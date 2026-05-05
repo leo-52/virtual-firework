@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <title>PrevoFX — Conception de spectacle pyrotechnique</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <div id="app">
+
+    <!-- Topbar -->
+    <header id="topbar">
+      <div class="brand">Prevo<span class="accent">FX</span></div>
+      <div class="topbar-sep"></div>
+
+      <button id="btn-play" class="primary" title="Lecture">▶ Lecture</button>
+      <button id="btn-pause" title="Pause">❚❚</button>
+      <button id="btn-stop" title="Stop">■</button>
+
+      <div class="topbar-sep"></div>
+
+      <label class="file-btn" title="Charger un fichier audio">
+        🎵 Audio
+        <input type="file" id="audio-input" accept="audio/*" />
+      </label>
+
+      <button id="btn-clear-fx" title="Effacer les feux à l'écran">Effacer 3D</button>
+      <button id="btn-clear-cues" class="danger" title="Effacer toutes les cues">Effacer cues</button>
+
+      <div class="spacer"></div>
+
+      <button id="btn-save-project" title="Sauvegarder le projet (.json)">💾 Projet</button>
+      <label class="file-btn" title="Charger un projet">
+        📂 Ouvrir
+        <input type="file" id="project-input" accept="application/json" />
+      </label>
+
+      <div class="topbar-sep"></div>
+
+      <button id="btn-export-csv" title="Exporter le script de tir CSV">⤓ CSV</button>
+      <button id="btn-export-json" title="Exporter le script de tir JSON">⤓ JSON</button>
+    </header>
+
+    <!-- Bibliothèque d'effets -->
+    <aside id="library">
+      <div class="panel-title">Bibliothèque d'effets</div>
+      <div id="effects-list"></div>
+    </aside>
+
+    <!-- Viewport 3D -->
+    <main id="viewport-wrap">
+      <canvas id="viewport"></canvas>
+      <div class="viewport-overlay">
+        Glisser : orbiter • Molette : zoom • Clic effet → clic timeline pour placer une cue
+      </div>
+    </main>
+
+    <!-- Inspector -->
+    <aside id="inspector">
+      <div class="panel-title">Inspecteur</div>
+      <div id="inspector-content"><div class="muted">Sélectionne une cue pour l'éditer.</div></div>
+    </aside>
+
+    <!-- Timeline -->
+    <section id="timeline"></section>
+
+    <!-- Status bar -->
+    <footer id="status">Initialisation…</footer>
+  </div>
+
+  <!-- Three.js (CDN) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+  <!-- Modules de l'app (ordre important) -->
+  <script src="js/effects.js"></script>
+  <script src="js/scene3d.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/timeline.js"></script>
+  <script src="js/project.js"></script>
+  <script src="js/export.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
