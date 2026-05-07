@@ -1,3 +1,18 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:8673c02893f52444f7f66df41479ecc84b4bfa586994f96c6f9483662ffc1e05
-size 426
+in vec3 aVertexPosition;
+
+out vec4 vPosition;
+
+void main(void) {
+    if( gl_VertexID == 0 ) {
+        gl_Position = vPosition = vec4(-1, 1,0,1);
+    }
+    else if( gl_VertexID == 1 ) {
+        gl_Position = vPosition = vec4(-1,-1,0,1);
+    }
+    else if( gl_VertexID == 2 ) {
+        gl_Position = vPosition = vec4( 1, 1,0,1);
+    }
+    else if( gl_VertexID == 3 ) {
+        gl_Position = vPosition = vec4( 1,-1,0,1);
+    }
+}

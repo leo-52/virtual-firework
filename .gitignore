@@ -1,0 +1,5 @@
+_explore/
+node_modules/
+build/
+dist/
+.DS_Store
