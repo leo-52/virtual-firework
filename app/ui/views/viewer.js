@@ -10,6 +10,7 @@ export function renderViewer(main, navigate, params = {}) {
   let currentId = params.id || (state.shows[0] && state.shows[0].id);
   let activeRenderer = null; // Renderer | FireworkSim
   let activeAudio = null;    // AudioPlayer
+  let switchToken = 0;       // incrémenté à chaque switchMode pour annuler les inits racy
 
   function detachAudio() {
     if (activeAudio) {
@@ -57,8 +58,13 @@ export function renderViewer(main, navigate, params = {}) {
   main.append(stage);
 
   function switchMode(m) {
-    if (activeRenderer && activeRenderer.destroy) activeRenderer.destroy();
-    if (activeRenderer && activeRenderer.pause) activeRenderer.pause();
+    switchToken++;
+    if (activeRenderer && activeRenderer.pause) {
+      try { activeRenderer.pause(); } catch {}
+    }
+    if (activeRenderer && activeRenderer.destroy) {
+      try { activeRenderer.destroy(); } catch {}
+    }
     activeRenderer = null;
     detachAudio();
     setStatsProvider(null);
@@ -222,7 +228,9 @@ export function renderViewer(main, navigate, params = {}) {
 
     stage.append(ctrl.controls, ctrl.progress, canvas, camRow, help, buildUpcoming(show));
 
+    const myToken = switchToken;
     requestAnimationFrame(() => {
+      if (myToken !== switchToken) return; // mode changé entretemps
       try {
         renderer = new Renderer(canvas);
       } catch (e) {
@@ -269,7 +277,9 @@ export function renderViewer(main, navigate, params = {}) {
       (t) => sim && sim.seek(t));
 
     stage.append(ctrl.controls, ctrl.progress, canvas, buildUpcoming(show));
+    const myToken = switchToken;
     requestAnimationFrame(() => {
+      if (myToken !== switchToken) return;
       sim = new FireworkSim(canvas);
       sim.load(show);
       sim.onTick = (t, dur) => {

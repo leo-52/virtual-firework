@@ -2164,6 +2164,40 @@ body.presentation-active { overflow: hidden; }
   gap: 6px;
 }
 
+/* ---------- Topbar save indicator ---------- */
+.topbar-save {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 8px 0 14px;
+  font-size: 11px;
+  color: var(--text-mute);
+  border-left: 1px solid var(--border);
+  margin-left: 4px;
+}
+
+.topbar-save-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #46a758;
+  box-shadow: 0 0 4px #46a758;
+}
+
+.topbar-save.pulse .topbar-save-dot {
+  animation: save-pulse 600ms ease-out;
+}
+
+@keyframes save-pulse {
+  0%   { transform: scale(1);   box-shadow: 0 0 4px #46a758; }
+  50%  { transform: scale(1.6); box-shadow: 0 0 12px #46a758; }
+  100% { transform: scale(1);   box-shadow: 0 0 4px #46a758; }
+}
+
+.topbar-save.pulse .topbar-save-label {
+  color: #46a758;
+}
+
 /* ---------- Toolbar 3D ---------- */
 .viewer-3d-toolbar {
   display: flex;

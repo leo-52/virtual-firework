@@ -124,6 +124,8 @@ export class BloomPipeline {
   }
 
   resize(w, h) {
+    // Guard contre canvas pas encore mesuré (width/height = 0)
+    if (w < 2 || h < 2) return;
     if (w === this.w && h === this.h) return;
     this.w = w; this.h = h;
     const gl = this.gl;
@@ -153,7 +155,7 @@ export class BloomPipeline {
 
   // Active la FBO scène avant que le renderer ne dessine.
   beginSceneCapture() {
-    if (!this.enabled) return false;
+    if (!this.enabled || !this.scene) return false;
     const gl = this.gl;
     gl.bindFramebuffer(gl.FRAMEBUFFER, this.scene.fbo);
     gl.viewport(0, 0, this.scene.w, this.scene.h);
@@ -162,7 +164,7 @@ export class BloomPipeline {
 
   // Compose le bloom et dessine vers le canvas (FBO null).
   finishToScreen() {
-    if (!this.enabled) return;
+    if (!this.enabled || !this.scene) return;
     const gl = this.gl;
 
     // Bright pass

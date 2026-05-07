@@ -53,16 +53,22 @@ function recordBlock(url) {
 }
 
 function isLocalUrl(url) {
+  if (!url || typeof url !== "string") return true;
+  // URL relative (sans schéma) = locale
+  if (!/^[a-z][a-z0-9+.-]*:/i.test(url)) return true;
   try {
-    const u = new URL(url, "http://x.local");
+    const u = new URL(url);
     if (u.protocol === "file:" || u.protocol === "data:" ||
-        u.protocol === "blob:" || u.protocol === "chrome-extension:") {
+        u.protocol === "blob:" || u.protocol === "chrome-extension:" ||
+        u.protocol === "chrome:" || u.protocol === "about:") {
       return true;
     }
     if (u.hostname === "" || LOCAL_HOSTS.has(u.hostname)) return true;
+    // 127.x.x.x → loopback
+    if (/^127\./.test(u.hostname)) return true;
+    // 10.x / 192.168.x : conservé en blocable selon config (par défaut local)
     return false;
   } catch {
-    // URL relative → locale
     return true;
   }
 }

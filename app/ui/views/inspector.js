@@ -14,17 +14,19 @@ import { createCurveEditor, PRESETS } from "../lib/curve-editor.js";
 export function renderInspector(root, ctx, cue) {
   const eff = findEffect(cue.effectId);
   const cat = eff ? (CATEGORIES[eff.partType] || CATEGORIES.other) : null;
+  const firstColor = eff?.colors?.[0] || "#888";
 
   // Header : effet + actions
   root.appendChild(el("div", { class: "inspector-eff" },
     el("div", {
       class: "inspector-color",
-      style: { background: eff?.colors[0] || "#888" },
+      style: { background: firstColor },
     }),
     el("div", { class: "inspector-eff-info" },
       el("div", { class: "inspector-eff-name" }, eff?.name || "Effet introuvable"),
       cat ? el("div", { class: "inspector-eff-meta" },
-        `${cat.icon} ${cat.label}${eff.subtype ? ` · ${subtypeLabel(eff.subtype)}` : ""}`) : null
+        `${cat.icon} ${cat.label}${eff.subtype ? ` · ${subtypeLabel(eff.subtype)}` : ""}`) : el("div", { class: "inspector-eff-meta" },
+          `Référence : ${cue.effectId}. L'effet a peut-être été supprimé.`)
     )
   ));
 

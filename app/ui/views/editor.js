@@ -29,6 +29,7 @@ import { openPresentation } from "./presentation.js";
 let currentEditor = null;
 
 export function getCurrentEditor() { return currentEditor; }
+export function clearCurrentEditor() { currentEditor = null; }
 
 export function renderEditor(main, navigate, params = {}) {
   const show = getShow(params.id);

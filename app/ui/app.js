@@ -10,7 +10,7 @@ import { t } from "./lib/i18n.js";
 
 import { renderHome } from "./views/home.js";
 import { renderShows } from "./views/shows.js";
-import { renderEditor, getCurrentEditor } from "./views/editor.js";
+import { renderEditor, getCurrentEditor, clearCurrentEditor } from "./views/editor.js";
 import { renderLibrary } from "./views/library.js";
 import { renderViewer } from "./views/viewer.js";
 import { renderOrders } from "./views/orders.js";
@@ -122,6 +122,10 @@ navFooter.appendChild(buildShieldIndicator());
 
 export function navigate(route, params = {}) {
   if (!ROUTES[route]) route = "home";
+  // Cleanup éditeur quand on le quitte (référence stale au show)
+  if (currentRoute === "editor" && route !== "editor") {
+    try { clearCurrentEditor(); } catch {}
+  }
   currentRoute = route;
   currentParams = params;
 
@@ -131,9 +135,41 @@ export function navigate(route, params = {}) {
   });
 
   main.innerHTML = "";
-  ROUTES[route](main, navigate, params);
+  try {
+    ROUTES[route](main, navigate, params);
+  } catch (e) {
+    console.error("[router] erreur de rendu :", e);
+    main.innerHTML = "";
+    main.appendChild(buildCrashPanel(e, () => navigate("home")));
+    return;
+  }
   main.scrollTop = 0;
 }
+
+function buildCrashPanel(err, onHome) {
+  const panel = document.createElement("div");
+  panel.className = "empty";
+  panel.innerHTML = `
+    <div class="empty-icon">⚠</div>
+    <h2 class="empty-title">Une erreur est survenue</h2>
+    <p class="empty-desc">La vue n'a pas pu s'afficher. Vos données sont saines, vous pouvez revenir à l'accueil.</p>
+    <pre style="font-size:11px;color:#999;background:#0a0d18;padding:10px;border-radius:4px;max-width:600px;overflow:auto;text-align:left;">${escapeHtml(err && (err.stack || err.message) || String(err))}</pre>
+  `;
+  const btn = document.createElement("button");
+  btn.className = "btn btn-primary";
+  btn.textContent = "← Retour à l'accueil";
+  btn.addEventListener("click", onHome);
+  panel.appendChild(btn);
+  return panel;
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, (c) =>
+    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+
+// Toaster les events de quota saturé que state.js dispatch
+window.addEventListener("prevofx:toast", (ev) => toast(ev.detail || ""));
 
 // ---- Raccourcis clavier globaux ----
 

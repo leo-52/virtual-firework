@@ -70,6 +70,18 @@ export function buildTopbar() {
   refreshHistoryButtons();
   right.appendChild(undoBtn);
   right.appendChild(redoBtn);
+
+  // Indicateur de sauvegarde
+  const saveDot = el("div", { class: "topbar-save", title: "État local" },
+    el("span", { class: "topbar-save-dot" }),
+    el("span", { class: "topbar-save-label" }, "Enregistré"));
+  right.appendChild(saveDot);
+  // Pulse à chaque save (via event)
+  window.addEventListener("prevofx:saved", () => {
+    saveDot.classList.add("pulse");
+    setTimeout(() => saveDot.classList.remove("pulse"), 600);
+  });
+
   bar.appendChild(right);
 
   return bar;

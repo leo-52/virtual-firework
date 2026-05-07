@@ -145,7 +145,12 @@ export class Renderer {
 
   destroy() {
     this.running = false;
+    this.playing = false;
     window.removeEventListener("resize", this._resize);
+    if (this._rafId) {
+      cancelAnimationFrame(this._rafId);
+      this._rafId = null;
+    }
   }
 
   // ---- Lecture spectacle ----
@@ -295,7 +300,7 @@ export class Renderer {
 
     if (this.onTick) this.onTick(this.t, this.duration);
     this._render();
-    requestAnimationFrame(() => this._loop());
+    this._rafId = requestAnimationFrame(() => this._loop());
   }
 
   _render() {
