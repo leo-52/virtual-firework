@@ -557,6 +557,7 @@ en JS standard.
 | C1 | Import KML (placement géographique) — parser + UI Fichier→Importer→KML | terminé | 3 |
 | C2 | Édition cue avancée : sélection multiple, copier/coller/couper/dupliquer/supprimer (raccourcis + menus + clipboard interne), décalage groupé, drag-to-move | terminé | 3-4 |
 | C3 | Bibliothèque d'effets éditable : favoris ⭐, effets personnalisés CRUD, onglets, filtres | terminé | 3 |
+| **C3b** | **Catalogue Prevot réel** : remplacer les 30 effets génériques par le vrai catalogue (export "My Parts" depuis Finale 3D, ou autre format). Cf. § 3.7 — synchro via `api2.prevotfx.com/gql` mutation `ApplyMyPartsCsvChanges`. **Nécessite un fichier d'export utilisateur, en attente.** | en attente | quand l'export sera dispo |
 | C4 | Cesium 3D Tiles : terrain réel sous la scène (lat/lon → 3D Tiles streaming) | à faire | 7+ |
 | C5 | Import `.fin` / `.us` natif : décodeur protobuf wire-format + mapping heuristique vers le catalogue (30 mots-clés) → import en un clic dans un nouveau show. _Précision limitée sans descripteur officiel._ | quasi-terminé | 7 |
 | C6 | Export : bons de tir + bons de commande imprimables (PDF via window.print). _`.fin` natif à venir._ | quasi-terminé | 4 |
