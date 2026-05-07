@@ -13,7 +13,7 @@
     "height": 1000,
     "min_width": 1024,
     "min_height": 700,
-    "icon": "icons/finale3d.icns",
+    "icon": "icons/prevotfx.icns",
     "frame": true,
     "fullscreen": false,
     "show": true,
