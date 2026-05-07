@@ -3,7 +3,7 @@
 > Document vivant. Mis à jour à la fin de chaque session de travail.
 > Source de vérité unique pour ce qui est planifié, en cours, terminé.
 
-**Dernière mise à jour** : session 3 — éditeur studio + foundations runtime.
+**Dernière mise à jour** : session 4 — édition pro, copier/coller, bons de tir PDF.
 
 ---
 
@@ -72,6 +72,32 @@ PrevoFX (notre app)
 - **Import KML** : Fichier → Importer → KML, lit les Placemarks et
   positionne le spectacle (lat/lon/centre)
 - **Raccourcis clavier** : 12 actions globales (cf. Aide → Raccourcis)
+
+### Session 4 — édition pro, bons de tir, dashboards
+- **Clipboard interne** (`lib/clipboard.js`) : copie structurée typée
+  pour cues / effets, événements observables.
+- **Timeline pro multi-pistes** (`views/timeline.js`) :
+  - 3 lanes : Aérien (shell/candle/cake/comet/rocket/mortar/singleShot/rack),
+    Sol (fountain/gerb/mine/flame), SFX (sfx/light)
+  - Drag-to-move horizontal pour déplacer un cue (ou un groupe sélectionné)
+  - Drop d'un effet de la bibliothèque sur n'importe quelle lane
+  - Curseur de lecture (playhead) déplaçable au clic sur le ruler
+  - Visuel par lane (teinte de fond, libellé)
+- **Copier / Couper / Coller / Dupliquer** : Ctrl+C, Ctrl+X, Ctrl+V, Ctrl+D
+  - Préserve les écarts relatifs entre cues collés (origineTime/offset)
+  - Coller à la position du dernier sélectionné, ou via playhead
+- **Bons de tir / commande PDF** (`views/order-print.js`) :
+  - Fenêtre dédiée stylisée pour `@media print`
+  - Bon de tir : séquence chronologique pour l'artificier (temps,
+    type, effet, style, calibre, durée, qté, fournisseur)
+  - Bon de commande : agrégation par effet (Réf., qté, PU, total HT)
+  - Bon consolidé : tous les spectacles cumulés
+  - Bouton "Imprimer" (→ PDF système) et "Fermer"
+- **Vue Accueil refondue** : "Reprendre" avec mini-timeline du dernier
+  spectacle + stats par lane, 6 actions rapides, spectacles récents,
+  catégories du catalogue, astuces clavier.
+- **Vue Spectacles refondue** : recherche, tri (récent/nom/cues/durée/coût),
+  ordre asc/desc, mode grille / liste tabulaire.
 
 ---
 
@@ -383,7 +409,7 @@ en JS standard.
 | A5 | Panneau "Bibliothèque d'effets" : 30 effets, 15 partTypes, 19 subtypes, favoris, custom CRUD | terminé | 3 |
 | A6 | Inspector : props d'un cue éditables live (timing, géométrie, apparence) | terminé | 3 |
 | A6b | Inspector : courbes d'émission (Recharts ou Canvas custom) | à faire | 5 |
-| A7 | Timeline : multi-sélection (Maj/Ctrl), Suppr, Ctrl+A — _zoom et copier/coller à venir_ | partiel | 3-5 |
+| A7 | Timeline pro : multi-pistes, drag-to-move, copier/coller (Ctrl+C/V/X/D), curseur de lecture, drop d'effets — _zoom + resize cues à venir_ | quasi-terminé | 3-4 |
 | A8 | `RenderPerformanceDialog` : reproduire le panneau diag rendu (FPS, batches, timings) | à faire | 7 |
 | A9 | Bascule progressive : par défaut nouvelle UI, fallback iframe ancien bundle | à faire | 8+ |
 
@@ -405,11 +431,11 @@ en JS standard.
 | # | Item | Statut | Session cible |
 |---|---|---|---|
 | C1 | Import KML (placement géographique) — parser + UI Fichier→Importer→KML | terminé | 3 |
-| C2 | Édition cue avancée : sélection multiple (Maj/Ctrl), Suppr, Ctrl+A, décalage groupé. _Copier/coller à finaliser._ | partiel | 3-5 |
+| C2 | Édition cue avancée : sélection multiple, copier/coller/couper/dupliquer/supprimer (raccourcis + menus + clipboard interne), décalage groupé, drag-to-move | terminé | 3-4 |
 | C3 | Bibliothèque d'effets éditable : favoris ⭐, effets personnalisés CRUD, onglets, filtres | terminé | 3 |
 | C4 | Cesium 3D Tiles : terrain réel sous la scène (lat/lon → 3D Tiles streaming) | à faire | 7+ |
 | C5 | Import `.fin` / `.us` natif (parser protobuf) | à faire | 6-8 |
-| C6 | Export : `.fin`, `.csv` détaillé, `.pdf` (bons de tir) | à faire | 6-8 |
+| C6 | Export : bons de tir + bons de commande imprimables (PDF via window.print). _`.fin` natif à venir._ | quasi-terminé | 4 |
 | C7 | ~~Décision auth/cloud~~ → **mode hors-ligne** : bouclier réseau qui bloque prevotfx.com et télémétries (cf. § 7) | terminé | 2 |
 | C8 | Synchro multi-utilisateur (export `.prevofx` + diff/merge ou backend custom) | à faire | 8+ |
 

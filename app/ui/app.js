@@ -2,8 +2,9 @@
 
 import { installShield, getStats, onChange } from "./lib/network-shield.js";
 import * as kbd from "./lib/keyboard.js";
+import * as clipboard from "./lib/clipboard.js";
 import { history } from "./lib/history.js";
-import { state, saveState, createShow } from "./lib/state.js";
+import { state, saveState, createShow, addCue, findEffect } from "./lib/state.js";
 import { toast } from "./lib/dom.js";
 import { t } from "./lib/i18n.js";
 
@@ -212,6 +213,106 @@ kbd.bind("Escape", () => {
   if (!ed) return;
   ed.selection.clear();
 }, { label: t("edit.deselect") });
+
+// ---- Copier / Couper / Coller / Dupliquer (sur l'éditeur) ----
+
+function copySelectedCues({ remove }) {
+  if (currentRoute !== "editor") return false;
+  const ed = getCurrentEditor();
+  if (!ed) return false;
+  const ids = ed.selection.list();
+  if (!ids.length) return false;
+  const cues = ed.show.cues
+    .filter((c) => ids.includes(c.id))
+    .map((c) => ({ effectId: c.effectId, time: c.time, quantity: c.quantity }));
+  // On stocke les cues triés par temps avec le minimum de temps comme origine,
+  // pour que le coller préserve les écarts relatifs.
+  const minT = Math.min(...cues.map((c) => c.time));
+  clipboard.set("cues", { cues, originTime: minT });
+
+  if (remove) {
+    ed.snapshotBefore("Couper");
+    for (const id of ids) {
+      const i = ed.show.cues.findIndex((c) => c.id === id);
+      if (i >= 0) ed.show.cues.splice(i, 1);
+    }
+    saveState();
+    ed.selection.clear();
+    ed.refresh();
+  }
+  toast(`${cues.length} cue(s) ${remove ? "coupé(s)" : "copié(s)"}.`);
+  return true;
+}
+
+function pasteCues() {
+  if (currentRoute !== "editor") return;
+  const ed = getCurrentEditor();
+  if (!ed) return;
+  const data = clipboard.get();
+  if (!data || data.kind !== "cues") {
+    toast("Presse-papier vide.");
+    return;
+  }
+  const cues = data.payload.cues;
+  if (!cues.length) return;
+
+  // Position cible : au playhead ou après le dernier cue sélectionné
+  const sel = ed.selection.list()
+    .map((id) => ed.show.cues.find((c) => c.id === id))
+    .filter(Boolean);
+  let target;
+  if (sel.length) {
+    target = Math.max(...sel.map((c) => c.time)) + 0.5;
+  } else {
+    target = data.payload.originTime + 1;
+  }
+  const offset = target - data.payload.originTime;
+
+  ed.snapshotBefore("Coller");
+  const newIds = [];
+  for (const c of cues) {
+    const eff = findEffect(c.effectId);
+    if (!eff) continue;
+    const t = Math.max(0, Math.min(ed.show.duration, c.time + offset));
+    const cue = addCue(ed.showId, c.effectId, Math.round(t * 10) / 10, c.quantity);
+    newIds.push(cue.id);
+  }
+  ed.selection.set(newIds);
+  ed.refresh();
+  toast(`${newIds.length} cue(s) collé(s).`);
+}
+
+function duplicateSelected() {
+  if (currentRoute !== "editor") return;
+  const ed = getCurrentEditor();
+  if (!ed) return;
+  const ids = ed.selection.list();
+  if (!ids.length) return;
+  ed.snapshotBefore("Dupliquer");
+  const newIds = [];
+  for (const id of ids) {
+    const c = ed.show.cues.find((x) => x.id === id);
+    if (!c) continue;
+    const t = Math.min(ed.show.duration, c.time + 1);
+    const cue = addCue(ed.showId, c.effectId, Math.round(t * 10) / 10, c.quantity);
+    newIds.push(cue.id);
+  }
+  ed.selection.set(newIds);
+  ed.refresh();
+  toast(`${newIds.length} cue(s) dupliqué(s).`);
+}
+
+kbd.bind("Ctrl+C", () => copySelectedCues({ remove: false }),
+  { label: t("edit.copy") });
+
+kbd.bind("Ctrl+X", () => copySelectedCues({ remove: true }),
+  { label: t("edit.cut") });
+
+kbd.bind("Ctrl+V", () => pasteCues(),
+  { label: t("edit.paste") });
+
+kbd.bind("Ctrl+D", () => duplicateSelected(),
+  { label: t("edit.duplicate") });
 
 // Premier rendu
 navigate("home");

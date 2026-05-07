@@ -1,143 +1,257 @@
-import { el, pageHeader, formatPrice } from "../lib/dom.js";
-import { state, globalStats } from "../lib/state.js";
-import { CATEGORIES } from "../data/effects.js";
+// Tableau de bord PrevoFX.
+//
+// Composé de 4 zones :
+//   1. Stats globales (compteurs)
+//   2. Actions rapides (lancer un nouveau show, etc.)
+//   3. Spectacles récents (3 plus récents avec mini-timeline)
+//   4. Catégories du catalogue (liens vers la bibliothèque filtrée)
+//   5. Astuce du jour / raccourcis utiles
+
+import { el, pageHeader, formatPrice, formatTime } from "../lib/dom.js";
+import { state, globalStats, createShow, findEffect } from "../lib/state.js";
+import { CATEGORIES, EFFECTS } from "../data/effects.js";
+import { t } from "../lib/i18n.js";
 
 export function renderHome(main, navigate) {
   const stats = globalStats();
+  const recent = [...state.shows]
+    .sort((a, b) => (b.updatedAt || b.createdAt) - (a.updatedAt || a.createdAt))
+    .slice(0, 3);
+  const lastShow = recent[0];
 
   main.append(
     pageHeader(
       "Tableau de bord",
-      `Bonjour. Vous avez ${stats.showCount} spectacle${stats.showCount > 1 ? "s" : ""} et ${stats.catalogSize} effets disponibles.`
+      lastShow
+        ? `Dernier spectacle : « ${lastShow.name} »`
+        : "Démarrez en créant votre premier spectacle.",
+      [
+        el("button", {
+          class: "btn",
+          onClick: () => navigate("library"),
+        }, t("view.library")),
+        el("button", {
+          class: "btn btn-primary",
+          onClick: () => {
+            const sh = createShow("Nouveau spectacle");
+            navigate("editor", { id: sh.id });
+          },
+        }, "+ " + t("file.new")),
+      ]
     )
   );
 
-  // Stats
-  const statGrid = el(
-    "div",
-    { class: "stats" },
-    statCard("Spectacles", stats.showCount, "✦"),
-    statCard("Cues totaux", stats.totalCues, "▸"),
-    statCard("Effets utilisés", stats.totalEffects, "⌗"),
-    statCard("Coût total", formatPrice(stats.totalCost), "€")
-  );
-  main.append(statGrid);
-
-  // Actions rapides
+  // ---- Stats ----
   main.append(
-    el(
-      "div",
-      { class: "section-header" },
-      el("h2", { class: "section-title" }, "Actions rapides")
+    el("div", { class: "stats" },
+      statCard("Spectacles", stats.showCount, "✦"),
+      statCard("Cues totaux", stats.totalCues, "▸"),
+      statCard("Effets utilisés", stats.totalEffects, "⌗"),
+      statCard("Coût cumulé HT", formatPrice(stats.totalCost), "€")
     )
   );
 
-  const actions = el(
-    "div",
-    { class: "cards" },
-    actionCard("Nouveau spectacle", "Démarrer la conception d'un nouveau show pyrotechnique.", "✦", () =>
-      navigate("shows")
-    ),
-    actionCard("Mes spectacles", "Reprendre un spectacle existant.", "📋", () =>
-      navigate("shows")
-    ),
-    actionCard("Bibliothèque d'effets", "Parcourir le catalogue.", "⌗", () =>
-      navigate("library")
-    ),
-    actionCard("Visualiseur 3D", "Lancer la prévisualisation Finale 3D.", "▶", () =>
-      navigate("viewer")
-    )
-  );
-  main.append(actions);
+  // ---- Spectacle en cours / dernier ----
+  if (lastShow) {
+    main.append(
+      el("div", { class: "section-header" },
+        el("h2", { class: "section-title" }, "Reprendre"),
+        el("button", {
+          class: "btn btn-ghost",
+          onClick: () => navigate("editor", { id: lastShow.id }),
+        }, "Ouvrir →"))
+    );
+    main.append(buildHero(lastShow, navigate));
+  }
 
-  // Catégories
+  // ---- Actions rapides ----
   main.append(
-    el(
-      "div",
-      { class: "section-header" },
-      el("h2", { class: "section-title" }, "Catégories du catalogue")
+    el("div", { class: "section-header" },
+      el("h2", { class: "section-title" }, "Actions rapides"))
+  );
+  main.append(
+    el("div", { class: "cards" },
+      actionCard("Nouveau spectacle",
+        "Démarrer la conception d'un nouveau show.",
+        "✦",
+        () => {
+          const sh = createShow("Nouveau spectacle");
+          navigate("editor", { id: sh.id });
+        }),
+      actionCard("Mes spectacles",
+        `${state.shows.length} spectacle(s) enregistré(s).`,
+        "📋",
+        () => navigate("shows")),
+      actionCard("Bibliothèque",
+        `${EFFECTS.length} effets dans le catalogue + favoris + perso.`,
+        "⌗",
+        () => navigate("library")),
+      actionCard("Visualiseur",
+        "Prévisu 2D ou moteur Finale 3D embarqué.",
+        "▶",
+        () => navigate("viewer")),
+      actionCard("Bons de commande",
+        "Agréger et exporter (CSV, PDF imprimable).",
+        "⛬",
+        () => navigate("orders")),
+      actionCard("Paramètres",
+        "Confidentialité, données, raccourcis.",
+        "⚙",
+        () => navigate("settings"))
     )
   );
 
+  // ---- Spectacles récents ----
+  if (recent.length > 1) {
+    main.append(
+      el("div", { class: "section-header" },
+        el("h2", { class: "section-title" }, "Spectacles récents"),
+        el("button", {
+          class: "btn btn-ghost",
+          onClick: () => navigate("shows"),
+        }, "Tout voir →"))
+    );
+    const list = el("div", { class: "cards" });
+    for (const show of recent) list.appendChild(showCard(show, navigate));
+    main.append(list);
+  }
+
+  // ---- Catégories ----
+  main.append(
+    el("div", { class: "section-header" },
+      el("h2", { class: "section-title" }, "Catégories du catalogue"))
+  );
   const cats = el("div", { class: "category-grid" });
   for (const [key, cat] of Object.entries(CATEGORIES)) {
     cats.appendChild(
-      el(
-        "div",
-        {
-          class: "category-pill",
-          style: { borderColor: cat.color, color: cat.color },
-          onClick: () => navigate("library", { category: key }),
-        },
+      el("div", {
+        class: "category-pill",
+        style: { borderColor: cat.color, color: cat.color },
+        onClick: () => navigate("library", { partType: key }),
+      },
         el("span", { class: "category-icon" }, cat.icon),
-        el("span", {}, cat.label)
-      )
+        el("span", {}, cat.label))
     );
   }
   main.append(cats);
 
-  // Spectacles récents
-  if (state.shows.length) {
-    main.append(
-      el(
-        "div",
-        { class: "section-header" },
-        el("h2", { class: "section-title" }, "Spectacles récents"),
-        el(
-          "button",
-          { class: "btn btn-ghost", onClick: () => navigate("shows") },
-          "Tout voir →"
-        )
-      )
-    );
-    const list = el("div", { class: "cards" });
-    for (const show of state.shows.slice(0, 3)) {
-      list.appendChild(
-        el(
-          "article",
-          {
-            class: "card clickable",
-            onClick: () => navigate("editor", { id: show.id }),
-          },
-          el("h3", { class: "card-title" }, show.name),
-          el(
-            "p",
-            { class: "card-desc" },
-            show.description || "Aucune description."
-          ),
-          el(
-            "div",
-            { class: "card-meta" },
-            el("span", {}, `${show.cues.length} cue(s)`),
-            el("span", {}, `${show.duration}s`)
-          )
-        )
-      );
-    }
-    main.append(list);
-  }
+  // ---- Astuce / raccourcis ----
+  main.append(
+    el("div", { class: "section-header" },
+      el("h2", { class: "section-title" }, "Astuces"))
+  );
+  main.append(buildTipsCard());
 }
 
 function statCard(label, value, icon) {
-  return el(
-    "div",
-    { class: "stat-card" },
+  return el("div", { class: "stat-card" },
     el("div", { class: "stat-icon" }, icon),
-    el(
-      "div",
-      {},
+    el("div", {},
       el("div", { class: "stat-value" }, String(value)),
-      el("div", { class: "stat-label" }, label)
-    )
-  );
+      el("div", { class: "stat-label" }, label)));
 }
 
 function actionCard(title, desc, icon, onClick) {
-  return el(
-    "article",
-    { class: "card clickable", onClick },
+  return el("article", { class: "card clickable", onClick },
     el("div", { class: "card-icon" }, icon),
     el("h3", { class: "card-title" }, title),
-    el("p", { class: "card-desc" }, desc)
+    el("p", { class: "card-desc" }, desc));
+}
+
+function showCard(show, navigate) {
+  return el("article", {
+    class: "card clickable",
+    onClick: () => navigate("editor", { id: show.id }),
+  },
+    el("h3", { class: "card-title" }, show.name),
+    el("p", { class: "card-desc" }, show.description || "Aucune description."),
+    el("div", { class: "card-meta" },
+      el("span", {}, `${show.cues.length} cue(s)`),
+      el("span", {}, `${show.duration}s`),
+      show.location ? el("span", {}, "📍 " + (show.location.name || "Lieu défini")) : null)
   );
+}
+
+function buildHero(show, navigate) {
+  // Mini timeline visuelle du dernier spectacle
+  const wrap = el("article", {
+    class: "card clickable hero-card",
+    onClick: () => navigate("editor", { id: show.id }),
+  });
+  wrap.appendChild(el("div", { class: "hero-card-header" },
+    el("h3", {}, show.name),
+    el("span", { class: "page-subtitle" },
+      `${show.cues.length} cue(s) · ${formatTime(show.duration)} · ${show.cues.length ? "prêt" : "vide"}`)
+  ));
+
+  // Mini-timeline
+  const tl = el("div", { class: "hero-timeline" });
+  for (const cue of show.cues) {
+    const eff = findEffect(cue.effectId);
+    if (!eff) continue;
+    const left = (cue.time / show.duration) * 100;
+    tl.appendChild(el("span", {
+      class: "hero-timeline-dot",
+      style: { left: `${left}%`, background: eff.colors[0] },
+      title: `${eff.name} · ${formatTime(cue.time)}`,
+    }));
+  }
+  wrap.appendChild(tl);
+
+  // Stats détaillées du show
+  const cuesByLane = countByLane(show);
+  wrap.appendChild(el("div", { class: "hero-card-stats" },
+    miniStat("Aérien", cuesByLane.aerial, "✦"),
+    miniStat("Sol", cuesByLane.ground, "⌃"),
+    miniStat("SFX", cuesByLane.sfx, "♪"),
+    miniStat("Coût", formatPrice(showCostOf(show)), "€")
+  ));
+  return wrap;
+}
+
+function miniStat(label, value, icon) {
+  return el("div", { class: "hero-mini-stat" },
+    el("span", { class: "hero-mini-stat-icon" }, icon),
+    el("div", {},
+      el("div", { class: "hero-mini-stat-value" }, String(value)),
+      el("div", { class: "hero-mini-stat-label" }, label)));
+}
+
+function countByLane(show) {
+  const out = { aerial: 0, ground: 0, sfx: 0 };
+  for (const cue of show.cues) {
+    const eff = findEffect(cue.effectId);
+    if (!eff) continue;
+    if (["fountain", "gerb", "mine", "flame"].includes(eff.partType)) out.ground++;
+    else if (["sfx", "light"].includes(eff.partType)) out.sfx++;
+    else out.aerial++;
+  }
+  return out;
+}
+
+function showCostOf(show) {
+  let total = 0;
+  for (const cue of show.cues) {
+    const eff = findEffect(cue.effectId);
+    if (eff) total += eff.price * cue.quantity;
+  }
+  return total;
+}
+
+function buildTipsCard() {
+  const tips = [
+    ["Glissez un effet", "depuis la bibliothèque sur la timeline pour ajouter un cue."],
+    ["Ctrl+C / Ctrl+V", "copier et coller des cues, comme dans un éditeur de texte."],
+    ["Maj+clic", "pour sélectionner plusieurs cues à la fois."],
+    ["Ctrl+Z / Ctrl+Y", "tout est annulable. Aucun risque de casse."],
+    ["Mode hors-ligne", "actif. Aucune donnée ne quitte votre machine."],
+    ["Bons de tir", "imprimables en PDF depuis la vue Commandes."],
+  ];
+  const grid = el("div", { class: "tips-grid" });
+  for (const [k, v] of tips) {
+    grid.appendChild(el("div", { class: "tip" },
+      el("strong", {}, k),
+      el("span", {}, v)));
+  }
+  return grid;
 }

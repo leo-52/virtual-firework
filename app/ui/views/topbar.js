@@ -9,6 +9,7 @@ import { history } from "../lib/history.js";
 import { listBindings } from "../lib/keyboard.js";
 import { parseKml } from "../lib/kml.js";
 import { setShowLocation } from "../lib/state.js";
+import { printShootSheet, printOrderSheet } from "./order-print.js";
 
 let currentShowIdGetter = () => null;
 let currentNavigate = () => {};
@@ -89,6 +90,23 @@ function fileMenu() {
       submenu: [
         { label: t("file.exportJson"), action: doExportJson },
         { label: t("file.exportCsv"), action: () => currentNavigate("orders") },
+        { separator: true },
+        {
+          label: "Bon de tir (PDF)",
+          disabled: !currentShowIdGetter(),
+          action: () => {
+            const id = currentShowIdGetter();
+            if (id) printShootSheet(id);
+          },
+        },
+        {
+          label: "Bon de commande (PDF)",
+          disabled: !currentShowIdGetter(),
+          action: () => {
+            const id = currentShowIdGetter();
+            if (id) printOrderSheet(id);
+          },
+        },
       ],
     },
     { separator: true },
@@ -103,19 +121,46 @@ function fileMenu() {
 
 // ---- Édition ----
 function editMenu() {
+  // Les actions Copier/Coller/etc. sont déclenchées par l'événement clavier
+  // global (cf. app.js). Depuis le menu, on dispatch un keydown synthétique :
+  // c'est plus simple que d'ex-importer toutes les fonctions dans la topbar.
+  const dispatch = (combo) => () => {
+    const [mods, key] = parseCombo(combo);
+    window.dispatchEvent(new KeyboardEvent("keydown", {
+      key,
+      ctrlKey: mods.has("ctrl"),
+      shiftKey: mods.has("shift"),
+      altKey: mods.has("alt"),
+      bubbles: true,
+    }));
+  };
   return [
     { label: t("edit.undo"), shortcut: "Ctrl+Z", disabled: !history.canUndo(), action: doUndo },
     { label: t("edit.redo"), shortcut: "Ctrl+Shift+Z", disabled: !history.canRedo(), action: doRedo },
     { separator: true },
-    { label: t("edit.cut"), shortcut: "Ctrl+X", disabled: true, action: () => {} },
-    { label: t("edit.copy"), shortcut: "Ctrl+C", disabled: true, action: () => {} },
-    { label: t("edit.paste"), shortcut: "Ctrl+V", disabled: true, action: () => {} },
+    { label: t("edit.cut"),       shortcut: "Ctrl+X", action: dispatch("Ctrl+X") },
+    { label: t("edit.copy"),      shortcut: "Ctrl+C", action: dispatch("Ctrl+C") },
+    { label: t("edit.paste"),     shortcut: "Ctrl+V", action: dispatch("Ctrl+V") },
     { separator: true },
-    { label: t("edit.duplicate"), shortcut: "Ctrl+D", disabled: true, action: () => {} },
-    { label: t("edit.delete"), shortcut: "Suppr", disabled: true, action: () => {} },
+    { label: t("edit.duplicate"), shortcut: "Ctrl+D", action: dispatch("Ctrl+D") },
+    { label: t("edit.delete"),    shortcut: "Suppr",  action: dispatch("Delete") },
     { separator: true },
-    { label: t("edit.selectAll"), shortcut: "Ctrl+A", disabled: true, action: () => {} },
+    { label: t("edit.selectAll"), shortcut: "Ctrl+A", action: dispatch("Ctrl+A") },
   ];
+}
+
+function parseCombo(combo) {
+  const parts = combo.split("+");
+  const mods = new Set();
+  let key = "";
+  for (const p of parts) {
+    const lc = p.toLowerCase();
+    if (lc === "ctrl") mods.add("ctrl");
+    else if (lc === "shift") mods.add("shift");
+    else if (lc === "alt") mods.add("alt");
+    else key = p.length === 1 ? p.toLowerCase() : p;
+  }
+  return [mods, key];
 }
 
 // ---- Affichage ----

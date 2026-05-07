@@ -23,6 +23,7 @@ import { makeSelection } from "../lib/selection.js";
 import { CATEGORIES, SUBTYPES, partTypeLabel, subtypeLabel, EFFECTS } from "../data/effects.js";
 import { t } from "../lib/i18n.js";
 import { renderInspector } from "./inspector.js";
+import { buildTimeline } from "./timeline.js";
 
 let currentEditor = null;
 
@@ -424,7 +425,7 @@ function timelineRow(ctx) {
 
   // En-tête timeline avec actions
   wrap.appendChild(el("div", { class: "studio-timeline-header" },
-    el("div", { class: "form-label" }, t("timeline")),
+    el("div", { class: "form-label" }, `${t("timeline")} · ${show.cues.length} cue(s)`),
     el("div", { class: "studio-timeline-actions" },
       el("button", {
         class: "btn btn-ghost",
@@ -442,84 +443,11 @@ function timelineRow(ctx) {
     )
   ));
 
-  // Track
-  const track = el("div", { class: "studio-timeline" });
-
-  // Ruler
-  const ruler = el("div", { class: "timeline-ruler" });
-  const stepSec = chooseStep(show.duration);
-  for (let t0 = 0; t0 <= show.duration; t0 += stepSec) {
-    const left = (t0 / show.duration) * 100;
-    ruler.appendChild(
-      el("div", { class: "timeline-tick", style: { left: `${left}%` } },
-        el("span", { class: "timeline-tick-label" }, formatTime(t0)))
-    );
-  }
-  track.appendChild(ruler);
-
-  const stage = el("div", { class: "studio-timeline-stage" });
-  // Drop d'un effet depuis la library
-  stage.addEventListener("dragover", (e) => { e.preventDefault(); e.dataTransfer.dropEffect = "copy"; });
-  stage.addEventListener("drop", (e) => {
-    e.preventDefault();
-    const id = e.dataTransfer.getData("text/effect-id");
-    if (!id) return;
-    const rect = stage.getBoundingClientRect();
-    const time = ((e.clientX - rect.left) / rect.width) * show.duration;
-    ctx.snapshotBefore("Ajout d'un cue (drop)");
-    const cue = addCue(ctx.showId, id, Math.round(time * 10) / 10);
-    ctx.selection.set([cue.id]);
-    ctx.refresh();
-  });
-  // Click vide → ajouter
-  stage.addEventListener("click", (e) => {
-    if (e.target !== stage) return;
-    if (!e.shiftKey) ctx.selection.clear();
-    const rect = stage.getBoundingClientRect();
-    const time = ((e.clientX - rect.left) / rect.width) * show.duration;
-    openEffectPicker(ctx, Math.round(time * 10) / 10);
-  });
-
-  for (const cue of show.cues) {
-    const eff = findEffect(cue.effectId);
-    if (!eff) continue;
-    const cat = CATEGORIES[eff.partType] || CATEGORIES.other;
-    const left = (cue.time / show.duration) * 100;
-    const width = Math.max(1.2, (eff.duration / show.duration) * 100);
-    const isSel = ctx.selection.has(cue.id);
-    const block = el("div", {
-      class: "studio-cue" + (isSel ? " selected" : ""),
-      title: `${eff.name} · ${formatTime(cue.time)}${cue.quantity > 1 ? ` ×${cue.quantity}` : ""}`,
-      style: {
-        left: `${left}%`,
-        width: `${width}%`,
-        background: `linear-gradient(90deg, ${cat.color}cc, ${cat.color}55)`,
-        borderColor: cat.color,
-      },
-      onClick: (e) => {
-        e.stopPropagation();
-        if (e.shiftKey || e.ctrlKey || e.metaKey) ctx.selection.toggle(cue.id);
-        else ctx.selection.set([cue.id]);
-      },
-    });
-    block.appendChild(el("span", { class: "studio-cue-icon" }, cat.icon));
-    block.appendChild(el("span", { class: "studio-cue-label" }, eff.name));
-    if (cue.quantity > 1) {
-      block.appendChild(el("span", { class: "qty-badge" }, `×${cue.quantity}`));
-    }
-    stage.appendChild(block);
-  }
-  track.appendChild(stage);
-  wrap.appendChild(track);
+  // Timeline pro multi-pistes (avec hooks pour clic vide)
+  ctx.onEmptyClick = (time) => openEffectPicker(ctx, time);
+  const tl = buildTimeline(ctx);
+  wrap.appendChild(tl.node);
   return wrap;
-}
-
-function chooseStep(duration) {
-  if (duration <= 30) return 5;
-  if (duration <= 60) return 10;
-  if (duration <= 180) return 20;
-  if (duration <= 600) return 60;
-  return 120;
 }
 
 function tab(label, onClick, active) {

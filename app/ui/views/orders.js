@@ -3,6 +3,7 @@ import {
 } from "../lib/dom.js";
 import { state, getShow, aggregateOrder, showCost } from "../lib/state.js";
 import { CATEGORIES } from "../data/effects.js";
+import { printOrderSheet, printAllShowsOrder, printShootSheet } from "./order-print.js";
 
 export function renderOrders(main, navigate, params = {}) {
   let scope = params.id || "all"; // "all" ou un id de show
@@ -13,8 +14,19 @@ export function renderOrders(main, navigate, params = {}) {
       "Bons de commande",
       "Agrégez les effets utilisés dans vos spectacles et exportez la commande.",
       [
-        el("button", { class: "btn", onClick: () => exportCsv() }, "⤓ Export CSV"),
-        el("button", { class: "btn btn-primary", onClick: () => print() }, "Imprimer"),
+        el("button", { class: "btn", onClick: () => exportCsv() }, "⤓ CSV"),
+        el("button", {
+          class: "btn",
+          onClick: () => {
+            if (scope === "all") return printAllShowsOrder();
+            printOrderSheet(scope);
+          },
+        }, "🖨 Bon de commande"),
+        el("button", {
+          class: "btn btn-primary",
+          disabled: scope === "all",
+          onClick: () => scope !== "all" && printShootSheet(scope),
+        }, "🖨 Bon de tir"),
       ]
     )
   );
@@ -138,9 +150,6 @@ export function renderOrders(main, navigate, params = {}) {
     toast("Export CSV téléchargé.");
   }
 
-  function print() {
-    window.print();
-  }
 
   redraw();
 }
