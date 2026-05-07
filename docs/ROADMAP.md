@@ -380,7 +380,7 @@ en JS standard.
 | C4 | Cesium 3D Tiles : terrain réel sous la scène (lat/lon → 3D Tiles streaming) | à faire | 7+ |
 | C5 | Import `.fin` / `.us` natif (parser protobuf) | à faire | 6-8 |
 | C6 | Export : `.fin`, `.csv` détaillé, `.pdf` (bons de tir) | à faire | 6-8 |
-| C7 | Décision auth/cloud : on conserve l'API `api2.prevotfx.com` (avec accord) ou on bâtit la nôtre | à décider | 4 |
+| C7 | ~~Décision auth/cloud~~ → **mode hors-ligne** : bouclier réseau qui bloque prevotfx.com et télémétries (cf. § 7) | terminé | 2 |
 | C8 | Synchro multi-utilisateur (export `.prevofx` + diff/merge ou backend custom) | à faire | 8+ |
 
 ---
@@ -395,6 +395,15 @@ en JS standard.
 - **Réutilisation** du compilateur WASM (Option A) plutôt que réécriture.
 - **Anglais → Français** : la source de vérité pour les libellés est
   `app.nw/translations/translations_fr.txt` (à puller en LFS).
+- **Mode hors-ligne strict** : aucune donnée ne doit quitter la machine.
+  Décidé en session 2. Implémentation : `app/ui/lib/network-shield.js`
+  installe un listener `chrome.webRequest` (NW.js) + override `fetch`/`XHR`
+  qui bloque les domaines listés ci-dessous, avec compteur visible dans la
+  sidebar et détail dans Paramètres → Confidentialité.
+
+  Domaines bloqués (extensible) : `prevotfx.com` (tous sous-domaines),
+  `google-analytics.com`, `googletagmanager.com`, `doubleclick.net`,
+  `sentry.io`. Localhost et `file://` toujours autorisés.
 
 ---
 
@@ -403,10 +412,10 @@ en JS standard.
 1. **Licence Finale 3D** : produit commercial, distribution à des collègues
    = potentielle violation. **À clarifier avec l'éditeur avant toute
    diffusion**, indépendamment des chantiers techniques.
-2. **Cloud `prevotfx.com`** : le bundle parle à `api2.prevotfx.com`.
-   Si on conserve l'iframe, **les données des spectacles peuvent partir
-   sur leur serveur**. Décision à prendre (off-line forcé ? autre
-   backend ?). Cf. C7.
+2. ~~**Cloud `prevotfx.com`**~~ **Tranché en session 2** : mode hors-ligne
+   strict, bouclier réseau actif (cf. § 7). À surveiller : que de nouvelles
+   versions du bundle Finale 3D n'introduisent pas d'autres domaines à
+   bloquer.
 3. **NW.js cross-package iframe** : est-ce que l'iframe `app/ui` →
    `app.nw/htmlui` se comporte bien (Node-remote, file://, CORS) ?
    → À tester au prochain lancement local.

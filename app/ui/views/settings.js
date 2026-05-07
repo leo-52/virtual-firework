@@ -1,5 +1,6 @@
 import { el, pageHeader, toast, confirmDialog, downloadFile } from "../lib/dom.js";
 import { state, saveState, resetState } from "../lib/state.js";
+import { getStats as getShieldStats, onChange as onShieldChange } from "../lib/network-shield.js";
 
 export function renderSettings(main, navigate) {
   main.append(pageHeader("Paramètres", "Préférences de l'application."));
@@ -148,6 +149,13 @@ export function renderSettings(main, navigate) {
     dataGroup
   );
 
+  // ---- Confidentialité / Réseau ----
+  main.append(
+    el("div", { class: "section-header" },
+      el("h2", { class: "section-title" }, "Confidentialité"))
+  );
+  main.append(buildShieldPanel());
+
   // ---- À propos ----
   main.append(
     el("div", { class: "section-header" },
@@ -180,6 +188,72 @@ function settingsRow(label, hint, control) {
     ),
     control
   );
+}
+
+function buildShieldPanel() {
+  const group = el("div", { class: "settings-group" });
+
+  const status = el("div", { class: "shield-status" });
+  const dot = el("span", { class: "shield-dot shield-active" });
+  const text = el("strong", {}, "Mode hors-ligne actif");
+  const sub = el("div", { class: "settings-hint" }, "");
+  status.append(
+    el("div", { style: "display: flex; align-items: center; gap: 10px;" }, dot, text),
+    sub
+  );
+
+  const counter = el("div", { class: "stat-tile-value" }, "0");
+  const counterLabel = el("div", { class: "stat-tile-label" }, "Requêtes bloquées");
+  const counterBox = el("div", { class: "stat-tile" }, counter, counterLabel);
+
+  const hostsList = el("ul", { class: "shield-hosts" });
+
+  const refresh = (s) => {
+    sub.textContent = `Source : ${s.source}. Toutes les requêtes vers les serveurs externes sont rejetées avant de quitter votre machine.`;
+    counter.textContent = String(s.blocked);
+    hostsList.innerHTML = "";
+    if (!s.byHost.length) {
+      hostsList.appendChild(el("li", { class: "page-subtitle" },
+        "Aucune tentative bloquée pour le moment."));
+    } else {
+      for (const [host, n] of s.byHost.slice(0, 12)) {
+        hostsList.appendChild(
+          el("li", {},
+            el("span", { class: "shield-host" }, host),
+            el("span", { class: "qty-badge" }, String(n)))
+        );
+      }
+    }
+  };
+  refresh(getShieldStats());
+  onShieldChange(refresh);
+
+  group.append(
+    el("div", { class: "settings-row", style: "flex-direction: column; align-items: stretch; gap: 12px;" },
+      status,
+      el("div", { class: "shield-grid" },
+        counterBox,
+        el("div", { class: "stat-tile" },
+          el("div", { class: "stat-tile-value" }, `${getShieldStats().blocklist.length}`),
+          el("div", { class: "stat-tile-label" }, "Domaines bloqués")
+        )
+      ),
+      el("div", {},
+        el("div", { class: "form-label" }, "Tentatives bloquées par hôte"),
+        hostsList
+      ),
+      el("div", {},
+        el("div", { class: "form-label" }, "Liste de blocage"),
+        el("div", { class: "shield-blocklist" },
+          ...getShieldStats().blocklist.map((p) =>
+            el("code", { class: "shield-pattern" }, p)
+          )
+        )
+      )
+    )
+  );
+
+  return group;
 }
 
 function buildSelect(options, value, onChange) {

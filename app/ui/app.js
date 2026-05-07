@@ -1,5 +1,6 @@
 // PrevoFX — bootstrap : routeur et navigation latérale.
 
+import { installShield, getStats, onChange } from "./lib/network-shield.js";
 import { renderHome } from "./views/home.js";
 import { renderShows } from "./views/shows.js";
 import { renderEditor } from "./views/editor.js";
@@ -30,11 +31,39 @@ const ROUTES = {
   settings: renderSettings,
 };
 
+// Active le bouclier réseau le plus tôt possible (avant tout autre rendu).
+installShield();
+
 const main = document.getElementById("main");
 const navContainer = document.getElementById("nav");
 const navFooter = document.getElementById("nav-footer");
 
 let currentRoute = "home";
+
+// Indicateur "Hors-ligne" dans la sidebar : pastille avec compteur de
+// requêtes bloquées, mise à jour en temps réel.
+function buildShieldIndicator() {
+  const root = document.createElement("div");
+  root.className = "shield-indicator";
+  root.title = "Mode hors-ligne — toutes les requêtes vers les serveurs distants sont bloquées.";
+  const dot = document.createElement("span");
+  dot.className = "shield-dot";
+  const label = document.createElement("span");
+  label.className = "shield-label";
+  const count = document.createElement("span");
+  count.className = "shield-count";
+  root.append(dot, label, count);
+  root.addEventListener("click", () => navigate("settings"));
+
+  const update = (s) => {
+    label.textContent = s.enabled ? "Hors-ligne" : "Réseau libre";
+    count.textContent = s.blocked > 0 ? ` · ${s.blocked} bloquée${s.blocked > 1 ? "s" : ""}` : "";
+    root.classList.toggle("shield-active", s.enabled);
+  };
+  update(getStats());
+  onChange(update);
+  return root;
+}
 
 function buildNav(items, container, isFooter) {
   for (const item of items) {
@@ -48,6 +77,7 @@ function buildNav(items, container, isFooter) {
 }
 buildNav(NAV, navContainer, false);
 buildNav(FOOTER_NAV, navFooter, true);
+navFooter.appendChild(buildShieldIndicator());
 
 export function navigate(route, params = {}) {
   if (!ROUTES[route]) route = "home";
