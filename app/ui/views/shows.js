@@ -4,9 +4,11 @@ import {
 } from "../lib/dom.js";
 import {
   state, createShow, deleteShow, duplicateShow,
-  showCost, showEffectCount,
+  showCost, showEffectCount, createShowFromTemplate,
 } from "../lib/state.js";
 import { t } from "../lib/i18n.js";
+import { TEMPLATES } from "../data/templates.js";
+import { modal } from "../lib/dom.js";
 
 export function renderShows(main, navigate) {
   let search = "";
@@ -27,6 +29,8 @@ export function renderShows(main, navigate) {
       "Mes spectacles",
       "Tous vos projets pyrotechniques.",
       [
+        el("button", { class: "btn", onClick: () => openTemplatePicker(navigate) },
+          "📋 Depuis un template"),
         el("button", { class: "btn btn-primary", onClick: newShow }, "+ Nouveau spectacle"),
       ]
     )
@@ -124,6 +128,34 @@ export function renderShows(main, navigate) {
     }
   }
   redraw();
+}
+
+function openTemplatePicker(navigate) {
+  const grid = el("div", { class: "template-grid" });
+  for (const tpl of TEMPLATES) {
+    grid.appendChild(el("article", {
+      class: "template-card clickable",
+      style: { borderColor: tpl.accent },
+      onClick: () => {
+        const sh = createShowFromTemplate(tpl);
+        toast(`« ${sh.name} » créé depuis le template.`);
+        close();
+        navigate("editor", { id: sh.id });
+      },
+    },
+      el("div", { class: "template-icon", style: { color: tpl.accent } }, tpl.icon),
+      el("h3", { class: "template-name" }, tpl.name),
+      el("p", { class: "template-desc" }, tpl.description),
+      el("div", { class: "template-meta" },
+        el("span", {}, `${tpl.duration}s`),
+        el("span", {}, " · "),
+        el("span", {}, `${tpl.build().cues.length} cues`))));
+  }
+  const { close } = modal({
+    title: "Choisir un template",
+    body: grid,
+    footer: [el("button", { class: "btn", onClick: () => close() }, "Annuler")],
+  });
 }
 
 function showCard(show, navigate) {

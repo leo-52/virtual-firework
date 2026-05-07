@@ -3,7 +3,7 @@ import { state, getShow, findEffect } from "../lib/state.js";
 import { FireworkSim } from "../sim/firework-sim.js";
 import { Renderer } from "../gl/renderer.js";
 import { setStatsProvider, openPerfDialog } from "./perf-dialog.js";
-import { AudioPlayer } from "../lib/audio.js";
+import { AudioPlayer, playBeep } from "../lib/audio.js";
 
 export function renderViewer(main, navigate, params = {}) {
   let mode = params.mode || "gl";  // gl | sim | finale3d
@@ -175,7 +175,52 @@ export function renderViewer(main, navigate, params = {}) {
     const help = el("div", { class: "viewer-help" },
       el("span", {}, "🖱 Glisser : orbiter · Maj+glisser : pan · Roulette : zoom"));
 
-    stage.append(ctrl.controls, ctrl.progress, canvas, help, buildUpcoming(show));
+    // Toolbar 3D : presets caméra + bloom + bip
+    const camRow = el("div", { class: "viewer-3d-toolbar" });
+    const camLabel = el("span", { class: "form-label" }, "Caméra");
+    const camButtons = [
+      ["Spectateur", "spectator"],
+      ["Tireur", "shooter"],
+      ["Plongée", "topdown"],
+      ["Dramatique", "dramatic"],
+      ["Reset", "default"],
+    ].map(([label, k]) =>
+      el("button", {
+        class: "btn btn-ghost",
+        onClick: () => renderer && renderer.applyCameraPreset(k),
+      }, label));
+
+    const bloomSlider = el("input", {
+      type: "range", min: "0", max: "2", step: "0.05",
+      value: String(state.settings?.bloomIntensity ?? 0.9),
+      onInput: (e) => renderer && renderer.setBloomIntensity(+e.target.value),
+    });
+    const bloomToggle = el("input", {
+      type: "checkbox",
+      checked: state.settings?.bloom !== false,
+      onChange: (e) => renderer && renderer.setBloomEnabled(e.target.checked),
+    });
+    const beepToggle = el("input", {
+      type: "checkbox",
+      checked: false,
+    });
+    const volSlider = el("input", {
+      type: "range", min: "0", max: "1", step: "0.05",
+      value: "1",
+      onInput: (e) => activeAudio && activeAudio.setVolume(+e.target.value),
+    });
+
+    camRow.append(
+      camLabel, ...camButtons,
+      el("span", { class: "viewer-3d-toolbar-sep" }),
+      el("label", { class: "viewer-3d-toolbar-item" }, bloomToggle, "Bloom"),
+      el("label", { class: "viewer-3d-toolbar-item" }, "Intensité", bloomSlider),
+      el("span", { class: "viewer-3d-toolbar-sep" }),
+      el("label", { class: "viewer-3d-toolbar-item" }, beepToggle, "Bip cue"),
+      el("label", { class: "viewer-3d-toolbar-item" }, "Volume", volSlider),
+    );
+
+    stage.append(ctrl.controls, ctrl.progress, canvas, camRow, help, buildUpcoming(show));
 
     requestAnimationFrame(() => {
       try {
@@ -193,6 +238,12 @@ export function renderViewer(main, navigate, params = {}) {
         toast("Spectacle terminé.");
         if (activeAudio) activeAudio.stop();
       };
+      renderer.onCueFired = () => {
+        if (beepToggle.checked) playBeep(880, 0.05, 0.15);
+      };
+      // Initial bloom from settings
+      renderer.setBloomEnabled(state.settings?.bloom !== false);
+      renderer.setBloomIntensity(state.settings?.bloomIntensity ?? 0.9);
       activeRenderer = renderer;
       attachAudio(show);
       setStatsProvider(() => ({

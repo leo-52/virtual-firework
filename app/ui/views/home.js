@@ -7,9 +7,10 @@
 //   4. Catégories du catalogue (liens vers la bibliothèque filtrée)
 //   5. Astuce du jour / raccourcis utiles
 
-import { el, pageHeader, formatPrice, formatTime } from "../lib/dom.js";
-import { state, globalStats, createShow, findEffect } from "../lib/state.js";
+import { el, pageHeader, formatPrice, formatTime, modal, toast } from "../lib/dom.js";
+import { state, globalStats, createShow, findEffect, createShowFromTemplate } from "../lib/state.js";
 import { CATEGORIES, EFFECTS } from "../data/effects.js";
+import { TEMPLATES } from "../data/templates.js";
 import { t } from "../lib/i18n.js";
 
 export function renderHome(main, navigate) {
@@ -28,6 +29,10 @@ export function renderHome(main, navigate) {
       [
         el("button", {
           class: "btn",
+          onClick: () => openTemplatePicker(navigate),
+        }, "📋 Templates"),
+        el("button", {
+          class: "btn",
           onClick: () => navigate("library"),
         }, t("view.library")),
         el("button", {
@@ -40,6 +45,19 @@ export function renderHome(main, navigate) {
       ]
     )
   );
+
+  // Si aucun spectacle : section démarrage rapide
+  if (!state.shows.length) {
+    const onboard = el("section", { class: "onboard" });
+    onboard.append(
+      el("h2", { class: "section-title" }, "Démarrage rapide"),
+      el("p", { class: "page-subtitle" },
+        "Bienvenue dans PrevoFX. Choisissez un template ou démarrez un spectacle vierge."));
+    const grid = el("div", { class: "template-grid" });
+    for (const tpl of TEMPLATES) grid.appendChild(templateCard(tpl, navigate));
+    onboard.append(grid);
+    main.append(onboard);
+  }
 
   // ---- Stats ----
   main.append(
@@ -236,6 +254,53 @@ function showCostOf(show) {
     if (eff) total += eff.price * cue.quantity;
   }
   return total;
+}
+
+function templateCard(tpl, navigate) {
+  return el("article", {
+    class: "template-card clickable",
+    style: { borderColor: tpl.accent },
+    onClick: () => {
+      const sh = createShowFromTemplate(tpl);
+      toast(`« ${sh.name} » créé.`);
+      navigate("editor", { id: sh.id });
+    },
+  },
+    el("div", { class: "template-icon", style: { color: tpl.accent } }, tpl.icon),
+    el("h3", { class: "template-name" }, tpl.name),
+    el("p", { class: "template-desc" }, tpl.description),
+    el("div", { class: "template-meta" },
+      el("span", {}, `${tpl.duration}s`),
+      el("span", {}, " · "),
+      el("span", {}, `${tpl.build().cues.length} cues`)));
+}
+
+function openTemplatePicker(navigate) {
+  const grid = el("div", { class: "template-grid" });
+  for (const tpl of TEMPLATES) {
+    grid.appendChild(el("article", {
+      class: "template-card clickable",
+      style: { borderColor: tpl.accent },
+      onClick: () => {
+        const sh = createShowFromTemplate(tpl);
+        toast(`« ${sh.name} » créé.`);
+        close();
+        navigate("editor", { id: sh.id });
+      },
+    },
+      el("div", { class: "template-icon", style: { color: tpl.accent } }, tpl.icon),
+      el("h3", { class: "template-name" }, tpl.name),
+      el("p", { class: "template-desc" }, tpl.description),
+      el("div", { class: "template-meta" },
+        el("span", {}, `${tpl.duration}s`),
+        el("span", {}, " · "),
+        el("span", {}, `${tpl.build().cues.length} cues`))));
+  }
+  const { close } = modal({
+    title: "Choisir un template",
+    body: grid,
+    footer: [el("button", { class: "btn", onClick: () => close() }, "Annuler")],
+  });
 }
 
 function buildTipsCard() {

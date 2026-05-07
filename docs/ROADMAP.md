@@ -3,7 +3,7 @@
 > Document vivant. Mis à jour à la fin de chaque session de travail.
 > Source de vérité unique pour ce qui est planifié, en cours, terminé.
 
-**Dernière mise à jour** : session 6 — audio sync, bloom GL, présentation, parser .fin.
+**Dernière mise à jour** : session 7 — templates, props 3D (mortiers/géo), presets caméra, settings, mapping .fin.
 
 ---
 
@@ -181,6 +181,45 @@ PrevoFX (notre app)
   un fichier `.fin` Finale 3D (ou `.us`) et d'explorer sa structure :
   arbre des champs avec tags numériques, vue "Chaînes lisibles" pour
   repérer titres et noms d'effets.
+
+### Session 7 — templates, props 3D, presets caméra, mapping .fin
+- **Templates de spectacles** (`data/templates.js`) :
+  4 spectacles pré-fabriqués (Fête nationale 180s/33 cues,
+  Mariage 90s/15 cues, Ouverture 45s/14 cues, Démo catalogue 60s/22 cues)
+  - Picker dans la vue Spectacles + onboarding sur l'Accueil quand
+    aucun spectacle n'existe
+  - 1 clic = nouveau show préfabriqué prêt à éditer
+- **Props 3D dans le moteur** (`gl/props.js`) :
+  - Mortiers visualisés au sol (cylindres sombres alignés sur 60m
+    devant l'origine) avec lighting Lambertien simple
+  - Marqueur de lieu géo (disque bleu translucide) si `show.location`
+    est défini, à proximité de la rampe
+  - Quantité de mortiers ≈ nombre de cues aériens du show, plafonné
+- **Presets caméra** : 5 boutons dans la toolbar 3D (Spectateur,
+  Tireur, Plongée, Dramatique, Reset). Méthode `applyCameraPreset`
+  qui anime target/distance/azimuth/elevation.
+- **Toolbar 3D enrichie** sous le canvas :
+  - Cluster Caméra (5 presets)
+  - Cluster Bloom (toggle + slider intensité)
+  - Cluster Audio (toggle bip cue + slider volume)
+- **Bip cue optionnel** : à chaque déclenchement, oscillateur 880 Hz
+  (50 ms, gain 0.15) — utile en répétition silencieuse
+- **Settings étendus** : moteur par défaut (gl/sim/finale3d), bloom
+  on/off, intensité 0..2, bip cue par défaut, pas de quantification
+  pour le snap timeline (0 = libre, 0.1s par défaut)
+- **Timeline pro** :
+  - Snap des cues (drop, drag, click) sur le pas configurable
+  - Click sur la waveform = seek (hook `ctx.onSeekTime` ou retombe sur
+    `onEmptyClick` pour ouvrir le picker)
+- **Mapping .fin → cues** (`lib/fin-mapper.js`) :
+  - Heuristique : parcourt l'arbre protobuf, identifie les sous-messages
+    qui ressemblent à un Shot (un float ∈ [0, 7200] + au moins une chaîne
+    courte)
+  - Mappe la chaîne vers un `effectId` du catalogue par fuzzy match
+    sur 30 mots-clés (peony/willow/kamuro/dahlia/etc., FR + EN)
+  - Dédoublonne et trie chronologiquement
+  - Bouton "→ Importer dans un nouveau spectacle" dans GPU Lab →
+    Inspecteur .fin (le show est créé, l'éditeur s'ouvre dessus)
 
 ---
 
@@ -519,7 +558,7 @@ en JS standard.
 | C2 | Édition cue avancée : sélection multiple, copier/coller/couper/dupliquer/supprimer (raccourcis + menus + clipboard interne), décalage groupé, drag-to-move | terminé | 3-4 |
 | C3 | Bibliothèque d'effets éditable : favoris ⭐, effets personnalisés CRUD, onglets, filtres | terminé | 3 |
 | C4 | Cesium 3D Tiles : terrain réel sous la scène (lat/lon → 3D Tiles streaming) | à faire | 7+ |
-| C5 | Import `.fin` / `.us` natif : décodeur protobuf wire-format générique + inspecteur GPU Lab. _Mapping vers nos cues à venir (besoin du `.proto` ou de mapping heuristique sur les noms VDL repérés dans le WASM)._ | partiel | 6-8 |
+| C5 | Import `.fin` / `.us` natif : décodeur protobuf wire-format + mapping heuristique vers le catalogue (30 mots-clés) → import en un clic dans un nouveau show. _Précision limitée sans descripteur officiel._ | quasi-terminé | 7 |
 | C6 | Export : bons de tir + bons de commande imprimables (PDF via window.print). _`.fin` natif à venir._ | quasi-terminé | 4 |
 | C7 | ~~Décision auth/cloud~~ → **mode hors-ligne** : bouclier réseau qui bloque prevotfx.com et télémétries (cf. § 7) | terminé | 2 |
 | C8 | Synchro multi-utilisateur (export `.prevofx` + diff/merge ou backend custom) | à faire | 8+ |

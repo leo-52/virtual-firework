@@ -2164,6 +2164,83 @@ body.presentation-active { overflow: hidden; }
   gap: 6px;
 }
 
+/* ---------- Toolbar 3D ---------- */
+.viewer-3d-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 8px 12px;
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+}
+
+.viewer-3d-toolbar .btn { padding: 4px 10px; font-size: 11px; }
+
+.viewer-3d-toolbar-sep {
+  width: 1px;
+  height: 22px;
+  background: var(--border);
+  margin: 0 4px;
+}
+
+.viewer-3d-toolbar-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--text-soft);
+}
+
+.viewer-3d-toolbar-item input[type="range"] { width: 80px; }
+
+/* ---------- Templates ---------- */
+.template-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+  margin: 12px 0;
+}
+
+.template-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 16px;
+  background: var(--bg-elev);
+  border: 2px solid;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+
+.template-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+.template-icon { font-size: 32px; line-height: 1; }
+.template-name { font-size: 14px; font-weight: 700; margin: 4px 0 0; }
+.template-desc { font-size: 12px; color: var(--text-soft); margin: 0; flex: 1; }
+.template-meta {
+  font-size: 11px;
+  color: var(--text-mute);
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.onboard {
+  margin-top: 18px;
+  padding: 18px;
+  background: var(--bg-elev);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+}
+
 /* ---------- Toast ---------- */
 .toast {
   position: fixed;

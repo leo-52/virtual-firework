@@ -17,6 +17,7 @@ import { program, buffer, makeSparkTexture } from "./gl-utils.js";
 import { mat4Multiply, mat4Identity } from "./math.js";
 import { findEffect } from "../lib/state.js";
 import { BloomPipeline } from "./bloom.js";
+import { Props } from "./props.js";
 
 const PART_VS = `#version 300 es
 in vec3 aQuad;             // quad corner -1..1
@@ -71,6 +72,7 @@ export class Renderer {
     this.particles = new ParticleSystem(40000);
     this.sparkTex = makeSparkTexture(gl, 64);
     this.bloom = new BloomPipeline(gl);
+    this.props = new Props(gl);
 
     this._initParticleProgram();
 
@@ -154,7 +156,64 @@ export class Renderer {
     this.scheduledEvents = [...show.cues]
       .sort((a, b) => a.time - b.time)
       .map((c) => ({ time: c.time, cue: c, fired: false }));
+
+    // Mortiers : 1 par cue aérien, alignés en demi-cercle devant l'origine
+    const aerialCount = show.cues.filter((c) => {
+      const eff = findEffect(c.effectId);
+      return eff && !["fountain", "gerb", "mine", "flame", "sfx", "light"].includes(eff.partType);
+    }).length;
+    const positions = [];
+    const N = Math.max(6, Math.min(40, aerialCount));
+    const spread = 60;
+    for (let i = 0; i < N; i++) {
+      const x = -spread / 2 + ((i + 0.5) / N) * spread;
+      positions.push([x, 0, 0]);
+    }
+    this.props.setMortars(positions);
+    if (show.location) {
+      // Le marqueur est centré devant la caméra (notre 0,0 = milieu rampe)
+      this.props.setGeoMarker({
+        pos: [0, 0, 18],
+        radius: 8,
+        color: [0.0, 0.6, 1.0],
+      });
+    } else {
+      this.props.setGeoMarker(null);
+    }
+
     this.reset();
+  }
+
+  // Préset de caméra (déclenché depuis l'UI)
+  applyCameraPreset(name) {
+    const c = this.camera;
+    if (name === "spectator") {
+      c.target = [0, 60, 0];
+      c.distance = 220;
+      c.azimuth = -Math.PI / 2;
+      c.elevation = Math.PI * 0.18;
+    } else if (name === "shooter") {
+      c.target = [0, 30, -10];
+      c.distance = 80;
+      c.azimuth = -Math.PI / 2;
+      c.elevation = Math.PI * 0.32;
+    } else if (name === "topdown") {
+      c.target = [0, 30, 0];
+      c.distance = 280;
+      c.azimuth = 0;
+      c.elevation = Math.PI * 0.45;
+    } else if (name === "dramatic") {
+      c.target = [0, 60, 0];
+      c.distance = 130;
+      c.azimuth = -Math.PI * 0.3;
+      c.elevation = Math.PI * 0.08;
+    } else {
+      c.target = [0, 30, 0];
+      c.distance = 150;
+      c.azimuth = Math.PI * 0.25;
+      c.elevation = Math.PI * 0.18;
+    }
+    c.update();
   }
 
   reset() {
@@ -215,6 +274,9 @@ export class Renderer {
               const pos = this._launchPosFor(e.cue, i, e.cue.quantity);
               spawnEffect(this.particles, eff, pos);
             }
+            if (this.onCueFired) {
+              try { this.onCueFired(e.cue, eff); } catch {}
+            }
           }
           e.fired = true;
         }
@@ -260,6 +322,9 @@ export class Renderer {
     gl.depthMask(true);
     gl.enable(gl.DEPTH_TEST);
     this.scene.drawGround(gl, this.viewProj);
+
+    // Props (mortiers, marqueur géo)
+    this.props.draw(gl, this.viewProj, [0.4, 0.8, 0.3]);
 
     // Particules
     this._drawParticles();

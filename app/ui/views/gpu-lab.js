@@ -7,6 +7,8 @@
 
 import { el, pageHeader, toast } from "../lib/dom.js";
 import { decodeMessage, pretty, stats } from "../lib/protobuf-decoder.js";
+import { mapFinTreeToCues } from "../lib/fin-mapper.js";
+import { createShow, saveState } from "../lib/state.js";
 
 const SHADER_PATH = "../../app.nw/gpu/";
 const WASM_PATH = "../../app.nw/htmlui/vdl_effect_compiler-DmdKSrYM.wasm";
@@ -63,7 +65,10 @@ const FAMILIES = {
   ui:        { label: "UI / 2D",        color: "#9aa0ad" },
 };
 
+let _navigateGlobal = null;
+
 export function renderGpuLab(main, navigate) {
+  _navigateGlobal = navigate;
   main.append(pageHeader(
     "GPU Lab",
     "Exploration du pipeline graphique embarqué et sondage du compilateur d'effets WASM.",
@@ -297,7 +302,28 @@ function buildFinTab() {
   const tabBar = el("div", { class: "tabs" });
 
   let lastTree = null;
+  let lastFileName = "";
   let currentView = "tree";
+
+  const importBtn = el("button", {
+    class: "btn btn-primary",
+    style: "display: none;",
+    onClick: () => {
+      if (!lastTree) return;
+      const mapping = mapFinTreeToCues(lastTree);
+      if (!mapping.cues.length) {
+        toast(mapping.warnings[0] || "Aucun cue trouvé.");
+        return;
+      }
+      const sh = createShow("Import .fin — " + (lastFileName.replace(/\.fin$/i, "") || "spectacle"));
+      sh.duration = mapping.duration;
+      sh.cues = mapping.cues;
+      sh.description = `Importé depuis ${lastFileName}. ${mapping.cues.length} cue(s) déduit(s) sur ${mapping.candidatesCount} candidat(s) protobuf.`;
+      saveState();
+      toast(`${mapping.cues.length} cue(s) importé(s) vers « ${sh.name} ».`);
+      if (_navigateGlobal) _navigateGlobal("editor", { id: sh.id });
+    },
+  }, "→ Importer dans un nouveau spectacle");
 
   function setView(v) {
     currentView = v;
@@ -312,7 +338,7 @@ function buildFinTab() {
   }
 
   root.append(
-    el("div", { style: "display: flex; gap: 8px; margin: 12px 0;" }, fileBtn),
+    el("div", { style: "display: flex; gap: 8px; margin: 12px 0;" }, fileBtn, importBtn),
     status, summary, tabBar, out, stringsBox);
 
   function pick() {
@@ -342,6 +368,8 @@ function buildFinTab() {
             return;
           }
           lastTree = tree;
+          lastFileName = f.name;
+          importBtn.style.display = "";
           const s = stats(tree);
           status.textContent = `${f.name} décodé (offset ${usedOffset}) : ${s.fields} champs, ${s.messages} sous-messages, ${s.strings} chaînes, profondeur max ${s.maxDepth}.`;
           summary.style.display = "";

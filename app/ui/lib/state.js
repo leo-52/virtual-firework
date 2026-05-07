@@ -12,6 +12,12 @@ const defaultState = {
     language: "fr",
     theme: "dark",
     defaultDuration: 180,
+    defaultViewer: "gl",      // gl | sim | finale3d
+    bloom: true,
+    bloomIntensity: 0.9,
+    audioVolume: 1.0,
+    beepOnCue: false,
+    snapStep: 0.1,            // s, pour quantifier les drops/drag timeline
   },
   meta: { version: 3 },
 };
@@ -205,6 +211,18 @@ export function deleteCustomEffect(id) {
     state.customEffects.splice(i, 1);
     saveState();
   }
+}
+
+// ---- Templates ------------------------------------------------------------
+
+export function createShowFromTemplate(template, overrideName) {
+  const built = template.build();
+  const sh = createShow(overrideName || template.name, template.description);
+  sh.duration = built.duration;
+  sh.cues = built.cues;
+  sh.updatedAt = Date.now();
+  saveState();
+  return sh;
 }
 
 // ---- Audio ----------------------------------------------------------------

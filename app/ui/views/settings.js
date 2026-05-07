@@ -62,6 +62,81 @@ export function renderSettings(main, navigate) {
     apparenceGroup
   );
 
+  // ---- Visualisation ----
+  const vizGroup = el("div", { class: "settings-group" },
+    settingsRow(
+      "Moteur par défaut",
+      "Mode utilisé à l'ouverture du visualiseur.",
+      buildSelect(
+        [
+          { value: "gl", label: "Moteur 3D PrevoFX" },
+          { value: "sim", label: "Simulateur 2D" },
+          { value: "finale3d", label: "Moteur Finale 3D" },
+        ],
+        state.settings.defaultViewer || "gl",
+        (v) => { state.settings.defaultViewer = v; saveState(); toast("Moteur par défaut mis à jour."); }
+      )
+    ),
+    settingsRow(
+      "Bloom",
+      "Effet de halo sur les feux d'artifice (3D).",
+      (() => {
+        const cb = el("input", { type: "checkbox" });
+        cb.checked = state.settings.bloom !== false;
+        cb.addEventListener("change", () => {
+          state.settings.bloom = cb.checked;
+          saveState();
+        });
+        return cb;
+      })()
+    ),
+    settingsRow(
+      "Intensité du bloom",
+      "0 = aucun halo · 2 = halo très intense.",
+      (() => {
+        const r = el("input", {
+          type: "range", min: "0", max: "2", step: "0.05",
+          value: String(state.settings.bloomIntensity ?? 0.9),
+        });
+        r.addEventListener("input", () => {
+          state.settings.bloomIntensity = +r.value;
+          saveState();
+        });
+        return r;
+      })()
+    ),
+    settingsRow(
+      "Bip à chaque cue",
+      "Bip de feedback quand un cue se déclenche pendant la lecture.",
+      (() => {
+        const cb = el("input", { type: "checkbox" });
+        cb.checked = !!state.settings.beepOnCue;
+        cb.addEventListener("change", () => {
+          state.settings.beepOnCue = cb.checked;
+          saveState();
+        });
+        return cb;
+      })()
+    ),
+    settingsRow(
+      "Pas de quantification (s)",
+      "Snap des cues sur la timeline. 0 = libre, 0.1s par défaut.",
+      el("input", {
+        type: "number", min: "0", max: "5", step: "0.05",
+        value: state.settings.snapStep ?? 0.1,
+        onChange: (e) => {
+          state.settings.snapStep = +e.target.value || 0;
+          saveState();
+        },
+      })
+    )
+  );
+  main.append(
+    el("div", { class: "section-header" },
+      el("h2", { class: "section-title" }, "Visualisation")),
+    vizGroup
+  );
+
   // ---- Données ----
   const dataGroup = el(
     "div",

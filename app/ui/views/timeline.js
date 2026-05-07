@@ -10,9 +10,15 @@
 
 import { el, formatTime } from "../lib/dom.js";
 import {
-  findEffect, addCue, updateCue, removeCue,
+  findEffect, addCue, updateCue, removeCue, state,
 } from "../lib/state.js";
 import { CATEGORIES } from "../data/effects.js";
+
+function snap(t) {
+  const step = state.settings?.snapStep || 0;
+  if (!step) return Math.round(t * 10) / 10;
+  return Math.round(t / step) * step;
+}
 
 const LANES = [
   { id: "aerial", label: "Aérien",
@@ -39,7 +45,14 @@ export function buildTimeline(ctx, opts = {}) {
 
   // Bande waveform si le show a un audio
   if (show.audio && Array.isArray(show.audio.peaks)) {
-    wrap.appendChild(buildWaveformStrip(show));
+    wrap.appendChild(buildWaveformStrip(show, {
+      onSeek: (t) => {
+        if (typeof ctx.onSeekTime === "function") ctx.onSeekTime(t);
+        else if (typeof ctx.onEmptyClick === "function") {
+          ctx.onEmptyClick(snap(Math.max(0, Math.min(show.duration, t))));
+        }
+      },
+    }));
   }
 
   // En-tête : colonne actions à gauche du temps
@@ -103,7 +116,7 @@ function buildLane(ctx, lane, show) {
     const rect = stage.getBoundingClientRect();
     const time = ((e.clientX - rect.left) / rect.width) * show.duration;
     snapshotBefore("Ajout d'un cue (drop)");
-    const cue = addCue(showId, id, Math.round(time * 10) / 10);
+    const cue = addCue(showId, id, snap(time));
     selection.set([cue.id]);
     refresh();
   });
@@ -123,7 +136,7 @@ function buildLane(ctx, lane, show) {
       const rect = stage.getBoundingClientRect();
       const time = ((e.clientX - rect.left) / rect.width) * show.duration;
       if (typeof ctx.onEmptyClick === "function") {
-        ctx.onEmptyClick(Math.round(time * 10) / 10);
+        ctx.onEmptyClick(snap(time));
       }
     } else if (!e.ctrlKey && !e.metaKey) {
       selection.clear();
@@ -198,7 +211,7 @@ function buildCueBlock(ctx, cue, eff, show) {
         const newT = clamp(t0 + dt, 0, show.duration);
         const c = show.cues.find((x) => x.id === id);
         if (c) {
-          c.time = Math.round(newT * 10) / 10;
+          c.time = snap(newT);
           // Repositionner visuellement les blocks correspondants
           updateBlockPosition(stage, c.id, c.time, show.duration);
         }
@@ -232,7 +245,7 @@ function updateBlockPosition(stage, cueId, time, duration) {
   block.style.left = `${left}%`;
 }
 
-function buildWaveformStrip(show) {
+function buildWaveformStrip(show, opts = {}) {
   const wrap = el("div", { class: "timeline-pro-waveform" });
   wrap.appendChild(el("div", { class: "timeline-pro-waveform-label" },
     "♪ " + (show.audio.name || "audio")));
@@ -241,8 +254,19 @@ function buildWaveformStrip(show) {
   canvas.className = "timeline-pro-waveform-canvas";
   stage.appendChild(canvas);
   wrap.appendChild(stage);
-  // Dessine après insertion (besoin de la taille pour le canvas)
+  // Dessine après insertion
   requestAnimationFrame(() => drawWaveform(canvas, show));
+
+  // Click waveform = navigue vers le visualiseur à ce temps,
+  // ou snap-place un cue selon le contexte
+  if (typeof opts.onSeek === "function") {
+    stage.style.cursor = "pointer";
+    stage.addEventListener("click", (e) => {
+      const r = stage.getBoundingClientRect();
+      const t = ((e.clientX - r.left) / r.width) * show.duration;
+      opts.onSeek(t);
+    });
+  }
   return wrap;
 }
 
