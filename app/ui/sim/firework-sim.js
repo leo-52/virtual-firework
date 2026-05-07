@@ -2,7 +2,11 @@
 // existant. Il joue une séquence de cues (effectId + time + quantity).
 // L'objectif : prévisu rapide pour valider le timing, pas le réalisme.
 
-import { getEffect, CATEGORIES } from "../data/effects.js";
+import { CATEGORIES, getEffect } from "../data/effects.js";
+import { findEffect } from "../lib/state.js";
+
+// findEffect couvre catalogue + custom effects ; getEffect en fallback.
+const lookupEffect = (id) => findEffect(id) || getEffect(id);
 
 const GRAVITY = 0.04;
 const AIR = 0.985;
@@ -137,7 +141,7 @@ export class FireworkSim {
   }
 
   _fireCue(cue) {
-    const eff = getEffect(cue.effectId);
+    const eff = lookupEffect(cue.effectId);
     if (!eff) return;
     for (let i = 0; i < cue.quantity; i++) {
       const launchX = this._launchX(cue.quantity, i);
@@ -152,13 +156,12 @@ export class FireworkSim {
   }
 
   _spawnByCategory(eff, x) {
-    const cat = eff.category;
+    const pt = eff.partType;
     const targetY = this._heightToY(eff.height);
-    if (cat === "bombe" || cat === "comete") {
+    if (pt === "shell" || pt === "comet" || pt === "rocket") {
       this._spawnRising(eff, x, targetY);
-    } else if (cat === "chandelle") {
-      // Chandelle : plusieurs tirs étalés dans le temps -> on simule
-      // en empilant plusieurs montées sur 2-3 secondes.
+    } else if (pt === "candle") {
+      // Chandelle : plusieurs tirs étalés dans le temps.
       const shots = Math.max(3, Math.round(eff.duration / 1.2));
       for (let i = 0; i < shots; i++) {
         setTimeout(() => {
@@ -166,12 +169,12 @@ export class FireworkSim {
           this._spawnRising(eff, x + (Math.random() - 0.5) * 30, targetY);
         }, i * 250);
       }
-    } else if (cat === "fontaine" || cat === "gerbe") {
+    } else if (pt === "fountain" || pt === "gerb" || pt === "flame") {
       this._spawnFountain(eff, x);
-    } else if (cat === "mine") {
+    } else if (pt === "mine" || pt === "singleShot" || pt === "mortar") {
       this._spawnMine(eff, x);
-    } else if (cat === "finale") {
-      // Pluie d'effets : plusieurs explosions étalées
+    } else if (pt === "cake" || pt === "rack") {
+      // Batterie : pluie d'effets étalés.
       const shots = Math.round(eff.duration * 1.5);
       for (let i = 0; i < shots; i++) {
         setTimeout(() => {
@@ -183,6 +186,9 @@ export class FireworkSim {
           );
         }, i * (eff.duration * 1000) / shots);
       }
+    } else {
+      // sfx, light, other : un petit burst neutre au sol
+      this._spawnMine(eff, x);
     }
   }
 
@@ -208,7 +214,7 @@ export class FireworkSim {
       size: 2,
       color: eff.colors[0],
       effectColors: eff.colors,
-      effectCategory: eff.category,
+      effectPartType: eff.partType,
       effectName: eff.name,
     });
   }

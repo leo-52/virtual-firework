@@ -3,7 +3,7 @@
 > Document vivant. Mis à jour à la fin de chaque session de travail.
 > Source de vérité unique pour ce qui est planifié, en cours, terminé.
 
-**Dernière mise à jour** : session 2 — reconnaissance fondations.
+**Dernière mise à jour** : session 3 — éditeur studio + foundations runtime.
 
 ---
 
@@ -43,6 +43,35 @@ PrevoFX (notre app)
   - Pipeline GPU documenté (cf. § 4)
   - WASM décodé (cf. § 5)
   - Format VDL identifié (cf. § 6)
+- Bouclier réseau hors-ligne (chrome.webRequest + override fetch/XHR)
+
+### Session 3 — éditeur studio + foundations runtime
+- **Foundations** :
+  - `lib/i18n.js` — table FR centralisée (~120 clefs)
+  - `lib/history.js` — undo/redo (50 snapshots max)
+  - `lib/keyboard.js` — manager raccourcis (Ctrl+Z/Y/A/S/N/O/P/L/H/Suppr/Esc/,)
+  - `lib/menu.js` — menus drop-down + sous-menus
+  - `lib/kml.js` — parser KML (Point/Polygon/LineString)
+  - `lib/selection.js` — sélection multiple
+- **Catalogue VDL aligné** : 30 effets, 15 partTypes (shell/candle/cake/…),
+  19 subtypes visuels (peony/willow/kamuro/dahlia/diadem/falling_leaves/…)
+- **State enrichi** : favoris, effets personnalisés (CRUD), géolocalisation
+  par spectacle, helper `findEffect` unifié
+- **Topbar pro** avec menus complets : Fichier, Édition, Affichage, Effet,
+  Outils, Aide. Boutons undo/redo dynamiques. À propos + Raccourcis.
+- **Éditeur studio** (3-zones) :
+  - Pane gauche : bibliothèque condensée avec onglets Tous/Favoris/Mes,
+    drag-and-drop sur la timeline, étoile favori
+  - Pane centre : preview 2D « overview » (axe X = temps, Y = hauteur,
+    dot = cue), section géo
+  - Pane droit : Inspecteur live (timing, géométrie, apparence, actions)
+  - Bas : timeline multi-sélection (clic-Maj pour multi, Ctrl+A, Suppr)
+- **Bibliothèque enrichie** : onglets (Tous/Favoris/Mes/Catalogue), filtres
+  par partType + subtype + recherche + tri, badges Personnalisé, CRUD
+  d'effets perso (création/édition/suppression)
+- **Import KML** : Fichier → Importer → KML, lit les Placemarks et
+  positionne le spectacle (lat/lon/centre)
+- **Raccourcis clavier** : 12 actions globales (cf. Aide → Raccourcis)
 
 ---
 
@@ -348,12 +377,13 @@ en JS standard.
 | # | Item | Statut | Session cible |
 |---|---|---|---|
 | A1 | Inventaire exhaustif des features (cf. § 3) | terminé | 2 |
-| A2 | `git lfs pull` local + parsing `translations_fr.txt` → table canonique de libellés FR | à faire | 3 |
-| A3 | Maquette FR layout principal : topbar + sidebar + scène 3D centrale + timeline bas | à faire | 3 |
-| A4 | Topbar : Fichier, Édition, Affichage, Effet, Outils, Aide (avec actions Save/Load/Undo/Redo/Render) | à faire | 4 |
-| A5 | Panneau "Bibliothèque d'effets" (déjà partiellement fait — étendre avec subtypes VDL § 3.4) | partiel | 4 |
-| A6 | Inspector / `EffectFieldsPanel` : props d'un cue + courbes d'émission (Recharts ou équivalent) | à faire | 5-6 |
-| A7 | Timeline pro : multi-pistes, zoom, sélection, copier/coller (ce qu'a Finale) | à faire | 5-6 |
+| A2 | `git lfs pull` local + parsing `translations_fr.txt` → table canonique (la nôtre est en place dans `lib/i18n.js`, ~120 clefs ; à enrichir au fil) | partiel | 3 |
+| A3 | Maquette FR layout principal : topbar + sidebar + scène + timeline | terminé | 3 |
+| A4 | Topbar : Fichier, Édition, Affichage, Effet, Outils, Aide (drop-down + sous-menus, Save/Open/Undo/Redo/Print/Quit) | terminé | 3 |
+| A5 | Panneau "Bibliothèque d'effets" : 30 effets, 15 partTypes, 19 subtypes, favoris, custom CRUD | terminé | 3 |
+| A6 | Inspector : props d'un cue éditables live (timing, géométrie, apparence) | terminé | 3 |
+| A6b | Inspector : courbes d'émission (Recharts ou Canvas custom) | à faire | 5 |
+| A7 | Timeline : multi-sélection (Maj/Ctrl), Suppr, Ctrl+A — _zoom et copier/coller à venir_ | partiel | 3-5 |
 | A8 | `RenderPerformanceDialog` : reproduire le panneau diag rendu (FPS, batches, timings) | à faire | 7 |
 | A9 | Bascule progressive : par défaut nouvelle UI, fallback iframe ancien bundle | à faire | 8+ |
 
@@ -374,9 +404,9 @@ en JS standard.
 
 | # | Item | Statut | Session cible |
 |---|---|---|---|
-| C1 | Import KML (placement géographique) | à faire | 4-5 |
-| C2 | Édition cue avancée : groupes, sélection multiple, copier/coller | à faire | 5 |
-| C3 | Bibliothèque d'effets éditable (CRUD + tags + favoris) | à faire | 5-6 |
+| C1 | Import KML (placement géographique) — parser + UI Fichier→Importer→KML | terminé | 3 |
+| C2 | Édition cue avancée : sélection multiple (Maj/Ctrl), Suppr, Ctrl+A, décalage groupé. _Copier/coller à finaliser._ | partiel | 3-5 |
+| C3 | Bibliothèque d'effets éditable : favoris ⭐, effets personnalisés CRUD, onglets, filtres | terminé | 3 |
 | C4 | Cesium 3D Tiles : terrain réel sous la scène (lat/lon → 3D Tiles streaming) | à faire | 7+ |
 | C5 | Import `.fin` / `.us` natif (parser protobuf) | à faire | 6-8 |
 | C6 | Export : `.fin`, `.csv` détaillé, `.pdf` (bons de tir) | à faire | 6-8 |

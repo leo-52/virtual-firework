@@ -2,28 +2,34 @@
 
 import { EFFECTS, getEffect } from "../data/effects.js";
 
-const STORAGE_KEY = "prevofx.state.v2";
+const STORAGE_KEY = "prevofx.state.v3";
 
 const defaultState = {
   shows: [],
+  favorites: [],         // ids d'effets favoris
+  customEffects: [],     // effets utilisateur (mêmes champs que data/effects.js)
   settings: {
     language: "fr",
     theme: "dark",
     defaultDuration: 180,
   },
-  meta: { version: 2 },
+  meta: { version: 3 },
 };
 
 export const state = loadState();
 
 function loadState() {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    // Migration : on lit aussi l'ancienne clé v2 si v3 absente.
+    let raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) raw = localStorage.getItem("prevofx.state.v2");
     if (!raw) return seedDemo(structuredClone(defaultState));
     const parsed = JSON.parse(raw);
     return {
       ...defaultState,
       ...parsed,
+      favorites: parsed.favorites || [],
+      customEffects: parsed.customEffects || [],
       settings: { ...defaultState.settings, ...(parsed.settings || {}) },
     };
   } catch {
@@ -42,11 +48,15 @@ export function resetState() {
 
 // ---- Spectacles -----------------------------------------------------------
 
+// ---- Helpers spectacle (étendus avec géolocalisation) ----------------------
+
 export function createShow(name, description = "") {
   const show = {
     id: "show_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
     name: name.trim(),
     description,
+    location: null,        // { name, lat, lon, alt? }
+    placemarks: [],        // import KML (zones de tir, public, etc.)
     createdAt: Date.now(),
     updatedAt: Date.now(),
     duration: state.settings.defaultDuration || 180,
@@ -134,6 +144,79 @@ export function removeCue(showId, cueId) {
   if (i >= 0) show.cues.splice(i, 1);
   show.updatedAt = Date.now();
   saveState();
+}
+
+// ---- Favoris --------------------------------------------------------------
+
+export function isFavorite(effectId) {
+  return state.favorites.includes(effectId);
+}
+
+export function toggleFavorite(effectId) {
+  const i = state.favorites.indexOf(effectId);
+  if (i >= 0) state.favorites.splice(i, 1);
+  else state.favorites.push(effectId);
+  saveState();
+  return isFavorite(effectId);
+}
+
+// ---- Effets personnalisés -------------------------------------------------
+
+export function getAllEffects() {
+  return [...state.customEffects, ...EFFECTS];
+}
+
+// Lookup global : effets personnalisés + catalogue
+export function findEffect(id) {
+  return state.customEffects.find((e) => e.id === id) || getEffect(id);
+}
+
+export function addCustomEffect(eff) {
+  const id = eff.id || ("custom_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6));
+  const full = {
+    id,
+    custom: true,
+    partType: "other",
+    subtype: "other",
+    caliber: 0,
+    duration: 3,
+    height: 30,
+    colors: ["#ffd60a"],
+    price: 0,
+    vendor: "Personnalisé",
+    ...eff,
+  };
+  state.customEffects.unshift(full);
+  saveState();
+  return full;
+}
+
+export function updateCustomEffect(id, patch) {
+  const eff = state.customEffects.find((e) => e.id === id);
+  if (!eff) return null;
+  Object.assign(eff, patch);
+  saveState();
+  return eff;
+}
+
+export function deleteCustomEffect(id) {
+  const i = state.customEffects.findIndex((e) => e.id === id);
+  if (i >= 0) {
+    state.customEffects.splice(i, 1);
+    saveState();
+  }
+}
+
+// ---- Géolocalisation ------------------------------------------------------
+
+export function setShowLocation(showId, location, placemarks) {
+  const show = getShow(showId);
+  if (!show) return null;
+  show.location = location || null;
+  if (placemarks) show.placemarks = placemarks;
+  show.updatedAt = Date.now();
+  saveState();
+  return show;
 }
 
 // ---- Stats / agrégations --------------------------------------------------

@@ -1,0 +1,153 @@
+// Inspecteur : édition live des propriétés d'un cue sélectionné.
+//
+// Sections : Synchronisation (temps, quantité), Géométrie (calibre,
+// hauteur), Apparence (effet, couleurs, fournisseur). Boutons d'action :
+// dupliquer, supprimer, isoler.
+
+import { el, formatPrice, formatTime, confirmDialog } from "../lib/dom.js";
+import { findEffect, updateCue, removeCue } from "../lib/state.js";
+import { addCue } from "../lib/state.js";
+import { CATEGORIES, subtypeLabel } from "../data/effects.js";
+import { t } from "../lib/i18n.js";
+
+export function renderInspector(root, ctx, cue) {
+  const eff = findEffect(cue.effectId);
+  const cat = eff ? (CATEGORIES[eff.partType] || CATEGORIES.other) : null;
+
+  // Header : effet + actions
+  root.appendChild(el("div", { class: "inspector-eff" },
+    el("div", {
+      class: "inspector-color",
+      style: { background: eff?.colors[0] || "#888" },
+    }),
+    el("div", { class: "inspector-eff-info" },
+      el("div", { class: "inspector-eff-name" }, eff?.name || "Effet introuvable"),
+      cat ? el("div", { class: "inspector-eff-meta" },
+        `${cat.icon} ${cat.label}${eff.subtype ? ` · ${subtypeLabel(eff.subtype)}` : ""}`) : null
+    )
+  ));
+
+  // Section : Synchronisation
+  root.appendChild(section(t("inspector.timing"),
+    field(t("cue.time") + " (s)",
+      el("input", {
+        type: "number",
+        min: "0",
+        max: String(ctx.show.duration),
+        step: "0.1",
+        value: cue.time,
+        onChange: (e) => {
+          ctx.snapshotBefore("Modification du temps");
+          updateCue(ctx.showId, cue.id, { time: +e.target.value });
+          ctx.refresh();
+        },
+      })
+    ),
+    field(t("cue.quantity"),
+      el("input", {
+        type: "number",
+        min: "1",
+        max: "99",
+        value: cue.quantity,
+        onChange: (e) => {
+          ctx.snapshotBefore("Modification de la quantité");
+          updateCue(ctx.showId, cue.id, { quantity: +e.target.value });
+          ctx.refresh();
+        },
+      })
+    ),
+    field("Décalage rapide",
+      el("div", { class: "inspector-row" },
+        nudge(-1, "−1s"), nudge(-0.1, "−0.1s"),
+        nudge(0.1, "+0.1s"), nudge(1, "+1s")),
+    )
+  ));
+
+  function nudge(dt, label) {
+    return el("button", {
+      class: "btn btn-ghost",
+      onClick: () => {
+        ctx.snapshotBefore("Ajustement du temps");
+        updateCue(ctx.showId, cue.id, { time: cue.time + dt });
+        ctx.refresh();
+      },
+    }, label);
+  }
+
+  // Section : Géométrie (lecture seule pour catalog, modifiable pour custom)
+  if (eff) {
+    root.appendChild(section(t("inspector.geometry"),
+      readonly("Calibre", eff.caliber ? `${eff.caliber} mm` : "—"),
+      readonly("Durée d'effet", `${eff.duration} s`),
+      readonly("Hauteur de tir", `${eff.height} m`)
+    ));
+
+    // Section : Apparence
+    root.appendChild(section(t("inspector.appearance"),
+      readonly("Style visuel", eff.subtype ? subtypeLabel(eff.subtype) : "—"),
+      colorRow("Couleurs", eff.colors),
+      readonly("Fournisseur", eff.vendor || "—"),
+      readonly("Prix unitaire", formatPrice(eff.price)),
+      readonly("Coût total (cue)", formatPrice(eff.price * cue.quantity))
+    ));
+  }
+
+  // Actions
+  root.appendChild(el("div", { class: "inspector-actions" },
+    el("button", {
+      class: "btn",
+      onClick: () => {
+        if (!eff) return;
+        ctx.snapshotBefore("Duplication d'un cue");
+        const next = addCue(ctx.showId, eff.id,
+          Math.min(ctx.show.duration, cue.time + 1), cue.quantity);
+        ctx.selection.set([next.id]);
+        ctx.refresh();
+      },
+    }, t("duplicate")),
+    el("button", {
+      class: "btn",
+      onClick: () => {
+        ctx.selection.set([cue.id]);
+        ctx.refresh();
+      },
+    }, "Isoler"),
+    el("button", {
+      class: "btn btn-danger",
+      onClick: async () => {
+        if (!await confirmDialog("Supprimer ce cue ?")) return;
+        ctx.snapshotBefore("Suppression d'un cue");
+        removeCue(ctx.showId, cue.id);
+        ctx.selection.clear();
+        ctx.refresh();
+      },
+    }, t("delete"))
+  ));
+}
+
+function section(title, ...children) {
+  return el("section", { class: "inspector-section" },
+    el("h4", { class: "inspector-section-title" }, title),
+    ...children);
+}
+
+function field(label, control) {
+  return el("label", { class: "inspector-field" },
+    el("span", { class: "form-label" }, label),
+    control);
+}
+
+function readonly(label, value) {
+  return el("div", { class: "inspector-readonly" },
+    el("span", { class: "form-label" }, label),
+    el("span", { class: "inspector-readonly-value" }, String(value))
+  );
+}
+
+function colorRow(label, colors) {
+  return el("div", { class: "inspector-readonly" },
+    el("span", { class: "form-label" }, label),
+    el("div", { class: "inspector-colors" },
+      ...colors.map((c) => el("div", { class: "inspector-color-dot", style: { background: c }, title: c }))
+    ));
+}

@@ -96,7 +96,7 @@ export function renderOrders(main, navigate, params = {}) {
     if (groupBy === "effect") {
       container.appendChild(buildEffectTable(rows));
     } else if (groupBy === "category") {
-      container.appendChild(buildGroupedTable(rows, (r) => r.effect.category, CATEGORIES));
+      container.appendChild(buildGroupedTable(rows, (r) => r.effect.partType, CATEGORIES));
     } else {
       container.appendChild(buildGroupedTable(rows, (r) => r.effect.vendor));
     }
@@ -120,7 +120,7 @@ export function renderOrders(main, navigate, params = {}) {
         [
           eff.id,
           csvEsc(eff.name),
-          eff.category,
+          eff.partType,
           eff.caliber || "",
           eff.duration,
           eff.height,
@@ -181,7 +181,7 @@ function buildEffectTable(rows) {
   const tbody = el("tbody");
   for (const r of rows) {
     const eff = r.effect;
-    const cat = CATEGORIES[eff.category];
+    const cat = CATEGORIES[eff.partType];
     tbody.appendChild(
       el(
         "tr",

@@ -1,47 +1,69 @@
-// PrevoFX — bootstrap : routeur et navigation latérale.
+// PrevoFX — bootstrap : topbar, routeur, raccourcis clavier.
 
 import { installShield, getStats, onChange } from "./lib/network-shield.js";
+import * as kbd from "./lib/keyboard.js";
+import { history } from "./lib/history.js";
+import { state, saveState, createShow } from "./lib/state.js";
+import { toast } from "./lib/dom.js";
+import { t } from "./lib/i18n.js";
+
 import { renderHome } from "./views/home.js";
 import { renderShows } from "./views/shows.js";
-import { renderEditor } from "./views/editor.js";
+import { renderEditor, getCurrentEditor } from "./views/editor.js";
 import { renderLibrary } from "./views/library.js";
 import { renderViewer } from "./views/viewer.js";
 import { renderOrders } from "./views/orders.js";
 import { renderSettings } from "./views/settings.js";
+import { setupTopbar, buildTopbar } from "./views/topbar.js";
+
+// Active le bouclier réseau le plus tôt possible.
+installShield();
+kbd.init();
 
 const NAV = [
-  { route: "home",     label: "Accueil",          icon: "⌂" },
-  { route: "shows",    label: "Mes spectacles",   icon: "✦" },
-  { route: "library",  label: "Bibliothèque",     icon: "⌗" },
-  { route: "viewer",   label: "Visualiseur",      icon: "▶" },
-  { route: "orders",   label: "Commandes",        icon: "⛬" },
+  { route: "home",     label: t("view.home"),     icon: "⌂" },
+  { route: "shows",    label: t("view.shows"),    icon: "✦" },
+  { route: "library",  label: t("view.library"),  icon: "⌗" },
+  { route: "viewer",   label: t("view.viewer"),   icon: "▶" },
+  { route: "orders",   label: t("view.orders"),   icon: "⛬" },
 ];
 
 const FOOTER_NAV = [
-  { route: "settings", label: "Paramètres",       icon: "⚙" },
+  { route: "settings", label: t("view.settings"), icon: "⚙" },
 ];
 
 const ROUTES = {
   home: renderHome,
   shows: renderShows,
-  editor: renderEditor,     // ouvert via lien depuis Spectacles
+  editor: renderEditor,
   library: renderLibrary,
   viewer: renderViewer,
   orders: renderOrders,
   settings: renderSettings,
 };
 
-// Active le bouclier réseau le plus tôt possible (avant tout autre rendu).
-installShield();
-
 const main = document.getElementById("main");
+const topbarRoot = document.getElementById("topbar");
 const navContainer = document.getElementById("nav");
 const navFooter = document.getElementById("nav-footer");
 
 let currentRoute = "home";
+let currentParams = {};
 
-// Indicateur "Hors-ligne" dans la sidebar : pastille avec compteur de
-// requêtes bloquées, mise à jour en temps réel.
+setupTopbar({
+  getCurrentShowId: () => currentParams?.id || null,
+  navigate,
+  onUndoRedoCallback: () => {
+    if (currentRoute === "editor") {
+      const ed = getCurrentEditor();
+      if (ed) ed.refresh();
+    } else {
+      navigate(currentRoute, currentParams);
+    }
+  },
+});
+topbarRoot.appendChild(buildTopbar());
+
 function buildShieldIndicator() {
   const root = document.createElement("div");
   root.className = "shield-indicator";
@@ -65,7 +87,7 @@ function buildShieldIndicator() {
   return root;
 }
 
-function buildNav(items, container, isFooter) {
+function buildNav(items, container) {
   for (const item of items) {
     const btn = document.createElement("button");
     btn.className = "nav-item";
@@ -75,15 +97,15 @@ function buildNav(items, container, isFooter) {
     container.appendChild(btn);
   }
 }
-buildNav(NAV, navContainer, false);
-buildNav(FOOTER_NAV, navFooter, true);
+buildNav(NAV, navContainer);
+buildNav(FOOTER_NAV, navFooter);
 navFooter.appendChild(buildShieldIndicator());
 
 export function navigate(route, params = {}) {
   if (!ROUTES[route]) route = "home";
   currentRoute = route;
+  currentParams = params;
 
-  // Highlight nav (route éditeur retombe sur "shows")
   const navHighlight = route === "editor" ? "shows" : route;
   document.querySelectorAll(".nav-item").forEach((el) => {
     el.classList.toggle("active", el.dataset.route === navHighlight);
@@ -94,13 +116,102 @@ export function navigate(route, params = {}) {
   main.scrollTop = 0;
 }
 
+// ---- Raccourcis clavier globaux ----
+
+kbd.bind("Ctrl+N", () => {
+  const sh = createShow("Nouveau spectacle");
+  toast(`Spectacle « ${sh.name} » créé.`);
+  navigate("editor", { id: sh.id });
+}, { label: t("file.new") });
+
+kbd.bind("Ctrl+S", () => {
+  saveState();
+  toast("Enregistré.");
+}, { label: t("file.save") });
+
+kbd.bind("Ctrl+O", () => navigate("shows"),
+  { label: t("file.open") });
+
+kbd.bind("Ctrl+P", () => window.print(),
+  { label: t("file.print") });
+
+kbd.bind("Ctrl+,", () => navigate("settings"),
+  { label: t("view.settings") });
+
+kbd.bind("Ctrl+L", () => navigate("library"),
+  { label: t("view.library") });
+
+kbd.bind("Ctrl+H", () => navigate("home"),
+  { label: t("view.home") });
+
+kbd.bind("Ctrl+Z", () => {
+  const snap = history.undo();
+  if (snap) {
+    state.shows = snap;
+    saveState();
+    toast("Annulation.");
+    if (currentRoute === "editor") {
+      const ed = getCurrentEditor();
+      if (ed) ed.refresh();
+    }
+  }
+}, { label: t("edit.undo") });
+
+kbd.bind("Ctrl+Shift+Z", () => {
+  const snap = history.redo();
+  if (snap) {
+    state.shows = snap;
+    saveState();
+    toast("Rétablissement.");
+    if (currentRoute === "editor") {
+      const ed = getCurrentEditor();
+      if (ed) ed.refresh();
+    }
+  }
+}, { label: t("edit.redo") });
+
+kbd.bind("Ctrl+Y", () => {
+  const snap = history.redo();
+  if (snap) {
+    state.shows = snap;
+    saveState();
+    if (currentRoute === "editor") {
+      const ed = getCurrentEditor();
+      if (ed) ed.refresh();
+    }
+  }
+}, { label: t("edit.redo") });
+
+kbd.bind("Delete", () => {
+  if (currentRoute !== "editor") return;
+  const ed = getCurrentEditor();
+  if (!ed) return;
+  const ids = ed.selection.list();
+  if (!ids.length) return;
+  ed.snapshotBefore("Suppression sélection");
+  for (const id of ids) {
+    const i = ed.show.cues.findIndex((c) => c.id === id);
+    if (i >= 0) ed.show.cues.splice(i, 1);
+  }
+  saveState();
+  ed.selection.clear();
+  ed.refresh();
+  toast(`${ids.length} cue(s) supprimé(s).`);
+}, { label: t("edit.delete") });
+
+kbd.bind("Ctrl+A", () => {
+  if (currentRoute !== "editor") return;
+  const ed = getCurrentEditor();
+  if (!ed) return;
+  ed.selection.set(ed.show.cues.map((c) => c.id));
+}, { label: t("edit.selectAll") });
+
+kbd.bind("Escape", () => {
+  if (currentRoute !== "editor") return;
+  const ed = getCurrentEditor();
+  if (!ed) return;
+  ed.selection.clear();
+}, { label: t("edit.deselect") });
+
 // Premier rendu
 navigate("home");
-
-// Raccourci clavier : Ctrl+, → paramètres
-window.addEventListener("keydown", (e) => {
-  if (e.ctrlKey && e.key === ",") {
-    e.preventDefault();
-    navigate("settings");
-  }
-});
