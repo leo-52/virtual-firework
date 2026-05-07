@@ -3,7 +3,7 @@
 > Document vivant. Mis à jour à la fin de chaque session de travail.
 > Source de vérité unique pour ce qui est planifié, en cours, terminé.
 
-**Dernière mise à jour** : session 4 — édition pro, copier/coller, bons de tir PDF.
+**Dernière mise à jour** : session 5 — viewer 3D WebGL2, courbes, diagnostic, GPU Lab.
 
 ---
 
@@ -98,6 +98,49 @@ PrevoFX (notre app)
   catégories du catalogue, astuces clavier.
 - **Vue Spectacles refondue** : recherche, tri (récent/nom/cues/durée/coût),
   ordre asc/desc, mode grille / liste tabulaire.
+
+### Session 5 — viewer 3D, courbes, diagnostic
+- **Curve editor canvas réutilisable** (`lib/curve-editor.js`) :
+  points draggables, ajout au clic vide, suppression au double-clic,
+  presets (Plat / Attaque / Decay / Cloche / Pulse), API `sampleLinear`.
+- **Inspector enveloppe** : section "Enveloppe d'intensité" pour chaque
+  cue, persistée dans `cue.envelope`, snapshots historique.
+- **Render Performance Dialog** (`views/perf-dialog.js`) :
+  modal flottante, 6 tuiles (FPS, frame time, RAM heap, particules,
+  batches, cues déclenchés), graphe FPS rolling 10 s avec lignes 16/30/60,
+  système de stats provider pluggable. Raccourci global F8.
+- **Viewer 3D WebGL2 vanilla** (`gl/`) :
+  - `gl-utils.js` : compile + program + buffer + textures procédurales
+    (sparkTexture gaussienne pour billboards)
+  - `math.js` : mat4 identity / perspective / lookAt / multiply
+  - `camera.js` : caméra orbit (drag = orbit, Maj+drag = pan, roulette
+    = zoom, élévation clamée)
+  - `scene.js` : skybox dégradée nuit + étoiles cheap, ground plane
+    avec grille douce et fog distance
+  - `particles.js` : système CPU SoA jusqu'à 40 000 particules,
+    physique simplifiée (gravité, drag), trails auto pour RISING,
+    sérialisation pour upload GPU
+  - `spawner.js` : règles par partType (shell/comet/rocket → RISING +
+    explosion à l'apogée ; cake → multi-shells décalés ; fountain/gerb
+    → SPRAY dirigé ; mine → demi-sphère sortante ; sfx/light → GLOW
+    ponctuel) ; 12 styles d'explosion (peony / chrysanthemum / willow
+    / palm / brocade / kamuro / crossette / dahlia / diadem /
+    fallingLeaves / ring / wave) avec count/speed/lifeBase/spread
+    spécifiques
+  - `renderer.js` : pipeline complet (sky → ground → particules
+    instanciées), billboard via uCamRight/uCamUp, blending additif,
+    boucle play/pause/seek
+- **Visualiseur 3 modes** : 3D PrevoFX (par défaut) / Sim 2D / Finale 3D
+  embarqué. Stats provider du mode actif branché au Perf Dialog.
+- **GPU Lab** (`views/gpu-lab.js`) :
+  - Onglet Résumé : pipeline Finale 3D expliqué, 35 shaders inventoriés
+    par famille (sparks/smoke/flame/lightbeam/mesh/post/physics/UI)
+  - Onglet Shaders : liste filtrable par famille, lecture du fichier
+    GLSL, analyse automatique (uniforms, in/out, structs, source brute)
+  - Onglet WASM : sondage de `vdl_effect_compiler.wasm` et `tinyexr.wasm`
+    via `WebAssembly.compile` puis `Module.imports/exports`. Affiche
+    la table complète et explique ce qu'il manque pour l'instanciation
+    embind complète.
 
 ---
 
@@ -408,9 +451,9 @@ en JS standard.
 | A4 | Topbar : Fichier, Édition, Affichage, Effet, Outils, Aide (drop-down + sous-menus, Save/Open/Undo/Redo/Print/Quit) | terminé | 3 |
 | A5 | Panneau "Bibliothèque d'effets" : 30 effets, 15 partTypes, 19 subtypes, favoris, custom CRUD | terminé | 3 |
 | A6 | Inspector : props d'un cue éditables live (timing, géométrie, apparence) | terminé | 3 |
-| A6b | Inspector : courbes d'émission (Recharts ou Canvas custom) | à faire | 5 |
+| A6b | Inspector : courbe d'enveloppe d'intensité (canvas) avec presets | terminé | 5 |
 | A7 | Timeline pro : multi-pistes, drag-to-move, copier/coller (Ctrl+C/V/X/D), curseur de lecture, drop d'effets — _zoom + resize cues à venir_ | quasi-terminé | 3-4 |
-| A8 | `RenderPerformanceDialog` : reproduire le panneau diag rendu (FPS, batches, timings) | à faire | 7 |
+| A8 | `RenderPerformanceDialog` : modal flottante (FPS lissé, frame time, RAM heap, particules, batches, cues), graphe 10 s, raccourci F8 | terminé | 5 |
 | A9 | Bascule progressive : par défaut nouvelle UI, fallback iframe ancien bundle | à faire | 8+ |
 
 ### Track B — Pont GPU/GLSL
@@ -419,11 +462,13 @@ en JS standard.
 |---|---|---|---|
 | B1 | Documenter pipeline + structs (CE document § 4) | terminé | 2 |
 | B2 | Inventaire WASM (CE document § 5) | terminé | 2 |
-| B3 | Charger le WASM compilateur depuis notre UI ; appeler `ee_newState` | à faire | 3 |
-| B4 | Hello-world : compiler un effet trivial → render batch sur un canvas WebGL2 | à faire | 4 |
-| B5 | Câbler la sortie `getRenderBatches()` à un mini-renderer (un seul shader) | à faire | 4-5 |
+| B3 | Charger le WASM compilateur ; sondage exports/imports via WebAssembly.Module (vue GPU Lab) | partiel | 5 |
+| B3b | Reproduire glue Embind pour instanciation complète + appel `ee_newState` | à faire | 6+ |
+| B4 | Hello-world : compiler un effet trivial → render batch sur un canvas WebGL2 | à faire | 6+ |
+| B5a | Mini-renderer WebGL2 vanilla autonome (sky + ground + particules billboardées + 12 styles d'explosion VDL) | terminé | 5 |
+| B5b | Câbler la sortie `getRenderBatches()` du WASM aux shaders Finale 3D originaux | à faire | 7+ |
 | B6 | Étendre à plusieurs shaders (sparks v2, smoke, flame) | à faire | 5-7 |
-| B7 | Caméra / scène (sun, fog, tonemap) | à faire | 7-8 |
+| B7 | Caméra / scène (sun, fog, tonemap) — _ground/sky/orbit déjà OK_ | partiel | 5 |
 | B8 | Composition full pipeline (post-process, blur, cubemap) | à faire | 9+ |
 
 ### Track C — Features métier (parallèle)

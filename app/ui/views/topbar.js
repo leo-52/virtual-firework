@@ -10,6 +10,7 @@ import { listBindings } from "../lib/keyboard.js";
 import { parseKml } from "../lib/kml.js";
 import { setShowLocation } from "../lib/state.js";
 import { printShootSheet, printOrderSheet } from "./order-print.js";
+import { openPerfDialog } from "./perf-dialog.js";
 
 let currentShowIdGetter = () => null;
 let currentNavigate = () => {};
@@ -199,11 +200,14 @@ function effectMenu() {
 // ---- Outils ----
 function toolsMenu() {
   return [
+    { label: "Moteur 3D PrevoFX",  action: () => currentNavigate("viewer", { mode: "gl" }) },
     { label: t("tools.simulator"), action: () => currentNavigate("viewer", { mode: "sim" }) },
     { label: t("tools.finale3d"),  action: () => currentNavigate("viewer", { mode: "finale3d" }) },
     { separator: true },
+    { label: "GPU Lab",            action: () => currentNavigate("gpulab") },
+    { label: t("tools.diagnostics"), shortcut: "F8", action: () => openPerfDialog() },
+    { separator: true },
     { label: t("tools.networkShield"), action: () => currentNavigate("settings") },
-    { label: t("tools.diagnostics"),    disabled: true, action: () => {} },
   ];
 }
 

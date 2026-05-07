@@ -15,7 +15,9 @@ import { renderLibrary } from "./views/library.js";
 import { renderViewer } from "./views/viewer.js";
 import { renderOrders } from "./views/orders.js";
 import { renderSettings } from "./views/settings.js";
+import { renderGpuLab } from "./views/gpu-lab.js";
 import { setupTopbar, buildTopbar } from "./views/topbar.js";
+import { openPerfDialog } from "./views/perf-dialog.js";
 
 // Active le bouclier réseau le plus tôt possible.
 installShield();
@@ -27,6 +29,7 @@ const NAV = [
   { route: "library",  label: t("view.library"),  icon: "⌗" },
   { route: "viewer",   label: t("view.viewer"),   icon: "▶" },
   { route: "orders",   label: t("view.orders"),   icon: "⛬" },
+  { route: "gpulab",   label: "GPU Lab",          icon: "⚛" },
 ];
 
 const FOOTER_NAV = [
@@ -41,7 +44,13 @@ const ROUTES = {
   viewer: renderViewer,
   orders: renderOrders,
   settings: renderSettings,
+  gpulab: renderGpuLab,
 };
+
+// Raccourci global pour ouvrir le diagnostic
+window.addEventListener("keydown", (e) => {
+  if (e.key === "F8") { e.preventDefault(); openPerfDialog(); }
+});
 
 const main = document.getElementById("main");
 const topbarRoot = document.getElementById("topbar");

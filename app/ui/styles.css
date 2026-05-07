@@ -1789,6 +1789,194 @@ input[type="number"]:focus {
   color: var(--accent);
 }
 
+/* ---------- Curve editor ---------- */
+.curve-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.curve-editor-canvas {
+  display: block;
+  width: 100%;
+  height: 140px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: #04060f;
+  cursor: crosshair;
+}
+
+.envelope-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.envelope-presets .btn { padding: 4px 8px; font-size: 11px; }
+
+/* ---------- Perf dialog ---------- */
+.modal-perf {
+  width: min(720px, 90vw);
+  max-height: 85vh;
+}
+
+.perf-body { display: flex; flex-direction: column; gap: 14px; padding: 16px; }
+
+.perf-tiles {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.perf-tile {
+  background: var(--bg-soft);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.perf-tile-label {
+  font-size: 10px;
+  color: var(--text-mute);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
+.perf-tile-value {
+  font-size: 22px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.perf-tile-sub { font-size: 11px; color: var(--text-soft); }
+
+.perf-graph {
+  width: 100%;
+  height: 100px;
+  background: #04060f;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+}
+
+/* ---------- GPU Lab ---------- */
+.lab-body { padding-top: 8px; }
+.lab-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+.lab-shader-grid {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 12px;
+  height: 60vh;
+}
+.lab-shader-list {
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.lab-shader-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border: 0;
+  border-left: 3px solid transparent;
+  background: transparent;
+  color: var(--text);
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 4px;
+}
+.lab-shader-item:hover { background: var(--bg-soft); }
+.lab-shader-item.active { background: var(--accent-soft); color: var(--accent); }
+.lab-shader-fam {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex: 0 0 auto;
+}
+.lab-shader-detail {
+  margin: 0;
+  padding: 12px;
+  background: #04060f;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: auto;
+  font-family: "Menlo", "Monaco", monospace;
+  font-size: 11px;
+  white-space: pre;
+  color: #c9d4e8;
+}
+
+.lab-wasm-status {
+  padding: 8px 12px;
+  background: var(--bg-soft);
+  border-radius: var(--radius-sm);
+  border-left: 3px solid var(--accent);
+  margin: 8px 0;
+  font-family: "Menlo", "Monaco", monospace;
+  font-size: 12px;
+}
+.lab-wasm-output {
+  margin: 0;
+  padding: 12px;
+  background: #04060f;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-family: "Menlo", "Monaco", monospace;
+  font-size: 11px;
+  white-space: pre-wrap;
+  max-height: 50vh;
+  overflow: auto;
+  color: #c9d4e8;
+}
+
+.lab-summary { display: flex; flex-direction: column; gap: 14px; }
+.lab-pipeline { padding-left: 22px; line-height: 1.6; }
+.lab-pipeline strong { color: var(--accent); }
+.lab-fam-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 8px;
+}
+.lab-fam-tile {
+  padding: 10px 12px;
+  background: var(--bg-elev);
+  border-radius: var(--radius-sm);
+  border-left: 3px solid;
+  font-size: 12px;
+}
+
+/* ---------- Viewer 3D ---------- */
+.viewer-canvas-3d {
+  background: #02030a;
+  cursor: grab;
+}
+.viewer-canvas-3d:active { cursor: grabbing; }
+
+.viewer-help {
+  margin-top: 6px;
+  padding: 6px 10px;
+  background: var(--bg-soft);
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  color: var(--text-soft);
+  text-align: center;
+}
+
 /* ---------- Toast ---------- */
 .toast {
   position: fixed;

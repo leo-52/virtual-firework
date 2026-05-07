@@ -9,6 +9,7 @@ import { findEffect, updateCue, removeCue } from "../lib/state.js";
 import { addCue } from "../lib/state.js";
 import { CATEGORIES, subtypeLabel } from "../data/effects.js";
 import { t } from "../lib/i18n.js";
+import { createCurveEditor, PRESETS } from "../lib/curve-editor.js";
 
 export function renderInspector(root, ctx, cue) {
   const eff = findEffect(cue.effectId);
@@ -92,6 +93,9 @@ export function renderInspector(root, ctx, cue) {
     ));
   }
 
+  // Section : Courbe d'enveloppe (intensité du cue dans le temps)
+  root.appendChild(buildEnvelopeSection(ctx, cue));
+
   // Actions
   root.appendChild(el("div", { class: "inspector-actions" },
     el("button", {
@@ -123,6 +127,48 @@ export function renderInspector(root, ctx, cue) {
       },
     }, t("delete"))
   ));
+}
+
+function buildEnvelopeSection(ctx, cue) {
+  const sec = el("section", { class: "inspector-section" },
+    el("h4", { class: "inspector-section-title" }, "Enveloppe d'intensité"));
+  const points = (cue.envelope && cue.envelope.length)
+    ? cue.envelope
+    : PRESETS.attack.slice();
+  const ed = createCurveEditor({
+    points,
+    color: "#0091ff",
+    onChange: (newPts) => {
+      ctx.snapshotBefore("Modification de l'enveloppe");
+      updateCue(ctx.showId, cue.id, { envelope: newPts });
+    },
+  });
+  sec.appendChild(ed.node);
+
+  // Presets
+  const presets = el("div", { class: "envelope-presets" });
+  for (const [name, p] of Object.entries(PRESETS)) {
+    presets.appendChild(el("button", {
+      class: "btn btn-ghost",
+      onClick: () => {
+        ed.set(p.slice());
+        ctx.snapshotBefore("Preset enveloppe");
+        updateCue(ctx.showId, cue.id, { envelope: p.slice() });
+      },
+    }, presetLabel(name)));
+  }
+  sec.appendChild(presets);
+  return sec;
+}
+
+function presetLabel(name) {
+  return ({
+    flat: "Plat",
+    attack: "Attaque",
+    decay: "Decay",
+    bell: "Cloche",
+    pulse: "Pulse",
+  })[name] || name;
 }
 
 function section(title, ...children) {
