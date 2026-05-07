@@ -1,2 +1,0 @@
-ursina==7.0.0
-pyinstaller==6.11.1
