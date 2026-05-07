@@ -1,3 +1,136 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:6edcaea88121c407e9833f57918f5feea897dbbaa29c46d993ab80a0770ae3d8
-size 4873
+{
+    [ base {
+        [ log_debug_hover false ]
+        [ log_frame_time false ]
+        [ log_frame_sample_info false ]
+        [ log_timing_details false ]
+        [ log_gl_object_infos false ]
+        [ log_effect_parse_trees false ]
+        [ log_master_context_info true ]
+        [ log_shader_compiler_info_log true ]
+        [ log_scene false ]
+        [ log_luminance_stats false ]
+        [ log_draw_calls false ]
+        [ skip_draw_calls false ]
+
+        // R_do_speed_test=1
+        // Does a getAnimationEventSubject() loop where the
+        // k_win32_gl_renderer does random-color glClear()s on the system framebuffer.
+        // This should show us the maximum possible framerate of the system, since
+        // we are essentially drawing as quickly as possible and doing nothing else.
+        // When you resize the 3d view to be small, you should be able to get over
+        // 1000 avg fps even on bad computers.
+
+        // R_do_speed_test=2
+        // Does a getAnimationEventSubject() loop where the
+        // Fin_designView keeps doing onInternalChange( synchronous_update=false )
+        // to cause repaints through our signalling mechanism.  We are measuring just
+        // the overhead in Fin_designView onInternalChange() signalling and render_dom
+        // building, without actually doing any drawing.
+        [ R_do_speed_test 0 ]
+
+        // R_speed_test_empty_render_task=true
+        // Set this to true to disable creating the render_task in Fin_designView.
+        // Use it to remove the cost of createRenderTask() from R_do_speed_test 2
+        [ R_speed_test_empty_render_task false ]
+
+        [ blockify_downsamples 2 ]
+        [ smoke_arm_multiplier 1.0 ]
+
+        [ mine_break_scale_y 0.5 ]
+
+        [ googleMapsScale 15.12 ]
+        
+        [ reflection_downsamples 1 ]
+
+        [ R_use_cubemap_tonemap true ]
+        [ R_cubemap_power 13.75 ]
+
+        [ R_light_beam_segments_count 64 ]
+        [ R_light_beam_intensity_factor 0.1 ]
+
+        [ R_blur_screenFactor_denom 1080.0 ]
+        [ R_accumulate_tile_size 32 ]
+
+        [ R_trail_spark_waypoint_schedule [0.05 0.25 0.5 0.75 1.0 ] ]
+
+        [ R_progressive_render_draw_calls_per_step 10 ]
+
+        [ debug_mouse_sliders {
+            [cameraExposureStops_edit [-10.0 50.0 ]]
+            [cameraExposureStops_playback [-10.0 50.0 ]]
+        }]
+
+        [ spark_aura_downsamples 3 ]
+        [ spark_aura_mag_filter GL_LINEAR_ ]
+        //[ spark_aura_mag_filter GL_NEAREST_ ]
+
+        [ blur_mag_filter GL_LINEAR_ ]
+
+        [ ui3d_blur_config {
+            [ stages [
+                {[ t BlurStage ] [ downsamples 1 ] [ radius 1.0 ] [ preAdd 0.0 ] [ postScale 0.5 ]}
+                {[ t BlurStage ] [ downsamples 0 ] [ radius 6.0 ] [ preAdd 0.0 ] [ postScale 0.5 ]}
+            ]]
+        }]
+
+        [ overbright_blur_config {
+            [ stages [
+                //{[ t BlurStage ] [ downsamples 0 ] [ radius 2.0 ] [ preAdd -1.0 ] [ postScale 0.5 ] }
+            ]]
+        }]
+
+        [ draw_debug_sliders false ]
+
+        [ dump_mesh_entries false ]
+        [ dump_final_scene_referred_frame false ]
+        [ dump_final_tone_mapped_frame false ]
+        [ debug_draw_fbo_id false ]
+
+        //[ dump_mesh_entries true ]
+        //[ debug_draw_fbo_id [ main ui3d ]]
+        //[ debug_draw_fbo_id [ main blur_output ]]
+
+        //[ debug_draw_flat_color [1 1 1 1 ]]
+        [ debug_draw_flat_color false ]
+        //[ debug_draw_exr "DigitalLAD.2048x1556.acescg.exr"]
+        //[ debug_draw_exr "SonyF35.StillLife.acescg.exr"]
+        [ debug_draw_exr "syntheticChart.01.acescg.exr"]
+        [ debug_draw_exr false ]
+        [ debug_hardcoded_shot_random_seed 0 ]
+        [ debug_force_invalid_gl_display false ]
+    }]
+    [renderSceneMerge {
+        [ R_draw_trail_sprites_v1   true ]
+        [ R_draw_trail_auras_v1     false ]
+        [ R_draw_flame_sprites      true ]
+        [ R_draw_rect2ds            true ]
+        [ R_draw_triangle3ds        true ]
+        [ R_draw_gltfs              true ]
+        [ R_draw_ui3ds              true ]
+
+        [ R_draw_star_sprites_v1 true ][ R_draw_star_auras_v1 true ][ R_draw_star_sprites_v2 false ]
+        //[ R_draw_star_sprites_v1 false ][ R_draw_star_auras_v1 false ][ R_draw_star_sprites_v2 true ]
+
+        //[ R_draw_smoke              true ]
+        //[ R_draw_reflection         true ]
+
+        [ R_sparkSpriteWidthScale 1.0 ]
+        [ R_spark_intensity 2.0 ]
+        [ R_spark_pointsize 700.0 ]
+        [ R_spark_aura_intensity 0.004 ]
+        [ R_spark_aura_pointsize 40.0 ]
+        [ R_spark_aura_exponent 1 ]
+        [ R_sparkMinContribution 0.001 ]
+
+        [ R_sparkPhase0Lifetime 0.1 ]
+        [ R_sparkPhase0WidthMultiplier 2.0 ]
+    }]
+    [renderSceneMergeIcon {
+        [ R_sparkSpriteWidthScale 5.0 ]
+        [ R_draw_reflection     false ]
+        [ R_draw_smoke          false ]
+    }]
+}
+
+

@@ -1,2 +1,5 @@
 app.nw/** filter=lfs diff=lfs merge=lfs -text
 app.nw/package.json !filter !diff !merge text
+app.nw/htmlui/** !filter !diff !merge
+app.nw/gpu/** !filter !diff !merge
+app.nw/app/** !filter !diff !merge

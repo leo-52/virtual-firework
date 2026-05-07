@@ -1,3 +1,13 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:dae51cf8472873f0f31a1581fe01727c5b7fae41b18552e30ecb09f4406a1c78
-size 147
+out vec4 outColor;
+
+in vec3 vWorldSpace;
+in vec4 vColor;
+
+void main(void) {
+#if 1
+  outColor = vColor;
+#else
+  outColor = vec4(1,0,0,1);
+#endif
+}
+

@@ -1,3 +1,18 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:5136377644cb79d7a7fe074bbd12f4c19f8f7faef99c7f3d9f05845b202feee3
-size 374
+in vec3 aPos;
+in vec4 aColor;
+
+uniform mat4 ProjMat;
+uniform mat4 ViewMat;
+uniform mat4 ModelMat;
+uniform mat4 ColorMat;
+
+out vec4 vColor;
+out vec3 vWorldSpace;
+
+void main(void) {
+    mat4 ModelViewMat = ViewMat * ModelMat;
+
+    vWorldSpace = project(ModelMat * vec4(aPos, 1)).xyz;
+    gl_Position = ProjMat * ModelViewMat * vec4(aPos, 1);
+    vColor = ColorMat * aColor;
+}
