@@ -30,7 +30,7 @@ export function openPresentation(show) {
     onClick: () => close() }, "Quitter (Échap)");
   top.appendChild(closeBtn);
 
-  // Canvas 3D principal
+  // Canvas FX principal
   const canvas = el("canvas", { class: "presentation-canvas" });
   main.appendChild(canvas);
 

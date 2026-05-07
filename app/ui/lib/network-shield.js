@@ -1,4 +1,4 @@
-// Bouclier réseau : empêche l'app (et l'iframe Finale 3D embarquée) de
+// Bouclier réseau : empêche l'app (et l'iframe Finale FX embarquée) de
 // contacter quoi que ce soit hors de la machine locale.
 //
 // Stratégie en 3 couches :
@@ -10,7 +10,7 @@
 //   3. Comptage des tentatives bloquées, pour affichage UI.
 
 const BLOCKLIST = [
-  // Endpoints connus du bundle Finale 3D
+  // Endpoints connus du bundle Finale FX
   "*://prevotfx.com/*",
   "*://*.prevotfx.com/*",
   // Télémétrie courante (au cas où)

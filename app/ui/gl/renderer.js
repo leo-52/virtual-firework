@@ -1,4 +1,4 @@
-// Renderer 3D principal — orchestrateur entre scène, particules et caméra.
+// Renderer FX principal — orchestrateur entre scène, particules et caméra.
 //
 // Pipeline par frame :
 //   1. step() de ParticleSystem (CPU)

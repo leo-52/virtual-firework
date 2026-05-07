@@ -105,7 +105,7 @@ export function renderHome(main, navigate) {
         "⌗",
         () => navigate("library")),
       actionCard("Visualiseur",
-        "Prévisu 2D ou moteur Finale 3D embarqué.",
+        "Prévisu 2D ou moteur Finale FX embarqué.",
         "▶",
         () => navigate("viewer")),
       actionCard("Bons de commande",

@@ -219,7 +219,7 @@ function effectMenu() {
 // ---- Outils ----
 function toolsMenu() {
   return [
-    { label: "Moteur 3D PrevoFX",  action: () => currentNavigate("viewer", { mode: "gl" }) },
+    { label: "Moteur FX PrevoFX",  action: () => currentNavigate("viewer", { mode: "gl" }) },
     { label: t("tools.simulator"), action: () => currentNavigate("viewer", { mode: "sim" }) },
     { label: t("tools.finale3d"),  action: () => currentNavigate("viewer", { mode: "finale3d" }) },
     { separator: true },
@@ -414,7 +414,7 @@ function doShowAbout() {
       el("p", { class: "page-subtitle" },
         "Version 0.1.0 · NW.js · Mode hors-ligne strict."),
       el("p", { class: "page-subtitle" },
-        "Le moteur Finale 3D d'origine est embarqué pour la prévisu 3D ; toute la couche FR / projets / commandes est de PrevoFX.")
+        "Le moteur Finale FX d'origine est embarqué pour la prévisu FX ; toute la couche FR / projets / commandes est de PrevoFX.")
     ),
     footer: [],
   });

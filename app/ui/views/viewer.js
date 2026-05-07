@@ -36,7 +36,7 @@ export function renderViewer(main, navigate, params = {}) {
   main.append(
     pageHeader(
       "Visualiseur",
-      "Trois modes : 3D vanilla (notre moteur), simulateur 2D, ou moteur Finale 3D embarqué.",
+      "Trois modes : FX vanilla (notre moteur), simulateur 2D, ou moteur Finale FX embarqué.",
       [
         el("button", {
           class: "btn",
@@ -48,9 +48,9 @@ export function renderViewer(main, navigate, params = {}) {
   );
 
   const tabs = el("div", { class: "tabs" },
-    tabButton("Moteur 3D PrevoFX", mode === "gl", () => switchMode("gl")),
+    tabButton("Moteur FX PrevoFX", mode === "gl", () => switchMode("gl")),
     tabButton("Simulateur 2D", mode === "sim", () => switchMode("sim")),
-    tabButton("Moteur Finale 3D", mode === "finale3d", () => switchMode("finale3d"))
+    tabButton("Moteur Finale FX", mode === "finale3d", () => switchMode("finale3d"))
   );
   main.append(tabs);
 
@@ -82,7 +82,7 @@ export function renderViewer(main, navigate, params = {}) {
     stage.appendChild(
       el("div", { class: "viewer-info" },
         el("p", { style: "margin: 0;" },
-          "Le moteur Finale 3D d'origine est chargé ci-dessous (mode hors-ligne strict actif)."))
+          "Le moteur Finale FX d'origine est chargé ci-dessous (mode hors-ligne strict actif)."))
     );
     stage.appendChild(
       el("iframe", {
@@ -181,7 +181,7 @@ export function renderViewer(main, navigate, params = {}) {
     const help = el("div", { class: "viewer-help" },
       el("span", {}, "🖱 Glisser : orbiter · Maj+glisser : pan · Roulette : zoom"));
 
-    // Toolbar 3D : presets caméra + bloom + bip
+    // Toolbar FX : presets caméra + bloom + bip
     const camRow = el("div", { class: "viewer-3d-toolbar" });
     const camLabel = el("span", { class: "form-label" }, "Caméra");
     const camButtons = [

@@ -1960,7 +1960,7 @@ input[type="number"]:focus {
   font-size: 12px;
 }
 
-/* ---------- Viewer 3D ---------- */
+/* ---------- Viewer FX ---------- */
 .viewer-canvas-3d {
   background: #02030a;
   cursor: grab;
@@ -2198,7 +2198,7 @@ body.presentation-active { overflow: hidden; }
   color: #46a758;
 }
 
-/* ---------- Toolbar 3D ---------- */
+/* ---------- Toolbar FX ---------- */
 .viewer-3d-toolbar {
   display: flex;
   flex-wrap: wrap;

@@ -69,9 +69,9 @@ export function renderSettings(main, navigate) {
       "Mode utilisé à l'ouverture du visualiseur.",
       buildSelect(
         [
-          { value: "gl", label: "Moteur 3D PrevoFX" },
+          { value: "gl", label: "Moteur FX PrevoFX" },
           { value: "sim", label: "Simulateur 2D" },
-          { value: "finale3d", label: "Moteur Finale 3D" },
+          { value: "finale3d", label: "Moteur Finale FX" },
         ],
         state.settings.defaultViewer || "gl",
         (v) => { state.settings.defaultViewer = v; saveState(); toast("Moteur par défaut mis à jour."); }
@@ -79,7 +79,7 @@ export function renderSettings(main, navigate) {
     ),
     settingsRow(
       "Bloom",
-      "Effet de halo sur les feux d'artifice (3D).",
+      "Effet de halo sur les feux d'artifice (FX).",
       (() => {
         const cb = el("input", { type: "checkbox" });
         cb.checked = state.settings.bloom !== false;
@@ -242,7 +242,7 @@ export function renderSettings(main, navigate) {
       { class: "settings-group" },
       settingsRow("Version", "PrevoFX v0.1.0",
         el("span", { class: "page-subtitle" }, "Prototype")),
-      settingsRow("Moteur 3D embarqué", "Bundle Finale 3D fourni avec l'application.",
+      settingsRow("Moteur FX embarqué", "Bundle Finale FX fourni avec l'application.",
         el("span", { class: "page-subtitle" }, "app.nw/htmlui/")),
       settingsRow("Crédits",
         "Application bureau NW.js — UI vanilla, simulateur 2D Canvas.",

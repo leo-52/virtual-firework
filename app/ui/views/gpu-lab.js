@@ -1,9 +1,9 @@
 // GPU Lab : explorer le pipeline shaders + sonder le WASM compilateur
-// du moteur Finale 3D embarqué.
+// du moteur Finale FX embarqué.
 //
 // Cette vue est une fenêtre de diagnostic / exploration. Elle ne rend
 // rien (pour l'instant) : elle inventorie ce qui est disponible côté
-// moteur Finale 3D, charge le `.wasm`, tente d'instancier l'embind.
+// moteur Finale FX, charge le `.wasm`, tente d'instancier l'embind.
 
 import { el, pageHeader, toast } from "../lib/dom.js";
 import { decodeMessage, pretty, stats } from "../lib/protobuf-decoder.js";
@@ -195,7 +195,7 @@ function analyzeShader(text) {
 function buildWasmTab() {
   const root = el("div", {});
   root.appendChild(el("p", { class: "page-subtitle" },
-    "Le compilateur d'effets Finale 3D est un module C++ (Emscripten + Embind). " +
+    "Le compilateur d'effets Finale FX est un module C++ (Emscripten + Embind). " +
     "Cette page tente de le charger pour inspecter son interface. " +
     "Sans la glue JS d'origine extraite du bundle, l'instanciation complète " +
     "n'est pas garantie — mais on peut au moins lire les imports/exports."));
@@ -285,7 +285,7 @@ function buildWasmTab() {
 function buildFinTab() {
   const root = el("div", {});
   root.appendChild(el("p", { class: "page-subtitle" },
-    "Charge un fichier .fin (format natif Finale 3D, Protocol Buffers binaire) " +
+    "Charge un fichier .fin (format natif Finale FX, Protocol Buffers binaire) " +
     "et affiche sa structure brute. Sans le descripteur .proto, les noms de " +
     "champs ne sont pas connus — on lit les tags numériques. C'est suffisant " +
     "pour repérer les chaînes (titres, noms d'effets) et la hiérarchie."));
@@ -429,13 +429,13 @@ function buildSummaryTab() {
   );
   root.appendChild(grid);
 
-  root.appendChild(el("h2", { class: "section-title" }, "Pipeline Finale 3D — vue d'ensemble"));
+  root.appendChild(el("h2", { class: "section-title" }, "Pipeline Finale FX — vue d'ensemble"));
   root.appendChild(el("ol", { class: "lab-pipeline" },
     li("Compilateur VDL", "Le WASM transforme la description de l'effet (arbre Effect → Shot → Launch + Break → ...) en buffers GPU : ParticleState[], EmitterInfo, courbes indexées."),
     li("Physics pre/inline/post", "Vertex shaders qui mettent à jour les particules à chaque frame : pos += vel*dt, gravité, vent, friction. Évalue les courbes paramétriques."),
     li("Rendu par primitive", "Fragment shaders dédiés : sparks v1/v2 (étoiles + traînes), smoke, flame, light beam. Chacun consomme son propre InfoStruct."),
     li("Mesh / GLTF / Reflective", "Pour le décor (terrain, public, modèles SketchUp). Réflexion via texture cubemap."),
-    li("Post-process", "Tonemap (LUT 3D + cubemap), gaussian blur (multi-passes), composite, autres effets écran."),
+    li("Post-process", "Tonemap (LUT FX + cubemap), gaussian blur (multi-passes), composite, autres effets écran."),
   ));
 
   root.appendChild(el("h2", { class: "section-title" }, "Familles de shaders"));

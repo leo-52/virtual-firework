@@ -1,6 +1,6 @@
 // Catalogue d'effets pyrotechniques.
 //
-// Modèle aligné sur VDL (Visual Description Language) de Finale 3D :
+// Modèle aligné sur VDL (Visual Description Language) de Finale FX :
 //   - `partType`  = packaging (cake, candle, shell, mortar, fountain, …)
 //   - `subtype`   = style visuel (peony, willow, kamuro, …)
 //   - `caliber`   = en mm

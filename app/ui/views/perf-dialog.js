@@ -1,9 +1,9 @@
 // Diagnostic de rendu : modal en temps réel.
 //
 // Affiche : FPS lissé, frame time (ms), heap RAM (si performance.memory),
-// nombre de particules actives (si un renderer 3D est branché), nombre
+// nombre de particules actives (si un renderer FX est branché), nombre
 // de cues, nombre de batches GPU. Inspiré du RenderPerformanceDialog
-// du moteur Finale 3D.
+// du moteur Finale FX.
 //
 // Usage : openPerfDialog({ getStats })
 //
@@ -70,7 +70,7 @@ export function openPerfDialog() {
   // ---- Source des stats ----
   body.appendChild(el("div", { class: "form-label" }, "Source"));
   body.appendChild(el("p", { class: "page-subtitle" },
-    "Les stats proviennent du renderer 3D actif (s'il y en a un) ou du simulateur 2D."));
+    "Les stats proviennent du renderer FX actif (s'il y en a un) ou du simulateur 2D."));
 
   // ---- Loop ----
   let running = true;

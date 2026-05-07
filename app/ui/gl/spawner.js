@@ -1,4 +1,4 @@
-// Règles de spawn par partType (style VDL Finale 3D simplifié).
+// Règles de spawn par partType (style VDL Finale FX simplifié).
 //
 // Étant donné un effet (de notre catalogue) et un point de lancement (x, z),
 // produit les particules nécessaires sur le système. Pour les bombes, une

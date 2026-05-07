@@ -1,4 +1,4 @@
-// Mapping .fin (Finale 3D) → cues PrevoFX, en heuristique.
+// Mapping .fin (Finale FX) → cues PrevoFX, en heuristique.
 //
 // Sans le `.proto` officiel, on ne peut pas mapper exactement chaque
 // champ. Les noms de messages identifiés dans le WASM

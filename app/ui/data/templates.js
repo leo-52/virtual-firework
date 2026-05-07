@@ -139,7 +139,7 @@ export const TEMPLATES = [
   {
     id: "demo_complete",
     name: "Démo catalogue (60 s)",
-    description: "Tour d'horizon de tous les types d'effets pour découvrir le moteur 3D.",
+    description: "Tour d'horizon de tous les types d'effets pour découvrir le moteur FX.",
     duration: 60,
     icon: "🎯",
     accent: "#46a758",
