@@ -1,0 +1,22 @@
+{
+  "name": "prevofx",
+  "version": "0.1.0",
+  "description": "PrevoFX — création et visualisation 3D de spectacles pyrotechniques",
+  "main": "ui/index.html",
+  "node-remote": [
+    "<local>"
+  ],
+  "chromium-args": "--enable-features=SharedArrayBuffer --enable-webgl --ignore-gpu-blocklist",
+  "window": {
+    "title": "PrevoFX",
+    "width": 1280,
+    "height": 800,
+    "min_width": 1024,
+    "min_height": 700,
+    "icon": "icons/finale3d.icns",
+    "frame": true,
+    "fullscreen": false,
+    "show": true,
+    "resizable": true
+  }
+}

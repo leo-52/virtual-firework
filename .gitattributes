@@ -3,3 +3,10 @@ app.nw/package.json !filter !diff !merge text
 app.nw/htmlui/** !filter !diff !merge
 app.nw/gpu/** !filter !diff !merge
 app.nw/app/** !filter !diff !merge
+
+app/** filter=lfs diff=lfs merge=lfs -text
+app/package.json !filter !diff !merge text
+app/ui/** !filter !diff !merge
+app/htmlui/** !filter !diff !merge
+app/gpu/** !filter !diff !merge
+app/app/** !filter !diff !merge

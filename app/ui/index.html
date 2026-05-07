@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PrevoFX</title>
+    <link rel="icon" href="../icons/finale3d.icns" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <aside class="sidebar">
+      <div class="brand">
+        <span class="brand-mark"></span>
+        <span class="brand-name">PrevoFX</span>
+      </div>
+
+      <nav class="nav">
+        <button class="nav-item active" data-route="home">
+          <span class="nav-icon" aria-hidden="true">⌂</span>
+          <span>Accueil</span>
+        </button>
+        <button class="nav-item" data-route="shows">
+          <span class="nav-icon" aria-hidden="true">✦</span>
+          <span>Mes spectacles</span>
+        </button>
+        <button class="nav-item" data-route="viewer">
+          <span class="nav-icon" aria-hidden="true">▶</span>
+          <span>Visualiseur 3D</span>
+        </button>
+        <button class="nav-item" data-route="orders">
+          <span class="nav-icon" aria-hidden="true">⛬</span>
+          <span>Commandes</span>
+        </button>
+      </nav>
+
+      <div class="nav-bottom">
+        <button class="nav-item" data-route="settings">
+          <span class="nav-icon" aria-hidden="true">⚙</span>
+          <span>Paramètres</span>
+        </button>
+      </div>
+    </aside>
+
+    <main class="main" id="main"></main>
+
+    <script src="app.js"></script>
+  </body>
+</html>
