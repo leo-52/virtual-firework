@@ -11,6 +11,10 @@ import { parseKml } from "../lib/kml.js";
 import { setShowLocation } from "../lib/state.js";
 import { printShootSheet, printOrderSheet } from "./order-print.js";
 import { openPerfDialog } from "./perf-dialog.js";
+import { openPresentation } from "./presentation.js";
+import { getShow } from "../lib/state.js";
+import { loadAudioFile } from "../lib/audio.js";
+import { setShowAudio } from "../lib/state.js";
 
 let currentShowIdGetter = () => null;
 let currentNavigate = () => {};
@@ -84,6 +88,9 @@ function fileMenu() {
       submenu: [
         { label: t("file.importKml"), action: doImportKml },
         { label: t("file.importJson"), action: doImportJson },
+        { label: "Audio (mp3 / wav / ogg)…",
+          disabled: !currentShowIdGetter(),
+          action: doImportAudio },
       ],
     },
     {
@@ -204,6 +211,16 @@ function toolsMenu() {
     { label: t("tools.simulator"), action: () => currentNavigate("viewer", { mode: "sim" }) },
     { label: t("tools.finale3d"),  action: () => currentNavigate("viewer", { mode: "finale3d" }) },
     { separator: true },
+    {
+      label: "Mode présentation",
+      shortcut: "F5",
+      disabled: !currentShowIdGetter(),
+      action: () => {
+        const sh = getShow(currentShowIdGetter());
+        if (sh) openPresentation(sh);
+      },
+    },
+    { separator: true },
     { label: "GPU Lab",            action: () => currentNavigate("gpulab") },
     { label: t("tools.diagnostics"), shortcut: "F8", action: () => openPerfDialog() },
     { separator: true },
@@ -273,6 +290,35 @@ function doImportJson() {
         saveState();
         toast("Import réussi.");
         currentNavigate("home");
+      } catch (err) {
+        toast("Échec : " + err.message);
+      }
+    },
+  });
+  document.body.appendChild(input);
+  input.click();
+  setTimeout(() => input.remove(), 1000);
+}
+
+function doImportAudio() {
+  const showId = currentShowIdGetter();
+  if (!showId) {
+    toast("Ouvrez un spectacle pour y rattacher de l'audio.");
+    return;
+  }
+  const input = el("input", {
+    type: "file",
+    accept: "audio/*,.mp3,.wav,.ogg,.flac,.m4a",
+    style: "display: none;",
+    onChange: async (e) => {
+      const f = e.target.files[0];
+      if (!f) return;
+      try {
+        toast("Décodage audio…");
+        const audio = await loadAudioFile(f);
+        setShowAudio(showId, audio);
+        toast(`Audio « ${audio.name} » importé (${audio.duration.toFixed(1)}s)`);
+        currentNavigate("editor", { id: showId });
       } catch (err) {
         toast("Échec : " + err.message);
       }

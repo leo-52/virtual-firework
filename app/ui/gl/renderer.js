@@ -16,6 +16,7 @@ import { spawnEffect, resolveBursts, trackRisingPositions } from "./spawner.js";
 import { program, buffer, makeSparkTexture } from "./gl-utils.js";
 import { mat4Multiply, mat4Identity } from "./math.js";
 import { findEffect } from "../lib/state.js";
+import { BloomPipeline } from "./bloom.js";
 
 const PART_VS = `#version 300 es
 in vec3 aQuad;             // quad corner -1..1
@@ -69,6 +70,7 @@ export class Renderer {
     this.scene = new Scene(gl);
     this.particles = new ParticleSystem(40000);
     this.sparkTex = makeSparkTexture(gl, 64);
+    this.bloom = new BloomPipeline(gl);
 
     this._initParticleProgram();
 
@@ -135,6 +137,7 @@ export class Renderer {
     this.canvas.width = Math.max(1, r.width * dpr);
     this.canvas.height = Math.max(1, r.height * dpr);
     this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
+    if (this.bloom) this.bloom.resize(this.canvas.width, this.canvas.height);
     this.camera.update();
   }
 
@@ -241,6 +244,12 @@ export class Renderer {
     // viewProj = proj * view
     mat4Multiply(this.viewProj, cam.projMat, cam.viewMat);
 
+    const usedBloom = this.bloom.beginSceneCapture();
+    if (!usedBloom) {
+      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+      gl.viewport(0, 0, this.canvas.width, this.canvas.height);
+    }
+
     gl.clearColor(0.02, 0.02, 0.04, 1);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
@@ -255,10 +264,16 @@ export class Renderer {
     // Particules
     this._drawParticles();
 
+    if (usedBloom) this.bloom.finishToScreen();
+
     this.stats.particles = this.particles.count;
-    this.stats.drawCalls = 3;
-    this.stats.batches = 1;
+    this.stats.drawCalls = usedBloom ? 9 : 3;
+    this.stats.batches = usedBloom ? 5 : 1;
   }
+
+  setBloomEnabled(on) { this.bloom.enabled = !!on; }
+  setBloomIntensity(v) { this.bloom.intensity = Math.max(0, Math.min(3, v)); }
+  setBloomThreshold(v) { this.bloom.threshold = Math.max(0, Math.min(1.5, v)); }
 
   _drawParticles() {
     const gl = this.gl;

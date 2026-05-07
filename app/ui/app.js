@@ -18,6 +18,8 @@ import { renderSettings } from "./views/settings.js";
 import { renderGpuLab } from "./views/gpu-lab.js";
 import { setupTopbar, buildTopbar } from "./views/topbar.js";
 import { openPerfDialog } from "./views/perf-dialog.js";
+import { openPresentation } from "./views/presentation.js";
+import { getShow } from "./lib/state.js";
 
 // Active le bouclier réseau le plus tôt possible.
 installShield();
@@ -47,9 +49,16 @@ const ROUTES = {
   gpulab: renderGpuLab,
 };
 
-// Raccourci global pour ouvrir le diagnostic
+// Raccourcis globaux : F8 diagnostic, F5 présentation
 window.addEventListener("keydown", (e) => {
   if (e.key === "F8") { e.preventDefault(); openPerfDialog(); }
+  if (e.key === "F5") {
+    e.preventDefault();
+    const id = currentParams?.id || (state.shows[0] && state.shows[0].id);
+    if (!id) { toast("Aucun spectacle à présenter."); return; }
+    const sh = getShow(id);
+    if (sh) openPresentation(sh);
+  }
 });
 
 const main = document.getElementById("main");

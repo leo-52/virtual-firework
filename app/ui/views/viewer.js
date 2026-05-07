@@ -3,11 +3,34 @@ import { state, getShow, findEffect } from "../lib/state.js";
 import { FireworkSim } from "../sim/firework-sim.js";
 import { Renderer } from "../gl/renderer.js";
 import { setStatsProvider, openPerfDialog } from "./perf-dialog.js";
+import { AudioPlayer } from "../lib/audio.js";
 
 export function renderViewer(main, navigate, params = {}) {
   let mode = params.mode || "gl";  // gl | sim | finale3d
   let currentId = params.id || (state.shows[0] && state.shows[0].id);
   let activeRenderer = null; // Renderer | FireworkSim
+  let activeAudio = null;    // AudioPlayer
+
+  function detachAudio() {
+    if (activeAudio) {
+      try { activeAudio.stop(); } catch {}
+      activeAudio = null;
+    }
+  }
+
+  async function attachAudio(show) {
+    detachAudio();
+    if (!show.audio || !show.audio.dataUrl) return null;
+    const player = new AudioPlayer();
+    try {
+      await player.setFromDataUrl(show.audio.dataUrl);
+      activeAudio = player;
+      return player;
+    } catch (e) {
+      toast("Audio illisible : " + e.message);
+      return null;
+    }
+  }
 
   main.append(
     pageHeader(
@@ -37,6 +60,7 @@ export function renderViewer(main, navigate, params = {}) {
     if (activeRenderer && activeRenderer.destroy) activeRenderer.destroy();
     if (activeRenderer && activeRenderer.pause) activeRenderer.pause();
     activeRenderer = null;
+    detachAudio();
     setStatsProvider(null);
 
     mode = m;
@@ -124,10 +148,29 @@ export function renderViewer(main, navigate, params = {}) {
 
     let renderer;
     const ctrl = buildControls(show,
-      () => renderer && renderer.play(),
-      () => renderer && renderer.pause(),
-      () => renderer && renderer.reset(),
-      (t) => renderer && renderer.seek(t));
+      () => {
+        if (!renderer) return;
+        renderer.play();
+        if (activeAudio && activeAudio.buffer) activeAudio.play(renderer.t);
+      },
+      () => {
+        if (!renderer) return;
+        renderer.pause();
+        if (activeAudio) activeAudio.pause();
+      },
+      () => {
+        if (!renderer) return;
+        renderer.reset();
+        if (activeAudio) { activeAudio.stop(); activeAudio.startOffset = 0; }
+      },
+      (t) => {
+        if (!renderer) return;
+        renderer.seek(t);
+        if (activeAudio) {
+          if (renderer.playing) activeAudio.play(t);
+          else { activeAudio.stop(); activeAudio.startOffset = t; }
+        }
+      });
 
     const help = el("div", { class: "viewer-help" },
       el("span", {}, "🖱 Glisser : orbiter · Maj+glisser : pan · Roulette : zoom"));
@@ -146,8 +189,12 @@ export function renderViewer(main, navigate, params = {}) {
         ctrl.timeLabel.textContent = formatTime(t);
         ctrl.progressBar.style.width = `${(t / dur) * 100}%`;
       };
-      renderer.onEnd = () => toast("Spectacle terminé.");
+      renderer.onEnd = () => {
+        toast("Spectacle terminé.");
+        if (activeAudio) activeAudio.stop();
+      };
       activeRenderer = renderer;
+      attachAudio(show);
       setStatsProvider(() => ({
         particles: renderer.particles.count,
         batches: renderer.stats.batches,

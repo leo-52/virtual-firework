@@ -37,6 +37,11 @@ export function buildTimeline(ctx, opts = {}) {
 
   const wrap = el("div", { class: "timeline-pro" });
 
+  // Bande waveform si le show a un audio
+  if (show.audio && Array.isArray(show.audio.peaks)) {
+    wrap.appendChild(buildWaveformStrip(show));
+  }
+
   // En-tête : colonne actions à gauche du temps
   const ruler = el("div", { class: "timeline-pro-ruler" });
   const stepSec = chooseStep(show.duration);
@@ -225,6 +230,51 @@ function updateBlockPosition(stage, cueId, time, duration) {
   if (!block) return;
   const left = (time / duration) * 100;
   block.style.left = `${left}%`;
+}
+
+function buildWaveformStrip(show) {
+  const wrap = el("div", { class: "timeline-pro-waveform" });
+  wrap.appendChild(el("div", { class: "timeline-pro-waveform-label" },
+    "♪ " + (show.audio.name || "audio")));
+  const stage = el("div", { class: "timeline-pro-waveform-stage" });
+  const canvas = document.createElement("canvas");
+  canvas.className = "timeline-pro-waveform-canvas";
+  stage.appendChild(canvas);
+  wrap.appendChild(stage);
+  // Dessine après insertion (besoin de la taille pour le canvas)
+  requestAnimationFrame(() => drawWaveform(canvas, show));
+  return wrap;
+}
+
+function drawWaveform(canvas, show) {
+  const dpr = window.devicePixelRatio || 1;
+  const r = canvas.getBoundingClientRect();
+  if (!r.width) return;
+  canvas.width = r.width * dpr;
+  canvas.height = r.height * dpr;
+  const cx = canvas.getContext("2d");
+  cx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const W = r.width, H = r.height;
+  cx.fillStyle = "#04060f";
+  cx.fillRect(0, 0, W, H);
+
+  const peaks = show.audio.peaks;
+  const audioDur = show.audio.duration;
+  const showDur = show.duration;
+  // L'audio peut être plus court que le show : on dessine sur l'intervalle
+  // [0..audioDur] dans la timeline [0..showDur].
+  const widthRatio = Math.min(1, audioDur / showDur);
+  const drawW = W * widthRatio;
+
+  cx.fillStyle = "#0091ff";
+  cx.strokeStyle = "#0091ff";
+  cx.lineWidth = 1;
+  for (let i = 0; i < peaks.length; i++) {
+    const x = (i / peaks.length) * drawW;
+    const v = peaks[i];
+    const h = v * (H - 4);
+    cx.fillRect(x, (H - h) / 2, Math.max(1, drawW / peaks.length), h);
+  }
 }
 
 function clamp(v, lo, hi) {

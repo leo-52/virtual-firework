@@ -96,6 +96,9 @@ export function renderInspector(root, ctx, cue) {
   // Section : Courbe d'enveloppe (intensité du cue dans le temps)
   root.appendChild(buildEnvelopeSection(ctx, cue));
 
+  // Section : Notes + tags
+  root.appendChild(buildNotesSection(ctx, cue));
+
   // Actions
   root.appendChild(el("div", { class: "inspector-actions" },
     el("button", {
@@ -127,6 +130,74 @@ export function renderInspector(root, ctx, cue) {
       },
     }, t("delete"))
   ));
+}
+
+function buildNotesSection(ctx, cue) {
+  const sec = el("section", { class: "inspector-section" },
+    el("h4", { class: "inspector-section-title" }, "Notes & étiquettes"));
+
+  // Notes
+  const ta = el("textarea", {
+    class: "inspector-notes",
+    rows: "3",
+    placeholder: "Notes pour l'artificier (consignes de tir, repères audio, etc.)",
+    onChange: (e) => {
+      ctx.snapshotBefore("Modification des notes");
+      updateCue(ctx.showId, cue.id, { notes: e.target.value });
+    },
+  });
+  ta.value = cue.notes || "";
+  sec.appendChild(ta);
+
+  // Tags : entrée + chips
+  const tagsRow = el("div", { class: "inspector-tags" });
+  const tags = Array.isArray(cue.tags) ? cue.tags.slice() : [];
+
+  function rebuildChips() {
+    tagsRow.innerHTML = "";
+    for (const t of tags) {
+      tagsRow.appendChild(el("span", { class: "tag-chip" },
+        t,
+        el("button", {
+          class: "tag-chip-x",
+          title: "Retirer",
+          onClick: () => {
+            const i = tags.indexOf(t);
+            if (i >= 0) {
+              tags.splice(i, 1);
+              ctx.snapshotBefore("Retrait d'une étiquette");
+              updateCue(ctx.showId, cue.id, { tags: tags.slice() });
+              rebuildChips();
+            }
+          },
+        }, "×")));
+    }
+    tagsRow.appendChild(input);
+  }
+
+  const input = el("input", {
+    type: "text",
+    class: "tag-input",
+    placeholder: "+ étiquette",
+    onKeydown: (e) => {
+      if (e.key === "Enter" || e.key === ",") {
+        e.preventDefault();
+        const v = input.value.trim().replace(/,$/, "");
+        if (v && !tags.includes(v)) {
+          tags.push(v);
+          ctx.snapshotBefore("Ajout d'une étiquette");
+          updateCue(ctx.showId, cue.id, { tags: tags.slice() });
+        }
+        input.value = "";
+        rebuildChips();
+        input.focus();
+      }
+    },
+  });
+
+  rebuildChips();
+  sec.appendChild(tagsRow);
+  return sec;
 }
 
 function buildEnvelopeSection(ctx, cue) {

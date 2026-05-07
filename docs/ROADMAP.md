@@ -3,7 +3,7 @@
 > Document vivant. Mis à jour à la fin de chaque session de travail.
 > Source de vérité unique pour ce qui est planifié, en cours, terminé.
 
-**Dernière mise à jour** : session 5 — viewer 3D WebGL2, courbes, diagnostic, GPU Lab.
+**Dernière mise à jour** : session 6 — audio sync, bloom GL, présentation, parser .fin.
 
 ---
 
@@ -141,6 +141,46 @@ PrevoFX (notre app)
     via `WebAssembly.compile` puis `Module.imports/exports`. Affiche
     la table complète et explique ce qu'il manque pour l'instanciation
     embind complète.
+
+### Session 6 — audio, bloom GL, présentation, parser .fin
+- **Audio synchronisé** (`lib/audio.js`) :
+  - Loader WebAudio (mp3/wav/ogg/flac/m4a, max 15 Mo)
+  - Extraction de waveform en 1024 buckets RMS normalisés
+  - Stockage en dataUrl pour persistance localStorage
+  - Classe `AudioPlayer` synchronisable (play/pause/seek)
+  - Bip TTS configurable pour les cues
+- **Waveform sur la timeline** : bande dédiée au-dessus du ruler
+  quand le show a un audio attaché
+- **Lecture audio sync dans le visualiseur** : play/pause/reset/seek
+  pilotent renderer + audio en parallèle, mode 3D et 2D
+- **Bloom GL post-process** (`gl/bloom.js`) :
+  - FBO scène + 3 FBOs intermédiaires (bright + 2 blur ping-pong)
+  - Brightpass avec seuil ajustable
+  - Blur séparable horizontal/vertical, 3 itérations à demi-résolution
+  - Composite + tonemap Reinhard final vers écran
+  - Activable/désactivable (`renderer.setBloomEnabled`)
+- **Notes & étiquettes par cue** dans l'inspector :
+  - Textarea "notes pour l'artificier" persistée dans `cue.notes`
+  - Chips d'étiquettes avec entrée live, suppression au clic, Enter/`,` valide
+- **Mode présentation** (`views/presentation.js`) :
+  - Plein écran sur fond noir, layout 3-zones
+  - Gros timer doré (56 px), vue 3D centrale, prochains 3 cues à droite
+    avec icône type + couleur, distance temporelle, notes affichées
+  - Lecture audio synchronisée
+  - Raccourci global F5, bouton "🎭 Présenter" dans l'éditeur,
+    accessible aussi via Outils → Mode présentation
+  - Espace = play/pause, Échap = quitter
+- **Parser .fin générique** (`lib/protobuf-decoder.js`) :
+  - Décodeur Protocol Buffers wire-format **sans schéma** (pas besoin
+    des `.proto` originaux)
+  - Lit les 4 wire types (VARINT, I64, LEN, I32), tente de redécoder
+    récursivement les LEN-DELIM comme sous-messages, détecte les chaînes
+    UTF-8 par heuristique
+  - Fonction `pretty()` pour rendu lisible, `stats()` pour métriques
+- **Inspecteur .fin dans GPU Lab** : nouvel onglet permettant de charger
+  un fichier `.fin` Finale 3D (ou `.us`) et d'explorer sa structure :
+  arbre des champs avec tags numériques, vue "Chaînes lisibles" pour
+  repérer titres et noms d'effets.
 
 ---
 
@@ -479,7 +519,7 @@ en JS standard.
 | C2 | Édition cue avancée : sélection multiple, copier/coller/couper/dupliquer/supprimer (raccourcis + menus + clipboard interne), décalage groupé, drag-to-move | terminé | 3-4 |
 | C3 | Bibliothèque d'effets éditable : favoris ⭐, effets personnalisés CRUD, onglets, filtres | terminé | 3 |
 | C4 | Cesium 3D Tiles : terrain réel sous la scène (lat/lon → 3D Tiles streaming) | à faire | 7+ |
-| C5 | Import `.fin` / `.us` natif (parser protobuf) | à faire | 6-8 |
+| C5 | Import `.fin` / `.us` natif : décodeur protobuf wire-format générique + inspecteur GPU Lab. _Mapping vers nos cues à venir (besoin du `.proto` ou de mapping heuristique sur les noms VDL repérés dans le WASM)._ | partiel | 6-8 |
 | C6 | Export : bons de tir + bons de commande imprimables (PDF via window.print). _`.fin` natif à venir._ | quasi-terminé | 4 |
 | C7 | ~~Décision auth/cloud~~ → **mode hors-ligne** : bouclier réseau qui bloque prevotfx.com et télémétries (cf. § 7) | terminé | 2 |
 | C8 | Synchro multi-utilisateur (export `.prevofx` + diff/merge ou backend custom) | à faire | 8+ |

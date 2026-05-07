@@ -24,6 +24,7 @@ import { CATEGORIES, SUBTYPES, partTypeLabel, subtypeLabel, EFFECTS } from "../d
 import { t } from "../lib/i18n.js";
 import { renderInspector } from "./inspector.js";
 import { buildTimeline } from "./timeline.js";
+import { openPresentation } from "./presentation.js";
 
 let currentEditor = null;
 
@@ -112,6 +113,11 @@ function studioHeader(ctx) {
     ),
     el("div", { class: "studio-header-actions" },
       el("button", { class: "btn", onClick: () => navigate("orders", { id: show.id }) }, "Commande"),
+      el("button", {
+        class: "btn",
+        title: "Mode présentation plein écran (F5)",
+        onClick: () => openPresentation(show),
+      }, "🎭 Présenter"),
       el("button", {
         class: "btn btn-primary",
         onClick: () => navigate("viewer", { id: show.id }),

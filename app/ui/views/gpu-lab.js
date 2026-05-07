@@ -6,6 +6,7 @@
 // moteur Finale 3D, charge le `.wasm`, tente d'instancier l'embind.
 
 import { el, pageHeader, toast } from "../lib/dom.js";
+import { decodeMessage, pretty, stats } from "../lib/protobuf-decoder.js";
 
 const SHADER_PATH = "../../app.nw/gpu/";
 const WASM_PATH = "../../app.nw/htmlui/vdl_effect_compiler-DmdKSrYM.wasm";
@@ -82,10 +83,11 @@ export function renderGpuLab(main, navigate) {
     body.innerHTML = "";
     if (name === "shaders") body.appendChild(buildShadersTab());
     else if (name === "wasm") body.appendChild(buildWasmTab());
+    else if (name === "fin") body.appendChild(buildFinTab());
     else body.appendChild(buildSummaryTab());
   }
 
-  for (const [key, label] of [["summary", "Résumé"], ["shaders", "Shaders GLSL"], ["wasm", "WASM compilateur"]]) {
+  for (const [key, label] of [["summary", "Résumé"], ["shaders", "Shaders GLSL"], ["wasm", "WASM compilateur"], ["fin", "Inspecteur .fin"]]) {
     const b = el("button", { class: "tab", "data-tab": key,
       onClick: () => setTab(key) }, label);
     tabsEl.appendChild(b);
@@ -271,6 +273,113 @@ function buildWasmTab() {
   }
 
   return root;
+}
+
+// ---- Inspecteur .fin ------------------------------------------------------
+
+function buildFinTab() {
+  const root = el("div", {});
+  root.appendChild(el("p", { class: "page-subtitle" },
+    "Charge un fichier .fin (format natif Finale 3D, Protocol Buffers binaire) " +
+    "et affiche sa structure brute. Sans le descripteur .proto, les noms de " +
+    "champs ne sont pas connus — on lit les tags numériques. C'est suffisant " +
+    "pour repérer les chaînes (titres, noms d'effets) et la hiérarchie."));
+
+  const fileBtn = el("button", {
+    class: "btn btn-primary",
+    onClick: () => pick(),
+  }, "Choisir un fichier .fin…");
+
+  const status = el("div", { class: "lab-wasm-status" }, "Aucun fichier chargé.");
+  const summary = el("div", { class: "stats", style: "display: none;" });
+  const out = el("pre", { class: "lab-wasm-output" }, "");
+  const stringsBox = el("pre", { class: "lab-wasm-output", style: "display: none;" }, "");
+  const tabBar = el("div", { class: "tabs" });
+
+  let lastTree = null;
+  let currentView = "tree";
+
+  function setView(v) {
+    currentView = v;
+    [...tabBar.children].forEach((c) => c.classList.toggle("active", c.dataset.v === v));
+    out.style.display = v === "tree" ? "" : "none";
+    stringsBox.style.display = v === "strings" ? "" : "none";
+  }
+  for (const [v, label] of [["tree", "Arbre"], ["strings", "Chaînes lisibles"]]) {
+    const b = el("button", { class: "tab", "data-v": v,
+      onClick: () => setView(v) }, label);
+    tabBar.appendChild(b);
+  }
+
+  root.append(
+    el("div", { style: "display: flex; gap: 8px; margin: 12px 0;" }, fileBtn),
+    status, summary, tabBar, out, stringsBox);
+
+  function pick() {
+    const inp = el("input", {
+      type: "file",
+      accept: ".fin,.us,application/octet-stream",
+      style: "display: none;",
+      onChange: async (e) => {
+        const f = e.target.files[0];
+        if (!f) return;
+        try {
+          status.textContent = `Lecture de ${f.name} (${(f.size / 1024).toFixed(1)} Ko)…`;
+          const buf = new Uint8Array(await f.arrayBuffer());
+          // Tente de décoder. Beaucoup de .fin ont un préambule ou sont
+          // compressés (zstd) — on essaie aussi sur un offset varié.
+          let tree = null;
+          let usedOffset = 0;
+          for (const off of [0, 4, 8, 16]) {
+            try {
+              const t = decodeMessage(buf, off);
+              if (t.length > 0) { tree = t; usedOffset = off; break; }
+            } catch {}
+          }
+          if (!tree) {
+            status.textContent = "Format non reconnu (peut-être zstd ou autre encapsulation).";
+            out.textContent = "";
+            return;
+          }
+          lastTree = tree;
+          const s = stats(tree);
+          status.textContent = `${f.name} décodé (offset ${usedOffset}) : ${s.fields} champs, ${s.messages} sous-messages, ${s.strings} chaînes, profondeur max ${s.maxDepth}.`;
+          summary.style.display = "";
+          summary.innerHTML = "";
+          summary.append(
+            statTile("Champs", s.fields),
+            statTile("Sous-messages", s.messages),
+            statTile("Chaînes", s.strings),
+            statTile("Profondeur", s.maxDepth));
+
+          out.textContent = pretty(tree).slice(0, 60000) +
+            (s.fields > 1500 ? "\n\n... (tronqué)" : "");
+          stringsBox.textContent = collectStrings(tree).join("\n");
+          setView("tree");
+        } catch (err) {
+          status.textContent = "Échec : " + err.message;
+          out.textContent = String(err.stack || err.message);
+          toast(".fin illisible.");
+        }
+      },
+    });
+    document.body.appendChild(inp);
+    inp.click();
+    setTimeout(() => inp.remove(), 1000);
+  }
+
+  return root;
+}
+
+function collectStrings(tree) {
+  const out = [];
+  for (const f of tree) {
+    if (f.asString != null && f.asString.length > 1) {
+      out.push(f.asString);
+    }
+    if (f.asMessage) out.push(...collectStrings(f.asMessage));
+  }
+  return out;
 }
 
 // ---- Résumé ---------------------------------------------------------------

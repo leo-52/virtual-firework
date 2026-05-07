@@ -207,6 +207,30 @@ export function deleteCustomEffect(id) {
   }
 }
 
+// ---- Audio ----------------------------------------------------------------
+
+export function setShowAudio(showId, audio) {
+  const show = getShow(showId);
+  if (!show) return null;
+  show.audio = audio;       // { name, dataUrl, peaks, duration, sampleRate, channels }
+  // Si l'audio est plus long que la durée du show, on étend le show.
+  if (audio && audio.duration > show.duration) {
+    show.duration = Math.ceil(audio.duration);
+  }
+  show.updatedAt = Date.now();
+  saveState();
+  return show;
+}
+
+export function clearShowAudio(showId) {
+  const show = getShow(showId);
+  if (!show) return null;
+  show.audio = null;
+  show.updatedAt = Date.now();
+  saveState();
+  return show;
+}
+
 // ---- Géolocalisation ------------------------------------------------------
 
 export function setShowLocation(showId, location, placemarks) {
