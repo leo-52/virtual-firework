@@ -60,7 +60,7 @@ const FR = {
 
   // ---- Outils
   "tools.simulator": "Simulateur 2D",
-  "tools.finale3d":  "Moteur Finale FX",
+  "tools.finalefx":  "Moteur Finale FX",
   "tools.networkShield": "Bouclier réseau",
   "tools.diagnostics": "Diagnostic de rendu",
 

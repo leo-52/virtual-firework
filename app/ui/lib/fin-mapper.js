@@ -2,7 +2,7 @@
 //
 // Sans le `.proto` officiel, on ne peut pas mapper exactement chaque
 // champ. Les noms de messages identifiés dans le WASM
-// (`Finale3dEffect.Effect`, `Finale3dEffect.Shot`, etc.) nous donnent
+// (`FinaleFxEffect.Effect`, `FinaleFxEffect.Shot`, etc.) nous donnent
 // une direction.
 //
 // Stratégie :

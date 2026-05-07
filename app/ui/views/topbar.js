@@ -221,7 +221,7 @@ function toolsMenu() {
   return [
     { label: "Moteur FX PrevoFX",  action: () => currentNavigate("viewer", { mode: "gl" }) },
     { label: t("tools.simulator"), action: () => currentNavigate("viewer", { mode: "sim" }) },
-    { label: t("tools.finale3d"),  action: () => currentNavigate("viewer", { mode: "finale3d" }) },
+    { label: t("tools.finalefx"),  action: () => currentNavigate("viewer", { mode: "finalefx" }) },
     { separator: true },
     {
       label: "Mode présentation",

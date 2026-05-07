@@ -71,7 +71,7 @@ export function renderSettings(main, navigate) {
         [
           { value: "gl", label: "Moteur FX PrevoFX" },
           { value: "sim", label: "Simulateur 2D" },
-          { value: "finale3d", label: "Moteur Finale FX" },
+          { value: "finalefx", label: "Moteur Finale FX" },
         ],
         state.settings.defaultViewer || "gl",
         (v) => { state.settings.defaultViewer = v; saveState(); toast("Moteur par défaut mis à jour."); }

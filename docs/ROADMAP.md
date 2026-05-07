@@ -3,15 +3,15 @@
 > Document vivant. Mis à jour à la fin de chaque session de travail.
 > Source de vérité unique pour ce qui est planifié, en cours, terminé.
 
-**Dernière mise à jour** : session 7 — templates, props 3D (mortiers/géo), presets caméra, settings, mapping .fin.
+**Dernière mise à jour** : session 7 — templates, props FX (mortiers/géo), presets caméra, settings, mapping .fin.
 
 ---
 
 ## 0. Cadre
 
 **But** : application bureau (NW.js) en français pour la création de spectacles
-pyrotechniques 3D — pour usage interne (équipe).
-**Stratégie** : on conserve le moteur Finale 3D embarqué (`app.nw/`) comme
+pyrotechniques FX — pour usage interne (équipe).
+**Stratégie** : on conserve le moteur Finale FX embarqué (`app.nw/`) comme
 référence et fallback pendant la transition, et on construit progressivement
 une nouvelle UI/UX française autour, puis on grignote les morceaux du moteur
 au fil des sessions.
@@ -21,7 +21,7 @@ au fil des sessions.
 PrevoFX (notre app)
 ├── ui/         ← shell français, vues, éditeur, commandes, etc.
 ├── engine/     ← futur : notre moteur de rendu (à construire)
-└── compat/     ← couche d'interop avec le moteur Finale 3D existant
+└── compat/     ← couche d'interop avec le moteur Finale FX existant
 ```
 
 ---
@@ -36,7 +36,7 @@ PrevoFX (notre app)
 - Catalogue de 23 effets (7 catégories)
 - Modèle de données Show/Cue + persistance localStorage
 - Vues : Accueil (dashboard), Spectacles (CRUD), Éditeur (timeline +
-  picker), Bibliothèque (filtrable), Visualiseur (sim 2D + iframe Finale 3D),
+  picker), Bibliothèque (filtrable), Visualiseur (sim 2D + iframe Finale FX),
   Commandes (agrégation + export CSV), Paramètres (export/import JSON, reset)
 - Simulateur 2D Canvas indépendant (5 types de spawn)
 - Reconnaissance complète (ce document) :
@@ -99,7 +99,7 @@ PrevoFX (notre app)
 - **Vue Spectacles refondue** : recherche, tri (récent/nom/cues/durée/coût),
   ordre asc/desc, mode grille / liste tabulaire.
 
-### Session 5 — viewer 3D, courbes, diagnostic
+### Session 5 — viewer FX, courbes, diagnostic
 - **Curve editor canvas réutilisable** (`lib/curve-editor.js`) :
   points draggables, ajout au clic vide, suppression au double-clic,
   presets (Plat / Attaque / Decay / Cloche / Pulse), API `sampleLinear`.
@@ -130,10 +130,10 @@ PrevoFX (notre app)
   - `renderer.js` : pipeline complet (sky → ground → particules
     instanciées), billboard via uCamRight/uCamUp, blending additif,
     boucle play/pause/seek
-- **Visualiseur 3 modes** : 3D PrevoFX (par défaut) / Sim 2D / Finale 3D
+- **Visualiseur 3 modes** : FX PrevoFX (par défaut) / Sim 2D / Finale FX
   embarqué. Stats provider du mode actif branché au Perf Dialog.
 - **GPU Lab** (`views/gpu-lab.js`) :
-  - Onglet Résumé : pipeline Finale 3D expliqué, 35 shaders inventoriés
+  - Onglet Résumé : pipeline Finale FX expliqué, 35 shaders inventoriés
     par famille (sparks/smoke/flame/lightbeam/mesh/post/physics/UI)
   - Onglet Shaders : liste filtrable par famille, lecture du fichier
     GLSL, analyse automatique (uniforms, in/out, structs, source brute)
@@ -164,7 +164,7 @@ PrevoFX (notre app)
   - Chips d'étiquettes avec entrée live, suppression au clic, Enter/`,` valide
 - **Mode présentation** (`views/presentation.js`) :
   - Plein écran sur fond noir, layout 3-zones
-  - Gros timer doré (56 px), vue 3D centrale, prochains 3 cues à droite
+  - Gros timer doré (56 px), vue FX centrale, prochains 3 cues à droite
     avec icône type + couleur, distance temporelle, notes affichées
   - Lecture audio synchronisée
   - Raccourci global F5, bouton "🎭 Présenter" dans l'éditeur,
@@ -178,11 +178,11 @@ PrevoFX (notre app)
     UTF-8 par heuristique
   - Fonction `pretty()` pour rendu lisible, `stats()` pour métriques
 - **Inspecteur .fin dans GPU Lab** : nouvel onglet permettant de charger
-  un fichier `.fin` Finale 3D (ou `.us`) et d'explorer sa structure :
+  un fichier `.fin` Finale FX (ou `.us`) et d'explorer sa structure :
   arbre des champs avec tags numériques, vue "Chaînes lisibles" pour
   repérer titres et noms d'effets.
 
-### Session 7 — templates, props 3D, presets caméra, mapping .fin
+### Session 7 — templates, props FX, presets caméra, mapping .fin
 - **Templates de spectacles** (`data/templates.js`) :
   4 spectacles pré-fabriqués (Fête nationale 180s/33 cues,
   Mariage 90s/15 cues, Ouverture 45s/14 cues, Démo catalogue 60s/22 cues)
@@ -198,13 +198,13 @@ PrevoFX (notre app)
 - **Presets caméra** : 5 boutons dans la toolbar 3D (Spectateur,
   Tireur, Plongée, Dramatique, Reset). Méthode `applyCameraPreset`
   qui anime target/distance/azimuth/elevation.
-- **Toolbar 3D enrichie** sous le canvas :
+- **Toolbar FX enrichie** sous le canvas :
   - Cluster Caméra (5 presets)
   - Cluster Bloom (toggle + slider intensité)
   - Cluster Audio (toggle bip cue + slider volume)
 - **Bip cue optionnel** : à chaque déclenchement, oscillateur 880 Hz
   (50 ms, gain 0.15) — utile en répétition silencieuse
-- **Settings étendus** : moteur par défaut (gl/sim/finale3d), bloom
+- **Settings étendus** : moteur par défaut (gl/sim/finalefx), bloom
   on/off, intensité 0..2, bip cue par défaut, pas de quantification
   pour le snap timeline (0 = libre, 0.1s par défaut)
 - **Timeline pro** :
@@ -225,7 +225,7 @@ PrevoFX (notre app)
 
 ## 2. Reconnaissance — synthèse
 
-### 2.1 Bundle Finale 3D (`app.nw/htmlui/`)
+### 2.1 Bundle Finale FX (`app.nw/htmlui/`)
 - **`index-2K8NCIxq.js`** (4,6 Mo minifié) : application React + Tailwind CSS
   (détectée via `rc-slider`, classes utilitaires, `displayName`).
 - **`index-C-QQLG6G.css`** (12 Ko) : essentiellement Tailwind utility classes ;
@@ -263,14 +263,14 @@ PrevoFX (notre app)
 
 ---
 
-## 3. Inventaire des features Finale 3D (issu du bundle)
+## 3. Inventaire des features Finale FX (issu du bundle)
 
 > Source : extraction strings + analyse CSS du bundle minifié (session 2).
 > 150+ composants UI, ~40 catégories d'effets, 283 sons, 40+ shaders, 30+ endpoints API.
 
 ### 3.1 Stack frontend détectée
 - **React 18.2** + **Redux** (state global) + **Apollo GraphQL** (sync cloud)
-- **Three.js** (rendu 3D principal) + **Cesium.js** (3D Tiles, terrain géospatial)
+- **Three.js** (rendu FX principal) + **Cesium.js** (3D Tiles, terrain géospatial)
 - **Google Maps API** (StreetView, DirectionsRenderer, TrafficLayer, BicyclingLayer)
 - **Recharts** (courbes/graphes) — utilisé dans CurvePlot, stats render
 - **rc-slider** (sliders), **Draco** (compression 3D), **Moment.js**, **Protobuf**
@@ -481,19 +481,19 @@ struct PhysicsParams { vec3 wind_velocity; }
 Messages identifiés dans la section data :
 
 ```
-Finale3dEffect.Effect.node_vdl       ← racine
-Finale3dEffect.Shot.node_vdl         ← un tir
-Finale3dEffect.Launch.node_vdl       ← trajectoire de montée
-Finale3dEffect.Break.node_vdl        ← explosion
-Finale3dEffect.BreakPetal.node_vdl   ← pétale d'explosion
-Finale3dEffect.Emitter.node_vdl      ← émetteur de particules
-Finale3dEffect.StarParticle.node_vdl ← étoile (particule lumineuse)
-Finale3dEffect.StarPhase.node_vdl    ← phase de vie d'une étoile
-Finale3dEffect.SparkVisual.node_vdl  ← visuel d'étincelle
-Finale3dEffect.FlameVisual.node_vdl  ← visuel de flamme
-Finale3dEffect.SmokeVisual.node_vdl  ← visuel de fumée
-Finale3dEffect.LightBeamVisual.node_vdl ← faisceau lumineux
-Finale3dEffect.Sound.node_vdl        ← effet sonore
+FinaleFxEffect.Effect.node_vdl       ← racine
+FinaleFxEffect.Shot.node_vdl         ← un tir
+FinaleFxEffect.Launch.node_vdl       ← trajectoire de montée
+FinaleFxEffect.Break.node_vdl        ← explosion
+FinaleFxEffect.BreakPetal.node_vdl   ← pétale d'explosion
+FinaleFxEffect.Emitter.node_vdl      ← émetteur de particules
+FinaleFxEffect.StarParticle.node_vdl ← étoile (particule lumineuse)
+FinaleFxEffect.StarPhase.node_vdl    ← phase de vie d'une étoile
+FinaleFxEffect.SparkVisual.node_vdl  ← visuel d'étincelle
+FinaleFxEffect.FlameVisual.node_vdl  ← visuel de flamme
+FinaleFxEffect.SmokeVisual.node_vdl  ← visuel de fumée
+FinaleFxEffect.LightBeamVisual.node_vdl ← faisceau lumineux
+FinaleFxEffect.Sound.node_vdl        ← effet sonore
 ```
 
 → **Un effet = un arbre `Effect → Shot* → (Launch + Break)`**
@@ -520,7 +520,7 @@ en JS standard.
 
 ## 6. Plan multi-sessions
 
-### Track A — UI Finale 3D (reproduction française)
+### Track A — UI Finale FX (reproduction française)
 
 | # | Item | Statut | Session cible |
 |---|---|---|---|
@@ -545,7 +545,7 @@ en JS standard.
 | B3b | Reproduire glue Embind pour instanciation complète + appel `ee_newState` | à faire | 6+ |
 | B4 | Hello-world : compiler un effet trivial → render batch sur un canvas WebGL2 | à faire | 6+ |
 | B5a | Mini-renderer WebGL2 vanilla autonome (sky + ground + particules billboardées + 12 styles d'explosion VDL) | terminé | 5 |
-| B5b | Câbler la sortie `getRenderBatches()` du WASM aux shaders Finale 3D originaux | à faire | 7+ |
+| B5b | Câbler la sortie `getRenderBatches()` du WASM aux shaders Finale FX originaux | à faire | 7+ |
 | B6 | Étendre à plusieurs shaders (sparks v2, smoke, flame) | à faire | 5-7 |
 | B7 | Caméra / scène (sun, fog, tonemap) — _ground/sky/orbit déjà OK_ | partiel | 5 |
 | B8 | Composition full pipeline (post-process, blur, cubemap) | à faire | 9+ |
@@ -557,7 +557,7 @@ en JS standard.
 | C1 | Import KML (placement géographique) — parser + UI Fichier→Importer→KML | terminé | 3 |
 | C2 | Édition cue avancée : sélection multiple, copier/coller/couper/dupliquer/supprimer (raccourcis + menus + clipboard interne), décalage groupé, drag-to-move | terminé | 3-4 |
 | C3 | Bibliothèque d'effets éditable : favoris ⭐, effets personnalisés CRUD, onglets, filtres | terminé | 3 |
-| **C3b** | **Catalogue Prevot réel** : remplacer les 30 effets génériques par le vrai catalogue (export "My Parts" depuis Finale 3D, ou autre format). Cf. § 3.7 — synchro via `api2.prevotfx.com/gql` mutation `ApplyMyPartsCsvChanges`. **Nécessite un fichier d'export utilisateur, en attente.** | en attente | quand l'export sera dispo |
+| **C3b** | **Catalogue Prevot réel** : remplacer les 30 effets génériques par le vrai catalogue (export "My Parts" depuis Finale FX, ou autre format). Cf. § 3.7 — synchro via `api2.prevotfx.com/gql` mutation `ApplyMyPartsCsvChanges`. **Nécessite un fichier d'export utilisateur, en attente.** | en attente | quand l'export sera dispo |
 | C4 | Cesium 3D Tiles : terrain réel sous la scène (lat/lon → 3D Tiles streaming) | à faire | 7+ |
 | C5 | Import `.fin` / `.us` natif : décodeur protobuf wire-format + mapping heuristique vers le catalogue (30 mots-clés) → import en un clic dans un nouveau show. _Précision limitée sans descripteur officiel._ | quasi-terminé | 7 |
 | C6 | Export : bons de tir + bons de commande imprimables (PDF via window.print). _`.fin` natif à venir._ | quasi-terminé | 4 |
@@ -590,12 +590,12 @@ en JS standard.
 
 ## 8. Risques / inconnues à valider en cours de route
 
-1. **Licence Finale 3D** : produit commercial, distribution à des collègues
+1. **Licence Finale FX** : produit commercial, distribution à des collègues
    = potentielle violation. **À clarifier avec l'éditeur avant toute
    diffusion**, indépendamment des chantiers techniques.
 2. ~~**Cloud `prevotfx.com`**~~ **Tranché en session 2** : mode hors-ligne
    strict, bouclier réseau actif (cf. § 7). À surveiller : que de nouvelles
-   versions du bundle Finale 3D n'introduisent pas d'autres domaines à
+   versions du bundle Finale FX n'introduisent pas d'autres domaines à
    bloquer.
 3. **NW.js cross-package iframe** : est-ce que l'iframe `app/ui` →
    `app.nw/htmlui` se comporte bien (Node-remote, file://, CORS) ?
@@ -607,7 +607,7 @@ en JS standard.
 5. **Corpus zstd partagé** (`zstd_effect_blob_corpus_1.bin`, 6 Mo) :
    nécessaire au compilateur, au render, ou aux deux ?
 6. **Format `.fin`** : protobuf binaire — parser nécessite les `.proto`
-   sources (à reverse depuis `Finale3dEffect.*.node_vdl`). Possible mais
+   sources (à reverse depuis `FinaleFxEffect.*.node_vdl`). Possible mais
    non trivial.
 7. **Modèles SketchUp `.skp`** : format propriétaire Trimble, pas de
    parser open source mature. Pour landmarks de démo, accepter de
@@ -619,7 +619,7 @@ en JS standard.
 
 ## 9. Glossaire FR
 
-| Terme EN (Finale 3D) | Terme FR | Sens |
+| Terme EN (Finale FX) | Terme FR | Sens |
 |---|---|---|
 | Show | Spectacle | Une chorégraphie complète |
 | Cue | Cue | Déclenchement d'un effet à un instant t (mot conservé, jargon métier) |

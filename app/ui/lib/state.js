@@ -12,7 +12,7 @@ const defaultState = {
     language: "fr",
     theme: "dark",
     defaultDuration: 180,
-    defaultViewer: "gl",      // gl | sim | finale3d
+    defaultViewer: "gl",      // gl | sim | finalefx
     bloom: true,
     bloomIntensity: 0.9,
     audioVolume: 1.0,

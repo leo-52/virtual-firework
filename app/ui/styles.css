@@ -1961,11 +1961,11 @@ input[type="number"]:focus {
 }
 
 /* ---------- Viewer FX ---------- */
-.viewer-canvas-3d {
+.viewer-canvas-fx {
   background: #02030a;
   cursor: grab;
 }
-.viewer-canvas-3d:active { cursor: grabbing; }
+.viewer-canvas-fx:active { cursor: grabbing; }
 
 .viewer-help {
   margin-top: 6px;
@@ -2199,7 +2199,7 @@ body.presentation-active { overflow: hidden; }
 }
 
 /* ---------- Toolbar FX ---------- */
-.viewer-3d-toolbar {
+.viewer-fx-toolbar {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -2212,16 +2212,16 @@ body.presentation-active { overflow: hidden; }
   font-size: 11px;
 }
 
-.viewer-3d-toolbar .btn { padding: 4px 10px; font-size: 11px; }
+.viewer-fx-toolbar .btn { padding: 4px 10px; font-size: 11px; }
 
-.viewer-3d-toolbar-sep {
+.viewer-fx-toolbar-sep {
   width: 1px;
   height: 22px;
   background: var(--border);
   margin: 0 4px;
 }
 
-.viewer-3d-toolbar-item {
+.viewer-fx-toolbar-item {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -2229,7 +2229,7 @@ body.presentation-active { overflow: hidden; }
   color: var(--text-soft);
 }
 
-.viewer-3d-toolbar-item input[type="range"] { width: 80px; }
+.viewer-fx-toolbar-item input[type="range"] { width: 80px; }
 
 /* ---------- Templates ---------- */
 .template-grid {

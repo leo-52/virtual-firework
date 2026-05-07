@@ -6,7 +6,7 @@ import { setStatsProvider, openPerfDialog } from "./perf-dialog.js";
 import { AudioPlayer, playBeep } from "../lib/audio.js";
 
 export function renderViewer(main, navigate, params = {}) {
-  let mode = params.mode || "gl";  // gl | sim | finale3d
+  let mode = params.mode || "gl";  // gl | sim | finalefx
   let currentId = params.id || (state.shows[0] && state.shows[0].id);
   let activeRenderer = null; // Renderer | FireworkSim
   let activeAudio = null;    // AudioPlayer
@@ -50,7 +50,7 @@ export function renderViewer(main, navigate, params = {}) {
   const tabs = el("div", { class: "tabs" },
     tabButton("Moteur FX PrevoFX", mode === "gl", () => switchMode("gl")),
     tabButton("Simulateur 2D", mode === "sim", () => switchMode("sim")),
-    tabButton("Moteur Finale FX", mode === "finale3d", () => switchMode("finale3d"))
+    tabButton("Moteur Finale FX", mode === "finalefx", () => switchMode("finalefx"))
   );
   main.append(tabs);
 
@@ -70,7 +70,7 @@ export function renderViewer(main, navigate, params = {}) {
     setStatsProvider(null);
 
     mode = m;
-    const idx = ["gl", "sim", "finale3d"].indexOf(m);
+    const idx = ["gl", "sim", "finalefx"].indexOf(m);
     [...tabs.children].forEach((b, i) => b.classList.toggle("active", i === idx));
     stage.innerHTML = "";
     if (m === "gl") renderGL();
@@ -150,7 +150,7 @@ export function renderViewer(main, navigate, params = {}) {
     const show = ensureShow();
     if (!show) return;
 
-    const canvas = el("canvas", { class: "viewer-canvas viewer-canvas-3d" });
+    const canvas = el("canvas", { class: "viewer-canvas viewer-canvas-fx" });
 
     let renderer;
     const ctrl = buildControls(show,
@@ -182,7 +182,7 @@ export function renderViewer(main, navigate, params = {}) {
       el("span", {}, "🖱 Glisser : orbiter · Maj+glisser : pan · Roulette : zoom"));
 
     // Toolbar FX : presets caméra + bloom + bip
-    const camRow = el("div", { class: "viewer-3d-toolbar" });
+    const camRow = el("div", { class: "viewer-fx-toolbar" });
     const camLabel = el("span", { class: "form-label" }, "Caméra");
     const camButtons = [
       ["Spectateur", "spectator"],
@@ -218,12 +218,12 @@ export function renderViewer(main, navigate, params = {}) {
 
     camRow.append(
       camLabel, ...camButtons,
-      el("span", { class: "viewer-3d-toolbar-sep" }),
-      el("label", { class: "viewer-3d-toolbar-item" }, bloomToggle, "Bloom"),
-      el("label", { class: "viewer-3d-toolbar-item" }, "Intensité", bloomSlider),
-      el("span", { class: "viewer-3d-toolbar-sep" }),
-      el("label", { class: "viewer-3d-toolbar-item" }, beepToggle, "Bip cue"),
-      el("label", { class: "viewer-3d-toolbar-item" }, "Volume", volSlider),
+      el("span", { class: "viewer-fx-toolbar-sep" }),
+      el("label", { class: "viewer-fx-toolbar-item" }, bloomToggle, "Bloom"),
+      el("label", { class: "viewer-fx-toolbar-item" }, "Intensité", bloomSlider),
+      el("span", { class: "viewer-fx-toolbar-sep" }),
+      el("label", { class: "viewer-fx-toolbar-item" }, beepToggle, "Bip cue"),
+      el("label", { class: "viewer-fx-toolbar-item" }, "Volume", volSlider),
     );
 
     stage.append(ctrl.controls, ctrl.progress, canvas, camRow, help, buildUpcoming(show));
