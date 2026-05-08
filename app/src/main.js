@@ -19,6 +19,7 @@ import { renderLibrary } from "./views/library.js";
 import { renderViewer } from "./views/viewer.js";
 import { renderOrders } from "./views/orders.js";
 import { renderSettings } from "./views/settings.js";
+import { renderPrevot } from "./views/prevot.js";
 
 const ROUTES = {
   home:     renderHome,
@@ -28,6 +29,7 @@ const ROUTES = {
   viewer:   renderViewer,
   orders:   renderOrders,
   settings: renderSettings,
+  prevot:   renderPrevot,
 };
 
 const main = document.getElementById("main");

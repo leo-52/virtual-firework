@@ -1,11 +1,12 @@
 import { el } from "./kit.js";
 
 export const NAV = [
-  { route: "home",     label: "Accueil",       icon: "⌂" },
-  { route: "shows",    label: "Spectacles",    icon: "✦" },
-  { route: "library",  label: "Bibliothèque",  icon: "⌗" },
-  { route: "viewer",   label: "Visualiseur",   icon: "▶" },
-  { route: "orders",   label: "Commandes",     icon: "⛬" },
+  { route: "home",     label: "Accueil",            icon: "⌂" },
+  { route: "shows",    label: "Spectacles",         icon: "✦" },
+  { route: "library",  label: "Bibliothèque",       icon: "⌗" },
+  { route: "viewer",   label: "Visualiseur",        icon: "▶" },
+  { route: "orders",   label: "Commandes",          icon: "⛬" },
+  { route: "prevot",   label: "Prevot FX (origine)", icon: "◉" },
 ];
 
 const FOOTER = [
