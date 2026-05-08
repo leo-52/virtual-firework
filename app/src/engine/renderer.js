@@ -12,7 +12,7 @@
 import { OrbitCamera } from "./camera.js";
 import { Scene } from "./scene.js";
 import { ParticleSystem, KIND } from "./particles.js";
-import { spawnEffect, resolveBursts, trackRisingPositions } from "./spawner.js";
+import { spawnEffect, resolveBursts, trackRisingPositions, resetSpawner } from "./spawner.js";
 import { program, buffer, makeSparkTexture } from "./gl-utils.js";
 import { mat4Multiply, mat4Identity } from "./math.js";
 import { findEffect } from "../store.js";
@@ -156,6 +156,10 @@ export class Renderer {
   // ---- Lecture spectacle ----
 
   load(show) {
+    // Reset l'état module du spawner (pending bursts, prevAlive, nextId)
+    // pour éviter les fuites entre deux loads.
+    resetSpawner();
+
     this.show = show;
     this.duration = show.duration;
     this.scheduledEvents = [...show.cues]

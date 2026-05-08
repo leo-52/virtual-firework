@@ -13,12 +13,13 @@ import { renderInspector } from "../ui/inspector.js";
 import { registerBinding } from "../shortcuts.js";
 import { TEMPLATES } from "../templates.js";
 import { openPresentation } from "./presentation.js";
+import { onLeave } from "../main.js";
 
 let _cleanups = [];
 
 export function renderEditor(root, navigate, params = {}) {
   // Cleanup any leftover bindings from previous editor session
-  _cleanups.forEach((fn) => fn());
+  _cleanups.forEach((fn) => { try { fn(); } catch {} });
   _cleanups = [];
 
   const sh = store.getShow(params.id);
@@ -107,6 +108,12 @@ export function renderEditor(root, navigate, params = {}) {
     rightPane.appendChild(buildInspectorContent(ctx));
   }
   selection.onChange(rebuildInspector);
+
+  // Lifecycle : libère les bindings clavier de l'éditeur quand on quitte
+  onLeave(() => {
+    _cleanups.forEach((fn) => { try { fn(); } catch {} });
+    _cleanups = [];
+  });
 }
 
 // ---- Header ----
@@ -581,22 +588,24 @@ function duplicateCues(ctx) {
 
 function doUndo(ctx) {
   const snap = history.undo();
-  if (snap) {
-    // Restore : remplace state.shows (on accède via setShows pas clean,
-    // ici on patche directement chaque show)
-    Object.assign(store.get().shows, snap);
-    // Plus simple : recharger via reset mais ça écrase tout. On laisse
-    // l'undo simple pour le moment : navigate refresh.
-    ctx.refresh();
-    toast("Annulation.", "info");
+  if (!snap) return;
+  store.replaceShows(snap);
+  if (!store.getShow(ctx.showId)) {
+    toast("Annulation : spectacle disparu.", "warning");
+    return;
   }
+  ctx.refresh();
+  toast("Annulation.", "info");
 }
 
 function doRedo(ctx) {
   const snap = history.redo();
-  if (snap) {
-    Object.assign(store.get().shows, snap);
-    ctx.refresh();
-    toast("Rétablissement.", "info");
+  if (!snap) return;
+  store.replaceShows(snap);
+  if (!store.getShow(ctx.showId)) {
+    toast("Rétablissement : spectacle disparu.", "warning");
+    return;
   }
+  ctx.refresh();
+  toast("Rétablissement.", "info");
 }

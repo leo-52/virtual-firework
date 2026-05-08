@@ -367,6 +367,16 @@ export function setSetting(key, value) {
   save();
 }
 
+// ---- Undo/redo helper ----
+
+// Remplace complètement le tableau des shows (utilisé par l'historique).
+// Préserve la même référence pour ne pas casser les imports qui font
+// `import { state } from ...` (peu utilisé, mais sûr).
+export function replaceShows(shows) {
+  state.shows.splice(0, state.shows.length, ...(shows || []));
+  save();
+}
+
 // ---- Stats / agrégations ----
 
 export function showCost(sh) {

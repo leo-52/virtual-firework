@@ -10,7 +10,16 @@ import { hexToRgb } from "./gl-utils.js";
 
 // Mémoire des explosions différées : map id → {colors, height, subtype}
 const pending = new Map();
+const prevAlive = new Set();
 let nextId = 1;
+
+// Reset l'état module entre deux loads (sinon des explosions de l'ancien
+// show peuvent se déclencher dans le nouveau, ou les ids saturent).
+export function resetSpawner() {
+  pending.clear();
+  prevAlive.clear();
+  nextId = 1;
+}
 
 function rgbOf(eff, idx = 0) {
   return hexToRgb(eff.colors[idx % eff.colors.length] || "#ffd60a");
@@ -151,7 +160,6 @@ function spawnGlow(ps, eff, lx, ly, lz) {
 // `prevCount` = nb de particules avant step ; `ps` = système.
 // Plus simple : on inspecte tous les targetEffectIdx présents AVANT step,
 // et après step on regarde lesquels ont disparu → ceux-là explosent.
-const prevAlive = new Set();
 export function resolveBursts(ps) {
   const stillAlive = new Set();
   for (let i = 0; i < ps.count; i++) {

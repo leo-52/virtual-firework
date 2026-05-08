@@ -4,6 +4,7 @@ import { el, formatTime, toast } from "../ui/kit.js";
 import * as store from "../store.js";
 import { Renderer } from "../engine/renderer.js";
 import { AudioPlayer, playBeep } from "../tools/audio.js";
+import { onLeave } from "../main.js";
 
 export function renderViewer(root, navigate, params = {}) {
   let currentId = params.id || (store.getShows()[0] && store.getShows()[0].id);
@@ -199,8 +200,16 @@ export function renderViewer(root, navigate, params = {}) {
   }
 
   // Cleanup quand on change de route
-  window.addEventListener("popstate", () => {
-    if (renderer && renderer.destroy) renderer.destroy();
-    if (audio) audio.stop();
-  }, { once: true });
+  onLeave(() => {
+    switchToken++; // annule tout init en cours
+    if (renderer) {
+      try { renderer.pause?.(); } catch {}
+      try { renderer.destroy?.(); } catch {}
+      renderer = null;
+    }
+    if (audio) {
+      try { audio.stop(); } catch {}
+      audio = null;
+    }
+  });
 }

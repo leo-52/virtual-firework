@@ -37,8 +37,24 @@ const sidebar = document.getElementById("sidebar");
 let currentRoute = "home";
 let currentParams = {};
 
+// Lifecycle simple : chaque vue peut enregistrer un onLeave() qui est
+// appelé avant le démontage. Permet de libérer les ressources (Renderer
+// WebGL2, AudioContext, RAF, listeners, etc.) sans coupler les vues.
+let pendingCleanup = null;
+
+export function onLeave(fn) {
+  pendingCleanup = fn;
+}
+
 export function navigate(route, params = {}) {
   if (!ROUTES[route]) route = "home";
+
+  // Cleanup de la vue précédente
+  if (pendingCleanup) {
+    try { pendingCleanup(); } catch (e) { console.warn("[router] onLeave error", e); }
+    pendingCleanup = null;
+  }
+
   currentRoute = route;
   currentParams = params;
 
