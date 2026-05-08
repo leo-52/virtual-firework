@@ -11,6 +11,7 @@ import { renderTopbar } from "./ui/topbar.js";
 import { renderSidebar, NAV } from "./ui/sidebar.js";
 import { toast } from "./ui/kit.js";
 import { initShortcuts } from "./shortcuts.js";
+import { log, installGlobalHooks } from "./lib/debug-log.js";
 
 import { renderHome } from "./views/home.js";
 import { renderShows } from "./views/shows.js";
@@ -50,10 +51,14 @@ export function onLeave(fn) {
 
 export function navigate(route, params = {}) {
   if (!ROUTES[route]) route = "home";
+  log("nav", { route, params, from: currentRoute });
 
   // Cleanup de la vue précédente
   if (pendingCleanup) {
-    try { pendingCleanup(); } catch (e) { console.warn("[router] onLeave error", e); }
+    try { pendingCleanup(); } catch (e) {
+      console.warn("[router] onLeave error", e);
+      log("error", { phase: "onLeave", message: String(e.message || e) });
+    }
     pendingCleanup = null;
   }
 
@@ -71,6 +76,7 @@ export function navigate(route, params = {}) {
     ROUTES[route](main, navigate, params);
   } catch (e) {
     console.error("[router]", e);
+    log("error", { phase: "render", route, message: String(e.message || e), stack: e.stack });
     main.innerHTML = "";
     main.appendChild(buildCrashPanel(e));
   }
@@ -110,6 +116,9 @@ window.addEventListener("toast", (e) => {
   const d = e.detail || {};
   toast(d.msg || "", d.kind || "info");
 });
+
+// Hooks de debug : capture errors / rejections / console.error
+installGlobalHooks();
 
 // Premier rendu
 navigate("home");

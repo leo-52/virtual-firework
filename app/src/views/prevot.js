@@ -7,6 +7,7 @@
 import { el, toast } from "../ui/kit.js";
 import { buildPatchedHtml, injectPatchesAtLoad } from "../lib/prevot-patches.js";
 import { onLeave } from "../main.js";
+import { log } from "../lib/debug-log.js";
 
 const ORIGINAL_HTML = "../app.nw/htmlui/index.html";
 
@@ -39,6 +40,7 @@ export function renderPrevot(root, navigate) {
   root.appendChild(wrap);
 
   async function mount() {
+    log("prevot-mount", { src: ORIGINAL_HTML });
     // Cleanup précédent
     if (currentBlobUrl) {
       URL.revokeObjectURL(currentBlobUrl);
@@ -50,6 +52,7 @@ export function renderPrevot(root, navigate) {
     try {
       // Construit le HTML patché (contient les patches inline avant le bundle)
       const patched = await buildPatchedHtml(ORIGINAL_HTML);
+      log("prevot-patched-built", { length: patched.length });
       const blob = new Blob([patched], { type: "text/html" });
       currentBlobUrl = URL.createObjectURL(blob);
 
@@ -62,10 +65,32 @@ export function renderPrevot(root, navigate) {
       // Filet : injection redondante au load au cas où le HTML patché ne
       // s'exécute pas (par exemple si fetch échoue).
       iframe.addEventListener("load", () => {
+        log("prevot-iframe-load", { src: iframe.src.slice(0, 100) });
         injectPatchesAtLoad(iframe);
+        // Hook erreurs de l'iframe
+        try {
+          iframe.contentWindow.addEventListener("error", (ev) => {
+            log("prevot-iframe-error", {
+              message: String(ev.message || ""),
+              filename: ev.filename,
+              line: ev.lineno,
+              col: ev.colno,
+              stack: ev.error && ev.error.stack || null,
+            });
+          });
+          iframe.contentWindow.addEventListener("unhandledrejection", (ev) => {
+            log("prevot-iframe-rejection", {
+              reason: String(ev.reason && (ev.reason.message || ev.reason) || ""),
+              stack: ev.reason && ev.reason.stack || null,
+            });
+          });
+        } catch (e) {
+          log("prevot-iframe-hook-failed", { message: String(e.message || e) });
+        }
       });
     } catch (e) {
       // Fallback : iframe direct sur le HTML original + injection au load
+      log("prevot-buildpatched-failed", { message: String(e.message || e), stack: e.stack });
       console.warn("[prevot] buildPatchedHtml failed, fallback simple iframe", e);
       iframe = el("iframe", {
         src: ORIGINAL_HTML,
@@ -73,6 +98,7 @@ export function renderPrevot(root, navigate) {
         allow: "fullscreen",
       });
       iframe.addEventListener("load", () => {
+        log("prevot-iframe-fallback-load", {});
         injectPatchesAtLoad(iframe);
       });
       toast("Mode fallback (chargement direct, patches au load).", "warning");

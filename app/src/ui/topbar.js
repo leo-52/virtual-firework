@@ -8,6 +8,7 @@ import * as store from "../store.js";
 import { loadAudioFile } from "../tools/audio.js";
 import { parseKml } from "../tools/kml.js";
 import { printShootSheet, printOrderSheet } from "../tools/pdf.js";
+import { downloadLog, clearLog, getLogPath } from "../lib/debug-log.js";
 
 let _navigate = () => {};
 let _getCurrentShowId = () => null;
@@ -56,6 +57,21 @@ export function renderTopbar(root, navigate, getCurrentShowId) {
     saveStatus.classList.add("pulse");
     setTimeout(() => saveStatus.classList.remove("pulse"), 600);
   });
+
+  // Bouton "Exporter le log" — utile pour reporting de bugs
+  const logBtn = el("button", {
+    class: "topbar-menu",
+    title: "Exporter le journal de debug (debug.log)",
+    onClick: async () => {
+      const path = getLogPath();
+      await downloadLog();
+      toast(path
+        ? `Log téléchargé. Fichier sur disque : ${path}`
+        : "Log téléchargé (mode mémoire).",
+        "success");
+    },
+  }, "📋 Log");
+  root.appendChild(logBtn);
 }
 
 // ---- Drop-down ----
