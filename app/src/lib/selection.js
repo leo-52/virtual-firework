@@ -1,27 +1,3 @@
-// Gestionnaire de sélection multiple (cues, effets, etc.).
-// Modèle observé : un Set d'IDs, avec helpers et listeners.
-
-export function makeSelection() {
-  const set = new Set();
-  const listeners = new Set();
-  const notify = () => {
-    for (const fn of listeners) {
-      try { fn([...set]); } catch (e) { /* ignore */ }
-    }
-  };
-  return {
-    has: (id) => set.has(id),
-    size: () => set.size,
-    list: () => [...set],
-    clear: () => { if (set.size) { set.clear(); notify(); } },
-    set: (ids) => {
-      set.clear();
-      for (const id of ids) set.add(id);
-      notify();
-    },
-    add: (id) => { if (!set.has(id)) { set.add(id); notify(); } },
-    remove: (id) => { if (set.has(id)) { set.delete(id); notify(); } },
-    toggle: (id) => { if (set.has(id)) set.delete(id); else set.add(id); notify(); },
-    onChange: (fn) => { listeners.add(fn); return () => listeners.delete(fn); },
-  };
-}
+version https://git-lfs.github.com/spec/v1
+oid sha256:5aecbfd938b760eff4645332577aabbb085293604ebf7b4918a070de5aea2698
+size 912
