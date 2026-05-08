@@ -40,11 +40,13 @@ export function initShortcuts({ navigate, getRoute, getParams }) {
   // Imprimer
   bind("Ctrl+P", () => window.print());
 
-  // Présentation : sera relié quand l'éditeur sera prêt
-  bind("F5", () => {
+  bind("F5", async () => {
     const id = _getParams()?.id;
     if (!id) { toast("Aucun spectacle ouvert."); return; }
-    window.dispatchEvent(new CustomEvent("present", { detail: { id } }));
+    const sh = store.getShow(id);
+    if (!sh) return;
+    const m = await import("./views/presentation.js");
+    m.openPresentation(sh);
   });
 
   // Diagnostic

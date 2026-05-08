@@ -5,6 +5,9 @@
 
 import { el, modal, toast, prompt, confirm, pickFile, download } from "./kit.js";
 import * as store from "../store.js";
+import { loadAudioFile } from "../tools/audio.js";
+import { parseKml } from "../tools/kml.js";
+import { printShootSheet, printOrderSheet } from "../tools/pdf.js";
 
 let _navigate = () => {};
 let _getCurrentShowId = () => null;
@@ -203,20 +206,64 @@ function doAbout() {
 
 function fileMenu() {
   const inNw = typeof process !== "undefined" && process.versions && process.versions.nw;
+  const id = _getCurrentShowId();
   const items = [
     { label: "Nouveau spectacle…", shortcut: "Ctrl+N", action: doNew },
     { label: "Voir les spectacles", shortcut: "Ctrl+O", action: () => _navigate("shows") },
     { separator: true },
     { label: "Enregistrer", shortcut: "Ctrl+S", action: doSave },
     { separator: true },
+    { label: "Importer KML…", disabled: !id, action: doImportKml },
+    { label: "Importer audio (mp3/wav)…", disabled: !id, action: doImportAudio },
     { label: "Importer JSON…", action: doImportJson },
+    { separator: true },
     { label: "Exporter JSON", action: doExportJson },
+    { label: "Bon de tir (PDF)…", disabled: !id, action: () => id && printShootSheet(id) },
+    { label: "Bon de commande (PDF)…", disabled: !id, action: () => id && printOrderSheet(id) },
   ];
   if (inNw) {
     items.push({ separator: true });
     items.push({ label: "Quitter", shortcut: "Ctrl+Q", action: doQuit });
   }
   return items;
+}
+
+async function doImportKml() {
+  const id = _getCurrentShowIdSafe();
+  if (!id) return toast("Ouvrez un spectacle.", "warning");
+  const f = await pickFile(".kml,application/vnd.google-earth.kml+xml,application/xml");
+  if (!f) return;
+  try {
+    const data = parseKml(await f.text());
+    if (!data.center) throw new Error("Aucune coordonnée valide.");
+    store.setShowLocation(id, {
+      name: data.name, lat: data.center.lat, lon: data.center.lon,
+    }, data.placemarks);
+    toast(`KML importé : ${data.placemarks.length} repère(s).`, "success");
+    _navigate("editor", { id });
+  } catch (e) {
+    toast("KML invalide : " + e.message, "error");
+  }
+}
+
+async function doImportAudio() {
+  const id = _getCurrentShowIdSafe();
+  if (!id) return toast("Ouvrez un spectacle.", "warning");
+  const f = await pickFile("audio/*,.mp3,.wav,.ogg,.flac,.m4a");
+  if (!f) return;
+  try {
+    toast("Décodage audio…", "info");
+    const audio = await loadAudioFile(f);
+    store.setShowAudio(id, audio);
+    toast(`Audio « ${audio.name} » importé.`, "success");
+    _navigate("editor", { id });
+  } catch (e) {
+    toast("Échec : " + e.message, "error");
+  }
+}
+
+function _getCurrentShowIdSafe() {
+  return _getCurrentShowId() || null;
 }
 
 function editMenu() {

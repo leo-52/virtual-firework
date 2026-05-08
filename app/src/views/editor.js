@@ -1,17 +1,26 @@
-// Éditeur stub V2.
-//
-// Squelette fonctionnel : édition basique d'un spectacle (nom, durée,
-// description, ajout/suppression de cues, table des cues éditable).
-// L'éditeur studio 3-zones avec timeline pro et inspector sera porté
-// dans la prochaine itération.
+// Éditeur Studio (V2 complet) : 3-zones (lib | scène | inspector) + timeline.
 
-import { el, formatPrice, formatTime, prompt, confirm, toast, modal } from "../ui/kit.js";
+import { el, formatPrice, formatTime, modal, confirm, toast } from "../ui/kit.js";
 import * as store from "../store.js";
 import {
-  PART_TYPES, partTypeLabel, partTypeColor, partTypeIcon, subtypeLabel,
+  PART_TYPES, partTypeColor, partTypeIcon, partTypeLabel,
 } from "../catalog.js";
+import { history } from "../lib/history.js";
+import { makeSelection } from "../lib/selection.js";
+import * as clipboard from "../lib/clipboard.js";
+import { buildTimeline } from "../ui/timeline.js";
+import { renderInspector } from "../ui/inspector.js";
+import { registerBinding } from "../shortcuts.js";
+import { TEMPLATES } from "../templates.js";
+import { openPresentation } from "./presentation.js";
+
+let _cleanups = [];
 
 export function renderEditor(root, navigate, params = {}) {
+  // Cleanup any leftover bindings from previous editor session
+  _cleanups.forEach((fn) => fn());
+  _cleanups = [];
+
   const sh = store.getShow(params.id);
   if (!sh) {
     root.appendChild(el("div", { class: "empty" },
@@ -23,190 +32,413 @@ export function renderEditor(root, navigate, params = {}) {
     return;
   }
 
-  const refresh = () => navigate("editor", { id: sh.id });
+  // Snapshot initial dans l'historique
+  if (!history.canUndo()) {
+    history.push(store.getShows(), "Ouverture éditeur");
+  }
+
+  const selection = makeSelection();
+
+  const ctx = {
+    showId: sh.id,
+    show: sh,
+    selection,
+    refresh: () => navigate("editor", { id: sh.id }),
+    snapshotBefore: (label) => history.push(store.getShows(), label),
+    onEmptyClick: (time) => openPicker(ctx, time),
+  };
+
+  // ---- Layout 3-zones ----
+
+  const studio = el("div", { class: "studio" });
 
   // Header
-  root.appendChild(el("header", { class: "page-header" },
-    el("div", {},
-      el("h1", { class: "page-title" }, sh.name),
-      el("p", { class: "page-subtitle" },
-        `${sh.cues.length} cue(s) · ${sh.duration}s · ${formatPrice(store.showCost(sh))}`)),
-    el("div", { class: "page-actions" },
-      el("button", { class: "btn", onClick: () => navigate("shows") }, "← Retour"),
+  studio.appendChild(buildHeader(ctx, navigate));
+
+  // Body : grille 3 colonnes
+  const body = el("div", { class: "studio-body" });
+  body.appendChild(buildLeftPane(ctx));
+  body.appendChild(buildCenterPane(ctx));
+  body.appendChild(buildRightPane(ctx));
+  studio.appendChild(body);
+
+  // Timeline
+  studio.appendChild(buildTimelineRow(ctx));
+
+  root.appendChild(studio);
+
+  // ---- Raccourcis contextuels ----
+
+  _cleanups.push(registerBinding("Delete", () => {
+    const ids = selection.list();
+    if (!ids.length) return;
+    ctx.snapshotBefore("Suppression");
+    store.removeCues(sh.id, ids);
+    selection.clear();
+    ctx.refresh();
+    toast(`${ids.length} cue(s) supprimé(s).`, "success");
+  }));
+
+  _cleanups.push(registerBinding("Ctrl+a", () => {
+    selection.set(sh.cues.map((c) => c.id));
+    rebuildInspector();
+  }));
+
+  _cleanups.push(registerBinding("Escape", () => {
+    selection.clear();
+    rebuildInspector();
+  }));
+
+  // Copy / Cut / Paste / Duplicate
+  _cleanups.push(registerBinding("Ctrl+c", () => copyCues(ctx, false)));
+  _cleanups.push(registerBinding("Ctrl+x", () => copyCues(ctx, true)));
+  _cleanups.push(registerBinding("Ctrl+v", () => pasteCues(ctx)));
+  _cleanups.push(registerBinding("Ctrl+d", () => duplicateCues(ctx)));
+
+  // Undo / Redo
+  _cleanups.push(registerBinding("Ctrl+z", () => doUndo(ctx)));
+  _cleanups.push(registerBinding("Ctrl+y", () => doRedo(ctx)));
+
+  // Trigger redraw of inspector when selection changes
+  let rightPane = body.querySelector(".studio-right");
+  function rebuildInspector() {
+    if (!rightPane) return;
+    rightPane.innerHTML = "";
+    rightPane.appendChild(buildInspectorContent(ctx));
+  }
+  selection.onChange(rebuildInspector);
+}
+
+// ---- Header ----
+
+function buildHeader(ctx, navigate) {
+  const { show, showId } = ctx;
+  return el("header", { class: "studio-header" },
+    el("div", {
+      style: "display: flex; gap: 10px; align-items: center;",
+    },
+      el("button", {
+        class: "btn btn-ghost",
+        onClick: () => navigate("shows"),
+      }, "← Spectacles"),
+      el("input", {
+        type: "text", value: show.name,
+        class: "studio-name",
+        onChange: (e) => {
+          ctx.snapshotBefore("Renommage");
+          store.updateShow(showId, { name: e.target.value || show.name });
+          ctx.refresh();
+        },
+      })),
+    el("div", {
+      style: "display: flex; gap: 16px; align-items: center;",
+    },
+      stat("Cues", show.cues.length),
+      stat("Durée", `${show.duration}s`),
+      stat("Coût", formatPrice(store.showCost(show))),
+      show.location ? stat("Lieu", show.location.name || "📍") : null),
+    el("div", { style: "display: flex; gap: 6px;" },
       el("button", {
         class: "btn",
-        onClick: () => navigate("orders", { id: sh.id }),
+        onClick: () => navigate("orders", { id: showId }),
       }, "Commande"),
       el("button", {
+        class: "btn",
+        title: "Mode présentation (F5)",
+        onClick: () => openPresentation(show),
+      }, "🎭 Présenter"),
+      el("button", {
         class: "btn btn-primary",
-        onClick: () => navigate("viewer", { id: sh.id }),
-      }, "▶ Visualiser"))));
-
-  // Métadonnées éditables
-  const metaGrid = el("div", {
-    style: "display: grid; grid-template-columns: 2fr 1fr 3fr; gap: 12px; margin-bottom: 18px;",
-  });
-  metaGrid.appendChild(field("Nom",
-    el("input", {
-      type: "text", value: sh.name,
-      onChange: (e) => {
-        store.updateShow(sh.id, { name: e.target.value || sh.name });
-        refresh();
-      },
-    })));
-  metaGrid.appendChild(field("Durée (s)",
-    el("input", {
-      type: "number", min: 5, max: 1800, value: sh.duration,
-      onChange: (e) => {
-        store.updateShow(sh.id, { duration: +e.target.value || sh.duration });
-        refresh();
-      },
-    })));
-  metaGrid.appendChild(field("Description",
-    el("input", {
-      type: "text", value: sh.description || "",
-      onChange: (e) => store.updateShow(sh.id, { description: e.target.value }),
-    })));
-  root.appendChild(metaGrid);
-
-  // Timeline simple
-  root.appendChild(el("div", {
-    style: "display: flex; justify-content: space-between; align-items: center; margin: 18px 0 8px;",
-  },
-    el("h2", { class: "section-title" }, "Timeline"),
-    el("button", {
-      class: "btn btn-primary",
-      onClick: () => openPicker(sh, refresh),
-    }, "+ Ajouter un cue")));
-  root.appendChild(buildTimeline(sh, refresh));
-
-  // Tableau des cues
-  root.appendChild(el("h2", { class: "section-title", style: "margin-top: 18px;" },
-    `Liste des cues (${sh.cues.length})`));
-  root.appendChild(buildCueTable(sh, refresh));
+        onClick: () => navigate("viewer", { id: showId }),
+      }, "▶ Visualiser")));
 }
 
-function field(label, control) {
-  return el("div", { class: "field" },
-    el("span", { class: "field-label" }, label),
-    control);
+function stat(label, value) {
+  return el("div", { style: "display: flex; flex-direction: column;" },
+    el("span", {
+      style: "font-size: 9px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-mute);",
+    }, label),
+    el("span", { style: "font-weight: 600;" }, String(value)));
 }
 
-function buildTimeline(sh, refresh) {
-  const wrap = el("div", {
-    style: "position: relative; height: 60px; background: var(--bg-elev); border: 1px solid var(--border); border-radius: 6px; overflow: hidden;",
-  });
-  // Ticks
-  const stepSec = sh.duration <= 30 ? 5 : sh.duration <= 180 ? 20 : 60;
-  for (let t = 0; t <= sh.duration; t += stepSec) {
-    const left = (t / sh.duration) * 100;
-    wrap.appendChild(el("div", {
-      style: {
-        position: "absolute", left: `${left}%`, top: 0, bottom: 0,
-        borderLeft: "1px solid var(--border)", paddingLeft: "4px",
-        fontSize: "10px", color: "var(--text-mute)",
-      },
-    }, formatTime(t)));
+// ---- Left pane : library condensée ----
+
+function buildLeftPane(ctx) {
+  const pane = el("aside", { class: "studio-left" });
+
+  pane.appendChild(el("h3", { class: "studio-pane-title" }, "Bibliothèque"));
+
+  let scope = "all";
+  let search = "";
+
+  const tabs = el("div", { style: "display: flex; gap: 2px; padding: 0 8px 6px; border-bottom: 1px solid var(--border);" });
+  for (const [k, label] of [["all", "Tous"], ["fav", "★"], ["custom", "Mes"]]) {
+    const t = el("button", {
+      class: "btn btn-ghost",
+      style: { padding: "4px 8px", fontSize: "11px",
+        background: scope === k ? "var(--accent-soft)" : "transparent" },
+      onClick: () => { scope = k; t.classList.add("active"); redraw(); },
+    }, label);
+    t.dataset.scope = k;
+    tabs.appendChild(t);
   }
-  // Cues
-  for (const cue of sh.cues) {
+  pane.appendChild(tabs);
+
+  pane.appendChild(el("input", {
+    type: "search", placeholder: "Rechercher…",
+    style: "margin: 8px; width: calc(100% - 16px);",
+    onInput: (e) => { search = e.target.value; redraw(); },
+  }));
+
+  const list = el("div", { class: "studio-lib-list" });
+  pane.appendChild(list);
+
+  function redraw() {
+    list.innerHTML = "";
+    let items = store.getAllEffects();
+    if (scope === "fav") items = items.filter((e) => store.isFavorite(e.id));
+    else if (scope === "custom") items = items.filter((e) => e.custom);
+    if (search) {
+      const q = search.toLowerCase();
+      items = items.filter((e) => e.name.toLowerCase().includes(q));
+    }
+    items = items.slice(0, 80);
+
+    [...tabs.children].forEach((t) =>
+      t.style.background = t.dataset.scope === scope ? "var(--accent-soft)" : "transparent");
+
+    if (!items.length) {
+      list.appendChild(el("p", { class: "empty-desc", style: "padding: 12px;" }, "Aucun effet."));
+      return;
+    }
+    for (const eff of items) list.appendChild(libItem(ctx, eff, redraw));
+  }
+  redraw();
+  return pane;
+}
+
+function libItem(ctx, eff, refresh) {
+  const c = partTypeColor(eff.partType);
+  const fav = store.isFavorite(eff.id);
+
+  return el("div", {
+    class: "studio-lib-item",
+    draggable: true,
+    title: eff.name,
+    onDblclick: () => {
+      const t = nextCueTime(ctx.show);
+      ctx.snapshotBefore("Ajout cue");
+      const cue = store.addCue(ctx.showId, eff.id, t);
+      if (cue) ctx.selection.set([cue.id]);
+      ctx.refresh();
+    },
+    onDragstart: (e) => {
+      e.dataTransfer.setData("text/effect-id", eff.id);
+      e.dataTransfer.effectAllowed = "copy";
+    },
+  },
+    el("div", {
+      style: { background: eff.colors[0], width: "12px", height: "12px",
+               borderRadius: "3px", boxShadow: `0 0 6px ${eff.colors[0]}`,
+               flex: "0 0 auto" },
+    }),
+    el("div", { style: "flex: 1; min-width: 0;" },
+      el("div", { class: "studio-lib-name" }, eff.name),
+      el("div", { class: "studio-lib-meta" },
+        `${partTypeLabel(eff.partType)}${eff.caliber ? ` · ${eff.caliber}mm` : ""} · ${formatPrice(eff.price)}`)),
+    el("button", {
+      class: "btn btn-ghost",
+      style: { padding: "0 6px", color: fav ? "#ffd60a" : "var(--text-mute)" },
+      onClick: (e) => {
+        e.stopPropagation();
+        store.toggleFavorite(eff.id);
+        refresh();
+      },
+    }, fav ? "★" : "☆"));
+}
+
+function nextCueTime(show) {
+  if (!show.cues.length) return 0;
+  const last = show.cues[show.cues.length - 1];
+  const eff = store.findEffect(last.effectId);
+  return Math.min(show.duration, last.time + (eff ? Math.max(2, eff.duration / 2) : 3));
+}
+
+// ---- Center pane : aperçu ----
+
+function buildCenterPane(ctx) {
+  const pane = el("section", { class: "studio-center" });
+  pane.appendChild(el("h3", { class: "studio-pane-title" }, "Aperçu"));
+
+  const canvas = el("canvas", { class: "studio-overview" });
+  pane.appendChild(canvas);
+
+  // Section géo
+  const geo = el("div", { class: "studio-geo" });
+  if (ctx.show.location) {
+    geo.appendChild(el("div", {},
+      el("strong", {}, ctx.show.location.name || "Sans nom"),
+      el("span", { class: "page-subtitle" },
+        ` · ${ctx.show.location.lat.toFixed(5)}, ${ctx.show.location.lon.toFixed(5)}`),
+      el("span", { class: "page-subtitle" },
+        ` · ${ctx.show.placemarks?.length || 0} repère(s)`)));
+  } else {
+    geo.appendChild(el("p", { class: "empty-desc" },
+      "Aucun lieu défini. Importez un KML via Fichier → Importer → KML."));
+  }
+  pane.appendChild(geo);
+
+  requestAnimationFrame(() => drawOverview(canvas, ctx));
+  ctx.selection.onChange(() => drawOverview(canvas, ctx));
+  return pane;
+}
+
+function drawOverview(canvas, ctx) {
+  const dpr = window.devicePixelRatio || 1;
+  const r = canvas.getBoundingClientRect();
+  if (!r.width || !r.height) return;
+  canvas.width = r.width * dpr;
+  canvas.height = r.height * dpr;
+  const cx = canvas.getContext("2d");
+  cx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const W = r.width, H = r.height;
+  const g = cx.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0, "#040611");
+  g.addColorStop(1, "#0c0f1c");
+  cx.fillStyle = g;
+  cx.fillRect(0, 0, W, H);
+  cx.fillStyle = "#070912";
+  cx.fillRect(0, H - 12, W, 12);
+  cx.strokeStyle = "rgba(255,255,255,0.06)";
+  for (let i = 1; i < 5; i++) {
+    cx.beginPath(); cx.moveTo(0, (H - 12) * (1 - i / 5));
+    cx.lineTo(W, (H - 12) * (1 - i / 5)); cx.stroke();
+  }
+  const sel = new Set(ctx.selection.list());
+  const maxH = 200;
+  for (const cue of ctx.show.cues) {
     const eff = store.findEffect(cue.effectId);
     if (!eff) continue;
-    const left = (cue.time / sh.duration) * 100;
-    const c = partTypeColor(eff.partType);
-    const w = Math.max(1.5, (eff.duration / sh.duration) * 100);
-    wrap.appendChild(el("div", {
-      title: `${eff.name} · ${formatTime(cue.time)}`,
-      style: {
-        position: "absolute",
-        left: `${left}%`,
-        width: `${w}%`,
-        top: "8px",
-        bottom: "8px",
-        background: `${c}55`,
-        borderLeft: `3px solid ${c}`,
-        borderRadius: "3px",
-        cursor: "pointer",
-        padding: "4px 6px",
-        fontSize: "11px",
-        color: "#fff",
-        whiteSpace: "nowrap",
-        overflow: "hidden",
-        textOverflow: "ellipsis",
-      },
-      onClick: () => openEditCue(sh, cue, refresh),
-    }, partTypeIcon(eff.partType), " ", eff.name));
+    const x = (cue.time / ctx.show.duration) * W;
+    const ratio = Math.min(1, eff.height / maxH);
+    const y = (H - 12) - ratio * (H - 30);
+    const c = eff.colors[0];
+    const isSel = sel.has(cue.id);
+    cx.shadowBlur = 12;
+    cx.shadowColor = c;
+    cx.fillStyle = c;
+    cx.beginPath();
+    cx.arc(x, y, isSel ? 6 : 4, 0, Math.PI * 2);
+    cx.fill();
+    cx.shadowBlur = 0;
+    if (isSel) {
+      cx.strokeStyle = "#fff"; cx.lineWidth = 1.5;
+      cx.beginPath(); cx.arc(x, y, 9, 0, Math.PI * 2); cx.stroke();
+    }
   }
+}
+
+// ---- Right pane : inspector ----
+
+function buildRightPane(ctx) {
+  const pane = el("aside", { class: "studio-right" });
+  pane.appendChild(buildInspectorContent(ctx));
+  return pane;
+}
+
+function buildInspectorContent(ctx) {
+  const wrap = document.createDocumentFragment();
+  const head = el("h3", { class: "studio-pane-title" }, "Inspecteur");
+  wrap.appendChild(head);
+  const body = el("div", { class: "studio-inspector" });
+
+  const ids = ctx.selection.list();
+  if (!ids.length) {
+    body.appendChild(el("p", { class: "empty-desc" },
+      "Sélectionnez un cue pour voir ses propriétés."));
+  } else if (ids.length > 1) {
+    body.appendChild(el("p", { class: "page-subtitle" },
+      `${ids.length} cues sélectionnés.`));
+    body.appendChild(buildBulkActions(ctx));
+  } else {
+    const cue = ctx.show.cues.find((c) => c.id === ids[0]);
+    if (cue) renderInspector(body, ctx, cue);
+  }
+  wrap.appendChild(body);
   return wrap;
 }
 
-function buildCueTable(sh, refresh) {
-  if (!sh.cues.length) {
-    return el("p", { class: "empty-desc" }, "Aucun cue. Cliquez sur « + Ajouter un cue ».");
-  }
-  const t = el("table", { class: "table" });
-  t.appendChild(el("thead", {},
-    el("tr", {},
-      el("th", { class: "num" }, "Temps"),
-      el("th", {}, "Effet"),
-      el("th", {}, "Type"),
-      el("th", { class: "num" }, "Calibre"),
-      el("th", { class: "num" }, "Qté"),
-      el("th", { class: "num" }, "Coût"),
-      el("th", {}, ""))));
-  const tb = el("tbody");
-  for (const cue of sh.cues) {
-    const eff = store.findEffect(cue.effectId);
-    if (!eff) continue;
-    const c = partTypeColor(eff.partType);
-    tb.appendChild(el("tr", {},
-      el("td", { class: "num" },
-        el("input", {
-          type: "number", min: 0, max: sh.duration, step: 0.1,
-          value: cue.time,
-          style: "width: 80px;",
-          onChange: (e) => {
-            store.updateCue(sh.id, cue.id, { time: +e.target.value });
-            refresh();
-          },
-        })),
-      el("td", {}, eff.name),
-      el("td", {},
-        el("span", { class: "badge", style: { color: c, borderColor: c } },
-          partTypeIcon(eff.partType), " ", partTypeLabel(eff.partType))),
-      el("td", { class: "num" }, eff.caliber ? `${eff.caliber}mm` : "—"),
-      el("td", { class: "num" },
-        el("input", {
-          type: "number", min: 1, max: 99, value: cue.quantity,
-          style: "width: 60px;",
-          onChange: (e) => {
-            store.updateCue(sh.id, cue.id, { quantity: +e.target.value });
-            refresh();
-          },
-        })),
-      el("td", { class: "num" }, formatPrice(eff.price * cue.quantity)),
-      el("td", {},
-        el("button", {
-          class: "btn btn-ghost",
-          style: "color: var(--danger); padding: 2px 8px;",
-          onClick: async () => {
-            const ok = await confirm("Supprimer ce cue ?", { danger: true, okLabel: "Supprimer" });
-            if (!ok) return;
-            store.removeCue(sh.id, cue.id);
-            refresh();
-          },
-        }, "🗑"))));
-  }
-  t.appendChild(tb);
-  return t;
+function buildBulkActions(ctx) {
+  const ids = ctx.selection.list();
+  const move = el("input", { type: "number", value: 0, step: 0.1, style: "width: 80px;" });
+  return el("div", {},
+    el("label", { class: "field-label" }, "Décaler tous (s)"),
+    el("div", { style: "display: flex; gap: 6px; align-items: center; margin-bottom: 12px;" },
+      move,
+      el("button", {
+        class: "btn",
+        onClick: () => {
+          const dt = +move.value;
+          if (!dt) return;
+          ctx.snapshotBefore("Décalage groupé");
+          for (const id of ids) {
+            const c = ctx.show.cues.find((x) => x.id === id);
+            if (c) store.updateCue(ctx.showId, id, { time: c.time + dt });
+          }
+          ctx.refresh();
+        },
+      }, "Appliquer")),
+    el("button", {
+      class: "btn btn-danger",
+      style: "width: 100%;",
+      onClick: async () => {
+        if (!await confirm(`Supprimer ${ids.length} cue(s) ?`,
+          { danger: true, okLabel: "Supprimer" })) return;
+        ctx.snapshotBefore("Suppression groupée");
+        store.removeCues(ctx.showId, ids);
+        ctx.selection.clear();
+        ctx.refresh();
+      },
+    }, `Supprimer ${ids.length} cue(s)`));
 }
 
-function openPicker(sh, refresh) {
+// ---- Timeline row ----
+
+function buildTimelineRow(ctx) {
+  const wrap = el("section", { class: "studio-timeline-wrap" });
+  wrap.appendChild(el("div", {
+    style: "display: flex; justify-content: space-between; align-items: center; padding: 8px 14px;",
+  },
+    el("div", { class: "field-label" },
+      `Timeline · ${ctx.show.cues.length} cue(s)`),
+    el("div", { style: "display: flex; gap: 4px;" },
+      el("button", {
+        class: "btn btn-ghost",
+        onClick: () => ctx.selection.clear(),
+        disabled: ctx.selection.size() === 0,
+      }, "Désélectionner"),
+      el("button", {
+        class: "btn btn-ghost",
+        onClick: () => ctx.selection.set(ctx.show.cues.map((c) => c.id)),
+      }, "Tout sélectionner"),
+      el("button", {
+        class: "btn btn-primary",
+        onClick: () => openPicker(ctx),
+      }, "+ Ajouter"))));
+
+  const tl = buildTimeline(ctx);
+  wrap.appendChild(tl.node);
+  return wrap;
+}
+
+// ---- Picker ----
+
+function openPicker(ctx, defaultTime = null) {
   let search = "";
   let partType = "all";
 
   const list = el("div", {
-    style: "max-height: 50vh; overflow-y: auto; display: flex; flex-direction: column; gap: 4px;",
+    style: "max-height: 50vh; overflow-y: auto;",
   });
 
   const draw = () => {
@@ -222,95 +454,149 @@ function openPicker(sh, refresh) {
       list.appendChild(el("p", { class: "empty-desc" }, "Aucun effet."));
       return;
     }
-    for (const eff of items.slice(0, 80)) {
-      const c = partTypeColor(eff.partType);
+    for (const eff of items.slice(0, 100)) {
       list.appendChild(el("div", {
-        style: "display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 4px; cursor: pointer; border: 1px solid var(--border-soft);",
+        style: "display: flex; gap: 8px; padding: 6px 10px; border-radius: 4px; cursor: pointer; align-items: center; border: 1px solid transparent;",
         onClick: () => {
-          const t = sh.cues.length ?
-            Math.min(sh.duration, sh.cues[sh.cues.length - 1].time + 2) : 0;
-          store.addCue(sh.id, eff.id, t, 1);
+          const t = defaultTime != null ? defaultTime : nextCueTime(ctx.show);
+          ctx.snapshotBefore("Ajout cue");
+          const cue = store.addCue(ctx.showId, eff.id, t);
+          if (cue) ctx.selection.set([cue.id]);
           close();
-          refresh();
+          ctx.refresh();
         },
+        onMouseenter: (e) => e.currentTarget.style.background = "var(--bg-soft)",
+        onMouseleave: (e) => e.currentTarget.style.background = "transparent",
       },
         el("div", {
-          style: { width: "10px", height: "10px", borderRadius: "50%",
-                   background: eff.colors[0], boxShadow: `0 0 6px ${eff.colors[0]}` },
+          style: { background: eff.colors[0], width: "10px", height: "10px",
+                   borderRadius: "50%", boxShadow: `0 0 6px ${eff.colors[0]}` },
         }),
         el("div", { style: "flex: 1;" },
           el("div", { style: "font-size: 12px;" }, eff.name),
           el("div", { style: "font-size: 10px; color: var(--text-mute);" },
-            partTypeLabel(eff.partType),
-            eff.caliber ? ` · ${eff.caliber}mm` : "",
-            ` · ${eff.duration}s · ${formatPrice(eff.price)}`))));
+            `${partTypeLabel(eff.partType)}${eff.caliber ? ` · ${eff.caliber}mm` : ""} · ${eff.duration}s · ${formatPrice(eff.price)}`))));
     }
   };
 
   const ptSelect = el("select", {
     onChange: (e) => { partType = e.target.value; draw(); },
   },
-    el("option", { value: "all" }, "Tous"),
+    el("option", { value: "all" }, "Tous types"),
     ...Object.keys(PART_TYPES).map((k) =>
       el("option", { value: k }, partTypeLabel(k))));
 
-  const filters = el("div", {
-    style: "display: flex; gap: 8px; margin-bottom: 12px;",
-  },
-    el("input", {
-      type: "search", placeholder: "Rechercher…",
-      style: "flex: 1;",
-      onInput: (e) => { search = e.target.value; draw(); },
-    }),
-    ptSelect);
-
   draw();
   const { close } = modal({
-    title: "Ajouter un cue",
-    body: el("div", {}, filters, list),
+    title: defaultTime != null
+      ? `Ajouter à ${formatTime(defaultTime)}`
+      : "Ajouter un cue",
+    body: el("div", {},
+      el("div", { style: "display: flex; gap: 8px; margin-bottom: 12px;" },
+        el("input", {
+          type: "search", placeholder: "Rechercher…", style: "flex: 1;",
+          onInput: (e) => { search = e.target.value; draw(); },
+        }),
+        ptSelect),
+      list),
     footer: [el("button", { class: "btn", onClick: () => close() }, "Fermer")],
   });
 }
 
-function openEditCue(sh, cue, refresh) {
-  const eff = store.findEffect(cue.effectId);
-  if (!eff) return;
-  const c = partTypeColor(eff.partType);
-  modal({
-    title: eff.name,
-    body: el("div", {},
-      el("p", { class: "page-subtitle" },
-        `${partTypeLabel(eff.partType)}${eff.subtype ? ` · ${subtypeLabel(eff.subtype)}` : ""}${eff.caliber ? ` · ${eff.caliber}mm` : ""} · ${eff.duration}s`),
-      field("Temps (s)",
-        el("input", {
-          type: "number", min: 0, max: sh.duration, step: 0.1,
-          value: cue.time,
-          onChange: (e) => {
-            store.updateCue(sh.id, cue.id, { time: +e.target.value });
-          },
-        })),
-      field("Quantité",
-        el("input", {
-          type: "number", min: 1, max: 99,
-          value: cue.quantity,
-          onChange: (e) => {
-            store.updateCue(sh.id, cue.id, { quantity: +e.target.value });
-          },
-        }))),
-    footer: [
-      el("button", {
-        class: "btn btn-danger",
-        onClick: async () => {
-          const ok = await confirm("Supprimer ce cue ?", { danger: true, okLabel: "Supprimer" });
-          if (!ok) return;
-          store.removeCue(sh.id, cue.id);
-          refresh();
-        },
-      }, "Supprimer"),
-      el("button", {
-        class: "btn btn-primary",
-        onClick: () => { refresh(); },
-      }, "OK"),
-    ],
-  });
+// ---- Copy / Cut / Paste / Duplicate ----
+
+function copyCues(ctx, remove) {
+  const ids = ctx.selection.list();
+  if (!ids.length) return;
+  const cues = ctx.show.cues
+    .filter((c) => ids.includes(c.id))
+    .map((c) => ({
+      effectId: c.effectId, time: c.time, quantity: c.quantity,
+      notes: c.notes, tags: c.tags, envelope: c.envelope,
+    }));
+  const minT = Math.min(...cues.map((c) => c.time));
+  clipboard.set("cues", { cues, originTime: minT });
+  if (remove) {
+    ctx.snapshotBefore("Couper");
+    store.removeCues(ctx.showId, ids);
+    ctx.selection.clear();
+    ctx.refresh();
+  }
+  toast(`${cues.length} cue(s) ${remove ? "coupé(s)" : "copié(s)"}.`, "success");
+}
+
+function pasteCues(ctx) {
+  const data = clipboard.get();
+  if (!data || data.kind !== "cues") {
+    toast("Presse-papier vide.", "warning");
+    return;
+  }
+  const cues = data.payload.cues;
+  if (!cues.length) return;
+
+  const sel = ctx.selection.list()
+    .map((id) => ctx.show.cues.find((c) => c.id === id))
+    .filter(Boolean);
+  let target = sel.length
+    ? Math.max(...sel.map((c) => c.time)) + 0.5
+    : data.payload.originTime + 1;
+  const offset = target - data.payload.originTime;
+
+  ctx.snapshotBefore("Coller");
+  const newIds = [];
+  for (const c of cues) {
+    if (!store.findEffect(c.effectId)) continue;
+    const t = Math.max(0, Math.min(ctx.show.duration, c.time + offset));
+    const cue = store.addCue(ctx.showId, c.effectId, t, c.quantity);
+    if (cue) {
+      if (c.notes) store.updateCue(ctx.showId, cue.id, { notes: c.notes });
+      if (c.tags) store.updateCue(ctx.showId, cue.id, { tags: c.tags });
+      if (c.envelope) store.updateCue(ctx.showId, cue.id, { envelope: c.envelope });
+      newIds.push(cue.id);
+    }
+  }
+  ctx.selection.set(newIds);
+  ctx.refresh();
+  toast(`${newIds.length} cue(s) collé(s).`, "success");
+}
+
+function duplicateCues(ctx) {
+  const ids = ctx.selection.list();
+  if (!ids.length) return;
+  ctx.snapshotBefore("Dupliquer");
+  const newIds = [];
+  for (const id of ids) {
+    const c = ctx.show.cues.find((x) => x.id === id);
+    if (!c) continue;
+    const t = Math.min(ctx.show.duration, c.time + 1);
+    const cue = store.addCue(ctx.showId, c.effectId, t, c.quantity);
+    if (cue) newIds.push(cue.id);
+  }
+  ctx.selection.set(newIds);
+  ctx.refresh();
+  toast(`${newIds.length} cue(s) dupliqué(s).`, "success");
+}
+
+// ---- Undo / Redo ----
+
+function doUndo(ctx) {
+  const snap = history.undo();
+  if (snap) {
+    // Restore : remplace state.shows (on accède via setShows pas clean,
+    // ici on patche directement chaque show)
+    Object.assign(store.get().shows, snap);
+    // Plus simple : recharger via reset mais ça écrase tout. On laisse
+    // l'undo simple pour le moment : navigate refresh.
+    ctx.refresh();
+    toast("Annulation.", "info");
+  }
+}
+
+function doRedo(ctx) {
+  const snap = history.redo();
+  if (snap) {
+    Object.assign(store.get().shows, snap);
+    ctx.refresh();
+    toast("Rétablissement.", "info");
+  }
 }

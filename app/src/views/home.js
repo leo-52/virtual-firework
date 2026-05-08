@@ -1,6 +1,7 @@
-import { el, formatPrice } from "../ui/kit.js";
+import { el, formatPrice, modal, toast } from "../ui/kit.js";
 import * as store from "../store.js";
 import { PART_TYPES, partTypeColor, partTypeIcon, partTypeLabel } from "../catalog.js";
+import { TEMPLATES } from "../templates.js";
 
 export function renderHome(root, navigate) {
   const stats = store.globalStats();
@@ -16,6 +17,10 @@ export function renderHome(root, navigate) {
       el("p", { class: "page-subtitle" },
         last ? `Dernier spectacle : ${last.name}` : "Démarrez en créant votre premier spectacle.")),
     el("div", { class: "page-actions" },
+      el("button", {
+        class: "btn",
+        onClick: () => openTemplatePicker(navigate),
+      }, "📋 Templates"),
       el("button", {
         class: "btn",
         onClick: () => navigate("library"),
@@ -94,4 +99,34 @@ function showCard(sh, navigate) {
       el("span", {}, `${sh.cues.length} cue(s)`),
       el("span", {}, `${sh.duration}s`),
       el("span", { style: "color: var(--accent-text);" }, formatPrice(cost))));
+}
+
+function openTemplatePicker(navigate) {
+  const grid = el("div", {
+    style: "display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px;",
+  });
+  for (const tpl of TEMPLATES) {
+    grid.appendChild(el("article", {
+      class: "card",
+      style: { borderColor: tpl.accent },
+      onClick: () => {
+        const sh = store.createShowFromTemplate(tpl);
+        toast(`« ${sh.name} » créé.`, "success");
+        close();
+        navigate("editor", { id: sh.id });
+      },
+    },
+      el("div", { style: { fontSize: "32px", color: tpl.accent } }, tpl.icon),
+      el("h3", { class: "card-title" }, tpl.name),
+      el("p", { class: "card-desc" }, tpl.description),
+      el("div", { class: "card-meta" },
+        el("span", {}, `${tpl.duration}s`),
+        el("span", {}, " · "),
+        el("span", {}, `${tpl.build().cues.length} cues`))));
+  }
+  const { close } = modal({
+    title: "Choisir un template",
+    body: grid,
+    footer: [el("button", { class: "btn", onClick: () => close() }, "Annuler")],
+  });
 }

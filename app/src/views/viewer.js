@@ -1,30 +1,22 @@
-// Visualiseur stub (V2 — version réécriture).
-//
-// Squelette fonctionnel : sélection de spectacle, contrôles play/pause,
-// progress bar, mini canvas 2D pour visualiser. Le moteur 3D WebGL2
-// complet sera porté dans la prochaine itération.
+// Visualiseur V2 complet : moteur 3D WebGL2 + audio sync + presets caméra.
 
 import { el, formatTime, toast } from "../ui/kit.js";
 import * as store from "../store.js";
-import { partTypeColor } from "../catalog.js";
+import { Renderer } from "../engine/renderer.js";
+import { AudioPlayer, playBeep } from "../tools/audio.js";
 
 export function renderViewer(root, navigate, params = {}) {
   let currentId = params.id || (store.getShows()[0] && store.getShows()[0].id);
-  let raf = null;
-  let playing = false;
-  let t = 0;
-  let lastFrame = 0;
-
-  root.appendChild(el("header", { class: "page-header" },
-    el("div", {},
-      el("h1", { class: "page-title" }, "Visualiseur"),
-      el("p", { class: "page-subtitle" },
-        "Prévisualisation du spectacle. Le moteur 3D sera porté dans la prochaine itération."))));
+  let renderer = null;
+  let audio = null;
+  let switchToken = 0;
 
   if (!store.getShows().length) {
+    root.appendChild(el("header", { class: "page-header" },
+      el("div", {}, el("h1", { class: "page-title" }, "Visualiseur"))));
     root.appendChild(el("div", { class: "empty" },
-      el("h2", { class: "empty-title" }, "Aucun spectacle à prévisualiser"),
-      el("p", { class: "empty-desc" }, "Créez un spectacle d'abord."),
+      el("h2", { class: "empty-title" }, "Aucun spectacle"),
+      el("p", { class: "empty-desc" }, "Créez d'abord un spectacle."),
       el("button", {
         class: "btn btn-primary",
         onClick: () => navigate("shows"),
@@ -34,6 +26,17 @@ export function renderViewer(root, navigate, params = {}) {
 
   const show = store.getShow(currentId) || store.getShows()[0];
   currentId = show.id;
+
+  // Header
+  root.appendChild(el("header", { class: "page-header" },
+    el("div", {},
+      el("h1", { class: "page-title" }, "Visualiseur"),
+      el("p", { class: "page-subtitle" }, `Moteur FX 3D · ${show.name}`)),
+    el("div", { class: "page-actions" },
+      el("button", {
+        class: "btn",
+        onClick: () => navigate("editor", { id: show.id }),
+      }, "← Éditer"))));
 
   // Sélecteur
   const select = el("select", {
@@ -45,21 +48,18 @@ export function renderViewer(root, navigate, params = {}) {
     el("option", { value: s.id, selected: s.id === currentId }, s.name)));
 
   // Canvas
-  const canvas = el("canvas", {
-    style: "width: 100%; height: 480px; background: #02030a; border-radius: 6px; display: block;",
-  });
-  const ctx = canvas.getContext("2d");
+  const canvas = el("canvas", { class: "viewer-canvas" });
 
   // Contrôles
-  const playBtn = el("button", { class: "btn btn-primary", onClick: () => togglePlay() }, "▶ Lecture");
-  const resetBtn = el("button", { class: "btn", onClick: () => reset() }, "⟲ Reprendre");
+  const playBtn = el("button", { class: "btn btn-primary", onClick: () => playToggle() }, "▶ Lecture");
+  const resetBtn = el("button", { class: "btn", onClick: () => doReset() }, "⟲ Reprendre");
   const timeLabel = el("span", { style: "font-variant-numeric: tabular-nums;" }, "00:00.0");
   const progress = el("div", {
     style: "flex: 1; height: 6px; background: var(--bg-soft); border-radius: 3px; cursor: pointer;",
     onClick: (e) => {
       const r = progress.getBoundingClientRect();
       const ratio = (e.clientX - r.left) / r.width;
-      seek(ratio * show.duration);
+      doSeek(ratio * show.duration);
     },
   });
   const progressBar = el("div", {
@@ -71,133 +71,136 @@ export function renderViewer(root, navigate, params = {}) {
     style: "display: flex; gap: 8px; align-items: center; margin-bottom: 12px;",
   }, el("label", { class: "field-label" }, "Spectacle"), select));
   root.appendChild(canvas);
+
+  // Toolbar contrôles
   root.appendChild(el("div", {
-    style: "display: flex; gap: 12px; align-items: center; margin-top: 12px;",
-  }, playBtn, resetBtn, progress,
-    timeLabel,
+    style: "display: flex; gap: 12px; align-items: center; margin-top: 10px;",
+  }, playBtn, resetBtn, progress, timeLabel,
     el("span", { class: "page-subtitle" }, ` / ${formatTime(show.duration)}`)));
 
-  // Liste des cues à venir
-  root.appendChild(el("div", { class: "section" },
-    el("h2", { class: "section-title" }, `Cues du spectacle (${show.cues.length})`),
-    buildCueList(show)));
-
-  // ---- Boucle ----
-
-  function fitCanvas() {
-    const dpr = window.devicePixelRatio || 1;
-    const r = canvas.getBoundingClientRect();
-    canvas.width = r.width * dpr;
-    canvas.height = r.height * dpr;
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  // Toolbar caméra + bloom + audio
+  const cam = el("div", { class: "viewer-toolbar" });
+  cam.appendChild(el("span", { class: "field-label" }, "Caméra"));
+  for (const [label, k] of [
+    ["Spectateur", "spectator"],
+    ["Tireur", "shooter"],
+    ["Plongée", "topdown"],
+    ["Dramatique", "dramatic"],
+    ["Reset", "default"],
+  ]) {
+    cam.appendChild(el("button", {
+      class: "btn btn-ghost",
+      onClick: () => renderer && renderer.applyCameraPreset(k),
+    }, label));
   }
 
-  function reset() {
-    playing = false;
-    t = 0;
-    if (raf) { cancelAnimationFrame(raf); raf = null; }
-    redraw();
+  cam.appendChild(el("span", { class: "viewer-toolbar-sep" }));
+
+  const bloomToggle = el("input", { type: "checkbox" });
+  bloomToggle.checked = store.getSettings().bloom !== false;
+  bloomToggle.addEventListener("change", () =>
+    renderer && renderer.setBloomEnabled(bloomToggle.checked));
+  cam.appendChild(el("label", { class: "viewer-toolbar-item" }, bloomToggle, "Bloom"));
+
+  const bloomSlider = el("input", {
+    type: "range", min: 0, max: 2, step: 0.05,
+    value: String(store.getSettings().bloomIntensity ?? 0.9),
+    onInput: (e) => renderer && renderer.setBloomIntensity(+e.target.value),
+  });
+  cam.appendChild(el("label", { class: "viewer-toolbar-item" }, "Intensité", bloomSlider));
+
+  cam.appendChild(el("span", { class: "viewer-toolbar-sep" }));
+
+  const beepToggle = el("input", { type: "checkbox" });
+  beepToggle.checked = !!store.getSettings().beepOnCue;
+  cam.appendChild(el("label", { class: "viewer-toolbar-item" }, beepToggle, "Bip cue"));
+
+  const volSlider = el("input", {
+    type: "range", min: 0, max: 1, step: 0.05, value: 1,
+    onInput: (e) => audio && audio.setVolume(+e.target.value),
+  });
+  cam.appendChild(el("label", { class: "viewer-toolbar-item" }, "Volume", volSlider));
+
+  root.appendChild(cam);
+
+  root.appendChild(el("p", {
+    style: "margin-top: 8px; padding: 6px 10px; font-size: 11px; color: var(--text-soft); background: var(--bg-soft); border-radius: 4px; text-align: center;",
+  }, "🖱 Glisser : orbiter · Maj+glisser : pan · Roulette : zoom"));
+
+  // ---- Init renderer ----
+
+  switchToken++;
+  const myToken = switchToken;
+  requestAnimationFrame(() => {
+    if (myToken !== switchToken) return;
+    try {
+      renderer = new Renderer(canvas);
+    } catch (e) {
+      toast("WebGL2 indisponible : " + e.message, "error");
+      return;
+    }
+    renderer.load(show);
+    renderer.onTick = (t, dur) => {
+      timeLabel.textContent = formatTime(t);
+      progressBar.style.width = `${(t / dur) * 100}%`;
+    };
+    renderer.onEnd = () => {
+      toast("Spectacle terminé.", "success");
+      if (audio) audio.stop();
+    };
+    renderer.onCueFired = () => {
+      if (beepToggle.checked) playBeep(880, 0.05, 0.15);
+    };
+    renderer.setBloomEnabled(bloomToggle.checked);
+    renderer.setBloomIntensity(+bloomSlider.value);
+    attachAudio(show);
+  });
+
+  async function attachAudio(show) {
+    if (audio) { audio.stop(); audio = null; }
+    if (!show.audio?.dataUrl) return;
+    try {
+      audio = new AudioPlayer();
+      await audio.setFromDataUrl(show.audio.dataUrl);
+      audio.setVolume(+volSlider.value);
+    } catch (e) {
+      toast("Audio illisible : " + e.message, "warning");
+      audio = null;
+    }
+  }
+
+  // ---- Contrôles ----
+
+  function playToggle() {
+    if (!renderer) return;
+    if (renderer.playing) {
+      renderer.pause();
+      if (audio) audio.pause();
+      playBtn.textContent = "▶ Lecture";
+    } else {
+      renderer.play();
+      if (audio?.buffer) audio.play(renderer.t);
+      playBtn.textContent = "⏸ Pause";
+    }
+  }
+  function doReset() {
+    if (!renderer) return;
+    renderer.reset();
+    if (audio) { audio.stop(); audio.startOffset = 0; }
     playBtn.textContent = "▶ Lecture";
   }
-
-  function seek(time) {
-    t = Math.max(0, Math.min(show.duration, time));
-    redraw();
-  }
-
-  function togglePlay() {
-    if (playing) {
-      playing = false;
-      playBtn.textContent = "▶ Lecture";
-      if (raf) { cancelAnimationFrame(raf); raf = null; }
-    } else {
-      if (t >= show.duration) t = 0;
-      playing = true;
-      playBtn.textContent = "⏸ Pause";
-      lastFrame = performance.now();
-      loop();
+  function doSeek(t) {
+    if (!renderer) return;
+    renderer.seek(t);
+    if (audio) {
+      if (renderer.playing) audio.play(t);
+      else { audio.stop(); audio.startOffset = t; }
     }
   }
 
-  function loop() {
-    if (!playing) return;
-    const now = performance.now();
-    const dt = Math.min(0.05, (now - lastFrame) / 1000);
-    lastFrame = now;
-    t += dt;
-    if (t >= show.duration) {
-      t = show.duration;
-      playing = false;
-      playBtn.textContent = "▶ Lecture";
-    }
-    redraw();
-    if (playing) raf = requestAnimationFrame(loop);
-  }
-
-  function redraw() {
-    fitCanvas();
-    const r = canvas.getBoundingClientRect();
-    const W = r.width, H = r.height;
-    // Fond dégradé nuit
-    const g = ctx.createLinearGradient(0, 0, 0, H);
-    g.addColorStop(0, "#02030a");
-    g.addColorStop(1, "#0c0f1c");
-    ctx.fillStyle = g;
-    ctx.fillRect(0, 0, W, H);
-    // Sol
-    ctx.fillStyle = "#070912";
-    ctx.fillRect(0, H - 12, W, 12);
-
-    // Cues : tous affichés comme des dots, ceux passés brillent encore
-    const maxH = 200;
-    for (const cue of show.cues) {
-      const eff = store.findEffect(cue.effectId);
-      if (!eff) continue;
-      const dt = t - cue.time;
-      if (dt < 0) continue;             // pas encore tiré
-      if (dt > eff.duration) continue;  // déjà fini
-      const ratio = Math.min(1, eff.height / maxH);
-      const x = ((cue.time / show.duration) * 0.6 + 0.2) * W;
-      const y = (H - 12) - ratio * (H - 30);
-      const fade = 1 - dt / eff.duration;
-      const c = eff.colors[0];
-      ctx.fillStyle = c;
-      ctx.shadowBlur = 16 * fade;
-      ctx.shadowColor = c;
-      ctx.beginPath();
-      ctx.arc(x, y, 4 + 8 * fade, 0, Math.PI * 2);
-      ctx.fill();
-    }
-    ctx.shadowBlur = 0;
-
-    timeLabel.textContent = formatTime(t);
-    progressBar.style.width = `${(t / show.duration) * 100}%`;
-  }
-
-  redraw();
-}
-
-function buildCueList(show) {
-  if (!show.cues.length) return el("p", { class: "empty-desc" }, "Aucun cue.");
-  const list = el("ul", { style: "list-style: none; padding: 0; margin: 0;" });
-  for (const cue of show.cues.slice(0, 20)) {
-    const eff = store.findEffect(cue.effectId);
-    if (!eff) continue;
-    const c = partTypeColor(eff.partType);
-    list.appendChild(el("li", {
-      style: "display: grid; grid-template-columns: 70px 1fr auto; gap: 8px; align-items: center; padding: 6px 10px; border-bottom: 1px solid var(--border-soft);",
-    },
-      el("span", { style: "color: var(--text-mute); font-variant-numeric: tabular-nums;" },
-        formatTime(cue.time)),
-      el("span", {},
-        el("span", { style: { color: c, marginRight: "6px" } }, "●"),
-        eff.name),
-      cue.quantity > 1 ?
-        el("span", { class: "badge" }, `×${cue.quantity}`) : null));
-  }
-  if (show.cues.length > 20) {
-    list.appendChild(el("li", { class: "page-subtitle", style: "padding: 6px 10px;" },
-      `… et ${show.cues.length - 20} autre(s).`));
-  }
-  return list;
+  // Cleanup quand on change de route
+  window.addEventListener("popstate", () => {
+    if (renderer && renderer.destroy) renderer.destroy();
+    if (audio) audio.stop();
+  }, { once: true });
 }

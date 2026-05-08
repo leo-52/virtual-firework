@@ -315,6 +315,18 @@ export function deleteCustomEffect(id) {
   return false;
 }
 
+// ---- Templates ----
+
+export function createShowFromTemplate(template) {
+  const built = template.build();
+  const sh = createShow(template.name, template.description);
+  sh.duration = built.duration;
+  sh.cues = built.cues.map((c) => ({ ...c, id: genId("cue") }));
+  sh.updatedAt = Date.now();
+  save();
+  return sh;
+}
+
 // ---- Audio / lieu ----
 
 export function setShowAudio(showId, audio) {
