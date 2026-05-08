@@ -1,7 +1,7 @@
 // Catalogue d'effets pyrotechniques (V2).
 //
 // 30 effets génériques inspirés du langage VDL (Visual Description Language)
-// de Finale FX. À remplacer par le vrai catalogue Prevot quand un export
+// de Prevot FX. À remplacer par le vrai catalogue Prevot quand un export
 // sera disponible.
 //
 // Modèle d'un effet :

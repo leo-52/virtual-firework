@@ -11,7 +11,7 @@
 
 **But** : application bureau (NW.js) en français pour la création de spectacles
 pyrotechniques FX — pour usage interne (équipe).
-**Stratégie** : on conserve le moteur Finale FX embarqué (`app.nw/`) comme
+**Stratégie** : on conserve le moteur Prevot FX embarqué (`app.nw/`) comme
 référence et fallback pendant la transition, et on construit progressivement
 une nouvelle UI/UX française autour, puis on grignote les morceaux du moteur
 au fil des sessions.
@@ -21,7 +21,7 @@ au fil des sessions.
 PrevoFX (notre app)
 ├── ui/         ← shell français, vues, éditeur, commandes, etc.
 ├── engine/     ← futur : notre moteur de rendu (à construire)
-└── compat/     ← couche d'interop avec le moteur Finale FX existant
+└── compat/     ← couche d'interop avec le moteur Prevot FX existant
 ```
 
 ---
@@ -36,7 +36,7 @@ PrevoFX (notre app)
 - Catalogue de 23 effets (7 catégories)
 - Modèle de données Show/Cue + persistance localStorage
 - Vues : Accueil (dashboard), Spectacles (CRUD), Éditeur (timeline +
-  picker), Bibliothèque (filtrable), Visualiseur (sim 2D + iframe Finale FX),
+  picker), Bibliothèque (filtrable), Visualiseur (sim 2D + iframe Prevot FX),
   Commandes (agrégation + export CSV), Paramètres (export/import JSON, reset)
 - Simulateur 2D Canvas indépendant (5 types de spawn)
 - Reconnaissance complète (ce document) :
@@ -130,10 +130,10 @@ PrevoFX (notre app)
   - `renderer.js` : pipeline complet (sky → ground → particules
     instanciées), billboard via uCamRight/uCamUp, blending additif,
     boucle play/pause/seek
-- **Visualiseur 3 modes** : FX PrevoFX (par défaut) / Sim 2D / Finale FX
+- **Visualiseur 3 modes** : FX PrevoFX (par défaut) / Sim 2D / Prevot FX
   embarqué. Stats provider du mode actif branché au Perf Dialog.
 - **GPU Lab** (`views/gpu-lab.js`) :
-  - Onglet Résumé : pipeline Finale FX expliqué, 35 shaders inventoriés
+  - Onglet Résumé : pipeline Prevot FX expliqué, 35 shaders inventoriés
     par famille (sparks/smoke/flame/lightbeam/mesh/post/physics/UI)
   - Onglet Shaders : liste filtrable par famille, lecture du fichier
     GLSL, analyse automatique (uniforms, in/out, structs, source brute)
@@ -178,7 +178,7 @@ PrevoFX (notre app)
     UTF-8 par heuristique
   - Fonction `pretty()` pour rendu lisible, `stats()` pour métriques
 - **Inspecteur .fin dans GPU Lab** : nouvel onglet permettant de charger
-  un fichier `.fin` Finale FX (ou `.us`) et d'explorer sa structure :
+  un fichier `.fin` Prevot FX (ou `.us`) et d'explorer sa structure :
   arbre des champs avec tags numériques, vue "Chaînes lisibles" pour
   repérer titres et noms d'effets.
 
@@ -204,7 +204,7 @@ PrevoFX (notre app)
   - Cluster Audio (toggle bip cue + slider volume)
 - **Bip cue optionnel** : à chaque déclenchement, oscillateur 880 Hz
   (50 ms, gain 0.15) — utile en répétition silencieuse
-- **Settings étendus** : moteur par défaut (gl/sim/finalefx), bloom
+- **Settings étendus** : moteur par défaut (gl/sim/prevotfx), bloom
   on/off, intensité 0..2, bip cue par défaut, pas de quantification
   pour le snap timeline (0 = libre, 0.1s par défaut)
 - **Timeline pro** :
@@ -225,7 +225,7 @@ PrevoFX (notre app)
 
 ## 2. Reconnaissance — synthèse
 
-### 2.1 Bundle Finale FX (`app.nw/htmlui/`)
+### 2.1 Bundle Prevot FX (`app.nw/htmlui/`)
 - **`index-2K8NCIxq.js`** (4,6 Mo minifié) : application React + Tailwind CSS
   (détectée via `rc-slider`, classes utilitaires, `displayName`).
 - **`index-C-QQLG6G.css`** (12 Ko) : essentiellement Tailwind utility classes ;
@@ -263,7 +263,7 @@ PrevoFX (notre app)
 
 ---
 
-## 3. Inventaire des features Finale FX (issu du bundle)
+## 3. Inventaire des features Prevot FX (issu du bundle)
 
 > Source : extraction strings + analyse CSS du bundle minifié (session 2).
 > 150+ composants UI, ~40 catégories d'effets, 283 sons, 40+ shaders, 30+ endpoints API.
@@ -481,19 +481,19 @@ struct PhysicsParams { vec3 wind_velocity; }
 Messages identifiés dans la section data :
 
 ```
-FinaleFxEffect.Effect.node_vdl       ← racine
-FinaleFxEffect.Shot.node_vdl         ← un tir
-FinaleFxEffect.Launch.node_vdl       ← trajectoire de montée
-FinaleFxEffect.Break.node_vdl        ← explosion
-FinaleFxEffect.BreakPetal.node_vdl   ← pétale d'explosion
-FinaleFxEffect.Emitter.node_vdl      ← émetteur de particules
-FinaleFxEffect.StarParticle.node_vdl ← étoile (particule lumineuse)
-FinaleFxEffect.StarPhase.node_vdl    ← phase de vie d'une étoile
-FinaleFxEffect.SparkVisual.node_vdl  ← visuel d'étincelle
-FinaleFxEffect.FlameVisual.node_vdl  ← visuel de flamme
-FinaleFxEffect.SmokeVisual.node_vdl  ← visuel de fumée
-FinaleFxEffect.LightBeamVisual.node_vdl ← faisceau lumineux
-FinaleFxEffect.Sound.node_vdl        ← effet sonore
+PrevotFxEffect.Effect.node_vdl       ← racine
+PrevotFxEffect.Shot.node_vdl         ← un tir
+PrevotFxEffect.Launch.node_vdl       ← trajectoire de montée
+PrevotFxEffect.Break.node_vdl        ← explosion
+PrevotFxEffect.BreakPetal.node_vdl   ← pétale d'explosion
+PrevotFxEffect.Emitter.node_vdl      ← émetteur de particules
+PrevotFxEffect.StarParticle.node_vdl ← étoile (particule lumineuse)
+PrevotFxEffect.StarPhase.node_vdl    ← phase de vie d'une étoile
+PrevotFxEffect.SparkVisual.node_vdl  ← visuel d'étincelle
+PrevotFxEffect.FlameVisual.node_vdl  ← visuel de flamme
+PrevotFxEffect.SmokeVisual.node_vdl  ← visuel de fumée
+PrevotFxEffect.LightBeamVisual.node_vdl ← faisceau lumineux
+PrevotFxEffect.Sound.node_vdl        ← effet sonore
 ```
 
 → **Un effet = un arbre `Effect → Shot* → (Launch + Break)`**
@@ -520,7 +520,7 @@ en JS standard.
 
 ## 6. Plan multi-sessions
 
-### Track A — UI Finale FX (reproduction française)
+### Track A — UI Prevot FX (reproduction française)
 
 | # | Item | Statut | Session cible |
 |---|---|---|---|
@@ -545,7 +545,7 @@ en JS standard.
 | B3b | Reproduire glue Embind pour instanciation complète + appel `ee_newState` | à faire | 6+ |
 | B4 | Hello-world : compiler un effet trivial → render batch sur un canvas WebGL2 | à faire | 6+ |
 | B5a | Mini-renderer WebGL2 vanilla autonome (sky + ground + particules billboardées + 12 styles d'explosion VDL) | terminé | 5 |
-| B5b | Câbler la sortie `getRenderBatches()` du WASM aux shaders Finale FX originaux | à faire | 7+ |
+| B5b | Câbler la sortie `getRenderBatches()` du WASM aux shaders Prevot FX originaux | à faire | 7+ |
 | B6 | Étendre à plusieurs shaders (sparks v2, smoke, flame) | à faire | 5-7 |
 | B7 | Caméra / scène (sun, fog, tonemap) — _ground/sky/orbit déjà OK_ | partiel | 5 |
 | B8 | Composition full pipeline (post-process, blur, cubemap) | à faire | 9+ |
@@ -557,7 +557,7 @@ en JS standard.
 | C1 | Import KML (placement géographique) — parser + UI Fichier→Importer→KML | terminé | 3 |
 | C2 | Édition cue avancée : sélection multiple, copier/coller/couper/dupliquer/supprimer (raccourcis + menus + clipboard interne), décalage groupé, drag-to-move | terminé | 3-4 |
 | C3 | Bibliothèque d'effets éditable : favoris ⭐, effets personnalisés CRUD, onglets, filtres | terminé | 3 |
-| **C3b** | **Catalogue Prevot réel** : remplacer les 30 effets génériques par le vrai catalogue (export "My Parts" depuis Finale FX, ou autre format). Cf. § 3.7 — synchro via `api2.prevotfx.com/gql` mutation `ApplyMyPartsCsvChanges`. **Nécessite un fichier d'export utilisateur, en attente.** | en attente | quand l'export sera dispo |
+| **C3b** | **Catalogue Prevot réel** : remplacer les 30 effets génériques par le vrai catalogue (export "My Parts" depuis Prevot FX, ou autre format). Cf. § 3.7 — synchro via `api2.prevotfx.com/gql` mutation `ApplyMyPartsCsvChanges`. **Nécessite un fichier d'export utilisateur, en attente.** | en attente | quand l'export sera dispo |
 | C4 | Cesium 3D Tiles : terrain réel sous la scène (lat/lon → 3D Tiles streaming) | à faire | 7+ |
 | C5 | Import `.fin` / `.us` natif : décodeur protobuf wire-format + mapping heuristique vers le catalogue (30 mots-clés) → import en un clic dans un nouveau show. _Précision limitée sans descripteur officiel._ | quasi-terminé | 7 |
 | C6 | Export : bons de tir + bons de commande imprimables (PDF via window.print). _`.fin` natif à venir._ | quasi-terminé | 4 |
@@ -590,12 +590,12 @@ en JS standard.
 
 ## 8. Risques / inconnues à valider en cours de route
 
-1. **Licence Finale FX** : produit commercial, distribution à des collègues
+1. **Licence Prevot FX** : produit commercial, distribution à des collègues
    = potentielle violation. **À clarifier avec l'éditeur avant toute
    diffusion**, indépendamment des chantiers techniques.
 2. ~~**Cloud `prevotfx.com`**~~ **Tranché en session 2** : mode hors-ligne
    strict, bouclier réseau actif (cf. § 7). À surveiller : que de nouvelles
-   versions du bundle Finale FX n'introduisent pas d'autres domaines à
+   versions du bundle Prevot FX n'introduisent pas d'autres domaines à
    bloquer.
 3. **NW.js cross-package iframe** : est-ce que l'iframe `app/ui` →
    `app.nw/htmlui` se comporte bien (Node-remote, file://, CORS) ?
@@ -607,7 +607,7 @@ en JS standard.
 5. **Corpus zstd partagé** (`zstd_effect_blob_corpus_1.bin`, 6 Mo) :
    nécessaire au compilateur, au render, ou aux deux ?
 6. **Format `.fin`** : protobuf binaire — parser nécessite les `.proto`
-   sources (à reverse depuis `FinaleFxEffect.*.node_vdl`). Possible mais
+   sources (à reverse depuis `PrevotFxEffect.*.node_vdl`). Possible mais
    non trivial.
 7. **Modèles SketchUp `.skp`** : format propriétaire Trimble, pas de
    parser open source mature. Pour landmarks de démo, accepter de
@@ -619,7 +619,7 @@ en JS standard.
 
 ## 9. Glossaire FR
 
-| Terme EN (Finale FX) | Terme FR | Sens |
+| Terme EN (Prevot FX) | Terme FR | Sens |
 |---|---|---|
 | Show | Spectacle | Une chorégraphie complète |
 | Cue | Cue | Déclenchement d'un effet à un instant t (mot conservé, jargon métier) |
