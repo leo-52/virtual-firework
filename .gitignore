@@ -4,8 +4,6 @@ build/
 dist/
 .DS_Store
 
-# app/ est un duplicata local de app.nw/. Seul le shell UI nouveau y est versionné.
-# Les assets binaires (identiques à ceux de app.nw/) ne sont pas re-commités.
-/app/*
-!/app/package.json
-!/app/ui/
+# Caches NW.js runtime (regénérés au démarrage)
+app/temp/
+app.nw/temp/
