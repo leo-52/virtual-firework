@@ -32,18 +32,39 @@ function init() {
         process.versions && process.versions.nw) {
       _fs = require("fs");
       _path = require("path");
-      // Le cwd dépend de comment l'app est lancée. On utilise __dirname si
-      // dispo, sinon on se base sur location.pathname.
+
+      // Résolution du dossier d'écriture, par ordre de robustesse :
+      // 1. NW.js App.dataPath (Windows : %APPDATA%\<app>) — toujours writable
+      // 2. process.cwd() (le dossier d'où on a lancé `nw .`)
+      // 3. location.pathname (chemin de l'index.html)
       let baseDir = "";
       try {
-        baseDir = _path.dirname(decodeURI(
-          location.pathname.replace(/^\/([a-zA-Z]:)/, "$1")
-        ));
-      } catch { baseDir = "."; }
+        const nwGui = require("nw.gui");
+        if (nwGui && nwGui.App && nwGui.App.startPath) {
+          baseDir = nwGui.App.startPath;
+        }
+      } catch {}
+      if (!baseDir) {
+        try { baseDir = process.cwd(); } catch {}
+      }
+      if (!baseDir) {
+        try {
+          // Windows : location.pathname = "/C:/Users/.../app/index.html"
+          // Mac/Linux : "/Users/.../app/index.html"
+          let p = decodeURI(location.pathname);
+          if (/^\/[a-zA-Z]:/.test(p)) p = p.slice(1); // enlève le / initial sur Windows
+          baseDir = _path.dirname(p);
+        } catch { baseDir = "."; }
+      }
       _logPath = _path.join(baseDir, LOG_FILENAME);
+
       // Header de session
-      const sep = "\n========== Session " + new Date().toISOString() + " ==========\n";
-      try { _fs.appendFileSync(_logPath, sep); } catch (e) {
+      const sep = "\n========== Session " + new Date().toISOString() +
+                  " (" + process.platform + ") ==========\n";
+      try {
+        _fs.appendFileSync(_logPath, sep);
+        console.info("[debug-log] writing to", _logPath);
+      } catch (e) {
         console.warn("[debug-log] cannot write to", _logPath, e.message);
         _fs = null;
       }
