@@ -3,7 +3,6 @@
   "version": "2.0.0",
   "description": "PrevoFX — application bureau de design pyrotechnique (V2 réécrite, hors-ligne stricte).",
   "main": "index.html",
-  "node-remote": ["<local>"],
   "chromium-args": "--enable-features=SharedArrayBuffer --enable-webgl --ignore-gpu-blocklist",
   "window": {
     "title": "PrevoFX",
