@@ -3,9 +3,6 @@
   "version": "1.0.0",
   "description": "Virtual Firework / PrevoFX desktop app powered by NW.js",
   "main": "htmlui/index.html",
-  "node-remote": [
-    "<local>"
-  ],
   "chromium-args": "--enable-features=SharedArrayBuffer --enable-webgl --ignore-gpu-blocklist",
   "window": {
     "title": "PrevoFX",

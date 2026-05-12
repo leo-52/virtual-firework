@@ -1,3 +1,127 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:1d098a2be0188c96b7145db9c4d31697c17e67da45f02b0108316208ceb608cf
-size 22283
+/* Prevot FX — wrapper minimal autour de l'app Finale 3D */
+
+:root {
+  --accent: #ff7a18;
+  --accent-hover: #ff8f3c;
+  --topbar-h: 38px;
+}
+
+body.theme-dark {
+  --bg: #1a1a1a;
+  --bg-elev: #242424;
+  --bg-elev-hover: #2e2e2e;
+  --text: #f0f0f0;
+  --text-mute: #9aa0a6;
+  --border: #333;
+}
+
+body.theme-light {
+  --bg: #f7f7f8;
+  --bg-elev: #ffffff;
+  --bg-elev-hover: #ececef;
+  --text: #1a1a1a;
+  --text-mute: #555;
+  --border: #d8d8dc;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+
+#topbar {
+  height: var(--topbar-h);
+  background: var(--bg-elev);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  gap: 12px;
+  user-select: none;
+  -webkit-app-region: drag;
+}
+
+#topbar .title {
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: 0.3px;
+  color: var(--accent);
+}
+
+#topbar .spacer { flex: 1; }
+
+#topbar button {
+  -webkit-app-region: no-drag;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s;
+}
+
+#topbar button:hover {
+  background: var(--bg-elev-hover);
+  border-color: var(--accent);
+}
+
+#topbar button.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #1a1a1a;
+  font-weight: 600;
+}
+
+#topbar button.primary:hover {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+
+#main {
+  height: calc(100% - var(--topbar-h));
+  width: 100%;
+  position: relative;
+  background: var(--bg);
+}
+
+#prevot-frame {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
+}
+
+.loading-msg {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--text-mute);
+  font-size: 14px;
+}
+
+.toast {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: var(--bg-elev);
+  border: 1px solid var(--accent);
+  color: var(--text);
+  padding: 10px 14px;
+  border-radius: 6px;
+  font-size: 13px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+  z-index: 9999;
+  max-width: 400px;
+  word-break: break-all;
+}
