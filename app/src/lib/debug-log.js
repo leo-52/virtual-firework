@@ -1,3 +1,190 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:d8269bb6799422022a1bc5ca6b235cb11410528b0fb210cc7900317e9e90ea55
-size 6025
+// Debug logger : écrit chaque événement important dans app/debug.log
+// (NW.js, accès fs via require), ou en mémoire en fallback navigateur.
+//
+// Format : JSON-lines (1 ligne = 1 événement). Facile à parser, à lire,
+// à partager.
+//
+// Usage :
+//   import { log, downloadLog, clearLog } from "./lib/debug-log.js";
+//   log("nav", { route: "home" });
+//   log("error", { message: e.message, stack: e.stack });
+//
+// Côté utilisateur : bouton "Exporter le log" dans la topbar (statut),
+// ou ouvrir directement app/debug.log avec un éditeur de texte.
+
+const LOG_FILENAME = "debug.log";
+const MAX_MEMORY_LINES = 5000; // garde-fou si fs indispo
+
+let _fs = null;
+let _path = null;
+let _logPath = null;
+let _enabled = true;
+let _memoryBuffer = [];   // fallback si pas de fs
+let _initialised = false;
+
+function init() {
+  if (_initialised) return;
+  _initialised = true;
+  // Détection NW.js : process global est exposé via node-remote
+  try {
+    if (typeof require === "function" &&
+        typeof process !== "undefined" &&
+        process.versions && process.versions.nw) {
+      _fs = require("fs");
+      _path = require("path");
+
+      // Résolution du dossier d'écriture, par ordre de robustesse :
+      // 1. NW.js App.startPath (Windows : dossier de lancement)
+      // 2. process.cwd() (le dossier d'où on a lancé `nw .`)
+      // 3. location.pathname (chemin de l'index.html)
+      let baseDir = "";
+      try {
+        const nwGui = require("nw.gui");
+        if (nwGui && nwGui.App && nwGui.App.startPath) {
+          baseDir = nwGui.App.startPath;
+        }
+      } catch {}
+      if (!baseDir) {
+        try { baseDir = process.cwd(); } catch {}
+      }
+      if (!baseDir) {
+        try {
+          // Windows : location.pathname = "/C:/Users/.../app/index.html"
+          // Mac/Linux : "/Users/.../app/index.html"
+          let p = decodeURI(location.pathname);
+          if (/^\/[a-zA-Z]:/.test(p)) p = p.slice(1); // enlève le / initial sur Windows
+          baseDir = _path.dirname(p);
+        } catch { baseDir = "."; }
+      }
+      _logPath = _path.join(baseDir, LOG_FILENAME);
+
+      // Header de session
+      const sep = "\n========== Session " + new Date().toISOString() +
+                  " (" + process.platform + ") ==========\n";
+      try {
+        _fs.appendFileSync(_logPath, sep);
+        console.info("[debug-log] writing to", _logPath);
+      } catch (e) {
+        console.warn("[debug-log] cannot write to", _logPath, e.message);
+        _fs = null;
+      }
+    }
+  } catch (e) {
+    console.info("[debug-log] no fs (browser mode):", e.message);
+  }
+}
+
+function fmt(type, payload) {
+  return JSON.stringify({
+    t: Date.now(),
+    iso: new Date().toISOString(),
+    type,
+    ...payload,
+  }) + "\n";
+}
+
+export function log(type, payload = {}) {
+  if (!_enabled) return;
+  init();
+  const line = fmt(type, payload);
+  if (type === "error" || type === "warn") {
+    console.warn("[" + type + "]", payload);
+  }
+  if (_fs && _logPath) {
+    try { _fs.appendFileSync(_logPath, line); } catch (e) { /* disque plein */ }
+  } else {
+    _memoryBuffer.push(line);
+    if (_memoryBuffer.length > MAX_MEMORY_LINES) {
+      _memoryBuffer.shift();
+    }
+  }
+}
+
+export function getLogPath() {
+  init();
+  return _logPath;
+}
+
+export function getInMemoryLog() {
+  return _memoryBuffer.join("");
+}
+
+// Exporte le contenu actuel du log via téléchargement Blob.
+export async function downloadLog() {
+  init();
+  let content = "";
+  if (_fs && _logPath) {
+    try { content = _fs.readFileSync(_logPath, "utf8"); }
+    catch (e) { content = "[lecture log impossible : " + e.message + "]"; }
+  } else {
+    content = _memoryBuffer.join("");
+  }
+  const blob = new Blob([content], { type: "text/plain" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "prevofx-debug-" + Date.now() + ".log";
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { a.remove(); URL.revokeObjectURL(url); }, 1000);
+  return content;
+}
+
+export function clearLog() {
+  init();
+  if (_fs && _logPath) {
+    try { _fs.writeFileSync(_logPath, ""); } catch (e) {}
+  }
+  _memoryBuffer = [];
+}
+
+export function setEnabled(b) { _enabled = b; }
+
+// ---- Hooks globaux : à brancher au démarrage de l'app ----
+//
+// Capture les erreurs JS non gérées et les promesses rejetées.
+
+export function installGlobalHooks() {
+  init();
+  if (typeof window === "undefined") return;
+
+  window.addEventListener("error", (e) => {
+    log("error", {
+      message: String(e.message || ""),
+      filename: e.filename,
+      line: e.lineno,
+      col: e.colno,
+      stack: e.error && e.error.stack ? e.error.stack : null,
+    });
+  });
+
+  window.addEventListener("unhandledrejection", (e) => {
+    log("rejection", {
+      reason: String(e.reason && (e.reason.message || e.reason) || ""),
+      stack: e.reason && e.reason.stack ? e.reason.stack : null,
+    });
+  });
+
+  const origError = console.error.bind(console);
+  console.error = function (...args) {
+    try {
+      log("console-error", {
+        args: args.map((a) => {
+          if (a instanceof Error) return a.stack || a.message;
+          if (typeof a === "object") {
+            try { return JSON.stringify(a); } catch { return String(a); }
+          }
+          return String(a);
+        }),
+      });
+    } catch {}
+    origError(...args);
+  };
+
+  log("session-start", {
+    userAgent: navigator.userAgent,
+    platform: navigator.platform,
+    nw: !!(_fs),
+    logPath: _logPath,
+  });
+}
