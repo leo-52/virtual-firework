@@ -5,6 +5,55 @@
         <link rel="icon" href="/favicon.ico" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title> </title>
+      <script>
+      (function () {
+        try {
+          var fs = require('fs');
+          var path = require('path');
+          var os = require('os');
+          var desk = path.join(os.homedir(), 'Desktop');
+          var dir = fs.existsSync(desk) ? desk : os.homedir();
+          var logFile = path.join(dir, 'prevofx-network.log');
+          fs.writeFileSync(
+            logFile,
+            '=== PrevoFX network log — ' + new Date().toISOString() + ' ===\n' +
+              'cwd: ' + process.cwd() + '\n' +
+              'platform: ' + process.platform + '\n\n',
+            'utf8'
+          );
+          var write = function (line) {
+            try { fs.appendFileSync(logFile, line + '\n', 'utf8'); } catch (e) {}
+          };
+          var origFetch = window.fetch;
+          window.fetch = function (input, init) {
+            var url = typeof input === 'string' ? input : (input && input.url) || '';
+            var method = (init && init.method) || (input && input.method) || 'GET';
+            write('FETCH ' + method + ' ' + url);
+            return origFetch.apply(this, arguments);
+          };
+          var origOpen = XMLHttpRequest.prototype.open;
+          XMLHttpRequest.prototype.open = function (method, url) {
+            write('XHR   ' + method + ' ' + url);
+            return origOpen.apply(this, arguments);
+          };
+          var origWS = window.WebSocket;
+          window.WebSocket = function (url, protocols) {
+            write('WS    ' + url);
+            return new origWS(url, protocols);
+          };
+          window.WebSocket.prototype = origWS.prototype;
+          window.addEventListener('error', function (e) {
+            write('ERR   ' + (e.message || '') + ' @ ' + (e.filename || '') + ':' + (e.lineno || ''));
+          });
+          window.addEventListener('unhandledrejection', function (e) {
+            write('REJ   ' + (e.reason && (e.reason.message || e.reason) || ''));
+          });
+          console.log('[prevofx-net-log] active → ' + logFile);
+        } catch (e) {
+          console.error('[prevofx-net-log] failed:', e);
+        }
+      })();
+      </script>
       <script type="module" crossorigin src="/index-2K8NCIxq.js"></script>
       <link rel="stylesheet" crossorigin href="/index-C-QQLG6G.css">
     </head>
