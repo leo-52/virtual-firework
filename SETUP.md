@@ -1,6 +1,6 @@
 # PrevoFXSim — Setup Phase 0
 
-Checklist d'installation à faire **une seule fois** avant qu'on attaque le POC Unreal + Cesium.
+Checklist d'installation à faire **une seule fois** avant qu'on attaque le POC.
 
 Une fois tout coché, ouvre Claude Code dans le dossier du repo et écris :
 > "Setup Phase 0 terminé, on attaque la Phase 1"
@@ -13,7 +13,7 @@ Une fois tout coché, ouvre Claude Code dans le dossier du repo et écris :
 
 ## Étape 1 — Claude Code en local (10 min)
 
-Objectif : pouvoir m'utiliser pour éditer directement les fichiers sur ton disque, sans passer par GitHub à chaque modif.
+Objectif : pouvoir m'utiliser pour éditer directement les fichiers sur ton disque.
 
 - [ ] Installer **Node.js LTS** : https://nodejs.org → bouton vert "LTS"
 - [ ] Ouvrir **PowerShell** et taper :
@@ -38,11 +38,11 @@ Nécessaire pour qu'Unreal compile son C++.
 
 ## Étape 3 — Epic Games Launcher + Unreal Engine 5 (1-2 h, ~50 Go)
 
-⚠️ Vérifie que tu as ~60 Go libres sur ton SSD avant.
+⚠️ Vérifie que tu as ~60 Go libres sur ton SSD.
 
 - [ ] Télécharger **Epic Games Launcher** : https://store.epicgames.com/fr/download
 - [ ] Créer un compte Epic Games (gratuit)
-- [ ] Onglet **Unreal Engine** → **Library** → cliquer le **+** → installer la **dernière 5.x** (5.5 actuellement)
+- [ ] Onglet **Unreal Engine** → **Library** → cliquer le **+** → installer la **dernière 5.x** (5.5)
 - [ ] Pendant l'install tu peux faire l'étape 4
 
 ---
@@ -60,23 +60,19 @@ git checkout claude/fix-empty-text-blocks-JFh1X
 
 ---
 
-## Étape 5 — Clé API Google (pour Cesium 3D Tiles) (5 min)
+## Étape 5 — Clé API Google (optionnel, pour plus tard) (5 min)
 
-Cesium peut charger les tuiles 3D photoréalistes de Google (mêmes que Google Earth) gratuitement jusqu'à un certain quota.
+⚠️ **Pas nécessaire pour la Phase 1.** On démarre sur un champ vide 1 km² sans carte.
+À faire seulement quand on voudra charger Google Maps en photoréaliste.
 
-- [ ] Aller sur https://console.cloud.google.com
-- [ ] Créer un projet (n'importe quel nom)
-- [ ] Activer l'API **"Map Tiles API"** dans la bibliothèque d'APIs
-- [ ] Créer une **clé API** dans "Identifiants"
-- [ ] **Copier la clé dans un fichier texte**, on s'en servira à la Phase 1
-
-> Alternative : on peut aussi utiliser Cesium ion (autre fournisseur, gratuit jusqu'à 5 Go/mois). Si Google te paraît compliqué, on basculera dessus.
+- https://console.cloud.google.com → projet → activer **"Map Tiles API"** → créer une clé
+- Garde la clé pour plus tard
 
 ---
 
 ## Étape 6 — Tu reviens ici 🚀
 
-Une fois tout fini :
+Une fois Node + VS + UE5 installés :
 
 ```powershell
 cd C:\Dev\virtual-firework
@@ -84,21 +80,53 @@ claude
 ```
 
 Puis dans la session Claude Code :
-> "Setup Phase 0 terminé, on attaque la Phase 1 (POC UE5 + Cesium)"
-
-À partir de là je peux éditer tes fichiers directement, créer le projet UE5, configurer Cesium, écrire les Blueprints du drone et le premier feu Niagara.
+> "Setup Phase 0 terminé, on attaque la Phase 1"
 
 ---
 
-## 🎯 Plan des phases
+## 🎯 Plan révisé (inspiré Finale 3D)
 
-| Phase | Objectif | Durée travail |
-|------|---------|---------------|
+### Architecture
+
+**Un seul projet Unreal, deux fenêtres OS natives :**
+
+| Fenêtre | Contenu |
+|--------|---------|
+| **Window 1 — Visu** | Vue 3D du show + timeline UMG en bas |
+| **Window 2 — Effets** | Catalogue d'effets pyro (cliquables) |
+
+Communication via game instance partagée (pas de HTTP, pas d'Electron).
+Click sur un effet dans la Window 2 → ajoute un cue à la timeline → tire dans la Window 1 au temps T.
+
+### Phases
+
+| Phase | Objectif | Durée |
+|------|---------|-------|
 | **0** | Setup (cette page) | ~2 h (90 % attente) |
-| **1** | POC : zone 3D Cesium + drone volant + 1 feu Niagara au clic | 2-4 h |
-| **2** | 5-10 effets pyro variés (chrysanthème, palmier, saule, etc.) | 4-6 h |
-| **3** | UI séquenceur : programmer un show sur timeline | 6-8 h |
-| **4** | Export vidéo MP4 du show + import GPS lat/lng | 4-6 h |
-| **5** | Polish : sons, fumée, multi-shells synchronisés musique | À voir |
+| **1** | **POC minimal** : champ vide 1 km² + ciel nuit + drone volant + 2 fenêtres OS + 1 effet Niagara au clic | 3-5 h |
+| **2** | 5-10 effets pyro variés (chrysanthème, palmier, saule, comète…) | 4-6 h |
+| **3** | Timeline éditable : drag d'effets, déplacement, suppression, lecture | 6-8 h |
+| **4** | Chargement carte Google Maps via Cesium (remplace le plan vide) + import GPS lat/lng | 4-6 h |
+| **5** | Export vidéo MP4 + sons synchronisés | À voir |
 
-Tu valides chaque phase avant qu'on passe à la suivante.
+### Phase 1 — détail du POC
+
+À l'ouverture du projet :
+- **Window 1** s'ouvre avec :
+  - Plan plat 1000 × 1000 m (herbe basique, sol uni)
+  - Ciel nuit étoilé
+  - Caméra drone contrôlable (ZQSD + souris) à 50 m d'altitude
+  - Bandeau timeline UMG en bas de l'écran (0:00 → 3:00)
+- **Window 2** s'ouvre automatiquement à côté avec :
+  - Liste d'1 effet "Test Shell" cliquable
+  - Click → spawn un feu Niagara à un point fixe sur la map
+
+Tu valides le visuel et l'ergonomie → on enchaîne sur Phase 2.
+
+---
+
+## 📁 Note sur le code existant
+
+Le repo contient un ancien skeleton NW.js (`/app/`, `/app.nw/`) qui ne sera pas réutilisé.
+On crée un nouveau dossier `/unreal/PrevoFXSim/` pour le projet UE5.
+Le NW.js legacy sera supprimé en Phase 2 si rien à récupérer.
