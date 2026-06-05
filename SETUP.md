@@ -84,44 +84,47 @@ Puis dans la session Claude Code :
 
 ---
 
-## 🎯 Plan révisé (inspiré Finale 3D)
+## 🎯 Plan révisé (inspiré Finale 3D / PyroOffice)
 
 ### Architecture
 
-**Un seul projet Unreal, deux fenêtres OS natives :**
+**Deux fenêtres OS séparées, tech différentes, reliées par HTTP :**
 
-| Fenêtre | Contenu |
-|--------|---------|
-| **Window 1 — Visu** | Vue 3D du show + timeline UMG en bas |
-| **Window 2 — Effets** | Catalogue d'effets pyro (cliquables) |
+| Fenêtre | Tech | Rôle |
+|--------|------|------|
+| **Window 1 — Simu** | Unreal Engine 5 | Vue 3D live (sol, positions de tir, fusées) **+ timeline en bas** avec cues, scrub, play/pause |
+| **Window 2 — Effets** | À définir (web / Electron / autre — **pas Unreal**) | Liste plate de noms d'effets ("Chrysanthème rouge 3"", "Comète argent"…). Sélection / drag pour envoyer dans la timeline |
 
-Communication via game instance partagée (pas de HTTP, pas d'Electron).
-Click sur un effet dans la Window 2 → ajoute un cue à la timeline → tire dans la Window 1 au temps T.
+**Pont** : plugin Unreal **Remote Control** expose une API HTTP/WebSocket.
+La Window 2 envoie à Unreal :
+`POST /add_cue { effect: "Comète argent", time: 7.5, position: "Pos-04" }`
+Unreal ajoute le cue dans la timeline et le tire au moment voulu.
+
+> Le choix de la stack Window 2 est laissé en suspens — on décidera après la Phase 1.
 
 ### Phases
 
 | Phase | Objectif | Durée |
 |------|---------|-------|
 | **0** | Setup (cette page) | ~2 h (90 % attente) |
-| **1** | **POC minimal** : champ vide 1 km² + ciel nuit + drone volant + 2 fenêtres OS + 1 effet Niagara au clic | 3-5 h |
+| **1a** | **Window 1 seule** : champ vide 1 km² + ciel nuit + drone + timeline UMG vide + plugin Remote Control + 1 effet Niagara déclenchable via curl HTTP | 4-6 h |
+| **1b** | **Window 2** (stack à choisir) : liste de 5 noms d'effets. Click → POST HTTP vers Unreal → cue ajouté dans la timeline | 3-5 h |
 | **2** | 5-10 effets pyro variés (chrysanthème, palmier, saule, comète…) | 4-6 h |
-| **3** | Timeline éditable : drag d'effets, déplacement, suppression, lecture | 6-8 h |
+| **3** | Timeline pleinement éditable : drag/move/suppr des cues, scrub, play/pause | 6-8 h |
 | **4** | Chargement carte Google Maps via Cesium (remplace le plan vide) + import GPS lat/lng | 4-6 h |
 | **5** | Export vidéo MP4 + sons synchronisés | À voir |
 
-### Phase 1 — détail du POC
+### Phase 1a — détail (POC Unreal solo)
 
-À l'ouverture du projet :
-- **Window 1** s'ouvre avec :
-  - Plan plat 1000 × 1000 m (herbe basique, sol uni)
-  - Ciel nuit étoilé
-  - Caméra drone contrôlable (ZQSD + souris) à 50 m d'altitude
-  - Bandeau timeline UMG en bas de l'écran (0:00 → 3:00)
-- **Window 2** s'ouvre automatiquement à côté avec :
-  - Liste d'1 effet "Test Shell" cliquable
-  - Click → spawn un feu Niagara à un point fixe sur la map
+À l'ouverture du projet Unreal :
+- Plan plat 1000 × 1000 m (herbe basique, sol uni)
+- Ciel nuit étoilé
+- Caméra drone contrôlable (ZQSD + souris) à 50 m d'altitude
+- Bandeau timeline UMG en bas de l'écran (0:00 → 3:00, vide)
+- Plugin **Remote Control** activé, endpoint exposé
+- Test : `curl -X POST localhost:30010/add_cue -d '{"effect":"test_shell","time":2.0}'` → un feu Niagara basique part à T+2s
 
-Tu valides le visuel et l'ergonomie → on enchaîne sur Phase 2.
+Quand ça marche → Phase 1b (on branche la fenêtre éditeur).
 
 ---
 
