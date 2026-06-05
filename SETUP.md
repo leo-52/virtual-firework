@@ -122,9 +122,35 @@ Unreal ajoute le cue dans la timeline et le tire au moment voulu.
 | **Fichier** | Nouveau spectacle, Ouvrir, Sauvegarder, Sauvegarder sous, Quitter… |
 | **Spectacle** | Réglages du show en cours : durée, musique associée, métadonnées (nom, lieu, date), liste des positions de tir, lecture/pause/stop… |
 | **Paysage** | Choix du décor : champ par défaut, charger Google Maps 3D (popup X/Y), ambiance lumineuse (coucher de soleil / pleine lune / nuit étoilée), météo (?)… |
-| **Options** | Préférences app : qualité graphique, contrôles drone, clé API Google, langue, raccourcis clavier… |
+| **Options** | Préférences app : qualité graphique, contrôles drone, clé API Google, langue, raccourcis clavier (voir ci-dessous)… |
 
 > Le contenu exact de chaque onglet sera affiné au fur et à mesure. La structure (4 onglets) est en place dès la Phase 1a même si certains sont quasi-vides au début.
+
+#### Raccourcis clavier & souris
+
+**Édition / Timeline**
+| Raccourci | Action |
+|-----------|--------|
+| `Ctrl + Z` | Annuler |
+| `Ctrl + Y` *(ou `Ctrl + Shift + Z`)* | Refaire |
+| `Espace` | Play / Pause |
+| `←` / `→` | Reculer / avancer dans la timeline de **0,1 s** |
+| `Shift + ←` / `→` | Reculer / avancer de **1 s** *(à confirmer)* |
+| `Home` / `End` | Aller au début / à la fin de la timeline *(à confirmer)* |
+| `Ctrl + S` | Sauvegarder |
+| `Suppr` | Supprimer le cue sélectionné |
+
+**Vue 3D (caméra drone)**
+| Raccourci | Action |
+|-----------|--------|
+| **Molette** | Zoom / dézoom |
+| **Clic gauche maintenu + souris** | Rotation de la vue |
+| **Clic droit maintenu + souris** | Pan / translation latérale *(à confirmer)* |
+| `Z` `Q` `S` `D` | Déplacement avant/gauche/arrière/droite du drone |
+| `A` / `E` | Monter / descendre le drone *(à confirmer)* |
+| `Shift` (maintenu) | Mode rapide *(à confirmer)* |
+
+> Les lignes *à confirmer* sont des propositions à valider — tu corriges si tu veux autre chose.
 
 #### Scène par défaut
 
