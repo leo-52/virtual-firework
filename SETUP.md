@@ -184,6 +184,13 @@ Unreal ajoute le cue dans la timeline et le tire au moment voulu.
 
 Avantage : on voit d'un coup d'œil les chevauchements de retombées dans le show.
 
+**Groupement en grappe** :
+- Sélectionner plusieurs cues (ex: 3 bombes X) → `Ctrl + G` → crée une **grappe** qui devient un seul cue manipulable d'un bloc
+- La grappe se déplace, se copie, se colle, se supprime comme un cue normal
+- `Ctrl + Shift + G` pour dégrouper *(à confirmer)*
+- Double-clic sur la grappe pour l'ouvrir et éditer les cues individuels à l'intérieur *(à confirmer)*
+- Visuel de la grappe : un trait englobant du premier déclenchement à la dernière retombée, avec tous les points d'explosion visibles à l'intérieur
+
 #### Scène par défaut
 
 À l'ouverture du projet Unreal :
