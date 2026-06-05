@@ -122,8 +122,13 @@ Unreal ajoute le cue dans la timeline et le tire au moment voulu.
 - Caméra drone contrôlable (ZQSD + souris) à 50 m d'altitude
 - Bandeau timeline UMG en bas de l'écran (0:00 → 3:00, vide)
 - **Popup au lancement** : "Charger un plan 3D Google Maps de la zone ?" → [Oui / Non, garder le champ vide]
-  - "Non" → on reste sur le beau champ par défaut
-  - "Oui" → Cesium charge les tiles Google Maps 3D (nécessite la clé API de l'étape 5)
+  - **"Non"** → on reste sur le beau champ par défaut
+  - **"Oui"** → ouvre une boîte de dialogue avec :
+    1. Un bouton/lien **"Ouvrir Google Maps"** (lance `https://maps.google.com` dans le navigateur). Tu y cherches ton lieu, click droit sur le point → copies les coordonnées (`48.8584, 2.2945` par ex).
+    2. Un champ texte où tu colles les coordonnées (ou les tapes à la main : `lat, lng`)
+    3. Bouton "Charger"
+  - Cesium charge alors les tiles Google Maps 3D centrées sur ces coordonnées, **toujours sur une zone 1 km × 1 km** (le drone et la timeline restent identiques, seul le sol change)
+  - Nécessite la clé API de l'étape 5
 - Plugin **Remote Control** activé, endpoint exposé
 - Test : `curl -X POST localhost:30010/add_cue -d '{"effect":"test_shell","time":2.0}'` → un feu Niagara basique part à T+2s depuis Pos-01
 
