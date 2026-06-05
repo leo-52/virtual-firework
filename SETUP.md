@@ -125,7 +125,7 @@ Unreal ajoute le cue dans la timeline et le tire au moment voulu.
   - **"Non"** → on reste sur le beau champ par défaut
   - **"Oui"** → ouvre une boîte de dialogue avec :
     1. Un bouton/lien **"Ouvrir Google Maps"** (lance `https://maps.google.com` dans le navigateur). Tu y cherches ton lieu, click droit sur le point → copies les coordonnées (`48.8584, 2.2945` par ex).
-    2. Un champ texte où tu colles les coordonnées (ou les tapes à la main : `lat, lng`)
+    2. **Deux champs séparés** : `X` (longitude) et `Y` (latitude). Tu peux soit coller les deux valeurs depuis Google Maps, soit les taper à la main.
     3. Bouton "Charger"
   - Cesium charge alors les tiles Google Maps 3D centrées sur ces coordonnées, **toujours sur une zone 1 km × 1 km** (le drone et la timeline restent identiques, seul le sol change)
   - Nécessite la clé API de l'étape 5
