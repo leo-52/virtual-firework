@@ -165,11 +165,24 @@ Unreal ajoute le cue dans la timeline et le tire au moment voulu.
 - Le snap accroche aux : marques de seconde, autres cues, playhead
 
 **Représentation visuelle d'un cue** :
-- Un **trait horizontal** dont la longueur = **durée totale de l'effet, du déclenchement (allumage / sortie du mortier) jusqu'à la fin des retombées** (dernières étincelles éteintes)
-- À l'intérieur du trait, **un point par explosion** indique l'instant exact où chaque tir / chaque shell explose
-- Exemple 1 — shell unique : départ à T=0, montée 2 s, explosion à T=2 s, retombées jusqu'à T=7 s → **trait de 7 s avec 1 point à T=2 s**
-- Exemple 2 — barrage de 5 shells tirés sur 3 s, dernier shell retombe 5 s après explosion → **trait d'environ 11 s avec 5 points** correspondant aux 5 instants d'explosion
-- Ça permet de voir d'un coup d'œil les chevauchements de retombées dans le show
+- Un **trait horizontal** dont la longueur = **durée totale de l'effet, du déclenchement jusqu'à la fin des retombées** (dernières étincelles éteintes)
+- À l'intérieur du trait, **un point par explosion** indique l'instant où chaque shell explose
+- Toutes les durées sont **relatives au début du trait** (le trait commence à t=0 quel que soit l'endroit où on le place dans le show)
+
+**Phases d'un cue** (peuvent être combinées) :
+1. Délai de mise à feu (optionnel) — entre le déclenchement et la sortie du mortier
+2. Montée — entre la sortie du mortier et l'explosion
+3. Retombées — après l'explosion jusqu'à extinction
+
+**Exemple type** (donné par l'utilisateur) :
+- Bombe **lancée à t=1 s** (1 s de délai de mise à feu)
+- **Explose 2 s après** le lancement (donc à t=3 s)
+- **Dure 2 s** après explosion (retombées jusqu'à t=5 s)
+- → **Trait de 5 s, avec un point à t=3 s**
+
+**Exemple barrage** : 5 shells lancés en 3 s, chacun avec montée 2 s + retombées 5 s → trait ~10 s avec 5 points espacés correspondant aux 5 explosions.
+
+Avantage : on voit d'un coup d'œil les chevauchements de retombées dans le show.
 
 #### Scène par défaut
 
