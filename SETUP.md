@@ -115,6 +115,19 @@ Unreal ajoute le cue dans la timeline et le tire au moment voulu.
 
 ### Phase 1a — détail (POC Unreal solo)
 
+#### Barre d'onglets en haut de la fenêtre
+
+| Onglet | Contenu (à préciser) |
+|--------|---------------------|
+| **Fichier** | Nouveau spectacle, Ouvrir, Sauvegarder, Sauvegarder sous, Quitter… |
+| **Spectacle** | Réglages du show en cours : durée, musique associée, métadonnées (nom, lieu, date), liste des positions de tir, lecture/pause/stop… |
+| **Paysage** | Choix du décor : champ par défaut, charger Google Maps 3D (popup X/Y), ambiance lumineuse (coucher de soleil / pleine lune / nuit étoilée), météo (?)… |
+| **Options** | Préférences app : qualité graphique, contrôles drone, clé API Google, langue, raccourcis clavier… |
+
+> Le contenu exact de chaque onglet sera affiné au fur et à mesure. La structure (4 onglets) est en place dès la Phase 1a même si certains sont quasi-vides au début.
+
+#### Scène par défaut
+
 À l'ouverture du projet Unreal :
 - **Beau champ** 1000 × 1000 m : herbe dense, sol naturel
 - **Ambiance lumineuse** au choix : coucher de soleil OU pleine lune (probablement coucher de soleil par défaut, plus joli pour démo)
