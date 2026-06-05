@@ -165,10 +165,11 @@ Unreal ajoute le cue dans la timeline et le tire au moment voulu.
 - Le snap accroche aux : marques de seconde, autres cues, playhead
 
 **Représentation visuelle d'un cue** :
-- Un **trait horizontal** dont la longueur = durée totale de l'effet (ex: barrage de 3 s → trait de 3 s)
-- À l'intérieur du trait, **un point par explosion** indique l'instant exact où chaque tir / chaque shell part
-- Exemple : un effet "barrage 5 shells sur 3 s" = un trait de 3 s avec 5 points espacés
-- Un effet "shell unique" = un trait quasi-ponctuel avec 1 point
+- Un **trait horizontal** dont la longueur = **durée totale de l'effet, du déclenchement (allumage / sortie du mortier) jusqu'à la fin des retombées** (dernières étincelles éteintes)
+- À l'intérieur du trait, **un point par explosion** indique l'instant exact où chaque tir / chaque shell explose
+- Exemple 1 — shell unique : départ à T=0, montée 2 s, explosion à T=2 s, retombées jusqu'à T=7 s → **trait de 7 s avec 1 point à T=2 s**
+- Exemple 2 — barrage de 5 shells tirés sur 3 s, dernier shell retombe 5 s après explosion → **trait d'environ 11 s avec 5 points** correspondant aux 5 instants d'explosion
+- Ça permet de voir d'un coup d'œil les chevauchements de retombées dans le show
 
 #### Scène par défaut
 
