@@ -152,6 +152,24 @@ Unreal ajoute le cue dans la timeline et le tire au moment voulu.
 
 > Les lignes *à confirmer* sont des propositions à valider — tu corriges si tu veux autre chose.
 
+#### Comportement de la timeline
+
+**Placement d'un effet** — deux méthodes équivalentes :
+1. **Drag & drop** depuis la liste de la Window 2 vers une position dans la timeline
+2. **Sélection** d'un effet dans la Window 2 puis **clic** dans la timeline à l'endroit voulu
+
+**Édition des cues** :
+- `Ctrl + C` / `Ctrl + V` : copier / coller un cue (ou groupe sélectionné)
+- Drag pour déplacer un cue dans la timeline
+- **Snap léger ("aimanté")** sur le début du cue : la valeur de snap par défaut est ~0,1 s, désactivable avec `Alt` pendant le drag *(à confirmer)*
+- Le snap accroche aux : marques de seconde, autres cues, playhead
+
+**Représentation visuelle d'un cue** :
+- Un **trait horizontal** dont la longueur = durée totale de l'effet (ex: barrage de 3 s → trait de 3 s)
+- À l'intérieur du trait, **un point par explosion** indique l'instant exact où chaque tir / chaque shell part
+- Exemple : un effet "barrage 5 shells sur 3 s" = un trait de 3 s avec 5 points espacés
+- Un effet "shell unique" = un trait quasi-ponctuel avec 1 point
+
 #### Scène par défaut
 
 À l'ouverture du projet Unreal :
