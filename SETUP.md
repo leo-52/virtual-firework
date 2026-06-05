@@ -152,6 +152,31 @@ Unreal ajoute le cue dans la timeline et le tire au moment voulu.
 
 > Les lignes *à confirmer* sont des propositions à valider — tu corriges si tu veux autre chose.
 
+#### Catalogue d'effets
+
+**Source** : catalogue commercial **SARL Jacques Prévot Artifices** (mars 2026) — `catalogue.ods` dans le repo.
+
+**Parsé automatiquement vers `catalog.json`** (1040 items, 20 sections, 81 familles) :
+
+| Section | Items |
+|---------|-------|
+| BOMBE 50/75/100/125/150 MM | 425 bombes |
+| CHANDELLE 10/20/30/50 MM | 62 chandelles |
+| COMPACT DROIT / ÉVENTAILLÉ / Z / NAUTIQUE / GRAND PUBLIC | 269 compacts |
+| MONOCOUP / PIÈCE SUR MÂT / FUSÉE / LAMPION | 80 divers |
+| FEU AUTOMATIQUE | 61 |
+| SÉRIE LIMITÉE | 143 |
+
+Champs extraits par item :
+- `reference`, `designation`, `section`, `famille`, `calibre_mm`, `certification`, `categorie_f`, `masse_ma_kg`, `couleurs_detectees`, `distance_securite`
+- Pour compacts : `compact_nb_tirs`, `compact_duration_s`, `compact_pattern` (droit/eventail/Z)
+- Données sim (dérivées du calibre + famille, **à affiner par l'utilisateur**) :
+  - `sim_ascension_s` — durée de montée
+  - `sim_burst_height_m` — hauteur d'explosion
+  - `sim_sky_duration_s` — durée dans le ciel
+
+> Ces données sim sont des défauts standard pyrotechnique. L'utilisateur pourra les surcharger via un fichier `catalog_overrides.json` au fur et à mesure qu'il connaît la réalité de ses produits.
+
 #### Comportement de la timeline
 
 **Placement d'un effet** — deux méthodes équivalentes :
@@ -183,6 +208,23 @@ Unreal ajoute le cue dans la timeline et le tire au moment voulu.
 **Exemple barrage** : 5 shells lancés en 3 s, chacun avec montée 2 s + retombées 5 s → trait ~10 s avec 5 points espacés correspondant aux 5 explosions.
 
 Avantage : on voit d'un coup d'œil les chevauchements de retombées dans le show.
+
+#### Réalisme : jitter temporel (~±5%)
+
+Les artifices pro ne sont **jamais parfaitement synchronisés** — chaque dispositif a une marge d'erreur de tir (mèche, charge propulsive, etc.) typiquement de **±5%**.
+
+**Conséquence à simuler** : si 3 chandelles identiques sont déclenchées simultanément et qu'elles sont censées tirer 1 coup toutes les 3 s pendant 24 s (8 coups chacune) :
+- t=0 : les 3 partent **ensemble** (déclenchement commun)
+- 1ʳᵉ salve : ~ 3 s, 3 s, 3 s (très peu de drift)
+- 2ᵉ salve : ~ 6 s, 6,2 s, 5,9 s (drift commence)
+- 3ᵉ salve : ~ 9 s, 9,4 s, 8,8 s
+- 8ᵉ salve : peut aller de 22 s à 26 s selon le dispositif
+
+**Implémentation** :
+- Chaque "tir" d'un compact/chandelle a un timing nominal + un jitter aléatoire borné par la marge d'erreur du dispositif (paramètre `jitter_pct`, défaut 5%)
+- Le jitter est **par instance** (3 chandelles = 3 séquences de jitter différentes)
+- Seed déterministe par show → la lecture reste identique d'une fois sur l'autre (sinon impossible de debug)
+- Configurable globalement dans les Options (ex: "Désactiver l'aléatoire pour debug")
 
 **Sélection** :
 - **Clic + drag sur fond vide** de la timeline → rectangle de sélection qui englobe tous les cues recouverts (comme dans la plupart des éditeurs)
