@@ -121,7 +121,7 @@ Unreal ajoute le cue dans la timeline et le tire au moment voulu.
 |--------|---------------------|
 | **Fichier** | Nouveau spectacle, Ouvrir, Sauvegarder, Sauvegarder sous, Quitter… |
 | **Spectacle** | Réglages du show en cours : durée, musique associée, métadonnées (nom, lieu, date), liste des positions de tir, lecture/pause/stop… |
-| **Paysage** | Choix du décor : champ par défaut, charger Google Maps 3D (popup X/Y), ambiance lumineuse (coucher de soleil / pleine lune / nuit étoilée), météo (?)… |
+| **Paysage** | Choix du décor : champ par défaut, charger Google Maps 3D (popup X/Y), ambiance lumineuse (coucher de soleil / pleine lune / nuit étoilée), météo (?), **outil eau** (ajouter/supprimer plans d'eau, voir ci-dessous)… |
 | **Options** | Préférences app : qualité graphique, contrôles drone, clé API Google, langue, raccourcis clavier (voir ci-dessous)… |
 
 > Le contenu exact de chaque onglet sera affiné au fur et à mesure. La structure (4 onglets) est en place dès la Phase 1a même si certains sont quasi-vides au début.
@@ -250,10 +250,24 @@ Les artifices pro ne sont **jamais parfaitement synchronisés** — chaque dispo
   - **"Non"** → on reste sur le beau champ par défaut
   - **"Oui"** → ouvre une boîte de dialogue avec :
     1. Un bouton/lien **"Ouvrir Google Maps"** (lance `https://maps.google.com` dans le navigateur). Tu y cherches ton lieu, click droit sur le point → copies les coordonnées (`48.8584, 2.2945` par ex).
-    2. **Deux champs séparés** : `X` (longitude) et `Y` (latitude). Tu peux soit coller les deux valeurs depuis Google Maps, soit les taper à la main.
+    2. **Deux champs séparés** : `X` (longitude) et `Y` (latitude). Pré-remplis avec les **coordonnées par défaut de l'utilisateur** : `X = 5.419596383170908`, `Y = 48.012878098489516` (zone Haute-Marne, proche de Sarrey). Tu peux soit coller les deux valeurs depuis Google Maps, soit les taper à la main.
     3. Bouton "Charger"
   - Cesium charge alors les tiles Google Maps 3D centrées sur ces coordonnées, **toujours sur une zone 1 km × 1 km** (le drone et la timeline restent identiques, seul le sol change)
   - Nécessite la clé API de l'étape 5
+
+#### Outil eau
+
+- Onglet **Paysage** → bouton **"Ajouter de l'eau"** : pose un plan d'eau (étang, lac, rivière) sur la zone
+  - Drag pour redimensionner / positionner
+  - Plusieurs plans d'eau possibles (cumulables)
+  - Forme : rectangle / cercle / spline libre *(à confirmer)*
+  - Bouton **"Supprimer"** pour retirer un plan sélectionné
+- **Réflexions photoréalistes obligatoires** : les feux d'artifice doivent se refléter dans l'eau avec un rendu "plus vrai que nature"
+  - Stack technique recommandée : UE5 **Water Plugin** (Single-Layer Water) + **planar reflections** + Lumen
+  - Les bursts lumineux des explosions doivent illuminer la surface d'eau en temps réel
+  - Effet "halo" de lumière sur l'eau quand un effet est tiré au-dessus
+- Cas d'usage typique : tir au-dessus d'un étang de château, lac de festival, port → l'eau double visuellement le spectacle
+
 - Plugin **Remote Control** activé, endpoint exposé
 - Test : `curl -X POST localhost:30010/add_cue -d '{"effect":"test_shell","time":2.0}'` → un feu Niagara basique part à T+2s depuis Pos-01
 
