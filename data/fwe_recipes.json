@@ -1,0 +1,11614 @@
+{
+ "01 Peony": {
+  "layers": [
+   {
+    "count": 110,
+    "type": "XXSmall",
+    "mass": 0.7,
+    "minLife": 1.2,
+    "maxLife": 1.6,
+    "birthtime": 0.0,
+    "fade": [
+     0.0774,
+     0.4197,
+     0.8914,
+     0.996
+    ],
+    "speed": 0.8,
+    "sigma": 0.017,
+    "posSigma": 0.099,
+    "distType": "SphericalDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Red",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.0,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   }
+  ],
+  "nLayers": 1,
+  "riseDelay": 2.5,
+  "ascent": {
+   "emitStart": 0.05,
+   "emitEnd": 0.286,
+   "density": 69.0
+  }
+ },
+ "02 Peony w_ Pistil": {
+  "layers": [
+   {
+    "count": 110,
+    "type": "XXSmall",
+    "mass": 0.7,
+    "minLife": 1.2,
+    "maxLife": 1.6,
+    "birthtime": 0.0,
+    "fade": [
+     0.0774,
+     0.4197,
+     0.8914,
+     0.996
+    ],
+    "speed": 0.8,
+    "sigma": 0.017,
+    "posSigma": 0.099,
+    "distType": "SphericalDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Orange",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.011504,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 50,
+    "type": "XXSmall",
+    "mass": 0.7,
+    "minLife": 0.6,
+    "maxLife": 1.0,
+    "birthtime": 0.0,
+    "fade": [
+     0.0774,
+     0.4197,
+     0.8148,
+     0.996
+    ],
+    "speed": 0.3,
+    "sigma": 0.0139999995,
+    "posSigma": 0.111,
+    "distType": "SphericalDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "PastelGreen",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.0,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   }
+  ],
+  "nLayers": 2,
+  "riseDelay": 2.5,
+  "ascent": {
+   "emitStart": 0.05,
+   "emitEnd": 0.286,
+   "density": 69.0
+  }
+ },
+ "03 Wave": {
+  "layers": [
+   {
+    "count": 80,
+    "type": "XSmall",
+    "mass": 0.7,
+    "minLife": 1.5,
+    "maxLife": 2.0,
+    "birthtime": 0.0,
+    "fade": [
+     0.0774,
+     0.3037,
+     0.6759,
+     0.9414
+    ],
+    "speed": 0.85,
+    "sigma": 0.025999999,
+    "posSigma": 0.108,
+    "distType": "SphericalDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "DarkGreen",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.011504,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   }
+  ],
+  "nLayers": 1,
+  "riseDelay": 2.5,
+  "ascent": {
+   "emitStart": 0.05,
+   "emitEnd": 0.286,
+   "density": 69.0
+  }
+ },
+ "04 Chrysanthemum": {
+  "layers": [
+   {
+    "count": 70,
+    "type": "XSmall",
+    "mass": 0.7,
+    "minLife": 2.0,
+    "maxLife": 2.5,
+    "birthtime": 0.0,
+    "fade": [
+     0.4805,
+     0.7752,
+     0.8844,
+     0.999
+    ],
+    "speed": 0.85,
+    "sigma": 0.035,
+    "posSigma": 0.083000004,
+    "distType": "SphericalDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "PastelRed",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.011504,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   }
+  ],
+  "nLayers": 1,
+  "riseDelay": 2.5,
+  "ascent": {
+   "emitStart": 0.05,
+   "emitEnd": 0.286,
+   "density": 69.0
+  }
+ },
+ "05 Dahlia": {
+  "layers": [
+   {
+    "count": 20,
+    "type": "Normal",
+    "mass": 0.8,
+    "minLife": 2.0,
+    "maxLife": 2.5,
+    "birthtime": 0.0,
+    "fade": [
+     0.0638,
+     0.4971,
+     0.824,
+     0.999
+    ],
+    "speed": 0.6,
+    "sigma": 0.024,
+    "posSigma": 0.0,
+    "distType": "SphericalDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "LightPink",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.011504,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   }
+  ],
+  "nLayers": 1,
+  "riseDelay": 2.5,
+  "ascent": {
+   "emitStart": 0.05,
+   "emitEnd": 0.286,
+   "density": 69.0
+  }
+ },
+ "06 Palm": {
+  "layers": [
+   {
+    "count": 12,
+    "type": "Normal",
+    "mass": 1.2,
+    "minLife": 1.5,
+    "maxLife": 2.0,
+    "birthtime": 0.0,
+    "fade": [
+     0.0774,
+     0.4756,
+     0.7801,
+     0.999
+    ],
+    "speed": 0.75,
+    "sigma": 0.0,
+    "posSigma": 0.14899999,
+    "distType": "SphericalDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Invisible",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.011504,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   }
+  ],
+  "nLayers": 1,
+  "riseDelay": 2.5,
+  "ascent": {
+   "emitStart": 0.05,
+   "emitEnd": 1.0,
+   "density": 400.0
+  }
+ },
+ "07 Crown": {
+  "layers": [
+   {
+    "count": 65,
+    "type": "Normal",
+    "mass": 1.0,
+    "minLife": 1.5,
+    "maxLife": 2.0,
+    "birthtime": 0.0,
+    "fade": [
+     0.0774,
+     0.4756,
+     0.7801,
+     0.999
+    ],
+    "speed": 0.85,
+    "sigma": 0.037,
+    "posSigma": 0.21,
+    "distType": "SphericalDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Invisible",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.011504,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   }
+  ],
+  "nLayers": 1,
+  "riseDelay": 2.5,
+  "ascent": {
+   "emitStart": 0.05,
+   "emitEnd": 0.286,
+   "density": 69.0
+  }
+ },
+ "08 Willow": {
+  "layers": [
+   {
+    "count": 38,
+    "type": "Normal",
+    "mass": 1.0,
+    "minLife": 3.0,
+    "maxLife": 4.5,
+    "birthtime": 0.0,
+    "fade": [
+     0.0774,
+     0.4756,
+     0.7801,
+     0.999
+    ],
+    "speed": 0.6,
+    "sigma": 0.049000002,
+    "posSigma": 1.0,
+    "distType": "HemisphereDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Invisible",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.011504,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   }
+  ],
+  "nLayers": 1,
+  "riseDelay": 2.5,
+  "ascent": {
+   "emitStart": 0.05,
+   "emitEnd": 0.286,
+   "density": 69.0
+  }
+ },
+ "09 Waterfall _ Horsetail": {
+  "layers": [
+   {
+    "count": 20,
+    "type": "Sparks",
+    "mass": 1.3,
+    "minLife": 3.0,
+    "maxLife": 6.0,
+    "birthtime": 0.0,
+    "fade": [
+     0.0368,
+     0.1625,
+     0.9458,
+     0.999
+    ],
+    "speed": 1.0,
+    "sigma": 0.14,
+    "posSigma": 0.325,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Invisible",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.0,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 20,
+    "type": "Sparks",
+    "mass": 1.2,
+    "minLife": 2.0,
+    "maxLife": 4.5,
+    "birthtime": 0.0,
+    "fade": [
+     0.0368,
+     0.1625,
+     0.8897,
+     0.999
+    ],
+    "speed": 1.0,
+    "sigma": 0.14,
+    "posSigma": 0.325,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Invisible",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.011504,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 20,
+    "type": "Sparks",
+    "mass": 1.1,
+    "minLife": 3.0,
+    "maxLife": 5.5,
+    "birthtime": 0.0,
+    "fade": [
+     0.0368,
+     0.1625,
+     0.8956,
+     0.999
+    ],
+    "speed": 1.0,
+    "sigma": 0.14,
+    "posSigma": 0.325,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Invisible",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.011504,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   }
+  ],
+  "nLayers": 3,
+  "riseDelay": 2.5,
+  "ascent": {
+   "emitStart": 0.05,
+   "emitEnd": 0.8,
+   "density": 5.0
+  }
+ },
+ "10 Sky Mine": {
+  "layers": [
+   {
+    "count": 20,
+    "type": "XSmall",
+    "mass": 0.7,
+    "minLife": 1.5,
+    "maxLife": 2.0,
+    "birthtime": 0.0,
+    "fade": [
+     0.1495,
+     0.5576,
+     0.6465,
+     0.999
+    ],
+    "speed": 0.67,
+    "sigma": 0.034,
+    "posSigma": 0.325,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "SkyBlue",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.0,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   }
+  ],
+  "nLayers": 1,
+  "riseDelay": 2.5,
+  "ascent": {
+   "emitStart": 0.05,
+   "emitEnd": 0.286,
+   "density": 69.0
+  }
+ },
+ "11 Falling Leaves": {
+  "layers": [
+   {
+    "count": 20,
+    "type": "Sparks",
+    "mass": 0.8,
+    "minLife": 4.0,
+    "maxLife": 5.5,
+    "birthtime": 0.0,
+    "fade": [
+     0.0368,
+     0.1625,
+     0.9458,
+     0.999
+    ],
+    "speed": 1.0,
+    "sigma": 0.14,
+    "posSigma": 0.325,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "DarkGreen",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.0,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 20,
+    "type": "Sparks",
+    "mass": 0.7,
+    "minLife": 4.0,
+    "maxLife": 5.5,
+    "birthtime": 0.0,
+    "fade": [
+     0.0368,
+     0.1625,
+     0.8897,
+     0.999
+    ],
+    "speed": 1.0,
+    "sigma": 0.14,
+    "posSigma": 0.325,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "DarkGreen",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.0,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 20,
+    "type": "Sparks",
+    "mass": 0.6,
+    "minLife": 4.0,
+    "maxLife": 5.5,
+    "birthtime": 0.0,
+    "fade": [
+     0.0368,
+     0.1625,
+     0.8956,
+     0.999
+    ],
+    "speed": 1.0,
+    "sigma": 0.14,
+    "posSigma": 0.325,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "DarkGreen",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.0,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   }
+  ],
+  "nLayers": 3,
+  "riseDelay": 2.5,
+  "ascent": {
+   "emitStart": 0.05,
+   "emitEnd": 0.286,
+   "density": 69.0
+  }
+ },
+ "11a Crossette": {
+  "layers": [
+   {
+    "count": 8,
+    "type": "Small",
+    "mass": 0.5,
+    "minLife": 2.0,
+    "maxLife": 2.5,
+    "birthtime": 0.0,
+    "fade": [
+     0.0638,
+     0.3514,
+     0.998,
+     0.999
+    ],
+    "speed": 0.6,
+    "sigma": 0.0,
+    "posSigma": 0.0,
+    "distType": "SphericalDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "LightRed",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.011504,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   }
+  ],
+  "nLayers": 1,
+  "riseDelay": 2.5,
+  "ascent": {
+   "emitStart": 0.05,
+   "emitEnd": 0.8,
+   "density": 5.0
+  }
+ },
+ "12 Salut": {
+  "layers": [
+   {
+    "count": 610,
+    "type": "Normal",
+    "mass": 1.0,
+    "minLife": 0.02,
+    "maxLife": 0.05,
+    "birthtime": 0.0,
+    "fade": [
+     0.0,
+     0.09,
+     0.85,
+     1.0
+    ],
+    "speed": 2.0,
+    "sigma": 0.040999997,
+    "posSigma": 0.283,
+    "distType": "SphericalDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Invisible",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.011504,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 100,
+    "type": "Normal",
+    "mass": 1.0,
+    "minLife": 0.02,
+    "maxLife": 0.05,
+    "birthtime": 0.0,
+    "fade": [
+     0.0,
+     0.09,
+     0.85,
+     1.0
+    ],
+    "speed": 2.0,
+    "sigma": 0.05,
+    "posSigma": 0.349,
+    "distType": "SphericalDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Invisible",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.011504,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   }
+  ],
+  "nLayers": 2,
+  "riseDelay": 2.5,
+  "ascent": {
+   "emitStart": 0.05,
+   "emitEnd": 0.286,
+   "density": 69.0
+  }
+ },
+ "13 Windbell": {
+  "layers": [
+   {
+    "count": 1,
+    "type": "Large",
+    "mass": 0.2,
+    "minLife": 12.0,
+    "maxLife": 13.0,
+    "birthtime": 0.0,
+    "fade": [
+     0.0774,
+     0.3112,
+     0.6627,
+     0.999
+    ],
+    "speed": 0.14,
+    "sigma": 0.0,
+    "posSigma": 0.0,
+    "distType": "SphericalDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "White",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.011504,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   }
+  ],
+  "nLayers": 1,
+  "riseDelay": 2.5,
+  "ascent": {
+   "emitStart": 0.05,
+   "emitEnd": 0.286,
+   "density": 69.0
+  }
+ },
+ "14 Gasoline": {
+  "layers": [
+   {
+    "count": 125,
+    "type": "Sparks",
+    "mass": 0.3,
+    "minLife": 0.45,
+    "maxLife": 0.8,
+    "birthtime": 0.0,
+    "fade": [
+     0.1818,
+     0.2718,
+     0.85,
+     1.0
+    ],
+    "speed": 0.05,
+    "sigma": 0.14,
+    "posSigma": 1.0,
+    "distType": "SphericalDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Invisible",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.0,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 125,
+    "type": "Sparks",
+    "mass": 0.3,
+    "minLife": 0.45,
+    "maxLife": 0.45,
+    "birthtime": 0.0,
+    "fade": [
+     0.1818,
+     0.2718,
+     0.85,
+     1.0
+    ],
+    "speed": 0.1,
+    "sigma": 0.14,
+    "posSigma": 1.0,
+    "distType": "SphericalDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Invisible",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.0,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   }
+  ],
+  "nLayers": 2,
+  "riseDelay": 2.5,
+  "ascent": {
+   "emitStart": 0.05,
+   "emitEnd": 0.8,
+   "density": 5.0
+  }
+ },
+ "25 Ring": {
+  "layers": [
+   {
+    "count": 20,
+    "type": "Small",
+    "mass": 0.8,
+    "minLife": 1.2,
+    "maxLife": 1.6,
+    "birthtime": 0.0,
+    "fade": [
+     0.127,
+     0.4609,
+     0.8143,
+     0.999
+    ],
+    "speed": 0.8,
+    "sigma": 0.0,
+    "posSigma": 0.325,
+    "distType": "RingDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "PastelRed",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.011504,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   }
+  ],
+  "nLayers": 1,
+  "riseDelay": 2.5,
+  "ascent": {
+   "emitStart": 0.05,
+   "emitEnd": 0.8,
+   "density": 5.0
+  }
+ },
+ "26 Double Ring": {
+  "layers": [
+   {
+    "count": 30,
+    "type": "Small",
+    "mass": 0.8,
+    "minLife": 1.2,
+    "maxLife": 1.6,
+    "birthtime": 0.0,
+    "fade": [
+     0.127,
+     0.7048,
+     0.8143,
+     0.999
+    ],
+    "speed": 0.8,
+    "sigma": 0.0,
+    "posSigma": 0.325,
+    "distType": "RingDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Pink",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.011504,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 20,
+    "type": "Small",
+    "mass": 0.8,
+    "minLife": 0.7,
+    "maxLife": 1.0,
+    "birthtime": 0.0,
+    "fade": [
+     0.127,
+     0.4609,
+     0.8143,
+     0.999
+    ],
+    "speed": 0.5,
+    "sigma": 0.0,
+    "posSigma": 0.325,
+    "distType": "RingDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Invisible",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.011504,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   }
+  ],
+  "nLayers": 2,
+  "riseDelay": 2.5,
+  "ascent": {
+   "emitStart": 0.05,
+   "emitEnd": 0.8,
+   "density": 5.0
+  }
+ },
+ "27 Saturn Ring": {
+  "layers": [
+   {
+    "count": 16,
+    "type": "XSmall",
+    "mass": 0.5,
+    "minLife": 2.3,
+    "maxLife": 2.5,
+    "birthtime": 0.0,
+    "fade": [
+     0.5057,
+     0.6985,
+     0.8702,
+     1.0
+    ],
+    "speed": 0.8,
+    "sigma": 0.0,
+    "posSigma": 0.308,
+    "distType": "RingDistribution",
+    "color": {
+     "name": "Orange",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Red",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.0,
+    "colorChanging": false,
+    "color2": {
+     "name": "PastelRed",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 80,
+    "type": "Sparks",
+    "mass": 0.5,
+    "minLife": 1.02,
+    "maxLife": 1.46,
+    "birthtime": 0.0,
+    "fade": [
+     0.0,
+     0.09,
+     0.85,
+     1.0
+    ],
+    "speed": 0.3,
+    "sigma": 0.027,
+    "posSigma": 0.192,
+    "distType": "SphericalDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Blue",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.0,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   }
+  ],
+  "nLayers": 2,
+  "riseDelay": 2.5,
+  "ascent": null
+ },
+ "28 Heart": {
+  "layers": [
+   {
+    "count": 34,
+    "type": "Small",
+    "mass": 0.8,
+    "minLife": 1.2,
+    "maxLife": 1.6,
+    "birthtime": 0.0,
+    "fade": [
+     0.127,
+     0.4609,
+     0.8143,
+     0.999
+    ],
+    "speed": 0.5,
+    "sigma": 0.14,
+    "posSigma": 1.0,
+    "distType": "HeartDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Red",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.011504,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   }
+  ],
+  "nLayers": 1,
+  "riseDelay": 2.5,
+  "ascent": {
+   "emitStart": 0.05,
+   "emitEnd": 0.286,
+   "density": 69.0
+  }
+ },
+ "29 Smiley": {
+  "layers": [
+   {
+    "count": 150,
+    "type": "XSmall",
+    "mass": 0.7,
+    "minLife": 1.5,
+    "maxLife": 2.82,
+    "birthtime": 0.0,
+    "fade": [
+     0.1,
+     0.3019,
+     0.7962,
+     1.0
+    ],
+    "speed": 1.0,
+    "sigma": 0.02,
+    "posSigma": 0.35,
+    "distType": "CustomShapeDistribution",
+    "color": {
+     "name": "Orange",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Orange",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.0,
+    "colorChanging": false,
+    "color2": {
+     "name": "PastelRed",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   }
+  ],
+  "nLayers": 1,
+  "riseDelay": 2.5,
+  "ascent": null
+ },
+ "30 Bow Tie": {
+  "layers": [
+   {
+    "count": 40,
+    "type": "XSmall",
+    "mass": 0.7,
+    "minLife": 1.0,
+    "maxLife": 2.0,
+    "birthtime": 0.0,
+    "fade": [
+     0.176,
+     0.5474,
+     0.8975,
+     0.999
+    ],
+    "speed": 0.8,
+    "sigma": 0.018,
+    "posSigma": 0.108,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "PastelGreen",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Invisible",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.125,
+    "strobeFreq": 113.09734,
+    "colorChanging": false,
+    "color2": {
+     "name": "PastelRed",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 40,
+    "type": "XSmall",
+    "mass": 0.7,
+    "minLife": 1.0,
+    "maxLife": 2.0,
+    "birthtime": 0.0,
+    "fade": [
+     0.176,
+     0.5474,
+     0.8975,
+     0.999
+    ],
+    "speed": 0.8,
+    "sigma": 0.017,
+    "posSigma": 0.108,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "PastelGreen",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Invisible",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.125,
+    "strobeFreq": 113.09734,
+    "colorChanging": false,
+    "color2": {
+     "name": "PastelRed",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   }
+  ],
+  "nLayers": 2,
+  "riseDelay": 2.5,
+  "ascent": {
+   "emitStart": 0.05,
+   "emitEnd": 0.286,
+   "density": 69.0
+  }
+ },
+ "31 Cluster _ Diadem": {
+  "layers": [
+   {
+    "count": 20,
+    "type": "Small",
+    "mass": 0.8,
+    "minLife": 1.5,
+    "maxLife": 2.3,
+    "birthtime": 0.0,
+    "fade": [
+     0.1,
+     0.3019,
+     0.7962,
+     1.0
+    ],
+    "speed": 0.6,
+    "sigma": 0.14,
+    "posSigma": 1.0,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "Invisible",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Invisible",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.0,
+    "colorChanging": false,
+    "color2": {
+     "name": "PastelRed",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 20,
+    "type": "Small",
+    "mass": 0.8,
+    "minLife": 1.5,
+    "maxLife": 2.3,
+    "birthtime": 0.0,
+    "fade": [
+     0.1,
+     0.3019,
+     0.7962,
+     1.0
+    ],
+    "speed": 0.6,
+    "sigma": 0.14,
+    "posSigma": 1.0,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "Invisible",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Invisible",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.0,
+    "colorChanging": false,
+    "color2": {
+     "name": "PastelRed",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 20,
+    "type": "Small",
+    "mass": 0.8,
+    "minLife": 1.5,
+    "maxLife": 2.3,
+    "birthtime": 0.0,
+    "fade": [
+     0.1,
+     0.3019,
+     0.7962,
+     1.0
+    ],
+    "speed": 0.6,
+    "sigma": 0.14,
+    "posSigma": 1.0,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "Invisible",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Invisible",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.0,
+    "colorChanging": false,
+    "color2": {
+     "name": "PastelRed",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 20,
+    "type": "Small",
+    "mass": 0.8,
+    "minLife": 1.5,
+    "maxLife": 2.3,
+    "birthtime": 0.0,
+    "fade": [
+     0.1,
+     0.3019,
+     0.7962,
+     1.0
+    ],
+    "speed": 0.6,
+    "sigma": 0.14,
+    "posSigma": 1.0,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "Invisible",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Invisible",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.0,
+    "colorChanging": false,
+    "color2": {
+     "name": "PastelRed",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 15,
+    "type": "Small",
+    "mass": 0.8,
+    "minLife": 1.5,
+    "maxLife": 2.3,
+    "birthtime": 0.0,
+    "fade": [
+     0.1,
+     0.3019,
+     0.7962,
+     1.0
+    ],
+    "speed": 0.6,
+    "sigma": 0.14,
+    "posSigma": 1.0,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "Invisible",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Invisible",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.0,
+    "colorChanging": false,
+    "color2": {
+     "name": "PastelRed",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   }
+  ],
+  "nLayers": 5,
+  "riseDelay": 2.5,
+  "ascent": {
+   "emitStart": 0.05,
+   "emitEnd": 0.8,
+   "density": 5.0
+  }
+ },
+ "32 Jellyfish _ Mushroom": {
+  "layers": [
+   {
+    "count": 6,
+    "type": "Small",
+    "mass": 0.8,
+    "minLife": 1.5,
+    "maxLife": 2.3,
+    "birthtime": 0.0,
+    "fade": [
+     0.1,
+     0.3019,
+     0.7962,
+     1.0
+    ],
+    "speed": 0.8,
+    "sigma": 0.0,
+    "posSigma": 1.0,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "White",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Red",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.0,
+    "colorChanging": false,
+    "color2": {
+     "name": "PastelRed",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 100,
+    "type": "XSmall",
+    "mass": 0.7,
+    "minLife": 1.5,
+    "maxLife": 2.3,
+    "birthtime": 0.0,
+    "fade": [
+     0.0619,
+     0.285,
+     0.4137,
+     0.7459
+    ],
+    "speed": 0.8,
+    "sigma": 0.0,
+    "posSigma": 0.0,
+    "distType": "HemisphereDistribution",
+    "color": {
+     "name": "PastelRed",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "PastelGreen",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.011504,
+    "colorChanging": false,
+    "color2": {
+     "name": "PastelRed",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 10,
+    "type": "Large",
+    "mass": 1.0,
+    "minLife": 1.5,
+    "maxLife": 2.3,
+    "birthtime": 0.0,
+    "fade": [
+     0.1415,
+     0.3755,
+     0.6623,
+     0.9358
+    ],
+    "speed": 0.8,
+    "sigma": 0.0,
+    "posSigma": 0.0,
+    "distType": "RingDistribution",
+    "color": {
+     "name": "White",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Invisible",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.011504,
+    "colorChanging": false,
+    "color2": {
+     "name": "PastelRed",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   }
+  ],
+  "nLayers": 3,
+  "riseDelay": 2.5,
+  "ascent": {
+   "emitStart": 0.05,
+   "emitEnd": 0.286,
+   "density": 69.0
+  }
+ },
+ "33 Half _ Half": {
+  "layers": [
+   {
+    "count": 50,
+    "type": "XXSmall",
+    "mass": 0.5,
+    "minLife": 1.2,
+    "maxLife": 1.5,
+    "birthtime": 0.0,
+    "fade": [
+     0.1,
+     0.2505,
+     0.7345,
+     0.968
+    ],
+    "speed": 0.8,
+    "sigma": 0.02,
+    "posSigma": 1.0,
+    "distType": "HemisphereDistribution",
+    "color": {
+     "name": "Orange",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Red",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.0,
+    "colorChanging": false,
+    "color2": {
+     "name": "PastelRed",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 70,
+    "type": "Sparks",
+    "mass": 0.5,
+    "minLife": 2.0,
+    "maxLife": 2.3,
+    "birthtime": 0.0,
+    "fade": [
+     0.0734,
+     0.3804,
+     0.8418,
+     1.0
+    ],
+    "speed": 0.8,
+    "sigma": 0.02,
+    "posSigma": 1.0,
+    "distType": "HemisphereDistribution",
+    "color": {
+     "name": "Orange",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Blue",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.0,
+    "colorChanging": false,
+    "color2": {
+     "name": "PastelRed",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   }
+  ],
+  "nLayers": 2,
+  "riseDelay": 2.5,
+  "ascent": {
+   "emitStart": 0.05,
+   "emitEnd": 0.286,
+   "density": 69.0
+  }
+ },
+ "34 4-4": {
+  "layers": [
+   {
+    "count": 60,
+    "type": "XXSmall",
+    "mass": 0.7,
+    "minLife": 1.2,
+    "maxLife": 1.6,
+    "birthtime": 0.0,
+    "fade": [
+     0.0639,
+     0.3235,
+     0.7811,
+     0.996
+    ],
+    "speed": 0.9,
+    "sigma": 0.0,
+    "posSigma": 0.1,
+    "distType": "QuarterSphereDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Red",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.011504,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 60,
+    "type": "Sparks",
+    "mass": 0.7,
+    "minLife": 1.5,
+    "maxLife": 1.9,
+    "birthtime": 0.0,
+    "fade": [
+     0.0639,
+     0.3235,
+     0.3887,
+     0.996
+    ],
+    "speed": 0.9,
+    "sigma": 0.0,
+    "posSigma": 0.1,
+    "distType": "QuarterSphereDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Blue",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.011504,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 60,
+    "type": "Sparks",
+    "mass": 0.7,
+    "minLife": 1.5,
+    "maxLife": 1.9,
+    "birthtime": 0.0,
+    "fade": [
+     0.0639,
+     0.3235,
+     0.3824,
+     0.996
+    ],
+    "speed": 0.9,
+    "sigma": 0.0,
+    "posSigma": 0.1,
+    "distType": "QuarterSphereDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "PastelGreen",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.011504,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 60,
+    "type": "XXSmall",
+    "mass": 0.7,
+    "minLife": 1.2,
+    "maxLife": 1.6,
+    "birthtime": 0.0,
+    "fade": [
+     0.0639,
+     0.3235,
+     0.7811,
+     0.996
+    ],
+    "speed": 0.9,
+    "sigma": 0.0,
+    "posSigma": 0.1,
+    "distType": "QuarterSphereDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "DarkYellow",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.011504,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   }
+  ],
+  "nLayers": 4,
+  "riseDelay": 2.5,
+  "ascent": {
+   "emitStart": 0.05,
+   "emitEnd": 0.286,
+   "density": 69.0
+  }
+ },
+ "34a Ghost Shell": {
+  "layers": [
+   {
+    "count": 240,
+    "type": "Normal",
+    "mass": 1.0,
+    "minLife": 1.0,
+    "maxLife": 1.2,
+    "birthtime": 0.0,
+    "fade": [
+     0.0774,
+     0.4756,
+     0.7801,
+     0.999
+    ],
+    "speed": 0.8,
+    "sigma": 0.0,
+    "posSigma": 0.525,
+    "distType": "SphericalDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Invisible",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.011504,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 60,
+    "type": "XSmall",
+    "mass": 0.7,
+    "minLife": 1.0,
+    "maxLife": 1.5,
+    "birthtime": 0.0,
+    "fade": [
+     0.32,
+     0.5409,
+     0.7992,
+     0.999
+    ],
+    "speed": 0.75,
+    "sigma": 0.025,
+    "posSigma": 0.25,
+    "distType": "QuarterSphereDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "PastelGreen",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.011504,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 60,
+    "type": "XXSmall",
+    "mass": 0.7,
+    "minLife": 1.5,
+    "maxLife": 2.2,
+    "birthtime": 0.0,
+    "fade": [
+     0.4143,
+     0.6969,
+     0.9105,
+     0.9857
+    ],
+    "speed": 0.75,
+    "sigma": 0.025,
+    "posSigma": 0.25,
+    "distType": "QuarterSphereDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Red",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.011504,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 60,
+    "type": "XSmall",
+    "mass": 0.7,
+    "minLife": 2.0,
+    "maxLife": 2.7,
+    "birthtime": 0.0,
+    "fade": [
+     0.5818,
+     0.7494,
+     0.8632,
+     0.999
+    ],
+    "speed": 0.75,
+    "sigma": 0.025,
+    "posSigma": 0.25,
+    "distType": "QuarterSphereDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "PastelGreen",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.011504,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 60,
+    "type": "XXSmall",
+    "mass": 0.7,
+    "minLife": 2.8,
+    "maxLife": 3.2,
+    "birthtime": 0.0,
+    "fade": [
+     0.7084,
+     0.8056,
+     0.9105,
+     0.9857
+    ],
+    "speed": 0.75,
+    "sigma": 0.025,
+    "posSigma": 0.25,
+    "distType": "QuarterSphereDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Red",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.011504,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   }
+  ],
+  "nLayers": 5,
+  "riseDelay": 3.8,
+  "ascent": {
+   "emitStart": 0.05,
+   "emitEnd": 0.286,
+   "density": 69.0
+  }
+ },
+ "35 Hybrids _ Special": {
+  "layers": [
+   {
+    "count": 150,
+    "type": "Sparks",
+    "mass": 0.5,
+    "minLife": 2.0,
+    "maxLife": 3.5,
+    "birthtime": 0.0,
+    "fade": [
+     0.2508,
+     0.7476,
+     0.7486,
+     1.0
+    ],
+    "speed": 1.0,
+    "sigma": 0.02,
+    "posSigma": 0.35,
+    "distType": "SphericalDistribution",
+    "color": {
+     "name": "Orange",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Blue",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.011504,
+    "colorChanging": false,
+    "color2": {
+     "name": "PastelRed",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 20,
+    "type": "XSmall",
+    "mass": 0.7,
+    "minLife": 1.5,
+    "maxLife": 2.0,
+    "birthtime": 0.0,
+    "fade": [
+     0.0831,
+     0.3534,
+     0.85,
+     1.0
+    ],
+    "speed": 0.85,
+    "sigma": 0.04,
+    "posSigma": 0.25,
+    "distType": "RingDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "White",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     },
+     {
+      "color": {
+       "name": "White",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     },
+     {
+      "color": {
+       "name": "White",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     },
+     {
+      "color": {
+       "name": "Red",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     },
+     {
+      "color": {
+       "name": "Red",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.011504,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   }
+  ],
+  "nLayers": 2,
+  "riseDelay": 3.2,
+  "ascent": {
+   "emitStart": 0.05,
+   "emitEnd": 1.0,
+   "density": 500.0
+  }
+ },
+ "40 Single Shot (Mine)": {
+  "layers": [
+   {
+    "count": 25,
+    "type": "XSmall",
+    "mass": 0.5,
+    "minLife": 1.3,
+    "maxLife": 2.5,
+    "birthtime": 0.0,
+    "fade": [
+     0.1954,
+     0.5493,
+     0.8472,
+     0.999
+    ],
+    "speed": 1.0,
+    "sigma": 0.045,
+    "posSigma": 0.35,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "PastelGreen",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Red",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.125,
+    "strobeFreq": 94.24778,
+    "colorChanging": false,
+    "color2": {
+     "name": "PastelRed",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   }
+  ],
+  "nLayers": 1,
+  "riseDelay": 0.0,
+  "ascent": null
+ },
+ "41 Single Shot (Comet)": {
+  "layers": [
+   {
+    "count": 1,
+    "type": "Large",
+    "mass": 0.75,
+    "minLife": 2.0,
+    "maxLife": 3.0,
+    "birthtime": 0.0,
+    "fade": [
+     0.0193,
+     0.4381,
+     0.9137,
+     0.999
+    ],
+    "speed": 1.05,
+    "sigma": 0.0,
+    "posSigma": 0.35,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "PastelGreen",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "PastelBlue",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.011504,
+    "colorChanging": false,
+    "color2": {
+     "name": "PastelRed",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   }
+  ],
+  "nLayers": 1,
+  "riseDelay": 0.0,
+  "ascent": null
+ },
+ "42 Single Shot (Comet & Mine)": {
+  "layers": [
+   {
+    "count": 1,
+    "type": "Large",
+    "mass": 0.75,
+    "minLife": 2.0,
+    "maxLife": 3.0,
+    "birthtime": 0.0,
+    "fade": [
+     0.0193,
+     0.4381,
+     0.9137,
+     0.999
+    ],
+    "speed": 1.05,
+    "sigma": 0.0,
+    "posSigma": 0.35,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "PastelGreen",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Lime",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.011504,
+    "colorChanging": false,
+    "color2": {
+     "name": "PastelRed",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 39,
+    "type": "Sparks",
+    "mass": 1.2,
+    "minLife": 1.3,
+    "maxLife": 1.7,
+    "birthtime": 0.0,
+    "fade": [
+     0.0684,
+     0.3469,
+     0.6515,
+     0.93
+    ],
+    "speed": 0.65,
+    "sigma": 0.045,
+    "posSigma": 0.35,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "PastelGreen",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Blue",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.125,
+    "strobeFreq": 94.24778,
+    "colorChanging": false,
+    "color2": {
+     "name": "PastelRed",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   }
+  ],
+  "nLayers": 2,
+  "riseDelay": 0.0,
+  "ascent": null
+ },
+ "43 Single Shot (Shell)": {
+  "layers": [
+   {
+    "count": 3,
+    "type": "Small",
+    "mass": 0.8,
+    "minLife": 1.0,
+    "maxLife": 2.1,
+    "birthtime": 0.0,
+    "fade": [
+     0.09,
+     0.22,
+     0.488,
+     0.756
+    ],
+    "speed": 1.0,
+    "sigma": 0.14,
+    "posSigma": 1.0,
+    "distType": "SphericalDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Red",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.011504,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 3,
+    "type": "Small",
+    "mass": 0.8,
+    "minLife": 1.0,
+    "maxLife": 2.1,
+    "birthtime": 0.0,
+    "fade": [
+     0.09,
+     0.22,
+     0.488,
+     0.756
+    ],
+    "speed": 1.0,
+    "sigma": 0.14,
+    "posSigma": 1.0,
+    "distType": "SphericalDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "SeaGreen",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.011504,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 3,
+    "type": "Small",
+    "mass": 0.8,
+    "minLife": 1.0,
+    "maxLife": 2.1,
+    "birthtime": 0.0,
+    "fade": [
+     0.09,
+     0.22,
+     0.488,
+     0.756
+    ],
+    "speed": 1.0,
+    "sigma": 0.14,
+    "posSigma": 1.0,
+    "distType": "SphericalDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "SkyBlue",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.011504,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 3,
+    "type": "Small",
+    "mass": 0.8,
+    "minLife": 1.0,
+    "maxLife": 2.1,
+    "birthtime": 0.0,
+    "fade": [
+     0.09,
+     0.22,
+     0.488,
+     0.756
+    ],
+    "speed": 1.0,
+    "sigma": 0.14,
+    "posSigma": 1.0,
+    "distType": "SphericalDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Orange",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.011504,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 3,
+    "type": "Small",
+    "mass": 0.8,
+    "minLife": 1.0,
+    "maxLife": 2.1,
+    "birthtime": 0.0,
+    "fade": [
+     0.09,
+     0.22,
+     0.488,
+     0.756
+    ],
+    "speed": 1.0,
+    "sigma": 0.14,
+    "posSigma": 1.0,
+    "distType": "SphericalDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "LightPink",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.011504,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 40,
+    "type": "Sparks",
+    "mass": 0.5,
+    "minLife": 0.3,
+    "maxLife": 0.7,
+    "birthtime": 0.0,
+    "fade": [
+     0.7622,
+     0.8257,
+     0.9593,
+     0.999
+    ],
+    "speed": 1.0,
+    "sigma": 0.14,
+    "posSigma": 1.0,
+    "distType": "SphericalDistribution",
+    "color": {
+     "name": "PastelGreen",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Gold",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": true
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.125,
+    "strobeFreq": 43.668137,
+    "colorChanging": false,
+    "color2": {
+     "name": "PastelRed",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 10,
+    "type": "XSmall",
+    "mass": 0.5,
+    "minLife": 2.0,
+    "maxLife": 2.5,
+    "birthtime": 0.0,
+    "fade": [
+     0.8996,
+     0.9167,
+     0.9177,
+     0.9618
+    ],
+    "speed": 1.0,
+    "sigma": 0.14,
+    "posSigma": 1.0,
+    "distType": "SphericalDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "PastelOrange",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.011504,
+    "colorChanging": false,
+    "color2": {
+     "name": "Orange",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 25,
+    "type": "XSmall",
+    "mass": 0.5,
+    "minLife": 1.5,
+    "maxLife": 2.0,
+    "birthtime": 0.0,
+    "fade": [
+     0.8996,
+     0.9167,
+     0.9177,
+     0.999
+    ],
+    "speed": 1.0,
+    "sigma": 0.14,
+    "posSigma": 1.0,
+    "distType": "SphericalDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "PastelOrange",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.011504,
+    "colorChanging": false,
+    "color2": {
+     "name": "Orange",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 50,
+    "type": "XSmall",
+    "mass": 0.5,
+    "minLife": 0.7,
+    "maxLife": 1.5,
+    "birthtime": 0.0,
+    "fade": [
+     0.8735,
+     0.9167,
+     0.9177,
+     0.999
+    ],
+    "speed": 1.0,
+    "sigma": 0.14,
+    "posSigma": 1.0,
+    "distType": "SphericalDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "PastelOrange",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.011504,
+    "colorChanging": false,
+    "color2": {
+     "name": "Orange",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   }
+  ],
+  "nLayers": 9,
+  "riseDelay": 2.0,
+  "ascent": {
+   "emitStart": 0.05,
+   "emitEnd": 1.0,
+   "density": 250.0
+  }
+ },
+ "44 Single Shot (Mine + Shell)": {
+  "layers": [
+   {
+    "count": 69,
+    "type": "XSmall",
+    "mass": 0.5,
+    "minLife": 0.5,
+    "maxLife": 1.0,
+    "birthtime": 0.0,
+    "fade": [
+     0.207,
+     0.5377,
+     0.8116,
+     0.999
+    ],
+    "speed": 0.8,
+    "sigma": 0.14,
+    "posSigma": 1.0,
+    "distType": "SphericalDistribution",
+    "color": {
+     "name": "PastelGreen",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Invisible",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.125,
+    "strobeFreq": 113.09734,
+    "colorChanging": false,
+    "color2": {
+     "name": "PastelRed",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 25,
+    "type": "Normal",
+    "mass": 0.5,
+    "minLife": 1.5,
+    "maxLife": 2.1,
+    "birthtime": 0.0,
+    "fade": [
+     0.0,
+     0.09,
+     0.85,
+     1.0
+    ],
+    "speed": 0.8,
+    "sigma": 0.14,
+    "posSigma": 1.0,
+    "distType": "SphericalDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Invisible",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.011504,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 10,
+    "type": "XSmall",
+    "mass": 1.0,
+    "minLife": 0.5,
+    "maxLife": 1.0,
+    "birthtime": 0.0,
+    "fade": [
+     0.207,
+     0.5377,
+     0.8116,
+     0.999
+    ],
+    "speed": 0.45,
+    "sigma": 0.036,
+    "posSigma": 1.0,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "PastelGreen",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Invisible",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.125,
+    "strobeFreq": 113.09734,
+    "colorChanging": false,
+    "color2": {
+     "name": "PastelRed",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   }
+  ],
+  "nLayers": 3,
+  "riseDelay": 1.8,
+  "ascent": {
+   "emitStart": 0.05,
+   "emitEnd": 1.0,
+   "density": 300.0
+  }
+ },
+ "45 Single Shot (Hybrids _ Special)": {
+  "layers": [
+   {
+    "count": 40,
+    "type": "XXSmall",
+    "mass": 0.8,
+    "minLife": 1.0,
+    "maxLife": 1.8,
+    "birthtime": 0.0,
+    "fade": [
+     0.176,
+     0.508,
+     0.944,
+     1.0
+    ],
+    "speed": 0.8,
+    "sigma": 0.14,
+    "posSigma": 1.0,
+    "distType": "SphericalDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Invisible",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.125,
+    "strobeFreq": 94.24778,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 5,
+    "type": "XXSmall",
+    "mass": 0.7,
+    "minLife": 0.6,
+    "maxLife": 1.0,
+    "birthtime": 0.0,
+    "fade": [
+     0.2156,
+     0.39,
+     0.876,
+     1.0
+    ],
+    "speed": 0.5,
+    "sigma": 0.076,
+    "posSigma": 1.0,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Red",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.0,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   }
+  ],
+  "nLayers": 2,
+  "riseDelay": 1.8,
+  "ascent": {
+   "emitStart": 0.05,
+   "emitEnd": 1.0,
+   "density": 250.0
+  }
+ },
+ "50 Roman Candle (Mine)": {
+  "layers": [
+   {
+    "count": 30,
+    "type": "XSmall",
+    "mass": 1.2,
+    "minLife": 2.0,
+    "maxLife": 3.0,
+    "birthtime": 0.0,
+    "fade": [
+     0.1954,
+     0.5493,
+     0.8472,
+     0.999
+    ],
+    "speed": 1.3,
+    "sigma": 0.039,
+    "posSigma": 0.35,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "PastelGreen",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Invisible",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.125,
+    "strobeFreq": 94.24778,
+    "colorChanging": false,
+    "color2": {
+     "name": "PastelRed",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   }
+  ],
+  "nLayers": 1,
+  "riseDelay": 0.0,
+  "ascent": null
+ },
+ "51 Roman Candle (Comet)": {
+  "layers": [
+   {
+    "count": 1,
+    "type": "XSmall",
+    "mass": 0.8,
+    "minLife": 1.2,
+    "maxLife": 1.5,
+    "birthtime": 0.0,
+    "fade": [
+     0.0,
+     0.09,
+     0.85,
+     1.0
+    ],
+    "speed": 1.28,
+    "sigma": 0.05,
+    "posSigma": 0.25,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Red",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.011504,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 1,
+    "type": "XSmall",
+    "mass": 0.8,
+    "minLife": 1.2,
+    "maxLife": 1.5,
+    "birthtime": 0.0,
+    "fade": [
+     0.0,
+     0.09,
+     0.85,
+     1.0
+    ],
+    "speed": 1.28,
+    "sigma": 0.05,
+    "posSigma": 0.25,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "LightGreen",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.011504,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 1,
+    "type": "XXSmall",
+    "mass": 0.8,
+    "minLife": 1.2,
+    "maxLife": 1.5,
+    "birthtime": 0.0,
+    "fade": [
+     0.0,
+     0.09,
+     0.85,
+     1.0
+    ],
+    "speed": 1.28,
+    "sigma": 0.05,
+    "posSigma": 0.25,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "PastelBlue",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.011504,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 1,
+    "type": "XSmall",
+    "mass": 0.8,
+    "minLife": 1.2,
+    "maxLife": 1.5,
+    "birthtime": 0.0,
+    "fade": [
+     0.0,
+     0.09,
+     0.85,
+     1.0
+    ],
+    "speed": 1.28,
+    "sigma": 0.05,
+    "posSigma": 0.25,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "DarkYellow",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.011504,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 1,
+    "type": "XSmall",
+    "mass": 0.8,
+    "minLife": 1.2,
+    "maxLife": 1.5,
+    "birthtime": 0.0,
+    "fade": [
+     0.0,
+     0.09,
+     0.85,
+     1.0
+    ],
+    "speed": 1.28,
+    "sigma": 0.05,
+    "posSigma": 0.25,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Pink",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.011504,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   }
+  ],
+  "nLayers": 5,
+  "riseDelay": 0.0,
+  "ascent": null
+ },
+ "52 Roman Candle (Comet + Mine)": {
+  "layers": [
+   {
+    "count": 1,
+    "type": "Sparks",
+    "mass": 1.0,
+    "minLife": 3.0,
+    "maxLife": 3.5,
+    "birthtime": 0.0,
+    "fade": [
+     0.0402,
+     0.0412,
+     0.0422,
+     0.6747
+    ],
+    "speed": 0.98,
+    "sigma": 0.015,
+    "posSigma": 0.25,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Invisible",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.011504,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 30,
+    "type": "XXSmall",
+    "mass": 2.0,
+    "minLife": 0.6,
+    "maxLife": 1.0,
+    "birthtime": 0.0,
+    "fade": [
+     0.1758,
+     0.3112,
+     0.6566,
+     0.8293
+    ],
+    "speed": 1.2,
+    "sigma": 0.067,
+    "posSigma": 1.0,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "PastelPurple",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.011504,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   }
+  ],
+  "nLayers": 2,
+  "riseDelay": 0.0,
+  "ascent": null
+ },
+ "53 Roman Candle (Shell)": {
+  "layers": [
+   {
+    "count": 10,
+    "type": "Sparks",
+    "mass": 0.7,
+    "minLife": 1.46,
+    "maxLife": 3.39,
+    "birthtime": 0.0,
+    "fade": [
+     0.0668,
+     0.1737,
+     0.8702,
+     0.999
+    ],
+    "speed": 1.0,
+    "sigma": 0.14,
+    "posSigma": 1.0,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Red",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 56.83,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 10,
+    "type": "Sparks",
+    "mass": 0.7,
+    "minLife": 1.46,
+    "maxLife": 3.39,
+    "birthtime": 0.0,
+    "fade": [
+     0.0668,
+     0.1737,
+     0.8817,
+     1.0
+    ],
+    "speed": 1.0,
+    "sigma": 0.14,
+    "posSigma": 1.0,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "PastelGreen",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 56.83,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 31,
+    "type": "Sparks",
+    "mass": 0.3,
+    "minLife": 0.4,
+    "maxLife": 1.22,
+    "birthtime": 0.0,
+    "fade": [
+     0.0,
+     0.09,
+     0.85,
+     1.0
+    ],
+    "speed": 1.18,
+    "sigma": 0.14,
+    "posSigma": 1.0,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Blue",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.0,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   }
+  ],
+  "nLayers": 3,
+  "riseDelay": 1.9166666,
+  "ascent": {
+   "emitStart": 0.05,
+   "emitEnd": 1.0,
+   "density": 300.0
+  }
+ },
+ "54 Roman Candle (Mine + Shell)": {
+  "layers": [
+   {
+    "count": 40,
+    "type": "XXSmall",
+    "mass": 0.5,
+    "minLife": 0.4,
+    "maxLife": 0.8,
+    "birthtime": 0.0,
+    "fade": [
+     0.1758,
+     0.5111,
+     0.7778,
+     1.0
+    ],
+    "speed": 0.8,
+    "sigma": 0.14,
+    "posSigma": 1.0,
+    "distType": "SphericalDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "DarkGreen",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.011504,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 10,
+    "type": "XXSmall",
+    "mass": 1.0,
+    "minLife": 0.6,
+    "maxLife": 1.0,
+    "birthtime": 0.0,
+    "fade": [
+     0.1758,
+     0.5111,
+     0.5576,
+     0.8384
+    ],
+    "speed": 0.8,
+    "sigma": 0.067,
+    "posSigma": 1.0,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "DarkGreen",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.011504,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   }
+  ],
+  "nLayers": 2,
+  "riseDelay": 1.8,
+  "ascent": {
+   "emitStart": 0.05,
+   "emitEnd": 0.286,
+   "density": 69.0
+  }
+ },
+ "55 Roman Candle (Bundle)": {
+  "layers": [
+   {
+    "count": 1,
+    "type": "XXSmall",
+    "mass": 0.7,
+    "minLife": 1.0,
+    "maxLife": 1.4,
+    "birthtime": 0.0,
+    "fade": [
+     0.1173,
+     0.5147,
+     0.8502,
+     1.0
+    ],
+    "speed": 1.0,
+    "sigma": 0.078,
+    "posSigma": 0.25,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "IceBlue",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 88.02743,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 1,
+    "type": "XXSmall",
+    "mass": 0.7,
+    "minLife": 1.0,
+    "maxLife": 1.4,
+    "birthtime": 0.0,
+    "fade": [
+     0.1173,
+     0.5147,
+     0.8502,
+     1.0
+    ],
+    "speed": 1.0,
+    "sigma": 0.078,
+    "posSigma": 0.25,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Invisible",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 88.02743,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   }
+  ],
+  "nLayers": 2,
+  "riseDelay": 0.0,
+  "ascent": null
+ },
+ "56 Roman Candle (Hybrids _ Special)": {
+  "layers": [
+   {
+    "count": 4,
+    "type": "XSmall",
+    "mass": 0.7,
+    "minLife": 0.9,
+    "maxLife": 1.3,
+    "birthtime": 0.0,
+    "fade": [
+     0.001,
+     0.2028,
+     0.8702,
+     0.999
+    ],
+    "speed": 2.0,
+    "sigma": 0.0,
+    "posSigma": 1.0,
+    "distType": "RingDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "DarkYellow",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 56.799995,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 10,
+    "type": "XSmall",
+    "mass": 0.5,
+    "minLife": 1.0,
+    "maxLife": 2.0,
+    "birthtime": 0.0,
+    "fade": [
+     0.1799,
+     0.4487,
+     0.9089,
+     0.999
+    ],
+    "speed": 0.8,
+    "sigma": 0.103,
+    "posSigma": 1.0,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "PastelGreen",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "White",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": true
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.125,
+    "strobeFreq": 94.24778,
+    "colorChanging": false,
+    "color2": {
+     "name": "PastelRed",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   }
+  ],
+  "nLayers": 2,
+  "riseDelay": 2.3,
+  "ascent": null
+ },
+ "60 Single Row (Mine)": {
+  "layers": [
+   {
+    "count": 35,
+    "type": "XXSmall",
+    "mass": 0.7,
+    "minLife": 1.7,
+    "maxLife": 2.0,
+    "birthtime": 0.0,
+    "fade": [
+     0.0603,
+     0.3785,
+     0.3795,
+     0.5016
+    ],
+    "speed": 1.0,
+    "sigma": 0.045,
+    "posSigma": 0.35,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "PastelGreen",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "DarkYellow",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.125,
+    "strobeFreq": 94.24778,
+    "colorChanging": false,
+    "color2": {
+     "name": "PastelRed",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   }
+  ],
+  "nLayers": 1,
+  "riseDelay": 0.0,
+  "ascent": null
+ },
+ "61 Single Row (Comet)": {
+  "layers": [
+   {
+    "count": 1,
+    "type": "Normal",
+    "mass": 1.0,
+    "minLife": 2.57,
+    "maxLife": 3.21,
+    "birthtime": 0.0,
+    "fade": [
+     0.0,
+     0.09,
+     0.85,
+     1.0
+    ],
+    "speed": 1.2,
+    "sigma": 0.0,
+    "posSigma": 0.25,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Invisible",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.011504,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   }
+  ],
+  "nLayers": 1,
+  "riseDelay": 0.0,
+  "ascent": null
+ },
+ "62 Single Row (Comet & Mine)": {
+  "layers": [
+   {
+    "count": 1,
+    "type": "Large",
+    "mass": 0.75,
+    "minLife": 1.8,
+    "maxLife": 2.0,
+    "birthtime": 0.0,
+    "fade": [
+     0.0193,
+     0.4381,
+     0.9137,
+     0.999
+    ],
+    "speed": 1.05,
+    "sigma": 0.0,
+    "posSigma": 0.35,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "PastelGreen",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Orange",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.011504,
+    "colorChanging": false,
+    "color2": {
+     "name": "PastelRed",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 72,
+    "type": "XXSmall",
+    "mass": 0.5,
+    "minLife": 0.6,
+    "maxLife": 2.62,
+    "birthtime": 0.0,
+    "fade": [
+     0.1189,
+     0.4723,
+     0.9414,
+     0.999
+    ],
+    "speed": 0.45,
+    "sigma": 0.042,
+    "posSigma": 0.35,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "PastelGreen",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "White",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": true
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.164,
+    "strobeFreq": 62.831856,
+    "colorChanging": false,
+    "color2": {
+     "name": "PastelRed",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   }
+  ],
+  "nLayers": 2,
+  "riseDelay": 0.0,
+  "ascent": null
+ },
+ "63 Single Row (Shell)": {
+  "layers": [
+   {
+    "count": 40,
+    "type": "XXSmall",
+    "mass": 0.5,
+    "minLife": 1.0,
+    "maxLife": 2.0,
+    "birthtime": 0.0,
+    "fade": [
+     0.1799,
+     0.4487,
+     0.9089,
+     0.999
+    ],
+    "speed": 1.0,
+    "sigma": 0.14,
+    "posSigma": 1.0,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "PastelGreen",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "White",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": true
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.10593,
+    "strobeFreq": 100.02831,
+    "colorChanging": false,
+    "color2": {
+     "name": "PastelRed",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 10,
+    "type": "XSmall",
+    "mass": 0.7,
+    "minLife": 1.0,
+    "maxLife": 2.0,
+    "birthtime": 0.0,
+    "fade": [
+     0.1799,
+     0.4487,
+     0.9089,
+     0.999
+    ],
+    "speed": 1.0,
+    "sigma": 0.14,
+    "posSigma": 1.0,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "PastelGreen",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "White",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": true
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.10593,
+    "strobeFreq": 100.02831,
+    "colorChanging": false,
+    "color2": {
+     "name": "PastelRed",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 5,
+    "type": "XSmall",
+    "mass": 0.7,
+    "minLife": 0.6,
+    "maxLife": 1.0,
+    "birthtime": 0.0,
+    "fade": [
+     0.1799,
+     0.4487,
+     0.8323,
+     0.999
+    ],
+    "speed": 1.0,
+    "sigma": 0.14,
+    "posSigma": 1.0,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "PastelGreen",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "PastelBlue",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.10593,
+    "strobeFreq": 100.02831,
+    "colorChanging": false,
+    "color2": {
+     "name": "PastelRed",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 40,
+    "type": "XXSmall",
+    "mass": 0.5,
+    "minLife": 1.0,
+    "maxLife": 2.0,
+    "birthtime": 0.0,
+    "fade": [
+     0.1799,
+     0.4487,
+     0.9089,
+     0.999
+    ],
+    "speed": 1.0,
+    "sigma": 0.14,
+    "posSigma": 1.0,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "PastelGreen",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "White",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": true
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.10593,
+    "strobeFreq": 100.02831,
+    "colorChanging": false,
+    "color2": {
+     "name": "PastelRed",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 10,
+    "type": "XSmall",
+    "mass": 0.7,
+    "minLife": 1.0,
+    "maxLife": 2.0,
+    "birthtime": 0.0,
+    "fade": [
+     0.1799,
+     0.4487,
+     0.9089,
+     0.999
+    ],
+    "speed": 1.0,
+    "sigma": 0.14,
+    "posSigma": 1.0,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "PastelGreen",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "White",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": true
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.10593,
+    "strobeFreq": 100.02831,
+    "colorChanging": false,
+    "color2": {
+     "name": "PastelRed",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 5,
+    "type": "XSmall",
+    "mass": 0.7,
+    "minLife": 0.6,
+    "maxLife": 1.0,
+    "birthtime": 0.0,
+    "fade": [
+     0.1799,
+     0.4487,
+     0.8323,
+     0.999
+    ],
+    "speed": 1.0,
+    "sigma": 0.14,
+    "posSigma": 1.0,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "PastelGreen",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "LightPink",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.10593,
+    "strobeFreq": 100.02831,
+    "colorChanging": false,
+    "color2": {
+     "name": "PastelRed",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 40,
+    "type": "XXSmall",
+    "mass": 0.5,
+    "minLife": 1.0,
+    "maxLife": 2.0,
+    "birthtime": 0.0,
+    "fade": [
+     0.1799,
+     0.4487,
+     0.9089,
+     0.999
+    ],
+    "speed": 1.0,
+    "sigma": 0.14,
+    "posSigma": 1.0,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "PastelGreen",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "White",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": true
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.10593,
+    "strobeFreq": 100.02831,
+    "colorChanging": false,
+    "color2": {
+     "name": "PastelRed",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 10,
+    "type": "XSmall",
+    "mass": 0.7,
+    "minLife": 1.0,
+    "maxLife": 2.0,
+    "birthtime": 0.0,
+    "fade": [
+     0.1799,
+     0.4487,
+     0.9089,
+     0.999
+    ],
+    "speed": 1.0,
+    "sigma": 0.14,
+    "posSigma": 1.0,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "PastelGreen",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "White",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": true
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.10593,
+    "strobeFreq": 100.02831,
+    "colorChanging": false,
+    "color2": {
+     "name": "PastelRed",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 5,
+    "type": "XSmall",
+    "mass": 0.7,
+    "minLife": 0.6,
+    "maxLife": 1.0,
+    "birthtime": 0.0,
+    "fade": [
+     0.1799,
+     0.4487,
+     0.8323,
+     0.999
+    ],
+    "speed": 1.0,
+    "sigma": 0.14,
+    "posSigma": 1.0,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "PastelGreen",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "DarkYellow",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.10593,
+    "strobeFreq": 100.02831,
+    "colorChanging": false,
+    "color2": {
+     "name": "PastelRed",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   }
+  ],
+  "nLayers": 9,
+  "riseDelay": 1.8,
+  "ascent": {
+   "emitStart": 0.05,
+   "emitEnd": 1.0,
+   "density": 300.0
+  }
+ },
+ "64 Single Row (Mine + Shell)": {
+  "layers": [
+   {
+    "count": 50,
+    "type": "Sparks",
+    "mass": 0.65,
+    "minLife": 1.2,
+    "maxLife": 2.0,
+    "birthtime": 0.0,
+    "fade": [
+     0.5874,
+     0.8089,
+     0.8099,
+     1.0
+    ],
+    "speed": 0.8,
+    "sigma": 0.14,
+    "posSigma": 1.0,
+    "distType": "SphericalDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Blue",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.0,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 20,
+    "type": "XXSmall",
+    "mass": 1.0,
+    "minLife": 1.3,
+    "maxLife": 1.6,
+    "birthtime": 0.0,
+    "fade": [
+     0.3209,
+     0.528,
+     0.9669,
+     0.999
+    ],
+    "speed": 0.5,
+    "sigma": 0.033,
+    "posSigma": 1.0,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "PastelGreen",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Red",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": true
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 94.24778,
+    "colorChanging": false,
+    "color2": {
+     "name": "PastelRed",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 20,
+    "type": "XSmall",
+    "mass": 0.7,
+    "minLife": 1.3,
+    "maxLife": 1.6,
+    "birthtime": 0.0,
+    "fade": [
+     0.3209,
+     0.528,
+     0.9669,
+     0.999
+    ],
+    "speed": 0.41,
+    "sigma": 0.033,
+    "posSigma": 1.0,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "PastelGreen",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Red",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": true
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 94.24778,
+    "colorChanging": false,
+    "color2": {
+     "name": "PastelRed",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   }
+  ],
+  "nLayers": 3,
+  "riseDelay": 1.8,
+  "ascent": {
+   "emitStart": 0.05,
+   "emitEnd": 1.0,
+   "density": 300.0
+  }
+ },
+ "65 Single Row (Hybrids _ Special)": {
+  "layers": [
+   {
+    "count": 1,
+    "type": "Normal",
+    "mass": 1.0,
+    "minLife": 1.4,
+    "maxLife": 1.8,
+    "birthtime": 0.0,
+    "fade": [
+     0.0562,
+     0.1034,
+     0.9137,
+     0.999
+    ],
+    "speed": 1.0,
+    "sigma": 0.009,
+    "posSigma": 0.35,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "PastelGreen",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Invisible",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.125,
+    "strobeFreq": 94.24778,
+    "colorChanging": false,
+    "color2": {
+     "name": "PastelRed",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 15,
+    "type": "XXSmall",
+    "mass": 0.5,
+    "minLife": 0.4,
+    "maxLife": 0.8,
+    "birthtime": 0.0,
+    "fade": [
+     0.1758,
+     0.5111,
+     0.7778,
+     1.0
+    ],
+    "speed": 0.8,
+    "sigma": 0.14,
+    "posSigma": 1.0,
+    "distType": "SphericalDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Invisible",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.011504,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 30,
+    "type": "XXSmall",
+    "mass": 0.8,
+    "minLife": 1.3,
+    "maxLife": 1.8,
+    "birthtime": 0.0,
+    "fade": [
+     0.3213,
+     0.6225,
+     0.9779,
+     0.999
+    ],
+    "speed": 0.6,
+    "sigma": 0.037,
+    "posSigma": 1.0,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "PastelGreen",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Red",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": true
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.15,
+    "strobeFreq": 31.415928,
+    "colorChanging": false,
+    "color2": {
+     "name": "PastelRed",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   }
+  ],
+  "nLayers": 3,
+  "riseDelay": 0.0,
+  "ascent": {
+   "emitStart": 0.05,
+   "emitEnd": 1.0,
+   "density": 44.0
+  }
+ },
+ "70 Cake (I-Shape)": {
+  "layers": [
+   {
+    "count": 25,
+    "type": "Small",
+    "mass": 0.8,
+    "minLife": 1.0,
+    "maxLife": 1.3,
+    "birthtime": 0.0,
+    "fade": [
+     0.0,
+     0.09,
+     0.85,
+     1.0
+    ],
+    "speed": 1.0,
+    "sigma": 0.14,
+    "posSigma": 1.0,
+    "distType": "SphericalDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Invisible",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.0,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   }
+  ],
+  "nLayers": 1,
+  "riseDelay": 1.7,
+  "ascent": {
+   "emitStart": 0.05,
+   "emitEnd": 1.0,
+   "density": 200.0
+  }
+ },
+ "71 Cake _ Compound (Z-Shap)": {
+  "layers": [
+   {
+    "count": 15,
+    "type": "XSmall",
+    "mass": 0.7,
+    "minLife": 1.0,
+    "maxLife": 1.3,
+    "birthtime": 0.0,
+    "fade": [
+     0.0,
+     0.1697,
+     0.2263,
+     0.4101
+    ],
+    "speed": 0.8,
+    "sigma": 0.14,
+    "posSigma": 1.0,
+    "distType": "SphericalDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "White",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.0,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   }
+  ],
+  "nLayers": 1,
+  "riseDelay": 1.7,
+  "ascent": {
+   "emitStart": 0.05,
+   "emitEnd": 1.0,
+   "density": 300.0
+  }
+ },
+ "72 Cake _ Compound (S-Shape)": {
+  "layers": [
+   {
+    "count": 1,
+    "type": "XSmall",
+    "mass": 0.7,
+    "minLife": 1.5,
+    "maxLife": 2.1,
+    "birthtime": 0.0,
+    "fade": [
+     0.0365,
+     0.2035,
+     0.998,
+     0.999
+    ],
+    "speed": 1.1,
+    "sigma": 0.05,
+    "posSigma": 1.0,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Red",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.0,
+    "colorChanging": false,
+    "color2": {
+     "name": "PastelRed",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   }
+  ],
+  "nLayers": 1,
+  "riseDelay": 0.0,
+  "ascent": null
+ },
+ "73 Cake (Fan-Shape)": {
+  "layers": [
+   {
+    "count": 12,
+    "type": "Small",
+    "mass": 0.8,
+    "minLife": 1.0,
+    "maxLife": 1.3,
+    "birthtime": 0.0,
+    "fade": [
+     0.0,
+     0.09,
+     0.85,
+     1.0
+    ],
+    "speed": 1.0,
+    "sigma": 0.14,
+    "posSigma": 1.0,
+    "distType": "SphericalDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Invisible",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.0,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   }
+  ],
+  "nLayers": 1,
+  "riseDelay": 1.8,
+  "ascent": {
+   "emitStart": 0.05,
+   "emitEnd": 1.0,
+   "density": 300.0
+  }
+ },
+ "74 Cake _ Compound (V-Shape)": {
+  "layers": [
+   {
+    "count": 13,
+    "type": "XLarge",
+    "mass": 1.0,
+    "minLife": 1.97,
+    "maxLife": 2.81,
+    "birthtime": 0.0,
+    "fade": [
+     0.5326,
+     0.7492,
+     0.8713,
+     0.999
+    ],
+    "speed": 0.6,
+    "sigma": 0.14,
+    "posSigma": 1.0,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "Invisible",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Invisible",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.0,
+    "colorChanging": false,
+    "color2": {
+     "name": "PastelRed",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   }
+  ],
+  "nLayers": 1,
+  "riseDelay": 1.8,
+  "ascent": {
+   "emitStart": 0.05,
+   "emitEnd": 1.0,
+   "density": 400.0
+  }
+ },
+ "75 Cake _ Compound (W-Shape)": {
+  "layers": [
+   {
+    "count": 67,
+    "type": "Sparks",
+    "mass": 0.3,
+    "minLife": 1.0,
+    "maxLife": 1.5,
+    "birthtime": 0.0,
+    "fade": [
+     0.0248,
+     0.3626,
+     0.563,
+     1.0
+    ],
+    "speed": 0.8,
+    "sigma": 0.14,
+    "posSigma": 1.0,
+    "distType": "SphericalDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Blue",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.0,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 27,
+    "type": "Sparks",
+    "mass": 0.3,
+    "minLife": 1.0,
+    "maxLife": 1.5,
+    "birthtime": 0.0,
+    "fade": [
+     0.2156,
+     0.5095,
+     0.563,
+     1.0
+    ],
+    "speed": 0.5,
+    "sigma": 0.077,
+    "posSigma": 1.0,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Blue",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.0,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   }
+  ],
+  "nLayers": 2,
+  "riseDelay": 1.8,
+  "ascent": {
+   "emitStart": 0.05,
+   "emitEnd": 1.0,
+   "density": 300.0
+  }
+ },
+ "76 Cake _ Compound (X-Shape)": {
+  "layers": [
+   {
+    "count": 1,
+    "type": "Small",
+    "mass": 1.0,
+    "minLife": 1.8,
+    "maxLife": 2.3,
+    "birthtime": 0.0,
+    "fade": [
+     0.4291,
+     0.834,
+     0.908,
+     1.0
+    ],
+    "speed": 1.0,
+    "sigma": 0.05,
+    "posSigma": 1.0,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Red",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.011504,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   }
+  ],
+  "nLayers": 1,
+  "riseDelay": 0.0,
+  "ascent": null
+ },
+ "77 Cake _ Compound (F-Shape)": {
+  "layers": [
+   {
+    "count": 1,
+    "type": "Normal",
+    "mass": 1.0,
+    "minLife": 2.17,
+    "maxLife": 3.08,
+    "birthtime": 0.0,
+    "fade": [
+     0.0,
+     0.09,
+     0.85,
+     1.0
+    ],
+    "speed": 0.75,
+    "sigma": 0.0,
+    "posSigma": 0.25,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Invisible",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.011504,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 19,
+    "type": "Sparks",
+    "mass": 0.8,
+    "minLife": 0.8,
+    "maxLife": 3.5,
+    "birthtime": 0.0,
+    "fade": [
+     0.4118,
+     0.507,
+     0.5837,
+     0.719
+    ],
+    "speed": 0.75,
+    "sigma": 0.019,
+    "posSigma": 0.25,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Invisible",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.011504,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   }
+  ],
+  "nLayers": 2,
+  "riseDelay": 0.0,
+  "ascent": null
+ },
+ "78 Cake _ Compound (Varied Shapes)": {
+  "layers": [
+   {
+    "count": 15,
+    "type": "Sparks",
+    "mass": 1.0,
+    "minLife": 1.0,
+    "maxLife": 1.2,
+    "birthtime": 0.0,
+    "fade": [
+     0.1333,
+     0.3414,
+     0.6364,
+     0.8505
+    ],
+    "speed": 1.2,
+    "sigma": 0.05,
+    "posSigma": 0.25,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Blue",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.011504,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 50,
+    "type": "XSmall",
+    "mass": 0.7,
+    "minLife": 2.5,
+    "maxLife": 3.2,
+    "birthtime": 0.0,
+    "fade": [
+     0.3209,
+     0.528,
+     0.9669,
+     0.999
+    ],
+    "speed": 1.1,
+    "sigma": 0.08,
+    "posSigma": 1.0,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "PastelGreen",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Red",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": true
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 94.24778,
+    "colorChanging": false,
+    "color2": {
+     "name": "PastelRed",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 15,
+    "type": "Sparks",
+    "mass": 1.0,
+    "minLife": 1.0,
+    "maxLife": 1.5,
+    "birthtime": 0.0,
+    "fade": [
+     0.1333,
+     0.3414,
+     0.6364,
+     0.8505
+    ],
+    "speed": 0.9,
+    "sigma": 0.108,
+    "posSigma": 0.25,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Invisible",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.011504,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 40,
+    "type": "Sparks",
+    "mass": 0.5,
+    "minLife": 1.0,
+    "maxLife": 1.2,
+    "birthtime": 0.0,
+    "fade": [
+     0.1333,
+     0.3414,
+     0.6364,
+     0.999
+    ],
+    "speed": 0.8,
+    "sigma": 0.14,
+    "posSigma": 1.0,
+    "distType": "SphericalDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Blue",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.011504,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 30,
+    "type": "Sparks",
+    "mass": 1.0,
+    "minLife": 0.6,
+    "maxLife": 1.6,
+    "birthtime": 0.0,
+    "fade": [
+     0.1333,
+     0.3414,
+     0.6364,
+     0.8505
+    ],
+    "speed": 0.6,
+    "sigma": 0.108,
+    "posSigma": 0.25,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Invisible",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.011504,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 15,
+    "type": "Sparks",
+    "mass": 1.0,
+    "minLife": 1.0,
+    "maxLife": 1.6,
+    "birthtime": 0.0,
+    "fade": [
+     0.1333,
+     0.3414,
+     0.6364,
+     0.999
+    ],
+    "speed": 1.2,
+    "sigma": 0.05,
+    "posSigma": 0.25,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Blue",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.011504,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 75,
+    "type": "XSmall",
+    "mass": 0.7,
+    "minLife": 1.3,
+    "maxLife": 1.6,
+    "birthtime": 0.0,
+    "fade": [
+     0.3209,
+     0.528,
+     0.9669,
+     0.999
+    ],
+    "speed": 0.8,
+    "sigma": 0.14,
+    "posSigma": 1.0,
+    "distType": "SphericalDistribution",
+    "color": {
+     "name": "PastelGreen",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Red",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": true
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 94.24778,
+    "colorChanging": false,
+    "color2": {
+     "name": "PastelRed",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 17,
+    "type": "XSmall",
+    "mass": 0.8,
+    "minLife": 1.0,
+    "maxLife": 1.3,
+    "birthtime": 0.0,
+    "fade": [
+     0.0,
+     0.09,
+     0.85,
+     1.0
+    ],
+    "speed": 0.8,
+    "sigma": 0.14,
+    "posSigma": 0.25,
+    "distType": "SphericalDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Invisible",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.011504,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 75,
+    "type": "XXSmall",
+    "mass": 0.7,
+    "minLife": 1.3,
+    "maxLife": 1.6,
+    "birthtime": 0.0,
+    "fade": [
+     0.3209,
+     0.528,
+     0.9669,
+     0.999
+    ],
+    "speed": 0.8,
+    "sigma": 0.14,
+    "posSigma": 1.0,
+    "distType": "SphericalDistribution",
+    "color": {
+     "name": "PastelGreen",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Red",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": true
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 94.24778,
+    "colorChanging": false,
+    "color2": {
+     "name": "PastelRed",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 32,
+    "type": "XSmall",
+    "mass": 0.8,
+    "minLife": 1.5,
+    "maxLife": 1.8,
+    "birthtime": 0.0,
+    "fade": [
+     0.0,
+     0.09,
+     0.85,
+     1.0
+    ],
+    "speed": 0.8,
+    "sigma": 0.14,
+    "posSigma": 0.25,
+    "distType": "SphericalDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Invisible",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.011504,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 2,
+    "type": "XSmall",
+    "mass": 0.5,
+    "minLife": 1.5,
+    "maxLife": 2.1,
+    "birthtime": 0.0,
+    "fade": [
+     0.1172,
+     0.2444,
+     0.3576,
+     0.6061
+    ],
+    "speed": 0.8,
+    "sigma": 0.04,
+    "posSigma": 0.25,
+    "distType": "SphericalDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Red",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.011504,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 2,
+    "type": "XSmall",
+    "mass": 0.5,
+    "minLife": 1.5,
+    "maxLife": 2.1,
+    "birthtime": 0.0,
+    "fade": [
+     0.1172,
+     0.2444,
+     0.3576,
+     0.6061
+    ],
+    "speed": 0.8,
+    "sigma": 0.04,
+    "posSigma": 0.25,
+    "distType": "SphericalDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "DarkGreen",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.0,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 2,
+    "type": "XSmall",
+    "mass": 0.5,
+    "minLife": 1.5,
+    "maxLife": 2.1,
+    "birthtime": 0.0,
+    "fade": [
+     0.1172,
+     0.2444,
+     0.3576,
+     0.6061
+    ],
+    "speed": 0.8,
+    "sigma": 0.04,
+    "posSigma": 0.25,
+    "distType": "SphericalDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "PastelBlue",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.0,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 20,
+    "type": "Sparks",
+    "mass": 0.5,
+    "minLife": 2.0,
+    "maxLife": 2.6,
+    "birthtime": 0.0,
+    "fade": [
+     0.5414,
+     0.9485,
+     0.9495,
+     1.0
+    ],
+    "speed": 0.8,
+    "sigma": 0.14,
+    "posSigma": 0.25,
+    "distType": "SphericalDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Custom",
+       "rgb": [
+        94.0,
+        47.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.011504,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 5,
+    "type": "XXSmall",
+    "mass": 0.7,
+    "minLife": 0.6,
+    "maxLife": 0.9,
+    "birthtime": 0.0,
+    "fade": [
+     0.1172,
+     0.3131,
+     0.6263,
+     0.9576
+    ],
+    "speed": 0.8,
+    "sigma": 0.04,
+    "posSigma": 0.25,
+    "distType": "SphericalDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "PastelBlue",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.011504,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 5,
+    "type": "XXSmall",
+    "mass": 0.7,
+    "minLife": 0.6,
+    "maxLife": 0.9,
+    "birthtime": 0.0,
+    "fade": [
+     0.1172,
+     0.3131,
+     0.6263,
+     0.9576
+    ],
+    "speed": 0.8,
+    "sigma": 0.04,
+    "posSigma": 0.25,
+    "distType": "SphericalDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "LightGreen",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.011504,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 5,
+    "type": "XXSmall",
+    "mass": 0.7,
+    "minLife": 0.6,
+    "maxLife": 0.9,
+    "birthtime": 0.0,
+    "fade": [
+     0.1172,
+     0.3131,
+     0.6263,
+     0.9576
+    ],
+    "speed": 0.8,
+    "sigma": 0.04,
+    "posSigma": 0.25,
+    "distType": "SphericalDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "LightPink",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.011504,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 15,
+    "type": "Sparks",
+    "mass": 1.0,
+    "minLife": 0.9,
+    "maxLife": 1.1,
+    "birthtime": 0.0,
+    "fade": [
+     0.5414,
+     0.9485,
+     0.9495,
+     1.0
+    ],
+    "speed": 0.8,
+    "sigma": 0.14,
+    "posSigma": 0.25,
+    "distType": "SphericalDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Invisible",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.011504,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 15,
+    "type": "XXSmall",
+    "mass": 0.7,
+    "minLife": 0.6,
+    "maxLife": 0.9,
+    "birthtime": 0.0,
+    "fade": [
+     0.1172,
+     0.3131,
+     0.6263,
+     0.9576
+    ],
+    "speed": 0.5,
+    "sigma": 0.116000004,
+    "posSigma": 0.25,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "LightGreen",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.011504,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 5,
+    "type": "XXSmall",
+    "mass": 0.7,
+    "minLife": 0.6,
+    "maxLife": 0.9,
+    "birthtime": 0.0,
+    "fade": [
+     0.1172,
+     0.3131,
+     0.6263,
+     0.9576
+    ],
+    "speed": 0.5,
+    "sigma": 0.116000004,
+    "posSigma": 0.25,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "LightPink",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.011504,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 50,
+    "type": "Sparks",
+    "mass": 0.7,
+    "minLife": 0.8,
+    "maxLife": 1.2,
+    "birthtime": 0.0,
+    "fade": [
+     0.3253,
+     0.9485,
+     0.9495,
+     1.0
+    ],
+    "speed": 0.55,
+    "sigma": 0.14,
+    "posSigma": 0.25,
+    "distType": "SphericalDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Invisible",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.011504,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 16,
+    "type": "XSmall",
+    "mass": 0.7,
+    "minLife": 0.6,
+    "maxLife": 1.0,
+    "birthtime": 0.0,
+    "fade": [
+     0.1172,
+     0.3131,
+     0.7737,
+     0.999
+    ],
+    "speed": 0.8,
+    "sigma": 0.14,
+    "posSigma": 1.0,
+    "distType": "SphericalDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "LightPink",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.011504,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 50,
+    "type": "Sparks",
+    "mass": 0.7,
+    "minLife": 0.8,
+    "maxLife": 1.2,
+    "birthtime": 0.0,
+    "fade": [
+     0.3253,
+     0.9485,
+     0.9495,
+     1.0
+    ],
+    "speed": 0.55,
+    "sigma": 0.14,
+    "posSigma": 0.25,
+    "distType": "SphericalDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Invisible",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.011504,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 16,
+    "type": "XSmall",
+    "mass": 0.7,
+    "minLife": 0.6,
+    "maxLife": 1.0,
+    "birthtime": 0.0,
+    "fade": [
+     0.1172,
+     0.3131,
+     0.7737,
+     0.999
+    ],
+    "speed": 0.8,
+    "sigma": 0.14,
+    "posSigma": 1.0,
+    "distType": "SphericalDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "LightGreen",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.011504,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 50,
+    "type": "Sparks",
+    "mass": 0.7,
+    "minLife": 0.8,
+    "maxLife": 1.2,
+    "birthtime": 0.0,
+    "fade": [
+     0.3253,
+     0.9485,
+     0.9495,
+     1.0
+    ],
+    "speed": 0.55,
+    "sigma": 0.14,
+    "posSigma": 0.25,
+    "distType": "SphericalDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Invisible",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.011504,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 25,
+    "type": "Sparks",
+    "mass": 0.7,
+    "minLife": 0.9,
+    "maxLife": 1.3,
+    "birthtime": 0.0,
+    "fade": [
+     0.1172,
+     0.3131,
+     0.7737,
+     0.999
+    ],
+    "speed": 0.8,
+    "sigma": 0.14,
+    "posSigma": 1.0,
+    "distType": "SphericalDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Blue",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.011504,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 32,
+    "type": "XSmall",
+    "mass": 0.8,
+    "minLife": 1.6,
+    "maxLife": 2.0,
+    "birthtime": 0.0,
+    "fade": [
+     0.0,
+     0.09,
+     0.85,
+     1.0
+    ],
+    "speed": 0.8,
+    "sigma": 0.14,
+    "posSigma": 1.0,
+    "distType": "SphericalDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Invisible",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.011504,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 100,
+    "type": "XSmall",
+    "mass": 0.5,
+    "minLife": 1.2,
+    "maxLife": 1.8,
+    "birthtime": 0.0,
+    "fade": [
+     0.354,
+     0.4762,
+     0.5673,
+     0.7122
+    ],
+    "speed": 0.8,
+    "sigma": 0.14,
+    "posSigma": 1.0,
+    "distType": "SphericalDistribution",
+    "color": {
+     "name": "PastelGreen",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Custom",
+       "rgb": [
+        254.0,
+        224.0,
+        184.0
+       ]
+      },
+      "strobe": true
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.2,
+    "strobeFreq": 81.68141,
+    "colorChanging": false,
+    "color2": {
+     "name": "PastelRed",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 50,
+    "type": "Sparks",
+    "mass": 0.5,
+    "minLife": 0.3,
+    "maxLife": 1.34,
+    "birthtime": 0.0,
+    "fade": [
+     0.001,
+     0.002,
+     0.003,
+     0.7041
+    ],
+    "speed": 0.8,
+    "sigma": 0.14,
+    "posSigma": 1.0,
+    "distType": "SphericalDistribution",
+    "color": {
+     "name": "PastelGreen",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Invisible",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.125,
+    "strobeFreq": 81.68141,
+    "colorChanging": false,
+    "color2": {
+     "name": "PastelRed",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 15,
+    "type": "Sparks",
+    "mass": 1.0,
+    "minLife": 1.0,
+    "maxLife": 1.5,
+    "birthtime": 0.0,
+    "fade": [
+     0.1333,
+     0.3414,
+     0.6364,
+     0.8505
+    ],
+    "speed": 0.9,
+    "sigma": 0.108,
+    "posSigma": 0.25,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Invisible",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.011504,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   }
+  ],
+  "nLayers": 30,
+  "riseDelay": 0.0,
+  "ascent": {
+   "emitStart": 0.05,
+   "emitEnd": 1.0,
+   "density": 300.0
+  }
+ },
+ "79 Cake _ Compound (Special)": {
+  "layers": [
+   {
+    "count": 2010,
+    "type": "Sparks",
+    "mass": 0.3,
+    "minLife": 1.21,
+    "maxLife": 3.6,
+    "birthtime": 0.0,
+    "fade": [
+     0.001,
+     0.3036,
+     0.998,
+     0.999
+    ],
+    "speed": 1.0,
+    "sigma": 0.14,
+    "posSigma": 0.25,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "White",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.0,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 20,
+    "type": "XSmall",
+    "mass": 0.7,
+    "minLife": 1.05,
+    "maxLife": 1.49,
+    "birthtime": 0.0,
+    "fade": [
+     0.0,
+     0.09,
+     0.85,
+     1.0
+    ],
+    "speed": 0.8,
+    "sigma": 0.14,
+    "posSigma": 1.0,
+    "distType": "SphericalDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Invisible",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.0,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 6,
+    "type": "Small",
+    "mass": 0.8,
+    "minLife": 0.95,
+    "maxLife": 2.14,
+    "birthtime": 0.0,
+    "fade": [
+     0.0,
+     0.4237,
+     0.6603,
+     1.0
+    ],
+    "speed": 0.8,
+    "sigma": 0.14,
+    "posSigma": 1.0,
+    "distType": "SphericalDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Red",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.0,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 12,
+    "type": "XSmall",
+    "mass": 0.7,
+    "minLife": 1.05,
+    "maxLife": 1.49,
+    "birthtime": 0.0,
+    "fade": [
+     0.0,
+     0.09,
+     0.85,
+     1.0
+    ],
+    "speed": 0.61,
+    "sigma": 0.078,
+    "posSigma": 1.0,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Invisible",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.0,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 3,
+    "type": "Small",
+    "mass": 0.8,
+    "minLife": 0.68,
+    "maxLife": 1.42,
+    "birthtime": 0.0,
+    "fade": [
+     0.0,
+     0.4237,
+     0.6603,
+     1.0
+    ],
+    "speed": 0.5,
+    "sigma": 0.14,
+    "posSigma": 1.0,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Red",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.0,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   }
+  ],
+  "nLayers": 5,
+  "riseDelay": 1.8,
+  "ascent": {
+   "emitStart": 0.05,
+   "emitEnd": 1.0,
+   "density": 200.0
+  }
+ },
+ "80 Rocket": {
+  "layers": [
+   {
+    "count": 26,
+    "type": "XSmall",
+    "mass": 0.5,
+    "minLife": 1.0,
+    "maxLife": 2.0,
+    "birthtime": 0.0,
+    "fade": [
+     0.207,
+     0.5377,
+     0.8116,
+     0.999
+    ],
+    "speed": 0.8,
+    "sigma": 0.14,
+    "posSigma": 1.0,
+    "distType": "SphericalDistribution",
+    "color": {
+     "name": "PastelGreen",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Invisible",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.129,
+    "strobeFreq": 36.693806,
+    "colorChanging": false,
+    "color2": {
+     "name": "PastelRed",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 30,
+    "type": "Sparks",
+    "mass": 0.5,
+    "minLife": 0.7,
+    "maxLife": 1.5,
+    "birthtime": 0.0,
+    "fade": [
+     0.0,
+     0.09,
+     0.85,
+     1.0
+    ],
+    "speed": 0.8,
+    "sigma": 0.14,
+    "posSigma": 1.0,
+    "distType": "SphericalDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Blue",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.0,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 20,
+    "type": "XXSmall",
+    "mass": 0.5,
+    "minLife": 0.4,
+    "maxLife": 0.8,
+    "birthtime": 0.0,
+    "fade": [
+     0.1576,
+     0.3717,
+     0.85,
+     1.0
+    ],
+    "speed": 0.8,
+    "sigma": 0.14,
+    "posSigma": 1.0,
+    "distType": "SphericalDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Orange",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.0,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   }
+  ],
+  "nLayers": 3,
+  "riseDelay": 3.0,
+  "ascent": {
+   "emitStart": 0.05,
+   "emitEnd": 1.0,
+   "density": 400.0
+  }
+ },
+ "85 Bengal Light": {
+  "layers": [],
+  "nLayers": 0,
+  "riseDelay": 0.0,
+  "ascent": null
+ },
+ "86 Bengal Flame": {
+  "layers": [
+   {
+    "count": 1500,
+    "type": "XSmall",
+    "mass": 0.7,
+    "minLife": 0.2,
+    "maxLife": 0.4,
+    "birthtime": 0.0,
+    "fade": [
+     0.0,
+     0.001,
+     0.089,
+     1.0
+    ],
+    "speed": 0.32,
+    "sigma": 0.01,
+    "posSigma": 0.25,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Green",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.011504,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 150,
+    "type": "Sparks",
+    "mass": 0.3,
+    "minLife": 0.2,
+    "maxLife": 0.4,
+    "birthtime": 0.0,
+    "fade": [
+     0.2998,
+     0.3317,
+     0.3327,
+     1.0
+    ],
+    "speed": 0.37,
+    "sigma": 0.027999999,
+    "posSigma": 0.25,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Custom",
+       "rgb": [
+        94.0,
+        47.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.011504,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   }
+  ],
+  "nLayers": 2,
+  "riseDelay": 0.0,
+  "ascent": null
+ },
+ "87 Fountain": {
+  "layers": [
+   {
+    "count": 1500,
+    "type": "XXSmall",
+    "mass": 0.7,
+    "minLife": 0.2,
+    "maxLife": 0.4,
+    "birthtime": 0.0,
+    "fade": [
+     0.0,
+     0.001,
+     0.089,
+     1.0
+    ],
+    "speed": 0.32,
+    "sigma": 0.01,
+    "posSigma": 0.25,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "PastelGreen",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.011504,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 182,
+    "type": "Sparks",
+    "mass": 0.3,
+    "minLife": 0.2,
+    "maxLife": 0.76,
+    "birthtime": 0.0,
+    "fade": [
+     0.2229,
+     0.3317,
+     0.3327,
+     1.0
+    ],
+    "speed": 1.21,
+    "sigma": 0.027999999,
+    "posSigma": 0.25,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Gold",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.011504,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 750,
+    "type": "Sparks",
+    "mass": 0.3,
+    "minLife": 1.21,
+    "maxLife": 1.88,
+    "birthtime": 0.0,
+    "fade": [
+     0.001,
+     0.002,
+     0.003,
+     0.999
+    ],
+    "speed": 0.7488,
+    "sigma": 0.14,
+    "posSigma": 0.25,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Custom",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.011504,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 2000,
+    "type": "Sparks",
+    "mass": 0.3,
+    "minLife": 1.5,
+    "maxLife": 2.42,
+    "birthtime": 0.0,
+    "fade": [
+     0.1051,
+     0.1061,
+     0.1071,
+     0.999
+    ],
+    "speed": 0.8,
+    "sigma": 0.059,
+    "posSigma": 0.25,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "White",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.011504,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 300,
+    "type": "Sparks",
+    "mass": 0.6,
+    "minLife": 1.21,
+    "maxLife": 1.88,
+    "birthtime": 0.0,
+    "fade": [
+     0.001,
+     0.002,
+     0.003,
+     0.999
+    ],
+    "speed": 0.68,
+    "sigma": 0.14,
+    "posSigma": 0.25,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Custom",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.011504,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   }
+  ],
+  "nLayers": 5,
+  "riseDelay": 0.0,
+  "ascent": null
+ },
+ "88 Vulcano": {
+  "layers": [
+   {
+    "count": 6000,
+    "type": "Sparks",
+    "mass": 0.3,
+    "minLife": 1.5,
+    "maxLife": 2.42,
+    "birthtime": 0.0,
+    "fade": [
+     0.0,
+     0.001,
+     0.002,
+     0.999
+    ],
+    "speed": 0.8,
+    "sigma": 0.14,
+    "posSigma": 0.25,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Custom",
+       "rgb": [
+        74.0,
+        37.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.0,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 800,
+    "type": "Sparks",
+    "mass": 0.3,
+    "minLife": 1.21,
+    "maxLife": 1.88,
+    "birthtime": 0.0,
+    "fade": [
+     0.001,
+     0.002,
+     0.003,
+     0.999
+    ],
+    "speed": 1.0,
+    "sigma": 0.14,
+    "posSigma": 0.25,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Custom",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.011504,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   }
+  ],
+  "nLayers": 2,
+  "riseDelay": 0.0,
+  "ascent": null
+ },
+ "89 Front Piece": {
+  "layers": [
+   {
+    "count": 1500,
+    "type": "XXSmall",
+    "mass": 0.7,
+    "minLife": 0.2,
+    "maxLife": 0.4,
+    "birthtime": 0.0,
+    "fade": [
+     0.0,
+     0.001,
+     0.089,
+     1.0
+    ],
+    "speed": 0.32,
+    "sigma": 0.01,
+    "posSigma": 0.25,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Pink",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.011504,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 150,
+    "type": "Sparks",
+    "mass": 0.3,
+    "minLife": 0.2,
+    "maxLife": 0.4,
+    "birthtime": 0.0,
+    "fade": [
+     0.2998,
+     0.3317,
+     0.3327,
+     1.0
+    ],
+    "speed": 0.37,
+    "sigma": 0.027999999,
+    "posSigma": 0.25,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Custom",
+       "rgb": [
+        94.0,
+        47.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.011504,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 2000,
+    "type": "Sparks",
+    "mass": 0.3,
+    "minLife": 1.21,
+    "maxLife": 1.88,
+    "birthtime": 0.0,
+    "fade": [
+     0.001,
+     0.4303,
+     0.4313,
+     0.999
+    ],
+    "speed": 1.0,
+    "sigma": 0.14,
+    "posSigma": 0.25,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "White",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     },
+     {
+      "color": {
+       "name": "White",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     },
+     {
+      "color": {
+       "name": "Custom",
+       "rgb": [
+        254.0,
+        224.0,
+        184.0
+       ]
+      },
+      "strobe": false
+     },
+     {
+      "color": {
+       "name": "PastelOrange",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     },
+     {
+      "color": {
+       "name": "Custom",
+       "rgb": [
+        196.0,
+        98.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.011504,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   }
+  ],
+  "nLayers": 3,
+  "riseDelay": 0.0,
+  "ascent": null
+ },
+ "90 Photo Flash": {
+  "layers": [],
+  "nLayers": 0,
+  "riseDelay": 0.0,
+  "ascent": null
+ },
+ "91 Ground Salut _ Cracker": {
+  "layers": [
+   {
+    "count": 630,
+    "type": "Normal",
+    "mass": 1.0,
+    "minLife": 0.02,
+    "maxLife": 0.05,
+    "birthtime": 0.0,
+    "fade": [
+     0.0,
+     0.09,
+     0.85,
+     1.0
+    ],
+    "speed": 2.0,
+    "sigma": 0.0,
+    "posSigma": 0.0,
+    "distType": "SphericalDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Invisible",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.011504,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   }
+  ],
+  "nLayers": 1,
+  "riseDelay": 0.0,
+  "ascent": null
+ },
+ "92 Flame Jet": {
+  "layers": [
+   {
+    "count": 200,
+    "type": "Sparks",
+    "mass": 0.3,
+    "minLife": 0.45,
+    "maxLife": 0.8,
+    "birthtime": 0.0,
+    "fade": [
+     0.1818,
+     0.2718,
+     0.85,
+     1.0
+    ],
+    "speed": 2.0,
+    "sigma": 0.0,
+    "posSigma": 0.25,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Invisible",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.0,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 70,
+    "type": "Sparks",
+    "mass": 0.3,
+    "minLife": 0.45,
+    "maxLife": 0.45,
+    "birthtime": 0.0,
+    "fade": [
+     0.1818,
+     0.2718,
+     0.85,
+     1.0
+    ],
+    "speed": 2.0,
+    "sigma": 0.011,
+    "posSigma": 0.25,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Invisible",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.0,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   }
+  ],
+  "nLayers": 2,
+  "riseDelay": 0.0,
+  "ascent": null
+ },
+ "93 Lycopodium": {
+  "layers": [
+   {
+    "count": 200,
+    "type": "Sparks",
+    "mass": 0.3,
+    "minLife": 0.45,
+    "maxLife": 0.8,
+    "birthtime": 0.0,
+    "fade": [
+     0.1818,
+     0.2718,
+     0.85,
+     1.0
+    ],
+    "speed": 2.0,
+    "sigma": 0.0,
+    "posSigma": 0.25,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Invisible",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.0,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 70,
+    "type": "Sparks",
+    "mass": 0.3,
+    "minLife": 0.45,
+    "maxLife": 0.45,
+    "birthtime": 0.0,
+    "fade": [
+     0.1818,
+     0.2718,
+     0.85,
+     1.0
+    ],
+    "speed": 2.0,
+    "sigma": 0.011,
+    "posSigma": 0.25,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Invisible",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.0,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   }
+  ],
+  "nLayers": 2,
+  "riseDelay": 0.0,
+  "ascent": null
+ },
+ "94 Ground Gasoline": {
+  "layers": [
+   {
+    "count": 125,
+    "type": "Sparks",
+    "mass": 0.3,
+    "minLife": 0.45,
+    "maxLife": 0.45,
+    "birthtime": 0.0,
+    "fade": [
+     0.1818,
+     0.2718,
+     0.85,
+     1.0
+    ],
+    "speed": 2.0,
+    "sigma": 0.023,
+    "posSigma": 0.25,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Invisible",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.0,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 200,
+    "type": "Sparks",
+    "mass": 0.3,
+    "minLife": 0.45,
+    "maxLife": 0.8,
+    "birthtime": 0.0,
+    "fade": [
+     0.1818,
+     0.2718,
+     0.85,
+     1.0
+    ],
+    "speed": 2.0,
+    "sigma": 0.0,
+    "posSigma": 0.25,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Invisible",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.0,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 75,
+    "type": "Sparks",
+    "mass": 0.3,
+    "minLife": 0.45,
+    "maxLife": 0.45,
+    "birthtime": 0.0,
+    "fade": [
+     0.1818,
+     0.2718,
+     0.85,
+     1.0
+    ],
+    "speed": 2.0,
+    "sigma": 0.011,
+    "posSigma": 0.25,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Invisible",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.0,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 600,
+    "type": "Sparks",
+    "mass": 0.3,
+    "minLife": 0.45,
+    "maxLife": 0.8,
+    "birthtime": 0.0,
+    "fade": [
+     0.1818,
+     0.2718,
+     0.85,
+     1.0
+    ],
+    "speed": 2.0,
+    "sigma": 0.0,
+    "posSigma": 0.25,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Invisible",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.0,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   }
+  ],
+  "nLayers": 4,
+  "riseDelay": 0.0,
+  "ascent": null
+ },
+ "95 Sparkler": {
+  "layers": [
+   {
+    "count": 325,
+    "type": "Sparks",
+    "mass": 0.3,
+    "minLife": 0.1,
+    "maxLife": 0.25,
+    "birthtime": 0.0,
+    "fade": [
+     0.001,
+     0.0808,
+     0.1385,
+     1.0
+    ],
+    "speed": 2.0,
+    "sigma": 0.14,
+    "posSigma": 0.25,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "White",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.0,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 184,
+    "type": "Sparks",
+    "mass": 0.3,
+    "minLife": 0.3,
+    "maxLife": 0.65,
+    "birthtime": 0.0,
+    "fade": [
+     0.001,
+     0.0808,
+     0.0818,
+     1.0
+    ],
+    "speed": 2.0,
+    "sigma": 0.14,
+    "posSigma": 0.25,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Custom",
+       "rgb": [
+        87.0,
+        87.0,
+        87.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.0,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 14,
+    "type": "Sparks",
+    "mass": 0.3,
+    "minLife": 0.3,
+    "maxLife": 0.65,
+    "birthtime": 0.0,
+    "fade": [
+     0.001,
+     0.998,
+     0.999,
+     1.0
+    ],
+    "speed": 2.0,
+    "sigma": 0.14,
+    "posSigma": 0.25,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "White",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.0,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 4,
+    "type": "Sparks",
+    "mass": 0.3,
+    "minLife": 0.1,
+    "maxLife": 0.3,
+    "birthtime": 0.0,
+    "fade": [
+     0.001,
+     0.998,
+     0.999,
+     1.0
+    ],
+    "speed": 2.0,
+    "sigma": 0.14,
+    "posSigma": 0.25,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "White",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.0,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   }
+  ],
+  "nLayers": 4,
+  "riseDelay": 0.0,
+  "ascent": null
+ },
+ "96 Nautical": {
+  "layers": [
+   {
+    "count": 110,
+    "type": "XXSmall",
+    "mass": 0.5,
+    "minLife": 1.2,
+    "maxLife": 1.6,
+    "birthtime": 0.0,
+    "fade": [
+     0.0774,
+     0.4028,
+     0.601,
+     0.999
+    ],
+    "speed": 0.8,
+    "sigma": 0.0,
+    "posSigma": 0.0,
+    "distType": "HemisphereDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "LightGreen",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.011504,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   }
+  ],
+  "nLayers": 1,
+  "riseDelay": 2.5,
+  "ascent": null
+ },
+ "Explo Waveflamer 2024": {
+  "layers": [
+   {
+    "count": 200,
+    "type": "Sparks",
+    "mass": 0.0,
+    "minLife": 0.45,
+    "maxLife": 0.8,
+    "birthtime": 0.0,
+    "fade": [
+     0.1818,
+     0.2718,
+     0.85,
+     1.0
+    ],
+    "speed": 2.0,
+    "sigma": 0.0,
+    "posSigma": 0.25,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Invisible",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.0,
+    "strobeFreq": 14.0,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": null
+   },
+   {
+    "count": 70,
+    "type": "Sparks",
+    "mass": 0.0,
+    "minLife": 0.45,
+    "maxLife": 0.45,
+    "birthtime": 0.0,
+    "fade": [
+     0.1818,
+     0.2718,
+     0.85,
+     1.0
+    ],
+    "speed": 2.0,
+    "sigma": 0.011,
+    "posSigma": 0.25,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Invisible",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.0,
+    "strobeFreq": 14.0,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": null
+   }
+  ],
+  "nLayers": 2,
+  "riseDelay": 0.0,
+  "ascent": null
+ },
+ "Flamejet 2024": {
+  "layers": [
+   {
+    "count": 250,
+    "type": "Sparks",
+    "mass": 0.0,
+    "minLife": 0.45,
+    "maxLife": 0.45,
+    "birthtime": 0.0,
+    "fade": [
+     0.1818,
+     0.2718,
+     0.85,
+     1.0
+    ],
+    "speed": 2.0,
+    "sigma": 0.011,
+    "posSigma": 0.25,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Invisible",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.0,
+    "strobeFreq": 14.0,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": null
+   },
+   {
+    "count": 450,
+    "type": "Sparks",
+    "mass": 0.0,
+    "minLife": 0.8,
+    "maxLife": 0.45,
+    "birthtime": 0.0,
+    "fade": [
+     0.1818,
+     0.2718,
+     0.85,
+     1.0
+    ],
+    "speed": 2.0,
+    "sigma": 0.0,
+    "posSigma": 0.25,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Invisible",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.0,
+    "strobeFreq": 14.0,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": null
+   },
+   {
+    "count": 125,
+    "type": "Sparks",
+    "mass": 0.0,
+    "minLife": 0.45,
+    "maxLife": 0.45,
+    "birthtime": 0.0,
+    "fade": [
+     0.1818,
+     0.2718,
+     0.85,
+     1.0
+    ],
+    "speed": 2.0,
+    "sigma": 0.011,
+    "posSigma": 0.25,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Invisible",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.0,
+    "strobeFreq": 14.0,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": null
+   }
+  ],
+  "nLayers": 3,
+  "riseDelay": 0.0,
+  "ascent": null
+ },
+ "Spark Machine #1": {
+  "layers": [
+   {
+    "count": 325,
+    "type": "Sparks",
+    "mass": 0.0,
+    "minLife": 0.1,
+    "maxLife": 0.25,
+    "birthtime": 0.0,
+    "fade": [
+     0.001,
+     0.0808,
+     0.1385,
+     1.0
+    ],
+    "speed": 2.0,
+    "sigma": 0.14,
+    "posSigma": 0.25,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "White",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.0,
+    "strobeFreq": 14.0,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": null
+   },
+   {
+    "count": 184,
+    "type": "Sparks",
+    "mass": 0.0,
+    "minLife": 0.3,
+    "maxLife": 0.65,
+    "birthtime": 0.0,
+    "fade": [
+     0.001,
+     0.0808,
+     0.0818,
+     1.0
+    ],
+    "speed": 2.0,
+    "sigma": 0.14,
+    "posSigma": 0.25,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Custom",
+       "rgb": [
+        87.0,
+        87.0,
+        87.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.0,
+    "strobeFreq": 14.0,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": null
+   },
+   {
+    "count": 14,
+    "type": "Sparks",
+    "mass": 0.0,
+    "minLife": 0.3,
+    "maxLife": 0.65,
+    "birthtime": 0.0,
+    "fade": [
+     0.001,
+     0.998,
+     0.999,
+     1.0
+    ],
+    "speed": 2.0,
+    "sigma": 0.14,
+    "posSigma": 0.25,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "White",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.0,
+    "strobeFreq": 14.0,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": null
+   },
+   {
+    "count": 4,
+    "type": "Sparks",
+    "mass": 0.0,
+    "minLife": 0.1,
+    "maxLife": 0.3,
+    "birthtime": 0.0,
+    "fade": [
+     0.001,
+     0.998,
+     0.999,
+     1.0
+    ],
+    "speed": 2.0,
+    "sigma": 0.14,
+    "posSigma": 0.25,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "White",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.0,
+    "strobeFreq": 14.0,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": null
+   }
+  ],
+  "nLayers": 4,
+  "riseDelay": 0.0,
+  "ascent": null
+ },
+ "Waveflamer 2025b": {
+  "layers": [
+   {
+    "count": 971,
+    "type": "Sparks",
+    "mass": 0.2,
+    "minLife": 0.45,
+    "maxLife": 0.8,
+    "birthtime": 0.0,
+    "fade": [
+     0.1818,
+     0.2718,
+     0.85,
+     1.0
+    ],
+    "speed": 2.0,
+    "sigma": 0.0,
+    "posSigma": 0.25,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Invisible",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.0,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   },
+   {
+    "count": 70,
+    "type": "Sparks",
+    "mass": 0.2,
+    "minLife": 0.45,
+    "maxLife": 0.45,
+    "birthtime": 0.0,
+    "fade": [
+     0.1818,
+     0.2718,
+     0.85,
+     1.0
+    ],
+    "speed": 2.0,
+    "sigma": 0.011,
+    "posSigma": 0.25,
+    "distType": "MineDistribution",
+    "color": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "phases": [
+     {
+      "color": {
+       "name": "Invisible",
+       "rgb": [
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      "strobe": false
+     }
+    ],
+    "strobe": false,
+    "strobeOnTime": 0.1,
+    "strobeFreq": 14.0,
+    "colorChanging": false,
+    "color2": {
+     "name": "Red",
+     "rgb": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "motorized": false,
+    "motor": {
+     "startAt": 0.5,
+     "strength": 0.0,
+     "curvature": 0.0
+    }
+   }
+  ],
+  "nLayers": 2,
+  "riseDelay": 0.0,
+  "ascent": null
+ }
+}
