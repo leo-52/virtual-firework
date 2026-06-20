@@ -4,8 +4,12 @@
 import { Firework } from './sim/firework.js';
 import { FireworksLayer } from './render/fireworksLayer.js';
 
-// ⚠️ METS TON TOKEN CESIUM ION ICI (compte gratuit cesium.com). Sans token, les feux
-//    s'affichent mais le terrain (Google 3D Tiles) reste vide.
+// DÉCOR = Google Photorealistic 3D Tiles, mais VIA CESIUM ION (token gratuit), PAS la
+// clé Google directe. Raison (vérifiée) : Google BLOQUE les 3D tiles en accès direct par
+// clé pour les comptes européens (EEA) -> erreur 403. Cesium ion les relaie via son compte
+// US -> ça passe en Europe. (C'est aussi pour ça que le décor d'Unreal, qui utilise la clé
+// Google directe, ne charge pas correctement.)
+// >>> Crée un token GRATUIT sur ion.cesium.com -> "Access Tokens", colle-le ci-dessous.
 const ION_TOKEN = 'METTRE_VOTRE_TOKEN_CESIUM_ION_ICI';
 
 // Lieu de tir par défaut (sera choisi par le client). Ici : un champ près de Paris.
@@ -14,11 +18,13 @@ const FIRE = { lon: 2.3522, lat: 48.8566, height: 35 };
 Cesium.Ion.defaultAccessToken = ION_TOKEN;
 
 const viewer = new Cesium.Viewer('cesiumContainer', {
+  baseLayer: false, // pas d'imagerie ion par defaut -> AUCUN token Cesium ion requis
   animation: false, timeline: false, baseLayerPicker: false, geocoder: true,
   homeButton: false, sceneModePicker: false, navigationHelpButton: false,
   fullscreenButton: false, infoBox: false, selectionIndicator: false
 });
 viewer.scene.debugShowFramesPerSecond = false;
+viewer.scene.globe.show = false; // le sol = les Google 3D Tiles (pas l'ellipsoide bleu)
 
 // Nuit : éclairage solaire + heure de nuit (le décor s'assombrit).
 viewer.scene.globe.enableLighting = true;
@@ -30,7 +36,7 @@ try { viewer.clock.currentTime = Cesium.JulianDate.fromIso8601('2025-07-14T21:30
     const tileset = await Cesium.createGooglePhotorealistic3DTileset();
     viewer.scene.primitives.add(tileset);
   } catch (e) {
-    console.warn('[PrevoFX] Google 3D Tiles indisponible (token ion ?) — feux affichés sans décor.', e);
+    console.warn('[PrevoFX] Google 3D Tiles indisponible (clé Google ?) — feux affichés sans décor.', e);
   }
 })();
 

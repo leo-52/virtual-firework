@@ -21,9 +21,14 @@ npx serve .          # ou : python -m http.server 8080
 Puis ouvrir http://localhost:3000 (ou :8080).
 
 ## ⚠️ Token Cesium ion REQUIS pour le décor
-Mets ton token (compte Cesium ion, gratuit — le même genre que pour UE) dans
-`src/main.js` → `ION_TOKEN`. Sans token, les feux s'affichent quand même mais le
-globe/terrain reste vide.
+Mets un token **Cesium ion** (gratuit, ion.cesium.com → Access Tokens) dans
+`src/main.js` → `ION_TOKEN`. Sans token, les feux s'affichent mais le terrain reste vide.
+
+**Pourquoi ion et pas la clé Google directe ?** Vérifié : Google **bloque les
+Photorealistic 3D Tiles en accès direct par clé pour les comptes européens (EEA)** → 403.
+Cesium ion les relaie via son compte US → ça passe en Europe. (Le projet Unreal, lui,
+utilise la clé Google en direct → c'est pourquoi son décor ne charge pas vraiment ; à
+migrer vers ion aussi côté desktop, plus tard.)
 
 ## État (v1 — fondation)
 - [x] Globe Cesium + Google 3D Tiles + caméra "public" (hauteur d'homme, 150 m, dans l'axe).
