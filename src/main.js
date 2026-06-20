@@ -11,34 +11,43 @@ import { FireworksLayer } from './render/fireworksLayer.js';
 // Google directe, ne charge pas correctement.)
 // >>> Crée un token GRATUIT sur ion.cesium.com -> "Access Tokens", colle-le ci-dessous.
 const ION_TOKEN = 'METTRE_VOTRE_TOKEN_CESIUM_ION_ICI';
+const HAS_ION = ION_TOKEN && !ION_TOKEN.startsWith('METTRE'); // token ion renseigné ?
 
-// Lieu de tir par défaut (sera choisi par le client). Ici : un champ près de Paris.
-const FIRE = { lon: 2.3522, lat: 48.8566, height: 35 };
+// Lieu de tir par défaut (sera choisi par le client). Ici : près de Paris.
+const FIRE = { lon: 2.3522, lat: 48.8566, height: HAS_ION ? 35 : 0 };
 
-Cesium.Ion.defaultAccessToken = ION_TOKEN;
+if (HAS_ION) Cesium.Ion.defaultAccessToken = ION_TOKEN;
+
+// DÉCOR :
+//  - SANS token (test immédiat) -> carte OpenStreetMap drapée sur le globe (GRATUIT, sans clé).
+//  - AVEC un token ion -> Google Photorealistic 3D Tiles (photoréaliste).
+const osmLayer = new Cesium.ImageryLayer(new Cesium.UrlTemplateImageryProvider({
+  url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+  maximumLevel: 19, credit: '© OpenStreetMap contributors'
+}));
 
 const viewer = new Cesium.Viewer('cesiumContainer', {
-  baseLayer: false, // pas d'imagerie ion par defaut -> AUCUN token Cesium ion requis
-  animation: false, timeline: false, baseLayerPicker: false, geocoder: true,
+  baseLayer: HAS_ION ? false : osmLayer,
+  animation: false, timeline: false, baseLayerPicker: false, geocoder: false,
   homeButton: false, sceneModePicker: false, navigationHelpButton: false,
   fullscreenButton: false, infoBox: false, selectionIndicator: false
 });
 viewer.scene.debugShowFramesPerSecond = false;
-viewer.scene.globe.show = false; // le sol = les Google 3D Tiles (pas l'ellipsoide bleu)
+viewer.scene.globe.show = !HAS_ION;        // OSM sur le globe (sans ion) ; caché si Google 3D Tiles
+viewer.scene.skyAtmosphere.show = false;   // pas de voile bleu : ciel sombre -> les feux ressortent
+viewer.scene.globe.enableLighting = false; // décor à pleine luminosité (réalisme nuit -> plus tard)
 
-// Nuit : éclairage solaire + heure de nuit (le décor s'assombrit).
-viewer.scene.globe.enableLighting = true;
-try { viewer.clock.currentTime = Cesium.JulianDate.fromIso8601('2025-07-14T21:30:00Z'); } catch (e) {}
-
-// Terrain photoréaliste (Google 3D Tiles via Cesium ion).
-(async () => {
-  try {
-    const tileset = await Cesium.createGooglePhotorealistic3DTileset();
-    viewer.scene.primitives.add(tileset);
-  } catch (e) {
-    console.warn('[PrevoFX] Google 3D Tiles indisponible (clé Google ?) — feux affichés sans décor.', e);
-  }
-})();
+// Terrain photoréaliste (Google 3D Tiles via Cesium ion) — uniquement si token ion.
+if (HAS_ION) {
+  (async () => {
+    try {
+      const tileset = await Cesium.createGooglePhotorealistic3DTileset();
+      viewer.scene.primitives.add(tileset);
+    } catch (e) {
+      console.warn('[PrevoFX] Google 3D Tiles via ion indisponible — feux sans décor.', e);
+    }
+  })();
+}
 
 // Bloom (le halo des feux la nuit) — post-process intégré de Cesium.
 const bloom = viewer.scene.postProcessStages.bloom;
