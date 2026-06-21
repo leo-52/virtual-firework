@@ -34,11 +34,13 @@ export class Firework {
     this.done = false;
     this.particles = [];
     this.apex = params.burstHeight;
+    this.ox = params.originX || 0; // décalage latéral du tir (m) -> étalement du show
+    this.oy = params.originY || 0;
     // tête de montée (la "boule" qui sort du tube et monte)
     this.head = {
-      pos:[0,0,0], vel:[0,0,0], age:0, life:params.riseTime, kind:'head',
+      pos:[this.ox, this.oy, 0], vel:[0,0,0], age:0, life:params.riseTime, kind:'head',
       color:[1,0.72,0.35], baseSize:0.45, size:0.45, bright:0.6,
-      lastTrail:[0,0,0], trailTimer:0
+      lastTrail:[this.ox, this.oy, 0], trailTimer:0
     };
   }
 
@@ -49,7 +51,7 @@ export class Firework {
     if (this.phase === 'rise'){
       const T  = Math.min(1, this.t / this.p.riseTime);
       const te = 1 - (1-T)*(1-T);            // easeOut : ralentit en montant
-      this.head.pos = [0, 0, this.apex * te];
+      this.head.pos = [this.ox, this.oy, this.apex * te];
       // traînée de montée (grains à durées variées)
       this.head.trailTimer -= dt;
       if (this.head.trailTimer <= 0){
@@ -122,7 +124,7 @@ export class Firework {
     const p = this.p;
     const n = Math.max(8, p.starCount|0);
     const speed = p.burstRadius * 1.8;       // break rapide -> freinage marqué
-    const apex = [0, 0, this.apex];
+    const apex = [this.ox, this.oy, this.apex];
     for (let i = 0; i < n; i++){
       const yy = 1 - 2*(i + 0.5)/n;          // -1..1
       const rr = Math.sqrt(Math.max(0, 1 - yy*yy));

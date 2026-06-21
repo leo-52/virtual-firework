@@ -25,6 +25,7 @@ const osmLayer = new Cesium.ImageryLayer(new Cesium.UrlTemplateImageryProvider({
   url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
   maximumLevel: 19, credit: '© OpenStreetMap contributors'
 }));
+osmLayer.brightness = 0.28; // assombrit la carte OSM -> effet NUIT (pas une feuille blanche)
 
 const viewer = new Cesium.Viewer('cesiumContainer', {
   baseLayer: HAS_ION ? false : osmLayer,
@@ -65,7 +66,7 @@ const layer = new FireworksLayer(viewer, FIRE);
 // Caméra "public" : hauteur d'homme (~1,75 m), à 150 m, dans l'axe de tir.
 function setPublicCamera(){
   const camW = layer.localToWorld([0, -150, 1.75]);
-  const tgtW = layer.localToWorld([0, 0, 40]);
+  const tgtW = layer.localToWorld([0, 0, 55]); // vise le cœur du show (plus de ciel, moins de sol)
   const dir = Cesium.Cartesian3.normalize(
     Cesium.Cartesian3.subtract(tgtW, camW, new Cesium.Cartesian3()), new Cesium.Cartesian3());
   let up = Cesium.Cartesian3.normalize(camW, new Cesium.Cartesian3()); // up géographique
@@ -77,22 +78,29 @@ function setPublicCamera(){
 }
 setPublicCamera();
 
-// DÉMO : une pivoine 75 orange en boucle (mêmes règles visuelles que l'app UE).
-function fireDemoPeony(){
+// DÉMO = un petit SHOW varié en boucle (couleurs, tailles, positions étalées gauche-droite),
+// en attendant le vrai séquenceur. Plusieurs pivoines -> ça ressemble enfin à un spectacle.
+const SHOW_COLORS = [
+  [1.0,0.25,0.18], [0.2,1.0,0.4], [0.3,0.5,1.0], [1.0,0.8,0.15],
+  [1.0,0.4,0.8],  [0.6,0.3,1.0], [0.2,1.0,0.9], [1.0,1.0,1.0]
+];
+function fireOne(){
+  const c = SHOW_COLORS[(Math.random()*SHOW_COLORS.length) | 0];
   layer.add(new Firework({
     archetype: 'peony',
-    colors: [[1.0, 0.45, 0.1]],
-    starCount: 60,
-    burstRadius: 11,   // m
-    burstHeight: 80,   // m
-    riseTime: 2.2,
-    minLife: 1.1,
-    maxLife: 1.6,
-    starSize: 0.35     // m
+    colors: [c],
+    starCount: 55 + ((Math.random()*45) | 0),
+    burstRadius: 13 + Math.random()*9,   // m
+    burstHeight: 55 + Math.random()*55,  // m
+    riseTime: 1.8 + Math.random()*0.8,
+    minLife: 1.1, maxLife: 1.7,
+    starSize: 0.5,                        // m (plus visible à 150 m)
+    originX: (Math.random()*2 - 1) * 45, // étalement latéral (gauche-droite)
+    originY: (Math.random()*2 - 1) * 10
   }));
 }
-fireDemoPeony();
-setInterval(fireDemoPeony, 4500);
+fireOne();
+setInterval(fireOne, 1300);
 
 // Boucle de simulation, calée sur le rendu Cesium.
 let last = performance.now();
