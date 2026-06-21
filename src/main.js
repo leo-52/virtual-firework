@@ -78,29 +78,21 @@ function setPublicCamera(){
 }
 setPublicCamera();
 
-// DÉMO = un petit SHOW varié en boucle (couleurs, tailles, positions étalées gauche-droite),
-// en attendant le vrai séquenceur. Plusieurs pivoines -> ça ressemble enfin à un spectacle.
-const SHOW_COLORS = [
-  [1.0,0.25,0.18], [0.2,1.0,0.4], [0.3,0.5,1.0], [1.0,0.8,0.15],
-  [1.0,0.4,0.8],  [0.6,0.3,1.0], [0.2,1.0,0.9], [1.0,1.0,1.0]
-];
-function fireOne(){
-  const c = SHOW_COLORS[(Math.random()*SHOW_COLORS.length) | 0];
-  layer.add(new Firework({
-    archetype: 'peony',
-    colors: [c],
-    starCount: 55 + ((Math.random()*45) | 0),
-    burstRadius: 13 + Math.random()*9,   // m
-    burstHeight: 55 + Math.random()*55,  // m
-    riseTime: 1.8 + Math.random()*0.8,
-    minLife: 1.1, maxLife: 1.7,
-    starSize: 0.5,                        // m (plus visible à 150 m)
-    originX: (Math.random()*2 - 1) * 45, // étalement latéral (gauche-droite)
-    originY: (Math.random()*2 - 1) * 10
-  }));
-}
-fireOne();
-setInterval(fireOne, 1300);
+// DÉMO = L'EFFET EN COURS DE RÉGLAGE, EN BOUCLE (comme l'app UE) -> on itère sur UN seul
+// effet. Pour bosser un autre effet, on changera FOCUS ci-dessous.
+const FOCUS = {
+  archetype: 'peony',
+  colors: [[1.0, 0.45, 0.1]],   // pivoine orange
+  starCount: 60,
+  burstRadius: 11,              // m
+  burstHeight: 80,             // m
+  riseTime: 2.2,
+  minLife: 1.1, maxLife: 1.6,
+  starSize: 0.35               // m
+};
+function fireFocus(){ layer.add(new Firework({ ...FOCUS })); }
+fireFocus();
+setInterval(fireFocus, 4500);
 
 // Boucle de simulation, calée sur le rendu Cesium.
 let last = performance.now();
