@@ -13,10 +13,10 @@ function makeGlowSprite(){
   cv.width = cv.height = s;
   const ctx = cv.getContext('2d');
   const g = ctx.createRadialGradient(s/2, s/2, 0, s/2, s/2, s/2);
-  g.addColorStop(0.0, 'rgba(255,255,255,1.0)');
-  g.addColorStop(0.18, 'rgba(255,255,255,0.85)');
-  g.addColorStop(0.45, 'rgba(255,255,255,0.25)');
-  g.addColorStop(1.0, 'rgba(255,255,255,0.0)');
+  g.addColorStop(0.0,  'rgba(255,255,255,1.0)');
+  g.addColorStop(0.22, 'rgba(255,255,255,0.96)'); // cœur clair plus large -> plus brillant
+  g.addColorStop(0.5,  'rgba(255,255,255,0.45)');
+  g.addColorStop(1.0,  'rgba(255,255,255,0.0)');
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, s, s);
   return cv;
@@ -80,10 +80,17 @@ export class FireworksLayer {
       Cesium.Matrix4.multiplyByPoint(this.enu, this._local, this._world);
       bb.position = this._world; // Cesium clone la valeur en interne
 
-      this._col.red = s.color[0]; this._col.green = s.color[1]; this._col.blue = s.color[2]; this._col.alpha = b;
-      bb.color = this._col;      // idem, cloné
+      // ÉCLAT POUSSÉ : alpha amplifié (étoiles bien présentes) + léger CŒUR BLANC-CHAUD
+      // quand c'est brillant -> ça "brille" vraiment (au lieu d'un blob coloré fade).
+      const a = b * 1.7 > 1 ? 1 : b * 1.7;
+      const w = 0.30 * b; // mix vers le blanc proportionnel à l'éclat
+      this._col.red   = s.color[0] + (1 - s.color[0]) * w;
+      this._col.green = s.color[1] + (1 - s.color[1]) * w;
+      this._col.blue  = s.color[2] + (1 - s.color[2]) * w;
+      this._col.alpha = a;
+      bb.color = this._col;      // cloné en interne
 
-      const sz = (s.size < 0.05 ? 0.05 : s.size) * 2.5;
+      const sz = (s.size < 0.05 ? 0.05 : s.size) * 2.8;
       bb.width = sz; bb.height = sz;
       bb.show = true;
     }
