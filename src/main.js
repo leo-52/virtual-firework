@@ -10,7 +10,7 @@ import { FireworksLayer } from './render/fireworksLayer.js';
 // US -> ça passe en Europe. (C'est aussi pour ça que le décor d'Unreal, qui utilise la clé
 // Google directe, ne charge pas correctement.)
 // >>> Crée un token GRATUIT sur ion.cesium.com -> "Access Tokens", colle-le ci-dessous.
-const ION_TOKEN = 'METTRE_VOTRE_TOKEN_CESIUM_ION_ICI';
+const ION_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI2N2NlZDQxNS1iYTEyLTQ5NDctYWVlZS1jNTA3OTE4OTBlMzEiLCJpZCI6NDQ3MjU0LCJpc3MiOiJodHRwczovL2FwaS5jZXNpdW0uY29tIiwiYXVkIjoidW5kZWZpbmVkX2RlZmF1bHQiLCJpYXQiOjE3ODIwNTgwMzV9.CmAwwB3X65ivEQbYxAtFg6uRNYnsk4Vp--3-LEn1enY';
 const HAS_ION = ION_TOKEN && !ION_TOKEN.startsWith('METTRE'); // token ion renseigné ?
 
 // Lieu de tir par défaut (sera choisi par le client). Ici : près de Paris.
@@ -103,4 +103,4 @@ viewer.scene.preUpdate.addEventListener(() => {
   layer.update(dt);
 });
 
-window.PrevoFX = { viewer, layer, fireDemoPeony, setPublicCamera }; // debug console
+window.PrevoFX = { viewer, layer, fireFocus, setPublicCamera }; // debug console
