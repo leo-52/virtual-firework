@@ -69,6 +69,19 @@ function makeStarTexture(){
 }
 const starTex = makeStarTexture();
 
+// --- TEXTURE FUMÉE : bouffée très douce et translucide (pas d'image externe) ---
+function makeSmokeTexture(){
+  const c = document.createElement('canvas'); c.width = c.height = 128;
+  const x = c.getContext('2d');
+  const g = x.createRadialGradient(64,64,0, 64,64,64);
+  g.addColorStop(0.0, 'rgba(255,255,255,0.55)');
+  g.addColorStop(0.45,'rgba(255,255,255,0.16)');
+  g.addColorStop(1.0, 'rgba(255,255,255,0)');
+  x.fillStyle = g; x.fillRect(0,0,128,128);
+  const t = new THREE.CanvasTexture(c); t.needsUpdate = true; return t;
+}
+const smokeTex = makeSmokeTexture();
+
 // ============================================================================
 // POOL DE TRAÎNÉES (partagé) — un seul nuage de points additif, recyclé en anneau.
 // Chaque grain : durée de vie en loi de puissance -> ils s'éteignent un par un.
@@ -133,9 +146,9 @@ function updateTrails(dt){
 const PEONY = {
   stars: 80,                 // une VRAIE pivoine ~80 étoiles distinctes (pas une purée)
   speed: 42,                 // vitesse d'éjection (coquille)
-  drag: 0.955,
+  drag: 0.955,               // frein (coquille nette et brillante)
   gravity: -9.81,
-  color: new THREE.Color(1.0, 0.22, 0.015), // orange franc (vert bas -> pas doré sous l'ACES)
+  color: new THREE.Color(1.0, 0.22, 0.015), // (base ; la COMBUSTION fait évoluer la teinte)
   starSize: 6.0,             // chaque étoile = un point de feu bien visible
   lifeMin: 1.5, lifeMax: 2.1,
   trail: false               // PIVOINE = pas de traînée (les traînées = saule/comète/autres effets)
@@ -161,6 +174,7 @@ class Peony {
       this.data.push({
         vx:dx*sp, vy:dy*sp, vz:dz*sp, age:0,
         life: PEONY.lifeMin + Math.random()*(PEONY.lifeMax-PEONY.lifeMin),
+        dimVar: 0.82 + Math.random()*0.30,   // variation d'éclat par étoile (nuée organique)
         lastX:apex.x, lastY:apex.y, lastZ:apex.z, since:0
       });
     }
@@ -197,6 +211,28 @@ class Peony {
       blending:THREE.AdditiveBlending, depthWrite:false });
     this.lines = new THREE.LineSegments(this.lgeo, this.lmat);
     scene.add(this.lines);
+
+    // FUMÉE rétroéclairée : quelques bouffées molles, éclairées chaud par le break,
+    // qui dérivent, grossissent et se dissipent (ambiance des vraies photos).
+    const sN = 24; this.smN = sN;
+    this.smPos = new Float32Array(sN*3);
+    this.smCol = new Float32Array(sN*3);
+    this.smData = [];
+    for (let i=0;i<sN;i++){
+      this.smPos[i*3]   = apex.x + (Math.random()-0.5)*8;
+      this.smPos[i*3+1] = apex.y + (Math.random()-0.5)*8;
+      this.smPos[i*3+2] = apex.z + (Math.random()-0.5)*8;
+      this.smData.push({ vx:(Math.random()-0.5)*7, vy:(Math.random()-0.5)*5+2.5,
+                         vz:(Math.random()-0.5)*7, seed:0.7+Math.random()*0.6 });
+    }
+    this.smGeo = new THREE.BufferGeometry();
+    this.smGeo.setAttribute('position', new THREE.BufferAttribute(this.smPos,3));
+    this.smGeo.setAttribute('color',    new THREE.BufferAttribute(this.smCol,3));
+    this.smMat = new THREE.PointsMaterial({ size:30, map:smokeTex, vertexColors:true,
+      transparent:true, opacity:0.0, blending:THREE.NormalBlending, depthWrite:false, sizeAttenuation:true });
+    this.smoke = new THREE.Points(this.smGeo, this.smMat);
+    this.smoke.renderOrder = -1; // derrière les étoiles
+    scene.add(this.smoke);
   }
 
   update(dt){
@@ -227,11 +263,15 @@ class Peony {
       const px = this.pos[i*3]+d.vx*dt, py = this.pos[i*3+1]+d.vy*dt, pz = this.pos[i*3+2]+d.vz*dt;
       this.pos[i*3]=px; this.pos[i*3+1]=py; this.pos[i*3+2]=pz;
 
-      // éclat : flash blanc au tout début, puis orange stable, fondu à la fin
-      let r=PEONY.color.r, g=PEONY.color.g, b=PEONY.color.b;
-      if (pr < 0.06){ const f=(1-pr/0.06)*0.4; r=r+(1-r)*f; g=g+(1-g)*f; b=b+(1-b)*f; } // léger cœur chaud (pas blanc)
-      // PUNCH HDR : étoiles bien vives (ACES gère le >1) -> orange brillant, pas terne
-      let inten = 2.1;
+      // COMBUSTION RÉALISTE (la braise refroidit) : orange vif/brillant l'essentiel de la
+      // vie, pointe blanc-chaud à l'allumage, puis ROUGE en toute fin. C'est ÇA le "vrai feu".
+      let r=1.0, g, b;
+      if (pr < 0.6){ g = 0.28 - 0.06*(pr/0.6); b = 0.03; }              // orange franc (0.28->0.22)
+      else { const t=(pr-0.6)/0.4; g = 0.22 - 0.17*t; b = 0.03*(1-t); } // refroidit vers le rouge (0.22->0.05)
+      if (pr < 0.05){ const f=(1-pr/0.05)*0.55; r=r+(1-r)*f; g=g+(1-g)*f; b=b+(1-b)*f; } // pointe blanc-chaud
+      // intensité : pic chaud à l'allumage (bloom -> blanc), burn brillant, fondu final
+      let inten = (pr < 0.10) ? (3.2 - (pr/0.10)*0.8) : 2.4;   // 3.2 -> 2.4 (bien brillant)
+      inten *= d.dimVar;                                        // variation organique par étoile
       if (pr > 0.80){ const k=(1-pr)/0.20; inten *= k; this.siz[i]=PEONY.starSize*k; } // fondu final
       this.col[i*3]=r*inten; this.col[i*3+1]=g*inten; this.col[i*3+2]=b*inten;
 
@@ -257,9 +297,30 @@ class Peony {
     this.geo.attributes.size.needsUpdate = true;
     this.lgeo.attributes.position.needsUpdate = true;
     this.lgeo.attributes.color.needsUpdate = true;
+
+    // FUMÉE : dérive + grossit + éclairée chaud au début (backlit) puis s'assombrit/dissipe
+    const sp = Math.min(1, this.age/2.4);
+    const ramp = Math.min(1, this.age/0.15);
+    this.smMat.size = 30 * (1 + sp*1.6);
+    this.smMat.opacity = 0.40 * ramp * (1-sp) * (1-sp);
+    const il = Math.max(0, 1 - sp*1.25);          // illumination (chaud) décroît
+    for (let i=0;i<this.smN;i++){
+      const sd = this.smData[i];
+      this.smPos[i*3]   += sd.vx*dt;
+      this.smPos[i*3+1] += sd.vy*dt;
+      this.smPos[i*3+2] += sd.vz*dt;
+      const warm = 0.5*il*sd.seed;
+      this.smCol[i*3]   = 0.10 + warm;            // chaud quand éclairée -> gris quand éteint
+      this.smCol[i*3+1] = 0.09 + warm*0.5;
+      this.smCol[i*3+2] = 0.10 + warm*0.15;
+    }
+    this.smGeo.attributes.position.needsUpdate = true;
+    this.smGeo.attributes.color.needsUpdate = true;
+
     if (alive === 0){
-      this.dead = true; scene.remove(this.points); scene.remove(this.lines);
+      this.dead = true; scene.remove(this.points); scene.remove(this.lines); scene.remove(this.smoke);
       this.geo.dispose(); this.mat.dispose(); this.lgeo.dispose(); this.lmat.dispose();
+      this.smGeo.dispose(); this.smMat.dispose();
     }
   }
 }
