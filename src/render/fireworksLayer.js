@@ -94,7 +94,7 @@ export class FireworksLayer {
       let stretch = 0;
       if (s.kind === 'star' && s.vel){
         const spd = Math.sqrt(s.vel[0]*s.vel[0] + s.vel[1]*s.vel[1] + s.vel[2]*s.vel[2]);
-        stretch = Math.min(3.0, spd * 0.07);
+        stretch = Math.min(0.8, spd * 0.02); // étirement SUBTIL (avant 0.07/3.0 = trop)
       }
       if (stretch > 0.2){
         this._vel.x = s.vel[0]; this._vel.y = s.vel[1]; this._vel.z = s.vel[2];

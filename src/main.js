@@ -74,8 +74,8 @@ bloom.uniforms.glowOnly = false;
 bloom.uniforms.contrast = 110;     // un peu plus bas -> plus de zones qui rayonnent
 bloom.uniforms.brightness = 0.0;   // plus lumineux
 bloom.uniforms.delta = 1.5;
-bloom.uniforms.sigma = 4.5;        // halo plus large
-bloom.uniforms.stepSize = 2.0;     // glow plus étendu
+bloom.uniforms.sigma = 2.8;        // halo plus serré (moins flou)
+bloom.uniforms.stepSize = 1.0;     // glow moins étendu
 
 // Couche de feux ancrée au lieu de tir.
 const layer = new FireworksLayer(viewer, FIRE);
