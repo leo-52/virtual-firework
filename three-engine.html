@@ -84,8 +84,8 @@ function spawnTrail(x,y,z, r,g,b, size){
   t.vy = -Math.random()*0.6;
   t.vz = (Math.random()-0.5)*0.8;
   t.age = 0;
-  // loi de puissance : beaucoup de grains courts, quelques-uns longs -> extinction étalée
-  t.life = 0.25 + 0.95 * Math.pow(Math.random(), 1.7);
+  // loi de puissance, MAIS courtes -> petite queue (pivoine), pas de longs filaments (saule)
+  t.life = 0.14 + 0.30 * Math.pow(Math.random(), 1.8);
   t.size = size * (0.7 + Math.random()*0.6);
   t.r=r; t.g=g; t.b=b; t.alive = true;
 }
@@ -96,7 +96,7 @@ function updateTrails(dt){
     if (!t.alive){ trailSize[i] = 0; continue; }
     t.age += dt;
     if (t.age >= t.life){ t.alive = false; trailSize[i] = 0; continue; }
-    t.vy += -3.5 * dt;          // gravité douce
+    t.vy += -2.5 * dt;          // gravité douce
     t.vx *= 0.96; t.vy *= 0.98; t.vz *= 0.96;
     t.x += t.vx*dt; t.y += t.vy*dt; t.z += t.vz*dt;
     const k = 1 - t.age / t.life;   // s'éteint en douceur
@@ -117,8 +117,8 @@ const PEONY = {
   speed: 42,                 // vitesse d'éjection (coquille)
   drag: 0.955,
   gravity: -9.81,
-  color: new THREE.Color(1.0, 0.42, 0.06),
-  starSize: 3.4,
+  color: new THREE.Color(1.0, 0.38, 0.04), // orange saturé (moins de vert -> moins doré)
+  starSize: 3.9,
   lifeMin: 1.5, lifeMax: 2.1 // un peu varié -> les traînées persistent après l'éclat
 };
 
@@ -159,8 +159,8 @@ class Peony {
     // FLASH CENTRAL (idée de la version "Skylighter") : la charge d'éclatement qui
     // détone à l'ouverture -> boule de feu blanche, expansion brutale, disparaît en ~0,13 s.
     this.age = 0;
-    const fg = new THREE.SphereGeometry(1.4, 16, 16);
-    const fm = new THREE.MeshBasicMaterial({ color: 0xfff3e6, transparent: true,
+    const fg = new THREE.SphereGeometry(0.7, 16, 16);              // plus petit
+    const fm = new THREE.MeshBasicMaterial({ color: 0xffc888, transparent: true, // ambré, pas blanc pur
       blending: THREE.AdditiveBlending, depthWrite: false });
     this.flash = new THREE.Mesh(fg, fm);
     this.flash.position.copy(apex);
@@ -172,11 +172,11 @@ class Peony {
     this.age += dt;
     // flash d'ouverture (très bref)
     if (this.flash){
-      const fd = 0.13;
+      const fd = 0.09;                          // plus bref
       if (this.age < fd){
         const p = this.age / fd;
-        this.flash.scale.setScalar(1 + p*16);
-        this.flash.material.opacity = 1 - p*p;
+        this.flash.scale.setScalar(1 + p*6);    // expansion bien plus petite
+        this.flash.material.opacity = (1 - p) * 0.55; // moins aveuglant
       } else {
         scene.remove(this.flash); this.flash.geometry.dispose();
         this.flash.material.dispose(); this.flash = null;
@@ -195,15 +195,18 @@ class Peony {
 
       // éclat : flash blanc au tout début, puis orange stable, fondu à la fin
       let r=PEONY.color.r, g=PEONY.color.g, b=PEONY.color.b;
-      if (pr < 0.12){ const f=1-pr/0.12; r=r+(1-r)*f; g=g+(1-g)*f; b=b+(1-b)*f; } // cœur blanc-chaud
-      if (pr > 0.78){ const k=(1-pr)/0.22; r*=k; g*=k; b*=k; this.siz[i]=PEONY.starSize*k; }
-      this.col[i*3]=r; this.col[i*3+1]=g; this.col[i*3+2]=b;
+      if (pr < 0.06){ const f=(1-pr/0.06)*0.4; r=r+(1-r)*f; g=g+(1-g)*f; b=b+(1-b)*f; } // léger cœur chaud (pas blanc)
+      // PUNCH HDR : étoiles bien vives (ACES gère le >1) -> orange brillant, pas terne
+      let inten = 1.7;
+      if (pr > 0.80){ const k=(1-pr)/0.20; inten *= k; this.siz[i]=PEONY.starSize*k; } // fondu final
+      this.col[i*3]=r*inten; this.col[i*3+1]=g*inten; this.col[i*3+2]=b*inten;
 
       // TRAÎNÉE : micro-grains lâchés le long du trajet (tant que l'étoile est "vive")
       d.since += dt;
-      if (pr < 0.6 && d.since > 0.018){
+      if (pr < 0.28 && d.since > 0.032){   // fenêtre courte + moins de grains -> petite queue
         const mx=(d.lastX+px)*0.5, my=(d.lastY+py)*0.5, mz=(d.lastZ+pz)*0.5;
-        spawnTrail(mx,my,mz, PEONY.color.r, PEONY.color.g, PEONY.color.b, 1.7);
+        // couleur de traînée ASSOMBRIE (0.5) -> pas d'accumulation additif dorée
+        spawnTrail(mx,my,mz, PEONY.color.r*0.5, PEONY.color.g*0.5, PEONY.color.b*0.5, 1.0);
         d.lastX=px; d.lastY=py; d.lastZ=pz; d.since=0;
       }
     }
