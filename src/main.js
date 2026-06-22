@@ -13,8 +13,9 @@ import { FireworksLayer } from './render/fireworksLayer.js';
 const ION_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI2N2NlZDQxNS1iYTEyLTQ5NDctYWVlZS1jNTA3OTE4OTBlMzEiLCJpZCI6NDQ3MjU0LCJpc3MiOiJodHRwczovL2FwaS5jZXNpdW0uY29tIiwiYXVkIjoidW5kZWZpbmVkX2RlZmF1bHQiLCJpYXQiOjE3ODIwNTgwMzV9.CmAwwB3X65ivEQbYxAtFg6uRNYnsk4Vp--3-LEn1enY';
 const HAS_ION = ION_TOKEN && !ION_TOKEN.startsWith('METTRE'); // token ion renseigné ?
 
-// Lieu de tir par défaut (sera choisi par le client). Ici : près de Paris.
-const FIRE = { lon: 2.3522, lat: 48.8566, height: HAS_ION ? 35 : 0 };
+// Lieu de tir par défaut (sera choisi par le client). lat/lon fournis par l'user.
+// height = altitude PROVISOIRE ; recalée sur le SOL RÉEL au chargement du terrain (cf plus bas).
+const FIRE = { lon: 5.419384258257399, lat: 48.012806134659186, height: HAS_ION ? 350 : 0 };
 
 if (HAS_ION) Cesium.Ion.defaultAccessToken = ION_TOKEN;
 
@@ -44,6 +45,16 @@ if (HAS_ION) {
     try {
       const tileset = await Cesium.createGooglePhotorealistic3DTileset();
       viewer.scene.primitives.add(tileset);
+      // CALER LE TIR SUR LE SOL RÉEL : on échantillonne la hauteur du terrain au lieu de
+      // tir (marche pour N'IMPORTE QUEL lieu) -> les feux partent bien du sol, pas dedans/au-dessus.
+      try {
+        const carto = Cesium.Cartographic.fromDegrees(FIRE.lon, FIRE.lat);
+        const r = await viewer.scene.sampleHeightMostDetailed([carto]);
+        const h = (r && r[0] && Number.isFinite(r[0].height)) ? r[0].height : FIRE.height;
+        FIRE.height = h;
+        layer.setOrigin({ lon: FIRE.lon, lat: FIRE.lat, height: h });
+        setPublicCamera();
+      } catch (e2) { console.warn('[PrevoFX] calage sol impossible (hauteur provisoire gardée).', e2); }
     } catch (e) {
       console.warn('[PrevoFX] Google 3D Tiles via ion indisponible — feux sans décor.', e);
     }

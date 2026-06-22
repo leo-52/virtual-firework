@@ -29,9 +29,7 @@ export class FireworksLayer {
     this.billboards = viewer.scene.primitives.add(new Cesium.BillboardCollection());
     this.fireworks = [];
 
-    const o = Cesium.Cartesian3.fromDegrees(origin.lon, origin.lat, origin.height);
-    this.origin = o;
-    this.enu = Cesium.Transforms.eastNorthUpToFixedFrame(o);
+    this.setOrigin(origin); // repère local (ENU) ancré au lieu de tir
 
     this.pool = [];
     this.MAX_PARTICLES = 8000;     // plafond d'affichage
@@ -39,6 +37,13 @@ export class FireworksLayer {
     this._local = new Cesium.Cartesian3();
     this._world = new Cesium.Cartesian3();
     this._col = new Cesium.Color();
+  }
+
+  // (Re)définit le lieu de tir -> recalcule le repère local (ENU). Sert à caler le tir
+  // sur le sol réel une fois le terrain chargé, et à changer de lieu (choix client).
+  setOrigin(origin){
+    this.origin = Cesium.Cartesian3.fromDegrees(origin.lon, origin.lat, origin.height);
+    this.enu = Cesium.Transforms.eastNorthUpToFixedFrame(this.origin);
   }
 
   // [x,y,z] local (mètres) -> Cartesian3 ECEF (alloue : usage ponctuel, ex caméra)
