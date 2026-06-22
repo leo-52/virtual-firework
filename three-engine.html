@@ -34,7 +34,7 @@ const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffe
 renderer.setSize(innerWidth, innerHeight);
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
 renderer.toneMapping = THREE.ACESFilmicToneMapping; // rendu "vidéo/ciné"
-renderer.toneMappingExposure = 1.15;
+renderer.toneMappingExposure = 1.3;
 document.body.appendChild(renderer.domElement);
 
 // --- TEXTURE ÉTOILE : cœur blanc incandescent -> halo couleur -> transparent ---
@@ -113,13 +113,14 @@ function updateTrails(dt){
 // PIVOINE — coquille creuse homogène (TruePeony), orange stable, + traînées.
 // ============================================================================
 const PEONY = {
-  stars: 320,
+  stars: 80,                 // une VRAIE pivoine ~80 étoiles distinctes (pas une purée)
   speed: 42,                 // vitesse d'éjection (coquille)
   drag: 0.955,
   gravity: -9.81,
-  color: new THREE.Color(1.0, 0.38, 0.04), // orange saturé (moins de vert -> moins doré)
-  starSize: 3.9,
-  lifeMin: 1.5, lifeMax: 2.1 // un peu varié -> les traînées persistent après l'éclat
+  color: new THREE.Color(1.0, 0.22, 0.015), // orange franc (vert bas -> pas doré sous l'ACES)
+  starSize: 6.0,             // chaque étoile = un point de feu bien visible
+  lifeMin: 1.5, lifeMax: 2.1,
+  trail: false               // PIVOINE = pas de traînée (les traînées = saule/comète/autres effets)
 };
 
 class Peony {
@@ -150,7 +151,7 @@ class Peony {
     this.geo.setAttribute('color',    new THREE.BufferAttribute(this.col,3));
     this.geo.setAttribute('size',     new THREE.BufferAttribute(this.siz,1));
     this.mat = new THREE.PointsMaterial({
-      size:1.0, map:starTex, vertexColors:true, transparent:true,
+      size:4.0, map:starTex, vertexColors:true, transparent:true,   // taille RÉELLE des étoiles (l'attribut par-point est ignoré par PointsMaterial)
       blending:THREE.AdditiveBlending, depthWrite:false, sizeAttenuation:true
     });
     this.points = new THREE.Points(this.geo, this.mat);
@@ -185,7 +186,7 @@ class Peony {
     const n = PEONY.stars; let alive = 0;
     for (let i = 0; i < n; i++){
       const d = this.data[i];
-      if (d.age >= d.life){ this.siz[i] = 0; continue; }
+      if (d.age >= d.life){ this.siz[i]=0; this.col[i*3]=this.col[i*3+1]=this.col[i*3+2]=0; continue; } // éteinte = noire (invisible)
       alive++; d.age += dt;
       const pr = d.age / d.life;
       d.vy += PEONY.gravity*dt;
@@ -197,13 +198,13 @@ class Peony {
       let r=PEONY.color.r, g=PEONY.color.g, b=PEONY.color.b;
       if (pr < 0.06){ const f=(1-pr/0.06)*0.4; r=r+(1-r)*f; g=g+(1-g)*f; b=b+(1-b)*f; } // léger cœur chaud (pas blanc)
       // PUNCH HDR : étoiles bien vives (ACES gère le >1) -> orange brillant, pas terne
-      let inten = 1.7;
+      let inten = 2.1;
       if (pr > 0.80){ const k=(1-pr)/0.20; inten *= k; this.siz[i]=PEONY.starSize*k; } // fondu final
       this.col[i*3]=r*inten; this.col[i*3+1]=g*inten; this.col[i*3+2]=b*inten;
 
       // TRAÎNÉE : micro-grains lâchés le long du trajet (tant que l'étoile est "vive")
       d.since += dt;
-      if (pr < 0.28 && d.since > 0.032){   // fenêtre courte + moins de grains -> petite queue
+      if (PEONY.trail && pr < 0.28 && d.since > 0.032){   // (désactivé pour la pivoine)
         const mx=(d.lastX+px)*0.5, my=(d.lastY+py)*0.5, mz=(d.lastZ+pz)*0.5;
         // couleur de traînée ASSOMBRIE (0.5) -> pas d'accumulation additif dorée
         spawnTrail(mx,my,mz, PEONY.color.r*0.5, PEONY.color.g*0.5, PEONY.color.b*0.5, 1.0);
