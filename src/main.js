@@ -3,6 +3,7 @@
 
 import { Firework } from './sim/firework.js';
 import { FireworksLayer } from './render/fireworksLayer.js';
+import { FpsCameraController } from './cameraController.js';
 
 // DÉCOR = Google Photorealistic 3D Tiles, mais VIA CESIUM ION (token gratuit), PAS la
 // clé Google directe. Raison (vérifiée) : Google BLOQUE les 3D tiles en accès direct par
@@ -53,7 +54,7 @@ if (HAS_ION) {
         const h = (r && r[0] && Number.isFinite(r[0].height)) ? r[0].height : FIRE.height;
         FIRE.height = h;
         layer.setOrigin({ lon: FIRE.lon, lat: FIRE.lat, height: h });
-        setPublicCamera();
+        cam.setFromLocal(CAM_LOCAL, CAM_TARGET); // recale la caméra sur le sol réel
       } catch (e2) { console.warn('[PrevoFX] calage sol impossible (hauteur provisoire gardée).', e2); }
     } catch (e) {
       console.warn('[PrevoFX] Google 3D Tiles via ion indisponible — feux sans décor.', e);
@@ -74,20 +75,12 @@ bloom.uniforms.stepSize = 2.0;     // glow plus étendu
 // Couche de feux ancrée au lieu de tir.
 const layer = new FireworksLayer(viewer, FIRE);
 
-// Caméra "public" : hauteur d'homme (~1,75 m), à 150 m, dans l'axe de tir.
-function setPublicCamera(){
-  const camW = layer.localToWorld([0, -150, 1.75]);
-  const tgtW = layer.localToWorld([0, 0, 55]); // vise le cœur du show (plus de ciel, moins de sol)
-  const dir = Cesium.Cartesian3.normalize(
-    Cesium.Cartesian3.subtract(tgtW, camW, new Cesium.Cartesian3()), new Cesium.Cartesian3());
-  let up = Cesium.Cartesian3.normalize(camW, new Cesium.Cartesian3()); // up géographique
-  const right = Cesium.Cartesian3.normalize(
-    Cesium.Cartesian3.cross(dir, up, new Cesium.Cartesian3()), new Cesium.Cartesian3());
-  up = Cesium.Cartesian3.normalize(
-    Cesium.Cartesian3.cross(right, dir, new Cesium.Cartesian3()), new Cesium.Cartesian3());
-  viewer.camera.setView({ destination: camW, orientation: { direction: dir, up } });
-}
-setPublicCamera();
+// Caméra "public" (spectateur FPS) : hauteur d'homme, 150 m, dans l'axe de tir.
+// Contrôles : QZSD (déplacement), clic gauche + glisser (rotation), pas de molette, sol dur.
+const cam = new FpsCameraController(viewer, layer);
+const CAM_LOCAL = [0, -150, 1.75];   // 150 m derrière, hauteur d'homme
+const CAM_TARGET = [0, 0, 55];       // vise le cœur du show
+cam.setFromLocal(CAM_LOCAL, CAM_TARGET);
 
 // DÉMO = L'EFFET EN COURS DE RÉGLAGE, EN BOUCLE (comme l'app UE) -> on itère sur UN seul
 // effet. Pour bosser un autre effet, on changera FOCUS ci-dessous.
@@ -111,7 +104,8 @@ viewer.scene.preUpdate.addEventListener(() => {
   const now = performance.now();
   const dt = Math.min(0.05, (now - last) / 1000);
   last = now;
+  cam.update(dt);     // caméra spectateur (QZSD + clic-glisser + sol dur)
   layer.update(dt);
 });
 
-window.PrevoFX = { viewer, layer, fireFocus, setPublicCamera }; // debug console
+window.PrevoFX = { viewer, layer, cam, fireFocus }; // debug console
