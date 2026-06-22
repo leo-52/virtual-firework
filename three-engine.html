@@ -166,6 +166,19 @@ class Peony {
     this.flash = new THREE.Mesh(fg, fm);
     this.flash.position.copy(apex);
     scene.add(this.flash);
+
+    // MOTION-BLUR ("tube" dû à la vitesse, vu caméra) : un court segment derrière chaque
+    // tête. PAS une traînée de poudre -> l'étoile-boule étirée par sa vitesse, qui
+    // redevient ronde quand elle ralentit. (Idée des variantes "lignes directionnelles".)
+    this.lpos = new Float32Array(n*2*3);
+    this.lcol = new Float32Array(n*2*3);
+    this.lgeo = new THREE.BufferGeometry();
+    this.lgeo.setAttribute('position', new THREE.BufferAttribute(this.lpos,3));
+    this.lgeo.setAttribute('color',    new THREE.BufferAttribute(this.lcol,3));
+    this.lmat = new THREE.LineBasicMaterial({ vertexColors:true, transparent:true,
+      blending:THREE.AdditiveBlending, depthWrite:false });
+    this.lines = new THREE.LineSegments(this.lgeo, this.lmat);
+    scene.add(this.lines);
   }
 
   update(dt){
@@ -186,7 +199,9 @@ class Peony {
     const n = PEONY.stars; let alive = 0;
     for (let i = 0; i < n; i++){
       const d = this.data[i];
-      if (d.age >= d.life){ this.siz[i]=0; this.col[i*3]=this.col[i*3+1]=this.col[i*3+2]=0; continue; } // éteinte = noire (invisible)
+      const li = i*6;
+      if (d.age >= d.life){ this.siz[i]=0; this.col[i*3]=this.col[i*3+1]=this.col[i*3+2]=0;
+        this.lcol[li]=this.lcol[li+1]=this.lcol[li+2]=this.lcol[li+3]=this.lcol[li+4]=this.lcol[li+5]=0; continue; } // éteinte = invisible
       alive++; d.age += dt;
       const pr = d.age / d.life;
       d.vy += PEONY.gravity*dt;
@@ -202,6 +217,14 @@ class Peony {
       if (pr > 0.80){ const k=(1-pr)/0.20; inten *= k; this.siz[i]=PEONY.starSize*k; } // fondu final
       this.col[i*3]=r*inten; this.col[i*3+1]=g*inten; this.col[i*3+2]=b*inten;
 
+      // MOTION-BLUR : segment tête->arrière, longueur ∝ vitesse (court), queue sombre -> fuseau.
+      const mbk = 0.09;
+      this.lpos[li]=px;          this.lpos[li+1]=py;          this.lpos[li+2]=pz;
+      this.lpos[li+3]=px-d.vx*mbk; this.lpos[li+4]=py-d.vy*mbk; this.lpos[li+5]=pz-d.vz*mbk;
+      const hr=r*inten, hg=g*inten, hb=b*inten;
+      this.lcol[li]=hr;      this.lcol[li+1]=hg;      this.lcol[li+2]=hb;        // tête = couleur étoile
+      this.lcol[li+3]=hr*0.12; this.lcol[li+4]=hg*0.12; this.lcol[li+5]=hb*0.12; // queue sombre
+
       // TRAÎNÉE : micro-grains lâchés le long du trajet (tant que l'étoile est "vive")
       d.since += dt;
       if (PEONY.trail && pr < 0.28 && d.since > 0.032){   // (désactivé pour la pivoine)
@@ -214,9 +237,11 @@ class Peony {
     this.geo.attributes.position.needsUpdate = true;
     this.geo.attributes.color.needsUpdate = true;
     this.geo.attributes.size.needsUpdate = true;
+    this.lgeo.attributes.position.needsUpdate = true;
+    this.lgeo.attributes.color.needsUpdate = true;
     if (alive === 0){
-      this.dead = true; scene.remove(this.points);
-      this.geo.dispose(); this.mat.dispose();
+      this.dead = true; scene.remove(this.points); scene.remove(this.lines);
+      this.geo.dispose(); this.mat.dispose(); this.lgeo.dispose(); this.lmat.dispose();
     }
   }
 }
