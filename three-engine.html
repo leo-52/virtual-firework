@@ -49,9 +49,9 @@ document.body.appendChild(renderer.domElement);
 const composer = new EffectComposer(renderer);
 composer.addPass(new RenderPass(scene, camera));
 const bloomPass = new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight),
-  0.9,   // strength  : intensité du halo
-  0.5,   // radius    : étalement du halo
-  0.0);  // threshold : 0 -> tout ce qui est lumineux rayonne (fond noir)
+  0.6,   // strength  : intensité (réduite)
+  0.25,  // radius    : halo SERRÉ (avant 0.5 = brouillard épais sur tout l'écran)
+  0.18); // threshold : seules les étoiles VIVES rayonnent (pas la fumée -> pas de voile)
 composer.addPass(bloomPass);
 composer.addPass(new OutputPass());
 
