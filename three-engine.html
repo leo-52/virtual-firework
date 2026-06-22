@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PrevoFX — Moteur Three.js (pivoine + traînées)</title>
+    <style>
+        body { margin: 0; padding: 0; overflow: hidden; background-color: #04040a; }
+        canvas { display: block; }
+    </style>
+</head>
+<body>
+
+<script type="importmap">
+    { "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js" } }
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+
+// ============================================================================
+// MOTEUR DE FEUX — synthèse : rendu additif "TruePeony" + TRAÎNÉES (micro-grains
+// qui meurent un par un, durées variées). 100% procédural, aucune image externe.
+// ============================================================================
+
+const scene = new THREE.Scene();
+scene.fog = new THREE.FogExp2(0x04040a, 0.0012);
+
+const camera = new THREE.PerspectiveCamera(60, innerWidth / innerHeight, 0.1, 2000);
+camera.position.set(0, 48, 140);
+camera.lookAt(0, 62, 0);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+renderer.setSize(innerWidth, innerHeight);
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.toneMapping = THREE.ACESFilmicToneMapping; // rendu "vidéo/ciné"
+renderer.toneMappingExposure = 1.15;
+document.body.appendChild(renderer.domElement);
+
+// --- TEXTURE ÉTOILE : cœur blanc incandescent -> halo couleur -> transparent ---
+function makeStarTexture(){
+  const c = document.createElement('canvas'); c.width = c.height = 64;
+  const x = c.getContext('2d');
+  const g = x.createRadialGradient(32,32,0, 32,32,32);
+  g.addColorStop(0.0,  'rgba(255,255,255,1)');
+  g.addColorStop(0.18, 'rgba(255,200,120,0.95)');
+  g.addColorStop(0.45, 'rgba(255,120,30,0.5)');
+  g.addColorStop(1.0,  'rgba(0,0,0,0)');
+  x.fillStyle = g; x.fillRect(0,0,64,64);
+  const t = new THREE.CanvasTexture(c); t.needsUpdate = true; return t;
+}
+const starTex = makeStarTexture();
+
+// ============================================================================
+// POOL DE TRAÎNÉES (partagé) — un seul nuage de points additif, recyclé en anneau.
+// Chaque grain : durée de vie en loi de puissance -> ils s'éteignent un par un.
+// ============================================================================
+const TRAIL_MAX = 12000;
+const trailPos  = new Float32Array(TRAIL_MAX * 3);
+const trailCol  = new Float32Array(TRAIL_MAX * 3);
+const trailSize = new Float32Array(TRAIL_MAX);
+const trail = []; // données CPU
+for (let i = 0; i < TRAIL_MAX; i++){
+  trail.push({ x:0,y:0,z:0, vx:0,vy:0,vz:0, age:0, life:0, size:0, r:0,g:0,b:0, alive:false });
+  trailSize[i] = 0;
+}
+let trailHead = 0;
+const trailGeo = new THREE.BufferGeometry();
+trailGeo.setAttribute('position', new THREE.BufferAttribute(trailPos, 3));
+trailGeo.setAttribute('color',    new THREE.BufferAttribute(trailCol, 3));
+trailGeo.setAttribute('size',     new THREE.BufferAttribute(trailSize, 1));
+const trailMat = new THREE.PointsMaterial({
+  size: 1.0, map: starTex, vertexColors: true, transparent: true,
+  blending: THREE.AdditiveBlending, depthWrite: false, sizeAttenuation: true
+});
+scene.add(new THREE.Points(trailGeo, trailMat));
+
+function spawnTrail(x,y,z, r,g,b, size){
+  const i = trailHead; trailHead = (trailHead + 1) % TRAIL_MAX;
+  const t = trail[i];
+  t.x=x; t.y=y; t.z=z;
+  // léger éparpillement + chute douce (les grains ne suivent pas pile l'étoile)
+  t.vx = (Math.random()-0.5)*0.8;
+  t.vy = -Math.random()*0.6;
+  t.vz = (Math.random()-0.5)*0.8;
+  t.age = 0;
+  // loi de puissance : beaucoup de grains courts, quelques-uns longs -> extinction étalée
+  t.life = 0.25 + 0.95 * Math.pow(Math.random(), 1.7);
+  t.size = size * (0.7 + Math.random()*0.6);
+  t.r=r; t.g=g; t.b=b; t.alive = true;
+}
+
+function updateTrails(dt){
+  for (let i = 0; i < TRAIL_MAX; i++){
+    const t = trail[i];
+    if (!t.alive){ trailSize[i] = 0; continue; }
+    t.age += dt;
+    if (t.age >= t.life){ t.alive = false; trailSize[i] = 0; continue; }
+    t.vy += -3.5 * dt;          // gravité douce
+    t.vx *= 0.96; t.vy *= 0.98; t.vz *= 0.96;
+    t.x += t.vx*dt; t.y += t.vy*dt; t.z += t.vz*dt;
+    const k = 1 - t.age / t.life;   // s'éteint en douceur
+    trailPos[i*3] = t.x; trailPos[i*3+1] = t.y; trailPos[i*3+2] = t.z;
+    trailCol[i*3] = t.r*k; trailCol[i*3+1] = t.g*k; trailCol[i*3+2] = t.b*k;
+    trailSize[i] = t.size * (0.4 + 0.6*k);
+  }
+  trailGeo.attributes.position.needsUpdate = true;
+  trailGeo.attributes.color.needsUpdate = true;
+  trailGeo.attributes.size.needsUpdate = true;
+}
+
+// ============================================================================
+// PIVOINE — coquille creuse homogène (TruePeony), orange stable, + traînées.
+// ============================================================================
+const PEONY = {
+  stars: 320,
+  speed: 42,                 // vitesse d'éjection (coquille)
+  drag: 0.955,
+  gravity: -9.81,
+  color: new THREE.Color(1.0, 0.42, 0.06),
+  starSize: 3.4,
+  lifeMin: 1.5, lifeMax: 2.1 // un peu varié -> les traînées persistent après l'éclat
+};
+
+class Peony {
+  constructor(apex){
+    this.apex = apex; this.dead = false;
+    const n = PEONY.stars;
+    this.pos = new Float32Array(n*3);
+    this.col = new Float32Array(n*3);
+    this.siz = new Float32Array(n);
+    this.data = [];
+    for (let i = 0; i < n; i++){
+      this.pos[i*3]=apex.x; this.pos[i*3+1]=apex.y; this.pos[i*3+2]=apex.z;
+      // direction sphérique uniforme
+      const u=Math.random(), v=Math.random();
+      const th=u*2*Math.PI, ph=Math.acos(2*v-1);
+      const dx=Math.sin(ph)*Math.cos(th), dy=Math.sin(ph)*Math.sin(th), dz=Math.cos(ph);
+      const sp = PEONY.speed * (0.96 + Math.random()*0.08);
+      this.col[i*3]=PEONY.color.r; this.col[i*3+1]=PEONY.color.g; this.col[i*3+2]=PEONY.color.b;
+      this.siz[i]=PEONY.starSize;
+      this.data.push({
+        vx:dx*sp, vy:dy*sp, vz:dz*sp, age:0,
+        life: PEONY.lifeMin + Math.random()*(PEONY.lifeMax-PEONY.lifeMin),
+        lastX:apex.x, lastY:apex.y, lastZ:apex.z, since:0
+      });
+    }
+    this.geo = new THREE.BufferGeometry();
+    this.geo.setAttribute('position', new THREE.BufferAttribute(this.pos,3));
+    this.geo.setAttribute('color',    new THREE.BufferAttribute(this.col,3));
+    this.geo.setAttribute('size',     new THREE.BufferAttribute(this.siz,1));
+    this.mat = new THREE.PointsMaterial({
+      size:1.0, map:starTex, vertexColors:true, transparent:true,
+      blending:THREE.AdditiveBlending, depthWrite:false, sizeAttenuation:true
+    });
+    this.points = new THREE.Points(this.geo, this.mat);
+    scene.add(this.points);
+
+    // FLASH CENTRAL (idée de la version "Skylighter") : la charge d'éclatement qui
+    // détone à l'ouverture -> boule de feu blanche, expansion brutale, disparaît en ~0,13 s.
+    this.age = 0;
+    const fg = new THREE.SphereGeometry(1.4, 16, 16);
+    const fm = new THREE.MeshBasicMaterial({ color: 0xfff3e6, transparent: true,
+      blending: THREE.AdditiveBlending, depthWrite: false });
+    this.flash = new THREE.Mesh(fg, fm);
+    this.flash.position.copy(apex);
+    scene.add(this.flash);
+  }
+
+  update(dt){
+    if (this.dead) return;
+    this.age += dt;
+    // flash d'ouverture (très bref)
+    if (this.flash){
+      const fd = 0.13;
+      if (this.age < fd){
+        const p = this.age / fd;
+        this.flash.scale.setScalar(1 + p*16);
+        this.flash.material.opacity = 1 - p*p;
+      } else {
+        scene.remove(this.flash); this.flash.geometry.dispose();
+        this.flash.material.dispose(); this.flash = null;
+      }
+    }
+    const n = PEONY.stars; let alive = 0;
+    for (let i = 0; i < n; i++){
+      const d = this.data[i];
+      if (d.age >= d.life){ this.siz[i] = 0; continue; }
+      alive++; d.age += dt;
+      const pr = d.age / d.life;
+      d.vy += PEONY.gravity*dt;
+      d.vx *= PEONY.drag; d.vy *= PEONY.drag; d.vz *= PEONY.drag;
+      const px = this.pos[i*3]+d.vx*dt, py = this.pos[i*3+1]+d.vy*dt, pz = this.pos[i*3+2]+d.vz*dt;
+      this.pos[i*3]=px; this.pos[i*3+1]=py; this.pos[i*3+2]=pz;
+
+      // éclat : flash blanc au tout début, puis orange stable, fondu à la fin
+      let r=PEONY.color.r, g=PEONY.color.g, b=PEONY.color.b;
+      if (pr < 0.12){ const f=1-pr/0.12; r=r+(1-r)*f; g=g+(1-g)*f; b=b+(1-b)*f; } // cœur blanc-chaud
+      if (pr > 0.78){ const k=(1-pr)/0.22; r*=k; g*=k; b*=k; this.siz[i]=PEONY.starSize*k; }
+      this.col[i*3]=r; this.col[i*3+1]=g; this.col[i*3+2]=b;
+
+      // TRAÎNÉE : micro-grains lâchés le long du trajet (tant que l'étoile est "vive")
+      d.since += dt;
+      if (pr < 0.6 && d.since > 0.018){
+        const mx=(d.lastX+px)*0.5, my=(d.lastY+py)*0.5, mz=(d.lastZ+pz)*0.5;
+        spawnTrail(mx,my,mz, PEONY.color.r, PEONY.color.g, PEONY.color.b, 1.7);
+        d.lastX=px; d.lastY=py; d.lastZ=pz; d.since=0;
+      }
+    }
+    this.geo.attributes.position.needsUpdate = true;
+    this.geo.attributes.color.needsUpdate = true;
+    this.geo.attributes.size.needsUpdate = true;
+    if (alive === 0){
+      this.dead = true; scene.remove(this.points);
+      this.geo.dispose(); this.mat.dispose();
+    }
+  }
+}
+
+// ============================================================================
+// BOUCLE
+// ============================================================================
+let peony = null;
+let rafId = 0;
+const clock = new THREE.Clock();
+function animate(){
+  rafId = requestAnimationFrame(animate);
+  const dt = Math.min(clock.getDelta(), 0.05);
+  if (!peony || peony.dead) peony = new Peony(new THREE.Vector3(0, 62, 0));
+  peony.update(dt);
+  updateTrails(dt);
+  renderer.render(scene, camera);
+}
+// hook debug : fige la boucle pour permettre une capture d'écran fixe
+window.__freeze = () => { cancelAnimationFrame(rafId); return 'frozen'; };
+addEventListener('resize', () => {
+  camera.aspect = innerWidth/innerHeight; camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+});
+animate();
+</script>
+</body>
+</html>
