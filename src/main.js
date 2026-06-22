@@ -46,6 +46,9 @@ if (HAS_ION) {
     try {
       const tileset = await Cesium.createGooglePhotorealistic3DTileset();
       viewer.scene.primitives.add(tileset);
+      // AMBIANCE NUIT : assombrit le terrain (les tuiles Google sont en plein jour). Le
+      // mode HIGHLIGHT (défaut) MULTIPLIE la texture par cette couleur -> sombre, bleuté.
+      tileset.style = new Cesium.Cesium3DTileStyle({ color: "color('#4f4f5e')" });
       // CALER LE TIR SUR LE SOL RÉEL (tuiles les plus détaillées au lieu de tir) -> les
       // feux partent du sol. Marche pour n'importe quel lieu.
       try {

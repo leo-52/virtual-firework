@@ -36,6 +36,8 @@ export class FireworksLayer {
     this.MAX_FIREWORKS = 6;        // feux simultanés max (anti-accumulation)
     this._local = new Cesium.Cartesian3();
     this._world = new Cesium.Cartesian3();
+    this._vel = new Cesium.Cartesian3();
+    this._velW = new Cesium.Cartesian3();
     this._col = new Cesium.Color();
   }
 
@@ -78,25 +80,42 @@ export class FireworksLayer {
       const bb = this.pool[i];
       if (i >= items.length){ if (bb.show) bb.show = false; continue; }
       const s = items[i];
-      const b = s.bright < 0 ? 0 : (s.bright > 1 ? 1 : s.bright);
-      if (b <= 0.01){ if (bb.show) bb.show = false; continue; }
+      const b0 = s.bright < 0 ? 0 : (s.bright > 1 ? 1 : s.bright);
+      if (b0 <= 0.01){ if (bb.show) bb.show = false; continue; }
+      let b = b0;
 
       this._local.x = s.pos[0]; this._local.y = s.pos[1]; this._local.z = s.pos[2];
       Cesium.Matrix4.multiplyByPoint(this.enu, this._local, this._world);
       bb.position = this._world; // Cesium clone la valeur en interne
 
-      // ÉCLAT POUSSÉ : alpha amplifié (étoiles bien présentes) + léger CŒUR BLANC-CHAUD
-      // quand c'est brillant -> ça "brille" vraiment (au lieu d'un blob coloré fade).
+      const sz = (s.size < 0.05 ? 0.05 : s.size) * 2.8;
+      // FLOU DE MOUVEMENT : les étoiles RAPIDES s'étirent le long de leur vitesse (streak)
+      // et redeviennent rondes en ralentissant. Signature "vidéo" (niveau 3).
+      let stretch = 0;
+      if (s.kind === 'star' && s.vel){
+        const spd = Math.sqrt(s.vel[0]*s.vel[0] + s.vel[1]*s.vel[1] + s.vel[2]*s.vel[2]);
+        stretch = Math.min(3.0, spd * 0.07);
+      }
+      if (stretch > 0.2){
+        this._vel.x = s.vel[0]; this._vel.y = s.vel[1]; this._vel.z = s.vel[2];
+        Cesium.Matrix4.multiplyByPointAsVector(this.enu, this._vel, this._velW);
+        Cesium.Cartesian3.normalize(this._velW, this._velW);
+        bb.alignedAxis = this._velW;                    // aligne le billboard sur la vitesse
+        bb.width = sz; bb.height = sz * (1 + stretch);  // étiré le long de la vitesse
+        b = b / Math.sqrt(1 + stretch);                 // énergie étalée -> flou doux
+      } else {
+        bb.alignedAxis = Cesium.Cartesian3.ZERO;        // rond (aligné écran)
+        bb.width = sz; bb.height = sz;
+      }
+
+      // ÉCLAT : alpha amplifié + léger CŒUR BLANC-CHAUD quand brillant -> ça "brille".
       const a = b * 1.7 > 1 ? 1 : b * 1.7;
-      const w = 0.30 * b; // mix vers le blanc proportionnel à l'éclat
+      const w = 0.30 * b0; // mix vers le blanc selon l'éclat d'origine
       this._col.red   = s.color[0] + (1 - s.color[0]) * w;
       this._col.green = s.color[1] + (1 - s.color[1]) * w;
       this._col.blue  = s.color[2] + (1 - s.color[2]) * w;
       this._col.alpha = a;
-      bb.color = this._col;      // cloné en interne
-
-      const sz = (s.size < 0.05 ? 0.05 : s.size) * 2.8;
-      bb.width = sz; bb.height = sz;
+      bb.color = this._col;
       bb.show = true;
     }
   }
