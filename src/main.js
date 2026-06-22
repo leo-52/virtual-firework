@@ -46,16 +46,18 @@ if (HAS_ION) {
     try {
       const tileset = await Cesium.createGooglePhotorealistic3DTileset();
       viewer.scene.primitives.add(tileset);
-      // CALER LE TIR SUR LE SOL RÉEL : on échantillonne la hauteur du terrain au lieu de
-      // tir (marche pour N'IMPORTE QUEL lieu) -> les feux partent bien du sol, pas dedans/au-dessus.
+      // CALER LE TIR SUR LE SOL RÉEL (tuiles les plus détaillées au lieu de tir) -> les
+      // feux partent du sol. Marche pour n'importe quel lieu.
       try {
         const carto = Cesium.Cartographic.fromDegrees(FIRE.lon, FIRE.lat);
         const r = await viewer.scene.sampleHeightMostDetailed([carto]);
-        const h = (r && r[0] && Number.isFinite(r[0].height)) ? r[0].height : FIRE.height;
-        FIRE.height = h;
-        layer.setOrigin({ lon: FIRE.lon, lat: FIRE.lat, height: h });
-        cam.setFromLocal(CAM_LOCAL, CAM_TARGET); // recale la caméra sur le sol réel
-      } catch (e2) { console.warn('[PrevoFX] calage sol impossible (hauteur provisoire gardée).', e2); }
+        const h = (r && r[0]) ? r[0].height : NaN;
+        if (Number.isFinite(h) && h > -500 && h < 6000){
+          FIRE.height = h;
+          layer.setOrigin({ lon: FIRE.lon, lat: FIRE.lat, height: h });
+          cam.setFromLocal(CAM_LOCAL, CAM_TARGET);
+        }
+      } catch (e2) { console.warn('[PrevoFX] calage sol impossible.', e2); }
     } catch (e) {
       console.warn('[PrevoFX] Google 3D Tiles via ion indisponible — feux sans décor.', e);
     }

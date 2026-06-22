@@ -1,22 +1,22 @@
-// Caméra "spectateur" (FPS) pour le web — reproduit les contrôles voulus :
+// Caméra "spectateur" (FPS) pour le web. Contrôles voulus :
 //  - déplacement QZSD : Z/S avant-arrière, Q/D gauche-droite, A/E bas-haut (Shift = rapide),
 //  - rotation = CLIC GAUCHE maintenu + glisser,
 //  - PAS de zoom molette,
-//  - SOL DUR : la caméra ne passe pas sous le terrain du lieu de tir.
-// On désactive la navigation Cesium par défaut et on pilote la caméra via heading/pitch dans
-// le repère local (ENU). On lit les touches par e.code (physique) -> marche AZERTY ET QWERTY :
-// la "grappe" physique W/A/S/D correspond aux touches Z/Q/S/D sur un clavier AZERTY.
+//  - SOL DUR : ne passe pas sous le terrain (calé sur le sol RÉEL sous la caméra),
+//  - vue par défaut : ~5 m au-dessus du sol, à 150 m, dans l'axe.
+// On lit les touches par e.code (physique) -> la grappe W/A/S/D = Z/Q/S/D sur AZERTY.
 
 export class FpsCameraController {
   constructor(viewer, layer){
     this.viewer = viewer;
+    this.scene = viewer.scene;
     this.camera = viewer.camera;
     this.layer = layer;
 
-    const ssc = viewer.scene.screenSpaceCameraController;
+    const ssc = this.scene.screenSpaceCameraController;
     ssc.enableRotate = ssc.enableTranslate = ssc.enableZoom = ssc.enableTilt = ssc.enableLook = false;
 
-    this.heading = 0; this.pitch = 0;            // rad (heading 0 = nord, pitch + = vers le haut)
+    this.heading = 0; this.pitch = 0;
     this.camPos = new Cesium.Cartesian3();
     this.keys = Object.create(null);
     this.dragging = false; this.lastX = 0; this.lastY = 0;
@@ -24,66 +24,92 @@ export class FpsCameraController {
     this.moveSpeed = 22;   // m/s
     this.fastMul   = 4;
     this.lookSpeed = 0.005;// rad / pixel
-    this.eyeFloor  = 1.6;  // m au-dessus du sol (hauteur d'homme mini)
+    this.eyeDefault = 5;   // hauteur par défaut au-dessus du sol local (m)
+    this.eyeFloor   = 2;   // hauteur mini au-dessus du sol (sol dur)
 
     this._enu = new Cesium.Matrix4();
     this._v = new Cesium.Cartesian3();
-    this._install();
+
+    this._installKeyboard();
+    this._installMouse();
   }
 
-  // Vue initiale depuis une position locale + une cible locale (repère du layer).
+  // Hauteur du SOL (terrain 3D) sous un point ECEF. Fallback : sol du lieu de tir.
+  _groundUnder(cartesian){
+    if (this.scene.sampleHeightSupported){
+      try {
+        const c = Cesium.Cartographic.fromCartesian(cartesian);
+        const h = this.scene.sampleHeight(c);
+        // borne plausible : rejette les valeurs aberrantes (qui sinon envoient la caméra dans l'espace)
+        if (Number.isFinite(h) && h > -500 && h < 6000) return h;
+      } catch (e) { /* tuiles pas encore là */ }
+    }
+    try { return Cesium.Cartographic.fromCartesian(this.layer.origin).height; } catch (e) { return null; }
+  }
+
+  // Vue depuis une position locale + cible locale (repère du layer). Cale la hauteur
+  // à eyeDefault au-dessus du sol RÉEL sous la caméra.
   setFromLocal(camLocal, tgtLocal){
     this.camPos = this.layer.localToWorld(camLocal);
     const dx = tgtLocal[0]-camLocal[0], dy = tgtLocal[1]-camLocal[1], dz = tgtLocal[2]-camLocal[2];
     this.heading = Math.atan2(dx, dy);
     this.pitch   = Math.atan2(dz, Math.hypot(dx, dy));
+    const g = this._groundUnder(this.camPos);
+    if (g !== null){
+      const c = Cesium.Cartographic.fromCartesian(this.camPos);
+      c.height = g + this.eyeDefault;
+      this.camPos = Cesium.Cartographic.toCartesian(c);
+    }
   }
 
-  _install(){
-    const cv = this.viewer.canvas;
-    cv.setAttribute('tabindex', '0');
+  _installKeyboard(){
     window.addEventListener('keydown', e => { this.keys[e.code] = true; });
     window.addEventListener('keyup',   e => { this.keys[e.code] = false; });
-    cv.addEventListener('mousedown', e => { if (e.button === 0){ this.dragging = true; this.lastX = e.clientX; this.lastY = e.clientY; } });
-    window.addEventListener('mouseup', e => { if (e.button === 0) this.dragging = false; });
-    window.addEventListener('mousemove', e => {
+  }
+
+  _installMouse(){
+    // Système d'événements Cesium (fiable, pas de conflit avec le canvas WebGL).
+    const h = new Cesium.ScreenSpaceEventHandler(this.scene.canvas);
+    h.setInputAction(m => { this.dragging = true;  this.lastX = m.position.x; this.lastY = m.position.y; }, Cesium.ScreenSpaceEventType.LEFT_DOWN);
+    h.setInputAction(() => { this.dragging = false; }, Cesium.ScreenSpaceEventType.LEFT_UP);
+    h.setInputAction(m => {
       if (!this.dragging) return;
-      this.heading += (e.clientX - this.lastX) * this.lookSpeed;
-      this.pitch   -= (e.clientY - this.lastY) * this.lookSpeed;
+      this.heading += (m.endPosition.x - this.lastX) * this.lookSpeed;
+      this.pitch   -= (m.endPosition.y - this.lastY) * this.lookSpeed;
       this.pitch = Math.max(-1.5, Math.min(1.5, this.pitch));
-      this.lastX = e.clientX; this.lastY = e.clientY;
-    });
-    cv.addEventListener('wheel', e => e.preventDefault(), { passive: false }); // PAS de zoom molette
-    cv.addEventListener('contextmenu', e => e.preventDefault());
+      this.lastX = m.endPosition.x; this.lastY = m.endPosition.y;
+    }, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
+    this._mouse = h;
   }
 
   update(dt){
     const k = this.keys;
     let f = 0, r = 0, u = 0;
-    if (k['KeyW']) f += 1; if (k['KeyS']) f -= 1;   // Z / S (azerty) = avant / arrière
+    if (k['KeyW']) f += 1; if (k['KeyS']) f -= 1;   // Z / S = avant / arrière
     if (k['KeyD']) r += 1; if (k['KeyA']) r -= 1;   // D / Q = droite / gauche
     if (k['KeyE']) u += 1; if (k['KeyQ']) u -= 1;   // E / A = haut / bas
 
     if (f || r || u){
       const spd = this.moveSpeed * ((k['ShiftLeft'] || k['ShiftRight']) ? this.fastMul : 1) * dt;
       const ch = Math.cos(this.heading), sh = Math.sin(this.heading);
-      // ENU : forward=(sin h, cos h, 0), right=(cos h, -sin h, 0), up=(0,0,1)
-      this._v.x = sh * f + ch * r;
+      this._v.x = sh * f + ch * r;     // ENU : forward=(sin h,cos h,0), right=(cos h,-sin h,0)
       this._v.y = ch * f - sh * r;
       this._v.z = u;
       Cesium.Transforms.eastNorthUpToFixedFrame(this.camPos, undefined, this._enu);
-      Cesium.Matrix4.multiplyByPointAsVector(this._enu, this._v, this._v); // ENU -> ECEF (direction)
+      Cesium.Matrix4.multiplyByPointAsVector(this._enu, this._v, this._v);
       Cesium.Cartesian3.normalize(this._v, this._v);
       Cesium.Cartesian3.multiplyByScalar(this._v, spd, this._v);
       Cesium.Cartesian3.add(this.camPos, this._v, this.camPos);
     }
 
-    // SOL DUR : hauteur mini = sol du lieu de tir + marge.
-    const groundH = Cesium.Cartographic.fromCartesian(this.layer.origin).height;
-    const cc = Cesium.Cartographic.fromCartesian(this.camPos);
-    if (cc.height < groundH + this.eyeFloor){
-      cc.height = groundH + this.eyeFloor;
-      this.camPos = Cesium.Cartographic.toCartesian(cc);
+    // SOL DUR : ne pas descendre sous le terrain local + marge.
+    const g = this._groundUnder(this.camPos);
+    if (g !== null){
+      const c = Cesium.Cartographic.fromCartesian(this.camPos);
+      if (c.height < g + this.eyeFloor){
+        c.height = g + this.eyeFloor;
+        this.camPos = Cesium.Cartographic.toCartesian(c);
+      }
     }
 
     this.camera.setView({ destination: this.camPos, orientation: { heading: this.heading, pitch: this.pitch, roll: 0 } });
