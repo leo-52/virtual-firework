@@ -1,7 +1,7 @@
 // Caméra "spectateur" (FPS) pour le web. Contrôles voulus :
 //  - déplacement QZSD : Z/S avant-arrière, Q/D gauche-droite, A/E bas-haut (Shift = rapide),
 //  - rotation = CLIC GAUCHE maintenu + glisser,
-//  - PAS de zoom molette,
+//  - ZOOM molette = avancer/reculer le long du regard (dolly),
 //  - SOL DUR : ne passe pas sous le terrain (calé sur le sol RÉEL sous la caméra),
 //  - vue par défaut : ~5 m au-dessus du sol, à 150 m, dans l'axe.
 // On lit les touches par e.code (physique) -> la grappe W/A/S/D = Z/Q/S/D sur AZERTY.
@@ -24,6 +24,7 @@ export class FpsCameraController {
     this.moveSpeed = 22;   // m/s
     this.fastMul   = 4;
     this.lookSpeed = 0.005;// rad / pixel
+    this.zoomFactor = 0.10;// molette -> dolly (m par unité de delta), borné par cran
     this.eyeDefault = 5;   // hauteur par défaut au-dessus du sol local (m)
     this.eyeFloor   = 2;   // hauteur mini au-dessus du sol (sol dur)
 
@@ -79,6 +80,18 @@ export class FpsCameraController {
       this.pitch = Math.max(-1.5, Math.min(1.5, this.pitch));
       this.lastX = m.endPosition.x; this.lastY = m.endPosition.y;
     }, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
+    // ZOOM MOLETTE = dolly : on avance/recule le long du regard (delta>0 = on s'approche).
+    h.setInputAction(delta => {
+      const step = Math.max(-45, Math.min(45, delta * this.zoomFactor));
+      const cp = Math.cos(this.pitch), sp = Math.sin(this.pitch);
+      const ch = Math.cos(this.heading), sh = Math.sin(this.heading);
+      this._v.x = sh * cp; this._v.y = ch * cp; this._v.z = sp; // direction du regard (ENU, avec pitch)
+      Cesium.Transforms.eastNorthUpToFixedFrame(this.camPos, undefined, this._enu);
+      Cesium.Matrix4.multiplyByPointAsVector(this._enu, this._v, this._v);
+      Cesium.Cartesian3.normalize(this._v, this._v);
+      Cesium.Cartesian3.multiplyByScalar(this._v, step, this._v);
+      Cesium.Cartesian3.add(this.camPos, this._v, this.camPos);
+    }, Cesium.ScreenSpaceEventType.WHEEL);
     this._mouse = h;
   }
 
