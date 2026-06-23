@@ -49,9 +49,9 @@ document.body.appendChild(renderer.domElement);
 const composer = new EffectComposer(renderer);
 composer.addPass(new RenderPass(scene, camera));
 const bloomPass = new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight),
-  0.6,   // strength  : intensité (réduite)
-  0.25,  // radius    : halo SERRÉ (avant 0.5 = brouillard épais sur tout l'écran)
-  0.18); // threshold : seules les étoiles VIVES rayonnent (pas la fumée -> pas de voile)
+  0.35,  // strength  : halo DISCRET (encore baissé)
+  0.20,  // radius    : serré
+  0.25); // threshold : seuls les cœurs très vifs rayonnent (pas de voile)
 composer.addPass(bloomPass);
 composer.addPass(new OutputPass());
 
@@ -145,8 +145,8 @@ function updateTrails(dt){
 // ============================================================================
 const PEONY = {
   stars: 110,                // sphère BIEN REMPLIE, étoiles presque partout (pas de trous)
-  speed: 42,                 // vitesse d'éjection (coquille)
-  drag: 0.955,               // frein (coquille nette et brillante)
+  speed: 75,                 // break AMPLE -> on VOIT les étoiles jaillir du centre (avant 42 = trop petit/rapide)
+  drag: 0.965,               // frein un peu plus doux -> expansion VISIBLE (on voit les étoiles voyager)
   gravity: -9.81,
   color: new THREE.Color(1.0, 0.22, 0.015), // (base ; la COMBUSTION fait évoluer la teinte)
   starSize: 5.5,             // chaque étoile = un point de feu bien visible
@@ -197,7 +197,7 @@ class Peony {
     // FLASH CENTRAL (idée de la version "Skylighter") : la charge d'éclatement qui
     // détone à l'ouverture -> boule de feu blanche, expansion brutale, disparaît en ~0,13 s.
     this.age = 0;
-    const fg = new THREE.SphereGeometry(0.7, 16, 16);              // plus petit
+    const fg = new THREE.SphereGeometry(0.5, 16, 16);              // petit (ne masque plus l'émergence)
     const fm = new THREE.MeshBasicMaterial({ color: 0xffc888, transparent: true, // ambré, pas blanc pur
       blending: THREE.AdditiveBlending, depthWrite: false });
     this.flash = new THREE.Mesh(fg, fm);
@@ -246,11 +246,11 @@ class Peony {
     this.age += dt;
     // flash d'ouverture (très bref)
     if (this.flash){
-      const fd = 0.09;                          // plus bref
+      const fd = 0.06;                          // très bref
       if (this.age < fd){
         const p = this.age / fd;
-        this.flash.scale.setScalar(1 + p*6);    // expansion bien plus petite
-        this.flash.material.opacity = (1 - p) * 0.55; // moins aveuglant
+        this.flash.scale.setScalar(1 + p*4);    // petite expansion
+        this.flash.material.opacity = (1 - p) * 0.4; // discret
       } else {
         scene.remove(this.flash); this.flash.geometry.dispose();
         this.flash.material.dispose(); this.flash = null;
@@ -282,7 +282,7 @@ class Peony {
       this.col[i*3]=r*inten; this.col[i*3+1]=g*inten; this.col[i*3+2]=b*inten;
 
       // MOTION-BLUR : segment tête->arrière, longueur ∝ vitesse (court), queue sombre -> fuseau.
-      const mbk = 0.09;
+      const mbk = 0.12;
       this.lpos[li]=px;          this.lpos[li+1]=py;          this.lpos[li+2]=pz;
       this.lpos[li+3]=px-d.vx*mbk; this.lpos[li+4]=py-d.vy*mbk; this.lpos[li+5]=pz-d.vz*mbk;
       const hr=r*inten, hg=g*inten, hb=b*inten;
