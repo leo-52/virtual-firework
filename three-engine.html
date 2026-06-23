@@ -36,8 +36,8 @@ const scene = new THREE.Scene();
 scene.fog = new THREE.FogExp2(0x04040a, 0.0012);
 
 const camera = new THREE.PerspectiveCamera(60, innerWidth / innerHeight, 0.1, 2000);
-camera.position.set(0, 40, 150);
-camera.lookAt(0, 48, 0);
+camera.position.set(0, 2, 165);   // vue spectateur (hauteur d'homme, ~165 m de recul)
+camera.lookAt(0, 55, 0);          // vers le ciel : voit le tir au sol jusqu'au burst à 90 m
 
 const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
 renderer.setSize(innerWidth, innerHeight);
@@ -129,13 +129,15 @@ function updateTrails(dt){
 // ============================================================================
 // PARAMÈTRES PIVOINE
 // ============================================================================
+// DONNÉES CATALOGUE (effets.json, champ hauteur_m = "donnée A") — pivoine par calibre :
+//   50mm:67m  75mm:~90m  100mm:~117m  150mm:200m.  Envergure (métier) ~50m au 75mm.
 const PEONY = {
   stars: 80,
-  burstRadius: 20,           // m  -> ouverture (diamètre) ; vitesse = burstRadius*speedMul
+  burstRadius: 13.5,         // m -> rayon de bombe ; envergure MESURÉE ~50m de diamètre (75mm)
   speedMul: 1.8,
-  apex: 48,                  // m (y) ; tir du sol (y=0)
-  riseTime: 2.2,             // s (±5% jitter)
-  riseLean: 9,               // m : décalage d'apex max -> montée EN BIAIS (pas toute droite)
+  apex: 90,                  // m (y) — DONNÉE A catalogue, pivoine 75mm. Tir du sol (y=0).
+  riseTime: 2.5,             // s (lift bombe 2.2-2.8s)
+  riseLean: 12,              // m : décalage d'apex max -> montée EN BIAIS (pas toute droite)
   G: 9.8,
   gravStar: 1.0,
   dragStar: 0.70,            // frein linéaire (1 - drag*dt)
