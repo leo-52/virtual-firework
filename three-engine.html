@@ -144,13 +144,13 @@ function updateTrails(dt){
 // PIVOINE — coquille creuse homogène (TruePeony), orange stable, + traînées.
 // ============================================================================
 const PEONY = {
-  stars: 80,                 // une VRAIE pivoine ~80 étoiles distinctes (pas une purée)
+  stars: 110,                // sphère BIEN REMPLIE, étoiles presque partout (pas de trous)
   speed: 42,                 // vitesse d'éjection (coquille)
   drag: 0.955,               // frein (coquille nette et brillante)
   gravity: -9.81,
   color: new THREE.Color(1.0, 0.22, 0.015), // (base ; la COMBUSTION fait évoluer la teinte)
-  starSize: 6.0,             // chaque étoile = un point de feu bien visible
-  lifeMin: 1.5, lifeMax: 2.1,
+  starSize: 5.5,             // chaque étoile = un point de feu bien visible
+  lifeMin: 2.0, lifeMax: 2.8, // vie plus longue -> extinction PAS précipitée
   trail: false               // PIVOINE = pas de traînée (les traînées = saule/comète/autres effets)
 };
 
@@ -164,10 +164,15 @@ class Peony {
     this.data = [];
     for (let i = 0; i < n; i++){
       this.pos[i*3]=apex.x; this.pos[i*3+1]=apex.y; this.pos[i*3+2]=apex.z;
-      // direction sphérique uniforme
-      const u=Math.random(), v=Math.random();
-      const th=u*2*Math.PI, ph=Math.acos(2*v-1);
-      const dx=Math.sin(ph)*Math.cos(th), dy=Math.sin(ph)*Math.sin(th), dz=Math.cos(ph);
+      // RÉPARTITION RÉGULIÈRE (Fibonacci) -> sphère pleine, étoiles partout, PAS de trous
+      const off = 2/n, inc = 2.399963229728653; // pas + angle d'or
+      const yy = i*off - 1 + off/2;
+      const rr = Math.sqrt(Math.max(0, 1 - yy*yy));
+      const ang = i*inc;
+      let dx = Math.cos(ang)*rr + (Math.random()-0.5)*0.05;  // léger bruit -> organique (pas un motif)
+      let dy = yy               + (Math.random()-0.5)*0.05;
+      let dz = Math.sin(ang)*rr + (Math.random()-0.5)*0.05;
+      const Ln = Math.hypot(dx,dy,dz)||1; dx/=Ln; dy/=Ln; dz/=Ln;
       const sp = PEONY.speed * (0.96 + Math.random()*0.08);
       this.col[i*3]=PEONY.color.r; this.col[i*3+1]=PEONY.color.g; this.col[i*3+2]=PEONY.color.b;
       this.siz[i]=PEONY.starSize;
@@ -232,7 +237,8 @@ class Peony {
       transparent:true, opacity:0.0, blending:THREE.NormalBlending, depthWrite:false, sizeAttenuation:true });
     this.smoke = new THREE.Points(this.smGeo, this.smMat);
     this.smoke.renderOrder = -1; // derrière les étoiles
-    scene.add(this.smoke);
+    // FUMÉE DÉSACTIVÉE (l'user la trouvait = brouillard) -> on ne l'ajoute PAS à la scène.
+    // scene.add(this.smoke);
   }
 
   update(dt){
@@ -272,7 +278,7 @@ class Peony {
       // intensité : pic chaud à l'allumage (bloom -> blanc), burn brillant, fondu final
       let inten = (pr < 0.10) ? (3.2 - (pr/0.10)*0.8) : 2.4;   // 3.2 -> 2.4 (bien brillant)
       inten *= d.dimVar;                                        // variation organique par étoile
-      if (pr > 0.80){ const k=(1-pr)/0.20; inten *= k; this.siz[i]=PEONY.starSize*k; } // fondu final
+      if (pr > 0.55){ const k=(1-pr)/0.45; inten *= k; this.siz[i]=PEONY.starSize*k; } // fondu LONG et doux (fin pas précipitée)
       this.col[i*3]=r*inten; this.col[i*3+1]=g*inten; this.col[i*3+2]=b*inten;
 
       // MOTION-BLUR : segment tête->arrière, longueur ∝ vitesse (court), queue sombre -> fuseau.
