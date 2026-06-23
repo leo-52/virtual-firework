@@ -27,32 +27,32 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 // ============================================================================
 // MOTEUR DE FEUX — VISUEL (bloom, braise, Fibonacci, motion-blur) + PHYSIQUE de
-// référence portée de web/src/sim/firework.js (elle-même portée de l'acteur Unreal).
-// Un feu = un RÉCIT : tir du sol -> MONTÉE (comète easeOut + traînée) -> APEX ->
-// EXPLOSION depuis le centre -> décélération (drag linéaire) -> RETOMBÉE -> extinction.
+// référence portée de web/src/sim/firework.js (port de l'acteur Unreal).
+// Récit : tir du sol -> MONTÉE (comète easeOut, légèrement en biais + traînée) ->
+// APEX -> EXPLOSION depuis le centre -> décélération (drag linéaire) -> RETOMBÉE -> extinction.
 // ============================================================================
 
 const scene = new THREE.Scene();
 scene.fog = new THREE.FogExp2(0x04040a, 0.0012);
 
 const camera = new THREE.PerspectiveCamera(60, innerWidth / innerHeight, 0.1, 2000);
-camera.position.set(0, 40, 145);
-camera.lookAt(0, 50, 0);
+camera.position.set(0, 40, 150);
+camera.lookAt(0, 48, 0);
 
 const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
 renderer.setSize(innerWidth, innerHeight);
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
-renderer.toneMapping = THREE.ACESFilmicToneMapping; // rendu "vidéo/ciné"
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.3;
 document.body.appendChild(renderer.domElement);
 
-// BLOOM CINÉMATIQUE : EffectComposer = rendu scène -> UnrealBloomPass (halo doux) -> OutputPass.
+// BLOOM CINÉMATIQUE : RenderPass -> UnrealBloomPass -> OutputPass.
 const composer = new EffectComposer(renderer);
 composer.addPass(new RenderPass(scene, camera));
 const bloomPass = new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight),
-  0.35,  // strength  : halo discret
-  0.20,  // radius    : serré
-  0.25); // threshold : seuls les cœurs très vifs rayonnent (pas de voile)
+  0.28,  // strength  : halo discret (réduit -> les étoiles vives ne gonflent plus)
+  0.18,  // radius    : serré
+  0.10); // threshold : bas + uniforme -> toutes les étoiles rayonnent PAREIL (pas de 4x)
 composer.addPass(bloomPass);
 composer.addPass(new OutputPass());
 
@@ -71,15 +71,13 @@ function makeStarTexture(){
 const starTex = makeStarTexture();
 
 // ============================================================================
-// POOL DE TRAÎNÉES (partagé) — un seul nuage de points additif, recyclé en anneau.
-// Sert à la TRAÎNÉE DE MONTÉE (comète) et, pour les effets traînants (saule), aux
-// micro-grains des étoiles. Chaque grain : durée de vie en loi de puissance (réf).
+// POOL DE TRAÎNÉES (partagé) : traînée de MONTÉE (comète) + grains des effets traînants.
 // ============================================================================
 const TRAIL_MAX = 12000;
 const trailPos  = new Float32Array(TRAIL_MAX * 3);
 const trailCol  = new Float32Array(TRAIL_MAX * 3);
 const trailSize = new Float32Array(TRAIL_MAX);
-const trail = []; // données CPU
+const trail = [];
 for (let i = 0; i < TRAIL_MAX; i++){
   trail.push({ x:0,y:0,z:0, vx:0,vy:0,vz:0, age:0, life:0, size:0, r:0,g:0,b:0, alive:false });
   trailSize[i] = 0;
@@ -90,7 +88,7 @@ trailGeo.setAttribute('position', new THREE.BufferAttribute(trailPos, 3));
 trailGeo.setAttribute('color',    new THREE.BufferAttribute(trailCol, 3));
 trailGeo.setAttribute('size',     new THREE.BufferAttribute(trailSize, 1));
 const trailMat = new THREE.PointsMaterial({
-  size: 1.0, map: starTex, vertexColors: true, transparent: true,
+  size: 0.8, map: starTex, vertexColors: true, transparent: true,
   blending: THREE.AdditiveBlending, depthWrite: false, sizeAttenuation: true
 });
 scene.add(new THREE.Points(trailGeo, trailMat));
@@ -99,13 +97,11 @@ function spawnTrail(x,y,z, r,g,b, size){
   const i = trailHead; trailHead = (trailHead + 1) % TRAIL_MAX;
   const t = trail[i];
   t.x=x; t.y=y; t.z=z;
-  // léger éparpillement (les grains ne suivent pas pile la tête)
   t.vx = (Math.random()-0.5)*0.8;
   t.vy = -Math.random()*0.6;
   t.vz = (Math.random()-0.5)*0.8;
   t.age = 0;
-  // loi de puissance (réf firework.js) -> les grains s'éteignent UN PAR UN
-  t.life = 0.26 * (0.35 + 1.45 * Math.pow(Math.random(), 1.6));
+  t.life = 0.26 * (0.35 + 1.45 * Math.pow(Math.random(), 1.6)); // loi de puissance (réf)
   t.size = size * (0.7 + Math.random()*0.6);
   t.r=r; t.g=g; t.b=b; t.alive = true;
 }
@@ -116,14 +112,13 @@ function updateTrails(dt){
     if (!t.alive){ trailSize[i] = 0; continue; }
     t.age += dt;
     if (t.age >= t.life){ t.alive = false; trailSize[i] = 0; continue; }
-    // PHYSIQUE RÉF (grain = type "trail") : gravité réduite (gF 0.4) + drag linéaire 0.42
-    t.vy -= 9.8 * 0.4 * dt;
-    const kd = Math.max(0, 1 - 0.42*dt);
+    t.vy -= 9.8 * 0.4 * dt;                 // grain : gravité réduite (gF 0.4)
+    const kd = Math.max(0, 1 - 0.42*dt);    // drag linéaire trail
     t.vx *= kd; t.vy *= kd; t.vz *= kd;
     t.x += t.vx*dt; t.y += t.vy*dt; t.z += t.vz*dt;
-    const a = 1 - t.age / t.life;            // s'éteint en douceur
+    const a = 1 - t.age / t.life;
     trailPos[i*3] = t.x; trailPos[i*3+1] = t.y; trailPos[i*3+2] = t.z;
-    trailCol[i*3] = t.r*a*0.85; trailCol[i*3+1] = t.g*a*0.85; trailCol[i*3+2] = t.b*a*0.85; // bright=(1-A)*0.85
+    trailCol[i*3] = t.r*a*0.85; trailCol[i*3+1] = t.g*a*0.85; trailCol[i*3+2] = t.b*a*0.85;
     trailSize[i] = t.size * a;
   }
   trailGeo.attributes.position.needsUpdate = true;
@@ -132,42 +127,54 @@ function updateTrails(dt){
 }
 
 // ============================================================================
-// PARAMÈTRES PIVOINE (valeurs recadrées sur la physique de référence)
+// PARAMÈTRES PIVOINE
 // ============================================================================
 const PEONY = {
-  stars: 80,                 // user : ~80 pour une VRAIE pivoine
-  burstRadius: 18,           // m  -> vitesse d'éjection = burstRadius * speedMul
-  speedMul: 1.8,             // réf firework.js (break rapide)
-  apex: 50,                  // m (axe vertical = y dans Three) ; le tir part du sol (y=0)
-  riseTime: 2.2,             // s (montée), ±5% de jitter
-  G: 9.8,                    // gravité (magnitude)
-  gravStar: 1.0,             // facteur de gravité des étoiles
-  dragStar: 0.70,            // frein linéaire des étoiles (1 - drag*dt) — réf ~0.42*1.8, adouci
-  color: new THREE.Color(1.0, 0.22, 0.015),     // base ; la combustion fait évoluer la teinte
-  riseColor: new THREE.Color(1.0, 0.72, 0.35),  // comète de montée
-  starSize: 3.6,             // FIN (braise, pas bille) -> material.size global
-  lifeMin: 1.35, lifeMax: 1.75, // pivoine 75 mm ~1.5 s
-  trailing: false            // PIVOINE = pas de traînée d'étoile (sinon = saule)
+  stars: 80,
+  burstRadius: 20,           // m  -> ouverture (diamètre) ; vitesse = burstRadius*speedMul
+  speedMul: 1.8,
+  apex: 48,                  // m (y) ; tir du sol (y=0)
+  riseTime: 2.2,             // s (±5% jitter)
+  riseLean: 9,               // m : décalage d'apex max -> montée EN BIAIS (pas toute droite)
+  G: 9.8,
+  gravStar: 1.0,
+  dragStar: 0.70,            // frein linéaire (1 - drag*dt)
+  color: new THREE.Color(1.0, 0.22, 0.015),
+  riseColor: new THREE.Color(1.0, 0.72, 0.35),
+  starSize: 2.2,             // FIN (réduit ; braise pas bille)
+  lifeMin: 1.35, lifeMax: 1.75,
+  trailing: false
 };
 
 class Peony {
   constructor(ox, oz){
     this.ox = ox||0; this.oz = oz||0;
+    // apex décalé horizontalement -> la montée se fait en léger biais (réaliste, pas verticale)
+    this.bx = this.ox + (Math.random()-0.5)*PEONY.riseLean;
+    this.bz = this.oz + (Math.random()-0.5)*PEONY.riseLean;
     this.dead = false; this.age = 0;
     this.phase = 'rise';
-    this.riseTime = PEONY.riseTime * (0.95 + Math.random()*0.10); // jitter ±5%
-    this.headY = 0; this.headLastY = 0; this.headTimer = 0;
+    this.riseTime = PEONY.riseTime * (0.95 + Math.random()*0.10);
+    this.headLastX = this.ox; this.headLastY = 0; this.headLastZ = this.oz; this.headTimer = 0;
     const n = PEONY.stars; this.n = n;
 
-    // TÊTE DE MONTÉE (la comète qui monte du sol) : un point additif orange.
+    // FLASH DE DÉPART (sortie du tube, au sol) — bref éclair à l'allumage.
+    const ug = new THREE.SphereGeometry(0.8, 12, 12);
+    const um = new THREE.MeshBasicMaterial({ color:0xffe3b0, transparent:true, opacity:0.0,
+      blending:THREE.AdditiveBlending, depthWrite:false });
+    this.launch = new THREE.Mesh(ug, um);
+    this.launch.position.set(this.ox, 1.5, this.oz);
+    scene.add(this.launch);
+
+    // TÊTE DE MONTÉE : petit point (pas une grosse boule) ; la comète, c'est surtout la traînée.
     this.headGeo = new THREE.BufferGeometry();
     this.headGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array([this.ox, 0, this.oz]), 3));
-    this.headMat = new THREE.PointsMaterial({ size:3.0, map:starTex, color:PEONY.riseColor,
+    this.headMat = new THREE.PointsMaterial({ size:1.0, map:starTex, color:PEONY.riseColor,
       transparent:true, blending:THREE.AdditiveBlending, depthWrite:false, sizeAttenuation:true });
     this.head = new THREE.Points(this.headGeo, this.headMat);
     scene.add(this.head);
 
-    // BUFFERS ÉTOILES (vides ; remplis seulement à l'explosion -> elles PARTENT du centre).
+    // BUFFERS ÉTOILES (remplis à l'explosion -> elles PARTENT du centre).
     this.pos  = new Float32Array(n*3);
     this.col  = new Float32Array(n*3);
     this.lpos = new Float32Array(n*2*3);
@@ -180,10 +187,10 @@ class Peony {
     this.mat = new THREE.PointsMaterial({ size:PEONY.starSize, map:starTex, vertexColors:true,
       transparent:true, blending:THREE.AdditiveBlending, depthWrite:false, sizeAttenuation:true });
     this.points = new THREE.Points(this.geo, this.mat);
-    this.points.visible = false;     // rien tant qu'on n'a pas explosé
+    this.points.visible = false;
     scene.add(this.points);
 
-    // MOTION-BLUR ("tube" dû à la vitesse) : segment court derrière chaque étoile.
+    // MOTION-BLUR (subtil) : court segment derrière chaque étoile.
     this.lgeo = new THREE.BufferGeometry();
     this.lgeo.setAttribute('position', new THREE.BufferAttribute(this.lpos,3));
     this.lgeo.setAttribute('color',    new THREE.BufferAttribute(this.lcol,3));
@@ -196,13 +203,12 @@ class Peony {
     this.flash = null; this.flashAge = 0;
   }
 
-  // EXPLOSION à l'apex : toutes les étoiles NAISSENT au centre, vitesse radiale (Fibonacci).
   burst(){
-    const n = this.n, apex = PEONY.apex;
+    const n = this.n, apex = PEONY.apex, bx = this.bx, bz = this.bz;
     const speed = PEONY.burstRadius * PEONY.speedMul;
-    const inc = 2.399963229728653, off = 2/n; // angle d'or
+    const inc = 2.399963229728653, off = 2/n;
     for (let i = 0; i < n; i++){
-      this.pos[i*3]=this.ox; this.pos[i*3+1]=apex; this.pos[i*3+2]=this.oz; // PARTENT DU CENTRE
+      this.pos[i*3]=bx; this.pos[i*3+1]=apex; this.pos[i*3+2]=bz; // PARTENT DU CENTRE (apex décalé)
       const yy = i*off - 1 + off/2;
       const rr = Math.sqrt(Math.max(0, 1 - yy*yy));
       const ang = i*inc;
@@ -214,18 +220,16 @@ class Peony {
       this.data.push({
         vx:dx*sp, vy:dy*sp, vz:dz*sp, age:0,
         life: PEONY.lifeMin + Math.random()*(PEONY.lifeMax-PEONY.lifeMin),
-        dimVar: 0.80 + Math.random()*0.30,
-        trailing: PEONY.trailing, since:0, lastX:this.ox, lastY:apex, lastZ:this.oz
+        dimVar: 0.95 + Math.random()*0.10,    // variation d'éclat SERRÉE (±5%) -> tailles homogènes
+        trailing: PEONY.trailing, since:0, lastX:bx, lastY:apex, lastZ:bz
       });
     }
     this.points.visible = true; this.lines.visible = true;
-    // FLASH de break (bref, discret)
     const fg = new THREE.SphereGeometry(0.6, 16, 16);
     const fm = new THREE.MeshBasicMaterial({ color:0xffd9a0, transparent:true,
       blending:THREE.AdditiveBlending, depthWrite:false });
-    this.flash = new THREE.Mesh(fg, fm); this.flash.position.set(this.ox, apex, this.oz); this.flashAge = 0;
+    this.flash = new THREE.Mesh(fg, fm); this.flash.position.set(bx, apex, bz); this.flashAge = 0;
     scene.add(this.flash);
-    // on retire la comète de montée
     scene.remove(this.head); this.headGeo.dispose(); this.headMat.dispose(); this.head = null;
   }
 
@@ -233,25 +237,34 @@ class Peony {
     if (this.dead) return;
     this.age += dt;
 
-    // ===== PHASE MONTÉE : comète easeOut du sol -> apex + traînée =====
-    if (this.phase === 'rise'){
-      const T = Math.min(1, this.age / this.riseTime);
-      const te = 1 - (1-T)*(1-T);                 // easeOut (ralentit en haut, projectile freiné)
-      const y = PEONY.apex * te;
-      this.headY = y;
-      this.headGeo.attributes.position.array[1] = y;
-      this.headGeo.attributes.position.needsUpdate = true;
-      this.headTimer -= dt;
-      if (this.headTimer <= 0 && (y - this.headLastY) > 0.5){
-        const my = (this.headLastY + y) * 0.5;     // grain de traînée à mi-chemin
-        spawnTrail(this.ox, my, this.oz, PEONY.riseColor.r, PEONY.riseColor.g, PEONY.riseColor.b, 1.4);
-        this.headLastY = y; this.headTimer = 0.02; // ~50 grains/s
-      }
-      if (T >= 1){ this.burst(); this.phase = 'burst'; }
-      return;                                       // pas d'étoiles avant l'explosion
+    // ===== FLASH DE DÉPART (sortie du tube) — très bref =====
+    if (this.launch){
+      const lp = this.age / 0.18;
+      if (lp < 1){ this.launch.scale.setScalar(1 + lp*5); this.launch.material.opacity = (1-lp)*0.6; }
+      else { scene.remove(this.launch); this.launch.geometry.dispose(); this.launch.material.dispose(); this.launch = null; }
     }
 
-    // ===== FLASH de break (très bref) =====
+    // ===== PHASE MONTÉE : comète easeOut en biais + traînée =====
+    if (this.phase === 'rise'){
+      const T = Math.min(1, this.age / this.riseTime);
+      const te = 1 - (1-T)*(1-T);                       // easeOut
+      const y  = PEONY.apex * te;
+      const hx = this.ox + (this.bx-this.ox)*te;         // arc (x,z interpolés -> biais)
+      const hz = this.oz + (this.bz-this.oz)*te;
+      const a = this.headGeo.attributes.position.array;
+      a[0]=hx; a[1]=y; a[2]=hz; this.headGeo.attributes.position.needsUpdate = true;
+      this.headTimer -= dt;
+      const dmoved = Math.hypot(hx-this.headLastX, y-this.headLastY, hz-this.headLastZ);
+      if (this.headTimer <= 0 && dmoved > 0.4){
+        const mx=(this.headLastX+hx)*0.5, my=(this.headLastY+y)*0.5, mz=(this.headLastZ+hz)*0.5;
+        spawnTrail(mx, my, mz, PEONY.riseColor.r, PEONY.riseColor.g, PEONY.riseColor.b, 1.1);
+        this.headLastX=hx; this.headLastY=y; this.headLastZ=hz; this.headTimer = 0.015; // comète dense
+      }
+      if (T >= 1){ this.burst(); this.phase = 'burst'; }
+      return;
+    }
+
+    // ===== FLASH de break (bref) =====
     if (this.flash){
       this.flashAge += dt; const fd = 0.12;
       if (this.flashAge < fd){
@@ -271,34 +284,33 @@ class Peony {
       alive++; d.age += dt;
       const A = d.age / d.life;
 
-      // PHYSIQUE RÉF : gravité (par type) + DRAG LINÉAIRE 1-drag*dt (indépendant du fps)
-      // -> expansion qui décélère puis RETOMBÉE gravitaire (le "plateau" qu'on avait perdu).
+      // gravité (par type) + DRAG LINÉAIRE -> expansion qui décélère puis RETOMBÉE
       d.vy -= PEONY.G * PEONY.gravStar * dt;
       const kd = Math.max(0, 1 - PEONY.dragStar*dt);
       d.vx *= kd; d.vy *= kd; d.vz *= kd;
       const px = this.pos[i*3]+d.vx*dt, py = this.pos[i*3+1]+d.vy*dt, pz = this.pos[i*3+2]+d.vz*dt;
       this.pos[i*3]=px; this.pos[i*3+1]=py; this.pos[i*3+2]=pz;
 
-      // COMBUSTION (braise qui refroidit) : orange vif -> rouge ; pointe blanc-chaud à l'allumage
+      // COMBUSTION : orange vif -> rouge ; pointe blanc-chaud à l'allumage
       let r=1.0, g, b;
       if (A < 0.6){ g = 0.28 - 0.06*(A/0.6); b = 0.03; }
       else { const t=(A-0.6)/0.4; g = 0.22 - 0.17*t; b = 0.03*(1-t); }
       if (A < 0.05){ const f=(1-A/0.05)*0.55; r=r+(1-r)*f; g=g+(1-g)*f; b=b+(1-b)*f; }
-      // BRILLANCE RÉF : (1 - A²*0.85) * dimVar * fondu d'entrée 250 ms (pas de flash aveuglant)
+      // BRILLANCE : (1 - A²*0.85) * dimVar * fondu d'entrée 250 ms
       const fade   = Math.max(0, 1 - A*A*0.85);
       const fadeIn = 0.4 + 0.6*Math.min(1, d.age/0.25);
-      const inten  = 2.5 * fade * d.dimVar * fadeIn;
+      const inten  = 2.4 * fade * d.dimVar * fadeIn;
       this.col[i*3]=r*inten; this.col[i*3+1]=g*inten; this.col[i*3+2]=b*inten;
 
-      // MOTION-BLUR : segment tête->arrière, longueur ∝ vitesse (court), queue sombre -> fuseau
-      const mbk = 0.11;
+      // MOTION-BLUR subtil (segment court, queue sombre)
+      const mbk = 0.07;
       this.lpos[li]=px;            this.lpos[li+1]=py;            this.lpos[li+2]=pz;
       this.lpos[li+3]=px-d.vx*mbk; this.lpos[li+4]=py-d.vy*mbk;   this.lpos[li+5]=pz-d.vz*mbk;
       const hr=r*inten, hg=g*inten, hb=b*inten;
-      this.lcol[li]=hr;        this.lcol[li+1]=hg;        this.lcol[li+2]=hb;
-      this.lcol[li+3]=hr*0.12; this.lcol[li+4]=hg*0.12;   this.lcol[li+5]=hb*0.12;
+      this.lcol[li]=hr*0.8;     this.lcol[li+1]=hg*0.8;   this.lcol[li+2]=hb*0.8;
+      this.lcol[li+3]=hr*0.10;  this.lcol[li+4]=hg*0.10;  this.lcol[li+5]=hb*0.10;
 
-      // TRAÎNÉE D'ÉTOILE (uniquement si trailing=true -> saule/comète, PAS la pivoine)
+      // TRAÎNÉE D'ÉTOILE (uniquement si trailing -> saule/comète, PAS la pivoine)
       if (d.trailing && A < 0.55){
         d.since += dt;
         if (d.since > 0.022){
@@ -331,14 +343,20 @@ const clock = new THREE.Clock();
 function animate(){
   rafId = requestAnimationFrame(animate);
   const dt = Math.min(clock.getDelta(), 0.05);
-  if (!peony || peony.dead) peony = new Peony(0, 0); // tir depuis le sol
+  if (!peony || peony.dead) peony = new Peony(0, 0);
   peony.update(dt);
   updateTrails(dt);
   composer.render();
 }
-// hook debug : fige la boucle pour permettre une capture d'écran fixe
 window.__freeze = () => { cancelAnimationFrame(rafId); return 'frozen'; };
-window.__peony = () => peony; // debug : état de la fusée (phase, age, riseTime)
+window.__peony = () => peony; // debug : état de la fusée
+// pilotage manuel (capture déterministe quand le rAF est throttlé)
+window.__sim = {
+  stop:()=>cancelAnimationFrame(rafId),
+  reset:()=>{ peony = new Peony(0,0); },
+  tick:(dt)=>{ if(!peony||peony.dead) peony = new Peony(0,0); peony.update(dt); updateTrails(dt); composer.render(); },
+  state:()=>peony
+};
 addEventListener('resize', () => {
   camera.aspect = innerWidth/innerHeight; camera.updateProjectionMatrix();
   renderer.setSize(innerWidth, innerHeight);
