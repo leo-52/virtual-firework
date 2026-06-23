@@ -1,8 +1,7 @@
 // PrevoFX Web — point d'entrée. Globe Cesium + couche de feux + démo pivoine.
 // (Cesium est chargé en global via le <script> CDN dans index.html.)
 
-import { Firework } from './sim/firework.js';
-import { FireworksLayer } from './render/fireworksLayer.js';
+import { ThreeFireworks } from './render/threeFireworks.js';
 import { FpsCameraController } from './cameraController.js';
 
 // DÉCOR = Google Photorealistic 3D Tiles, mais VIA CESIUM ION (token gratuit), PAS la
@@ -67,50 +66,32 @@ if (HAS_ION) {
   })();
 }
 
-// Bloom (le halo des feux la nuit) — post-process intégré de Cesium.
-const bloom = viewer.scene.postProcessStages.bloom;
-bloom.enabled = true;
-bloom.uniforms.glowOnly = false;
-bloom.uniforms.contrast = 110;     // un peu plus bas -> plus de zones qui rayonnent
-bloom.uniforms.brightness = 0.0;   // plus lumineux
-bloom.uniforms.delta = 1.5;
-bloom.uniforms.sigma = 2.8;        // halo plus serré (moins flou)
-bloom.uniforms.stepSize = 1.0;     // glow moins étendu
+// Le bloom des feux est désormais géré par l'OVERLAY Three.js (UnrealBloomPass), pas par
+// Cesium. On coupe le bloom Cesium (il ne servait qu'aux anciens billboards).
+viewer.scene.postProcessStages.bloom.enabled = false;
 
-// Couche de feux ancrée au lieu de tir.
-const layer = new FireworksLayer(viewer, FIRE);
+// Overlay de feux Three.js (canvas transparent "screen" par-dessus le décor), ancré au tir.
+const layer = new ThreeFireworks(viewer, FIRE);
 
 // Caméra "public" (spectateur FPS) : hauteur d'homme, 150 m, dans l'axe de tir.
 // Contrôles : QZSD (déplacement), clic gauche + glisser (rotation), pas de molette, sol dur.
 const cam = new FpsCameraController(viewer, layer);
-const CAM_LOCAL = [0, -150, 1.75];   // 150 m derrière, hauteur d'homme
-const CAM_TARGET = [0, 0, 55];       // vise le cœur du show
+const CAM_LOCAL = [0, -150, 1.75];   // 150 m derrière (axe de tir), hauteur d'homme
+const CAM_TARGET = [0, 0, 60];       // vise vers le burst (apex ~90 m)
 cam.setFromLocal(CAM_LOCAL, CAM_TARGET);
 
-// DÉMO = L'EFFET EN COURS DE RÉGLAGE, EN BOUCLE (comme l'app UE) -> on itère sur UN seul
-// effet. Pour bosser un autre effet, on changera FOCUS ci-dessous.
-const FOCUS = {
-  archetype: 'peony',
-  colors: [[1.0, 0.45, 0.1]],   // pivoine orange
-  starCount: 60,
-  burstRadius: 11,              // m
-  burstHeight: 80,             // m
-  riseTime: 2.2,
-  minLife: 1.1, maxLife: 1.6,
-  starSize: 0.35               // m
-};
-function fireFocus(){ layer.add(new Firework({ ...FOCUS })); }
-fireFocus();
-setInterval(fireFocus, 4500);
+// DÉMO : la pivoine 75 mm calibrée tourne en boucle (l'overlay relance le tir tout seul).
 
-// Boucle de simulation, calée sur le rendu Cesium.
+// Boucle, calée sur le rendu Cesium.
 let last = performance.now();
 viewer.scene.preUpdate.addEventListener(() => {
   const now = performance.now();
   const dt = Math.min(0.05, (now - last) / 1000);
   last = now;
   cam.update(dt);     // caméra spectateur (QZSD + clic-glisser + sol dur)
-  layer.update(dt);
+  layer.update(dt);   // simulation des feux (mètres locaux)
 });
+// L'overlay Three.js se rend APRÈS Cesium (caméra Cesium à jour) -> sync caméra + dessin par-dessus.
+viewer.scene.postRender.addEventListener(() => { layer.render(); });
 
-window.PrevoFX = { viewer, layer, cam, fireFocus }; // debug console
+window.PrevoFX = { viewer, layer, cam, fire: () => layer.fire() }; // debug console

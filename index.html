@@ -19,6 +19,12 @@
 <body>
   <div id="cesiumContainer"></div>
   <div id="hud"><b>PrevoFX — aperçu web</b><br>pivoine 75 (démo) · clavier QZSD + clic-glisser</div>
+  <script type="importmap">
+    { "imports": {
+        "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+    } }
+  </script>
   <script type="module" src="./src/main.js"></script>
 </body>
 </html>
