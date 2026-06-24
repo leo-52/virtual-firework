@@ -205,6 +205,7 @@ function behaveMosaic(d,A,dt,ctx){
 // TABLE DES EFFETS (clé absente -> BASE = profil pivoine)
 // ============================================================================
 const CAL_SCALE = { 50:0.67, 75:1.0, 100:1.44, 125:1.87, 150:2.30, 200:2.58 };
+const STAR_SCALE = 1.2;   // étoiles +20% (réglage global ; user)
 const BASE = {
   stars:80, nMax:0, burstRadius:13.5, speedMul:1.8, speedJit:0.05,
   apex:90, riseTime:2.5, riseLean:12, G:9.8, gravStar:1.0, dragStar:0.70,
@@ -288,20 +289,25 @@ class Shell {
     this.riseTime = this.cfg.riseTime * (0.95 + Math.random()*0.10);
     this.headLastX=this.ox; this.headLastY=0; this.headLastZ=this.oz; this.headTimer=0;
     this.nMax = this.cfg.nMax || this.cfg.stars; this.nAlive = 0;
-    this.data = []; this.flash=null; this.muzzle=null;
+    this.data = []; this.flash=null; this.muzzle=null; this.muzzleGlow=null;
 
     if (this.cfg.gerbe){               // POT À FEU : pas de montée ni burst, gerbe au sol
       this.phase='gerbe'; this.gerbeLeft=this.cfg.gerbe.dur; this.emitAcc=0; this.head=null;
     } else {
       this.phase='rise';
-      // MUZZLE (sortie du tube) : flamme + gerbe d'étincelles
-      const sm=new THREE.SpriteMaterial({ map:starTex, color:0xfff0d0, transparent:true,
-        blending:THREE.AdditiveBlending, depthWrite:false, opacity:1 });
-      this.muzzle=new THREE.Sprite(sm); this.muzzle.position.set(this.ox,8,this.oz);
-      this.muzzle.scale.set(8,22,1); scene.add(this.muzzle); this.muzzleAge=0;
-      for (let k=0;k<90;k++){ const ang=Math.random()*Math.PI*2, lat=Math.random()*0.5;
-        spawnTrail(this.ox+(Math.random()-0.5)*2.5,2,this.oz+(Math.random()-0.5)*2.5,
-          1.0,0.60,0.20, 1.4,0.8,3.4, Math.cos(ang)*lat*70, 55+Math.random()*110, Math.sin(ang)*lat*70); }
+      // MUZZLE (sortie du tube) : PETIT burst compact AU-DESSUS du tube + GROSSE zone de
+      // lumière DIFFUSE (le feu éclaire largement la fumée/le sol sans être gros lui-même).
+      const fmz=new THREE.SpriteMaterial({ map:starTex, color:0xfff2dc, transparent:true,
+        blending:THREE.AdditiveBlending, depthWrite:false, opacity:0.95 });
+      this.muzzle=new THREE.Sprite(fmz); this.muzzle.position.set(this.ox,4.5,this.oz);
+      this.muzzle.scale.set(4,9,1); scene.add(this.muzzle); this.muzzleAge=0;   // flamme COMPACTE
+      const gmz=new THREE.SpriteMaterial({ map:starTex, color:0xffcc99, transparent:true,
+        blending:THREE.AdditiveBlending, depthWrite:false, opacity:0.28 });
+      this.muzzleGlow=new THREE.Sprite(gmz); this.muzzleGlow.position.set(this.ox,7,this.oz);
+      this.muzzleGlow.scale.set(34,30,1); scene.add(this.muzzleGlow);           // zone de lumière DIFFUSE
+      for (let k=0;k<45;k++){ const ang=Math.random()*Math.PI*2, lat=Math.random()*0.4;
+        spawnTrail(this.ox+(Math.random()-0.5)*1.2, 2, this.oz+(Math.random()-0.5)*1.2,
+          1.0,0.62,0.22, 1.1,0.85,2.0, Math.cos(ang)*lat*26, 35+Math.random()*55, Math.sin(ang)*lat*26); }
       this.headGeo=new THREE.BufferGeometry();
       this.headGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array([this.ox,0,this.oz]),3));
       this.headMat=new THREE.PointsMaterial({ size:this.cfg.headSize, map:starTex, color:this.cfg.riseColor,
@@ -315,7 +321,7 @@ class Shell {
     this.geo=new THREE.BufferGeometry();
     this.geo.setAttribute('position', new THREE.BufferAttribute(this.pos,3));
     this.geo.setAttribute('color',    new THREE.BufferAttribute(this.col,3));
-    this.mat=new THREE.PointsMaterial({ size:this.cfg.starSize, map:starTex, vertexColors:true,
+    this.mat=new THREE.PointsMaterial({ size:this.cfg.starSize*STAR_SCALE, map:starTex, vertexColors:true,
       transparent:true, blending:THREE.AdditiveBlending, depthWrite:false, sizeAttenuation:true });
     this.points=new THREE.Points(this.geo,this.mat); this.points.visible=false; scene.add(this.points);
     this.lgeo=new THREE.BufferGeometry();
@@ -418,10 +424,16 @@ class Shell {
       return;
     }
 
-    if (this.muzzle){ this.muzzleAge+=dt; const md=0.42;
-      if (this.muzzleAge<md){ const p=this.muzzleAge/md; this.muzzle.material.opacity=(1-p)*0.95;
-        this.muzzle.scale.set(8*(1+p*0.5), 22*(1+p*0.25), 1); }
-      else { scene.remove(this.muzzle); this.muzzle.material.dispose(); this.muzzle=null; } }
+    if (this.muzzle || this.muzzleGlow){ this.muzzleAge+=dt;
+      if (this.muzzle){ const fd=0.30;
+        if (this.muzzleAge<fd){ const p=this.muzzleAge/fd; this.muzzle.material.opacity=(1-p)*0.95;
+          this.muzzle.scale.set(4+p*1.6, 9+p*2.4, 1); }
+        else { scene.remove(this.muzzle); this.muzzle.material.dispose(); this.muzzle=null; } }
+      if (this.muzzleGlow){ const gd=0.55;
+        if (this.muzzleAge<gd){ const q=this.muzzleAge/gd; this.muzzleGlow.material.opacity=(1-q)*0.28;
+          this.muzzleGlow.scale.set(34+q*16, 30+q*12, 1); }
+        else { scene.remove(this.muzzleGlow); this.muzzleGlow.material.dispose(); this.muzzleGlow=null; } }
+    }
 
     if (this.phase==='rise'){
       const T=Math.min(1,this.age/this.riseTime), te=1-(1-T)*(1-T);
