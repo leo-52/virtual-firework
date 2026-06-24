@@ -187,11 +187,19 @@ class Shell {
     this.headLastX = this.ox; this.headLastY = 0; this.headLastZ = this.oz; this.headTimer = 0;
     const n = this.cfg.stars; this.n = n;
 
-    const ug = new THREE.SphereGeometry(0.8, 12, 12);
-    const um = new THREE.MeshBasicMaterial({ color:0xffe3b0, transparent:true, opacity:0.0,
-      blending:THREE.AdditiveBlending, depthWrite:false });
-    this.launch = new THREE.Mesh(ug, um); this.launch.position.set(this.ox, 1.5, this.oz);
-    scene.add(this.launch);
+    // MUZZLE — sortie du tube : VRAIE explosion = jet de flamme + gerbe d'étincelles (pas une boule).
+    const sm = new THREE.SpriteMaterial({ map:starTex, color:0xfff0d0, transparent:true,
+      blending:THREE.AdditiveBlending, depthWrite:false, opacity:1 });
+    this.muzzle = new THREE.Sprite(sm); this.muzzle.position.set(this.ox, 8, this.oz);
+    this.muzzle.scale.set(8, 22, 1); scene.add(this.muzzle);
+    this.muzzleAge = 0;
+    // gerbe d'étincelles chaudes projetées vers le HAUT (charge de lift) -> montent puis retombent
+    for (let k=0;k<90;k++){
+      const ang=Math.random()*Math.PI*2, lat=Math.random()*0.5;
+      spawnTrail(this.ox+(Math.random()-0.5)*2.5, 2, this.oz+(Math.random()-0.5)*2.5,
+        1.0, 0.60, 0.20, 1.4, 0.8, 3.4,
+        Math.cos(ang)*lat*70, 55+Math.random()*110, Math.sin(ang)*lat*70);
+    }
 
     this.headGeo = new THREE.BufferGeometry();
     this.headGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array([this.ox,0,this.oz]),3));
@@ -262,10 +270,12 @@ class Shell {
     if (this.dead) return;
     this.age += dt;
 
-    if (this.launch){
-      const lp=this.age/0.18;
-      if (lp<1){ this.launch.scale.setScalar(1+lp*5); this.launch.material.opacity=(1-lp)*0.6; }
-      else { scene.remove(this.launch); this.launch.geometry.dispose(); this.launch.material.dispose(); this.launch=null; }
+    if (this.muzzle){
+      this.muzzleAge += dt; const md=0.42;
+      if (this.muzzleAge < md){ const p=this.muzzleAge/md;
+        this.muzzle.material.opacity = (1-p)*0.95;
+        this.muzzle.scale.set(8*(1+p*0.5), 22*(1+p*0.25), 1); }
+      else { scene.remove(this.muzzle); this.muzzle.material.dispose(); this.muzzle=null; }
     }
 
     if (this.phase==='rise'){
@@ -372,8 +382,8 @@ export class ThreeFireworks {
     this.setOrigin(origin);
 
     this.shell=null; this.restDelay=0;
-    this.cycle=['peony','chrysanthemum','willow','sphere','ring','palm','crackling','strobe','fallingLeaves','comet'];
-    this.ci=0; this.current='peony';
+    // DÉMO = en boucle UNIQUEMENT l'effet en cours de réglage (PAS un défilé). Changer via setFocus().
+    this.focus='peony'; this.current='peony';
     this.hud = document.getElementById('hud');
 
     addEventListener('resize', () => this._resize());
@@ -409,7 +419,8 @@ export class ThreeFireworks {
 
   fire(arch){ this.current = EFFECTS[arch] ? arch : 'peony'; this.shell = new Shell(this.current, 0, 0);
     if (this.hud) this.hud.innerHTML = '<b>PrevoFX — aperçu web</b><br>'+(LABELS[this.current]||this.current)+' 75 · QZSD + clic-glisser'; }
-  fireNext(){ this.fire(this.cycle[this.ci % this.cycle.length]); this.ci++; }
+  fireNext(){ this.fire(this.focus); }
+  setFocus(arch){ if (EFFECTS[arch]) this.focus = arch; }
 
   update(dt){
     if (!this.shell || this.shell.dead){

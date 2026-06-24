@@ -94,4 +94,5 @@ viewer.scene.preUpdate.addEventListener(() => {
 // L'overlay Three.js se rend APRÈS Cesium (caméra Cesium à jour) -> sync caméra + dessin par-dessus.
 viewer.scene.postRender.addEventListener(() => { layer.render(); });
 
-window.PrevoFX = { viewer, layer, cam, fire: () => layer.fire() }; // debug console
+// debug console : PrevoFX.focus('willow') change l'effet joué en boucle ; PrevoFX.fire('ring') tire une fois.
+window.PrevoFX = { viewer, layer, cam, fire: (a) => layer.fire(a), focus: (a) => layer.setFocus(a) };
