@@ -3,9 +3,10 @@
 //   en lumière sur le décor (le noir n'affecte rien).
 // - caméra Three SYNCHRONISÉE sur la caméra Cesium chaque frame (repère ENU du lieu de
 //   tir, mapping ENU(e,n,u)->Three(e,u,-n)). Sim en mètres locaux, obus du SOL (y=0).
-// - 1 classe Shell générique + table EFFECTS : chaque archétype = distribution + trailing
-//   + gravité/frein + durée (par calibre) + comportement spécial. Pipeline (rise, burst,
-//   physique 1-drag*dt, motion-blur, bloom) commun. Spécs portées du code Unreal + étude.
+// - 1 classe Shell générique + table EFFECTS. Comportements calés sur les corrections de
+//   l'user (pyrotechnicien) : couleur TENUE (pas de refroidissement sauf warm), extinction
+//   ~simultanée ±10%, comète = 1 étoile sans burst, palme sans tronc, saule qui PEND,
+//   strobe = entre-deux, œuf de dragon = tout le break crépite, feuille morte qui TANGUE.
 
 import * as THREE from 'three';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
@@ -27,7 +28,7 @@ function makeStarTexture(){
 const starTex = makeStarTexture();
 
 // --- pool de traînées (comète de montée + grains des effets traînants) ---
-const TRAIL_MAX = 14000;
+const TRAIL_MAX = 16000;
 const trailPos  = new Float32Array(TRAIL_MAX * 3);
 const trailCol  = new Float32Array(TRAIL_MAX * 3);
 const trailSize = new Float32Array(TRAIL_MAX);
@@ -45,11 +46,12 @@ const trailMat = new THREE.PointsMaterial({ size:0.8, map:starTex, vertexColors:
   transparent:true, blending:THREE.AdditiveBlending, depthWrite:false, sizeAttenuation:true });
 scene.add(new THREE.Points(trailGeo, trailMat));
 
-function spawnTrail(x,y,z, r,g,b, size, gF=0.4, lifeMul=1){
+function spawnTrail(x,y,z, r,g,b, size, gF=0.4, lifeMul=1, vx0=0, vy0=0, vz0=0){
   const i = trailHead; trailHead = (trailHead + 1) % TRAIL_MAX;
   const t = trail[i];
   t.x=x; t.y=y; t.z=z;
-  t.vx=(Math.random()-0.5)*0.8; t.vy=-Math.random()*0.6; t.vz=(Math.random()-0.5)*0.8;
+  // léger éparpillement + héritage d'une fraction de la vitesse de l'étoile (sillage)
+  t.vx=vx0*0.25+(Math.random()-0.5)*0.8; t.vy=vy0*0.25-Math.random()*0.6; t.vz=vz0*0.25+(Math.random()-0.5)*0.8;
   t.age=0; t.life = lifeMul * 0.26 * (0.35 + 1.45*Math.pow(Math.random(),1.6));
   t.size = size*(0.7+Math.random()*0.6); t.r=r; t.g=g; t.b=b; t.gF=gF; t.alive=true;
 }
@@ -73,58 +75,56 @@ function updateTrails(dt){
 }
 
 // ============================================================================
-// DISTRIBUTIONS du break (i,n,rnd) -> {dx,dy,dz, spMul, isCore?}
+// DISTRIBUTIONS du break (i,n,rnd) -> {dx,dy,dz, spMul}
 // ============================================================================
 function vrand(rnd){ const z=rnd()*2-1, t=rnd()*Math.PI*2, r=Math.sqrt(Math.max(0,1-z*z));
   return [Math.cos(t)*r, Math.sin(t)*r, z]; }
 
-function distFibonacci(i,n,rnd){            // sphère pleine et homogène
+function distFibonacci(i,n,rnd){            // sphère pleine et homogène (pivoine/sphère/chrys)
   const off=2/n, inc=2.399963229728653;
   const yy=i*off-1+off/2, rr=Math.sqrt(Math.max(0,1-yy*yy)), a=i*inc;
   let dx=Math.cos(a)*rr+(rnd()-0.5)*0.05, dy=yy+(rnd()-0.5)*0.05, dz=Math.sin(a)*rr+(rnd()-0.5)*0.05;
   const L=Math.hypot(dx,dy,dz)||1; return {dx:dx/L,dy:dy/L,dz:dz/L,spMul:1};
 }
-function distRing(i,n,rnd){                 // anneau dans le plan Est-Haut (face caméra sud)
+function distRing(i,n,rnd){                 // anneau plan (orientation 3D aléatoire posée par tir)
   const a=2*Math.PI*i/n;
-  let dx=Math.cos(a), dy=Math.sin(a), dz=(rnd()-0.5)*0.18;
+  let dx=Math.cos(a), dy=Math.sin(a), dz=(rnd()-0.5)*0.05;  // anneau FIN
   const L=Math.hypot(dx,dy,dz)||1; return {dx:dx/L,dy:dy/L,dz:dz/L,spMul:1};
 }
-function distComet(i,n,rnd){                // petite grappe montante (la montée EST l'effet)
-  const v=vrand(rnd);
-  let dx=v[0]*0.55, dy=0.55+0.55*Math.abs(v[1]), dz=v[2]*0.55;
-  const L=Math.hypot(dx,dy,dz)||1; return {dx:dx/L,dy:dy/L,dz:dz/L,spMul:0.7};
+function distComet(i,n,rnd){                // 1 étoile, vers le haut (la montée/combustion EST l'effet)
+  let dx=(rnd()-0.5)*0.2, dy=1.0, dz=(rnd()-0.5)*0.2;
+  const L=Math.hypot(dx,dy,dz)||1; return {dx:dx/L,dy:dy/L,dz:dz/L,spMul:0.45};
 }
-function distPalm(i,n,rnd){                 // frondes montantes obliques (palmier)
-  const az=2*Math.PI*(i/n)+(rnd()-0.5)*0.3;
-  const up=0.5+0.4*Math.abs(Math.sin(az));
+function distPalm(i,n,rnd){                 // frondes montantes (effet PALME, pas de tronc)
+  const az=2*Math.PI*(i/n)+(rnd()-0.5)*0.4;
+  const up=0.55+0.35*Math.random();
   let dx=Math.cos(az), dy=up, dz=Math.sin(az);
-  const L=Math.hypot(dx,dy,dz)||1; return {dx:dx/L,dy:dy/L,dz:dz/L,spMul:1.8};
+  const L=Math.hypot(dx,dy,dz)||1; return {dx:dx/L,dy:dy/L,dz:dz/L,spMul:1.6};
 }
-function distCrackling(i,n,rnd){            // coquille pivoine + coeur (étoiles "isCore")
-  const core=Math.floor(n/6);
-  if (i<core){ const v=vrand(rnd); return {dx:v[0],dy:v[1],dz:v[2],spMul:0.22,isCore:true}; }
-  return distFibonacci(i-core, n-core, rnd);
+function distLeaves(i,n,rnd){               // break lâche/ragged (feuille morte)
+  const v=vrand(rnd); return {dx:v[0],dy:v[1],dz:v[2],spMul:0.45+rnd()*0.45};
 }
 
 // ============================================================================
-// HOOKS onStar(d, A) -> {intenMul?, whiteMix?} | null  (comportements sur la durée)
+// HOOKS onStar(d, A, dt) -> {intenMul?, whiteMix?} | null
 // ============================================================================
-function strobeFn(d){                       // clignotement régulier ~9 Hz (phase décalée par étoile)
-  return { intenMul: (Math.floor((d.age + d.phase)*9) % 2) ? 0 : 1 };
+function strobeFn(d){                        // ENTRE-DEUX : jamais noir, jamais plein ; pulse lent/désync
+  const ph=(d.age*d.strobeF + d.phase) % 1;
+  return { intenMul: ph < 0.18 ? 1.4 : 0.4 }; // bref pic clair, sinon braise basse (PAS noir)
 }
-function crackleFn(d, A){                    // pops blancs saccadés du coeur, surtout en fin
-  if (!d.isCore) return null;
-  if (A > 0.40){
-    if (Math.random() < 0.45) return { intenMul: 1.9, whiteMix: 0.85 };
-    return { intenMul: 0.18 };
-  }
-  return null;
+function crackleFn(d, A, dt){                 // ŒUF DE DRAGON : tout le break pète, braise dorée stable entre
+  d.popOn = (d.popOn||0) - dt;
+  if (d.popOn <= 0 && Math.random() < 7*dt) d.popOn = 0.045; // micro-pop ~7/s, indépendant du fps
+  if (d.popOn > 0) return { intenMul: 2.3, whiteMix: 0.9 };
+  return null;                                // sinon : braise dorée tenue (heatColor)
 }
 
 // ============================================================================
-// TABLE DES EFFETS (toute clé absente hérite de BASE = profil pivoine)
+// TABLE DES EFFETS (clé absente -> hérite de BASE = profil pivoine)
 // ============================================================================
-const GOLD = new THREE.Color(1.0, 0.72, 0.32);
+const GOLD    = new THREE.Color(1.0, 0.72, 0.32);
+const DIMGOLD = new THREE.Color(0.55, 0.40, 0.14);
+const SILVER  = new THREE.Color(0.82, 0.88, 1.0);
 const CAL_SCALE = { 50:0.67, 75:1.0, 100:1.44, 125:1.87, 150:2.30, 200:2.58 };
 
 const BASE = {
@@ -132,42 +132,44 @@ const BASE = {
   apex:90, riseTime:2.5, riseLean:12,
   G:9.8, gravStar:1.0, dragStar:0.70,
   color:new THREE.Color(1.0,0.22,0.015), riseColor:new THREE.Color(1.0,0.72,0.35),
-  heat:true, starSize:2.2, lifeBase75:1.55, lifeJitter:0.13,
+  heat:true, headSize:1.0, sway:0, starSize:2.2, lifeBase75:1.55, lifeJitter:0.13,
   dist:distFibonacci, trailing:false, onStar:null
 };
 
 const EFFECTS = {
-  // pivoine — référence (validée)
+  // PIVOINE — référence, NE PAS TOUCHER (validée par l'user)
   peony: {},
-  // chrysanthème = pivoine + traîne d'étincelles OR (seul diff : trailing)
-  chrysanthemum: { trailing:{emitUntil:0.55, period:0.022, grain:0.85, gF:0.40, lifeMul:1.0, color:GOLD} },
-  // saule = gravité basse + frein haut + vie longue + traîne dorée longue
-  willow: { apex:100, speedMul:1.53, gravStar:0.62, dragStar:0.50, lifeBase75:3.0, starSize:2.0,
-            heat:false, color:new THREE.Color(1.0,0.62,0.22),
-            trailing:{emitUntil:0.85, period:0.018, grain:1.0, gF:0.40, lifeMul:1.7, color:GOLD} },
-  // comète = peu d'étoiles montantes, grosses, traçantes (la montée porte l'effet)
-  comet: { apex:90, stars:6, dist:distComet, gravStar:0.90, dragStar:0.35, lifeBase75:2.4, starSize:3.4,
-           trailing:{emitUntil:0.70, period:0.020, grain:0.9, gF:0.40, lifeMul:1.2, color:GOLD} },
-  // sphère = pivoine étoiles plus fines + dispersion plus large
-  sphere: { apex:68, starSize:1.3, speedMul:1.9, speedJit:0.18 },
-  // couronne = distribution plane (anneau face caméra)
-  ring: { apex:110, burstRadius:16, dist:distRing },
-  // crépitant = pivoine + coeur qui crépite en pops blancs
-  crackling: { apex:95, dist:distCrackling, onStar:crackleFn },
-  // scintillant = clignotement on/off ~9 Hz, teinte froide
-  strobe: { apex:112, heat:false, color:new THREE.Color(0.80,0.86,1.0), onStar:strobeFn },
-  // feuille morte = chute très lente (grav basse, frein énorme, vie très longue)
-  fallingLeaves: { apex:95, speedMul:0.9, gravStar:0.30, dragStar:1.40, lifeBase75:6.0,
-                   heat:false, color:new THREE.Color(1.0,0.55,0.18),
-                   trailing:{emitUntil:0.70, period:0.05, grain:1.0, gF:0.25, lifeMul:1.2, color:GOLD} },
-  // palmier = peu de frondes montantes, grosses comètes
-  palm: { apex:105, stars:11, dist:distPalm, gravStar:0.70, dragStar:0.45, lifeBase75:2.0, starSize:3.1,
-          trailing:{emitUntil:0.70, period:0.018, grain:1.1, gF:0.40, lifeMul:1.3, color:GOLD} },
+  // CHRYSANTHÈME — même sphère, mais chaque étoile traîne un RAIL d'étincelles or continu
+  chrysanthemum: { trailing:{emitUntil:0.85, period:0.015, grain:0.9, gF:0.40, lifeMul:1.6, color:GOLD} },
+  // SAULE — FORME qui PEND : gravité haute + frein bas + traîne LONGUE (×4) ; kamuro = couleur or pailleté
+  willow: { apex:100, heat:false, color:DIMGOLD, gravStar:0.92, dragStar:0.25, lifeBase75:3.2,
+            starSize:1.8, speedMul:1.5,
+            trailing:{emitUntil:0.95, period:0.014, grain:1.0, gF:0.22, lifeMul:4.0, color:GOLD} },
+  // COMÈTE — 1 SEULE étoile, AUCUN éclatement : grosse boule qui brûle longtemps + traîne or chaud
+  comet: { apex:96, stars:1, dist:distComet, heat:false, color:GOLD, gravStar:0.90, dragStar:0.30,
+           lifeBase75:3.0, starSize:4.5, speedMul:1.0, headSize:4.0, riseColor:GOLD,
+           trailing:{emitUntil:0.97, period:0.012, grain:1.3, gF:0.35, lifeMul:1.8, color:GOLD} },
+  // SPHÈRE — pivoine en PLUS RÉGULIER (≈ alias)
+  sphere: { speedJit:0.02 },
+  // COURONNE — anneau plan fin, couleur tenue, centre vide
+  ring: { apex:110, burstRadius:16, dist:distRing, heat:false, speedJit:0.02,
+          color:new THREE.Color(0.25,1.0,0.45) },
+  // ŒUF DE DRAGON (= "crépitant") — TOUT le break crépite ; braise dorée stable entre les pops
+  crackling: { apex:95, heat:false, color:GOLD, onStar:crackleFn },
+  // STROBE — ENTRE-DEUX (ni noir ni plein), lent/irrégulier/désync, blanc-argent, descend
+  strobe: { apex:112, heat:false, color:SILVER, onStar:strobeFn, lifeBase75:2.4, gravStar:0.55 },
+  // FEUILLE MORTE — feuilles colorées super légères qui TANGUENT (vent), SANS traîne, longue durée
+  fallingLeaves: { apex:95, dist:distLeaves, heat:false, color:new THREE.Color(1.0,0.45,0.55),
+                   gravStar:0.26, dragStar:0.85, lifeBase75:6.0, speedMul:0.7, sway:7, starSize:2.4 },
+  // PALME — frondes montantes dorées (PAS de tronc), grosses étoiles à traîne épaisse, qui s'arquent
+  palm: { apex:105, stars:11, dist:distPalm, heat:false, color:GOLD, gravStar:0.95, dragStar:0.35,
+          lifeBase75:2.4, starSize:3.0,
+          trailing:{emitUntil:0.88, period:0.015, grain:1.3, gF:0.40, lifeMul:1.8, color:GOLD} },
 };
 
-const LABELS = { peony:'pivoine', chrysanthemum:'chrysanthème', willow:'saule', comet:'comète',
-  sphere:'sphère', ring:'couronne', crackling:'crépitant', strobe:'scintillant',
-  fallingLeaves:'feuille morte', palm:'palmier' };
+const LABELS = { peony:'pivoine', chrysanthemum:'chrysanthème', willow:'saule (kamuro)', comet:'comète',
+  sphere:'sphère', ring:'couronne', crackling:'œuf de dragon', strobe:'scintillant',
+  fallingLeaves:'feuille morte', palm:'palme' };
 
 // ============================================================================
 // SHELL : un obus (tir -> montée -> burst -> retombée), configuré par un archétype.
@@ -193,7 +195,7 @@ class Shell {
 
     this.headGeo = new THREE.BufferGeometry();
     this.headGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array([this.ox,0,this.oz]),3));
-    this.headMat = new THREE.PointsMaterial({ size:1.0, map:starTex, color:this.cfg.riseColor,
+    this.headMat = new THREE.PointsMaterial({ size:this.cfg.headSize, map:starTex, color:this.cfg.riseColor,
       transparent:true, blending:THREE.AdditiveBlending, depthWrite:false, sizeAttenuation:true });
     this.head = new THREE.Points(this.headGeo, this.headMat); scene.add(this.head);
 
@@ -228,7 +230,8 @@ class Shell {
       const sp=speed*(dir.spMul||1)*(1 - jit + Math.random()*2*jit);
       this.data.push({ vx:dir.dx*sp, vy:dir.dy*sp, vz:dir.dz*sp, age:0,
         life:this.life(), dimVar:0.95+Math.random()*0.10,
-        isCore:!!dir.isCore, phase:Math.random(),
+        phase:Math.random(), strobeF:2+Math.random()*2.5,
+        swF:1.5+Math.random()*1.5, swF2:1.5+Math.random()*1.5, phase2:Math.random()*6.28,
         trailing:!!this.cfg.trailing, since:0, lastX:bx, lastY:apex, lastZ:bz });
     }
     this.points.visible=true; this.lines.visible=true;
@@ -239,7 +242,7 @@ class Shell {
     scene.remove(this.head); this.headGeo.dispose(); this.headMat.dispose(); this.head=null;
   }
 
-  // couleur de combustion : flash blanc -> teinte -> refroidissement (si heat) ; sinon teinte stable
+  // couleur : si heat -> incandescence warm qui rougit légèrement (pivoine) ; sinon couleur TENUE
   heatColor(A, d){
     const c=this.cfg.color; let r, g, b;
     if (this.cfg.heat){
@@ -248,8 +251,8 @@ class Shell {
       else { const t=(A-0.6)/0.4; g=c.g-(c.g-0.05)*t; b=(c.b+0.015)*(1-t); }
       if (A<0.05){ const f=(1-A/0.05)*0.55; r=r+(1-r)*f; g=g+(1-g)*f; b=b+(1-b)*f; }
     } else {
-      r=c.r; g=c.g; b=c.b;
-      if (A<0.04){ const f=(1-A/0.04)*0.5; r=r+(1-r)*f; g=g+(1-g)*f; b=b+(1-b)*f; }
+      r=c.r; g=c.g; b=c.b;                                   // COULEUR TENUE jusqu'au bout
+      if (A<0.04){ const f=(1-A/0.04)*0.5; r=r+(1-r)*f; g=g+(1-g)*f; b=b+(1-b)*f; } // bref allumage
     }
     const fade=Math.max(0,1-A*A*0.85), fadeIn=0.4+0.6*Math.min(1,d.age/0.25);
     return { r, g, b, inten: 2.4*fade*d.dimVar*fadeIn };
@@ -274,8 +277,9 @@ class Shell {
       const dmoved=Math.hypot(hx-this.headLastX, y-this.headLastY, hz-this.headLastZ);
       if (this.headTimer<=0 && dmoved>0.4){
         const mx=(this.headLastX+hx)*0.5, my=(this.headLastY+y)*0.5, mz=(this.headLastZ+hz)*0.5;
-        spawnTrail(mx,my,mz, this.cfg.riseColor.r, this.cfg.riseColor.g, this.cfg.riseColor.b, 1.1);
-        this.headLastX=hx; this.headLastY=y; this.headLastZ=hz; this.headTimer=0.015;
+        const rc=this.cfg.riseColor; const big=this.cfg.headSize>1.5;
+        spawnTrail(mx,my,mz, rc.r,rc.g,rc.b, big?1.4:1.1, 0.4, big?1.6:1.0);
+        this.headLastX=hx; this.headLastY=y; this.headLastZ=hz; this.headTimer = big?0.010:0.015;
       }
       if (T>=1){ this.burst(); this.phase='burst'; }
       return;
@@ -287,7 +291,7 @@ class Shell {
       else { scene.remove(this.flash); this.flash.geometry.dispose(); this.flash.material.dispose(); this.flash=null; }
     }
 
-    const n=this.n; let alive=0; const tr=this.cfg.trailing;
+    const n=this.n; let alive=0; const tr=this.cfg.trailing, sway=this.cfg.sway;
     for (let i=0;i<n;i++){
       const d=this.data[i], li=i*6;
       if (d.age>=d.life){ this.col[i*3]=this.col[i*3+1]=this.col[i*3+2]=0;
@@ -296,11 +300,15 @@ class Shell {
 
       d.vy -= this.cfg.G*this.cfg.gravStar*dt;
       const kd=Math.max(0,1-this.cfg.dragStar*dt); d.vx*=kd; d.vy*=kd; d.vz*=kd;
+      if (sway){ // TANGAGE latéral (feuille morte au gré du vent)
+        d.vx += Math.sin(d.age*d.swF + d.phase)*sway*dt;
+        d.vz += Math.cos(d.age*d.swF2 + d.phase2)*sway*dt;
+      }
       const px=this.pos[i*3]+d.vx*dt, py=this.pos[i*3+1]+d.vy*dt, pz=this.pos[i*3+2]+d.vz*dt;
       this.pos[i*3]=px; this.pos[i*3+1]=py; this.pos[i*3+2]=pz;
 
       const cc=this.heatColor(A,d); let r=cc.r,g=cc.g,b=cc.b,inten=cc.inten;
-      if (this.cfg.onStar){ const o=this.cfg.onStar(d,A); if (o){
+      if (this.cfg.onStar){ const o=this.cfg.onStar(d,A,dt); if (o){
         if (o.intenMul!=null) inten*=o.intenMul;
         if (o.whiteMix){ const w=o.whiteMix; r=r+(1-r)*w; g=g+(1-g)*w; b=b+(1-b)*w; } } }
       this.col[i*3]=r*inten; this.col[i*3+1]=g*inten; this.col[i*3+2]=b*inten;
@@ -317,7 +325,7 @@ class Shell {
         if (d.since > tr.period){
           const mx=(d.lastX+px)*0.5, my=(d.lastY+py)*0.5, mz=(d.lastZ+pz)*0.5;
           const tc=tr.color||GOLD;
-          spawnTrail(mx,my,mz, tc.r,tc.g,tc.b, tr.grain, tr.gF, tr.lifeMul);
+          spawnTrail(mx,my,mz, tc.r,tc.g,tc.b, tr.grain, tr.gF, tr.lifeMul, d.vx,d.vy,d.vz);
           d.lastX=px; d.lastY=py; d.lastZ=pz; d.since=0;
         }
       }
