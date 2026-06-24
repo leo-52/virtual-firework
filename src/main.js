@@ -1,7 +1,7 @@
 // PrevoFX Web — point d'entrée. Globe Cesium + couche de feux + démo pivoine.
 // (Cesium est chargé en global via le <script> CDN dans index.html.)
 
-import { ThreeFireworks } from './render/threeFireworks.js';
+import { ThreeFireworks, LABELS } from './render/threeFireworks.js';
 import { FpsCameraController } from './cameraController.js';
 
 // DÉCOR = Google Photorealistic 3D Tiles, mais VIA CESIUM ION (token gratuit), PAS la
@@ -80,7 +80,17 @@ const CAM_LOCAL = [0, -150, 1.75];   // 150 m derrière (axe de tir), hauteur d'
 const CAM_TARGET = [0, 0, 60];       // vise vers le burst (apex ~90 m)
 cam.setFromLocal(CAM_LOCAL, CAM_TARGET);
 
-// DÉMO : la pivoine 75 mm calibrée tourne en boucle (l'overlay relance le tir tout seul).
+// DÉMO : l'effet choisi tourne EN BOUCLE (focus). Sélecteur d'effet en haut à droite pour réviser.
+const pick = document.createElement('select');
+Object.assign(pick.style, { position:'fixed', top:'10px', right:'10px', zIndex:'10',
+  background:'rgba(0,0,0,.55)', color:'#fff', border:'1px solid #555', borderRadius:'6px',
+  padding:'6px 8px', fontFamily:'system-ui, sans-serif', fontSize:'13px' });
+for (const [k, label] of Object.entries(LABELS)){
+  const o = document.createElement('option'); o.value = k; o.textContent = label; pick.appendChild(o);
+}
+pick.value = 'peony';
+pick.addEventListener('change', e => layer.setFocus(e.target.value));
+document.body.appendChild(pick);
 
 // Boucle, calée sur le rendu Cesium.
 let last = performance.now();
