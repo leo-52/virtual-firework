@@ -295,19 +295,15 @@ class Shell {
       this.phase='gerbe'; this.gerbeLeft=this.cfg.gerbe.dur; this.emitAcc=0; this.head=null;
     } else {
       this.phase='rise';
-      // MUZZLE (sortie du tube) : PETIT burst compact AU-DESSUS du tube + GROSSE zone de
-      // lumière DIFFUSE (le feu éclaire largement la fumée/le sol sans être gros lui-même).
-      const fmz=new THREE.SpriteMaterial({ map:starTex, color:0xfff2dc, transparent:true,
-        blending:THREE.AdditiveBlending, depthWrite:false, opacity:0.95 });
-      this.muzzle=new THREE.Sprite(fmz); this.muzzle.position.set(this.ox,4.5,this.oz);
-      this.muzzle.scale.set(4,9,1); scene.add(this.muzzle); this.muzzleAge=0;   // flamme COMPACTE
+      // MUZZLE (sortie du tube) : la FLAMME = des CENTAINES de minuscules étincelles qui montent
+      // à ~muzzleH (selon le CALIBRE : 125mm->6m, moins sinon) + une GROSSE zone de lumière DIFFUSE.
+      this.muzzleH = 6 * (this.cal/125);
+      this.muzzleEmit = 0.25; this.muzzleAcc = 0; this.muzzleAge = 0;
       const gmz=new THREE.SpriteMaterial({ map:starTex, color:0xffcc99, transparent:true,
-        blending:THREE.AdditiveBlending, depthWrite:false, opacity:0.28 });
-      this.muzzleGlow=new THREE.Sprite(gmz); this.muzzleGlow.position.set(this.ox,7,this.oz);
-      this.muzzleGlow.scale.set(34,30,1); scene.add(this.muzzleGlow);           // zone de lumière DIFFUSE
-      for (let k=0;k<45;k++){ const ang=Math.random()*Math.PI*2, lat=Math.random()*0.4;
-        spawnTrail(this.ox+(Math.random()-0.5)*1.2, 2, this.oz+(Math.random()-0.5)*1.2,
-          1.0,0.62,0.22, 1.1,0.85,2.0, Math.cos(ang)*lat*26, 35+Math.random()*55, Math.sin(ang)*lat*26); }
+        blending:THREE.AdditiveBlending, depthWrite:false, opacity:0.26 });
+      this.muzzleGlow=new THREE.Sprite(gmz);
+      const gs=12+this.muzzleH*4; this.muzzleGlow.position.set(this.ox, Math.max(3,this.muzzleH*0.8), this.oz);
+      this.muzzleGlow.scale.set(gs, gs*0.85, 1); scene.add(this.muzzleGlow);   // lumière diffuse ∝ calibre
       this.headGeo=new THREE.BufferGeometry();
       this.headGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array([this.ox,0,this.oz]),3));
       this.headMat=new THREE.PointsMaterial({ size:this.cfg.headSize, map:starTex, color:this.cfg.riseColor,
@@ -398,6 +394,13 @@ class Shell {
       c.r,c.g,c.b, 1.1*g.grain, 1.0, 1.5+Math.random()*2.5, vx*4, vy*4, vz*4);
   }
 
+  _emitMuzzle(){   // 1 minuscule étincelle chaude vers le haut -> 500 ensemble = la flamme
+    const vUp=Math.sqrt(2*9.8*this.muzzleH), vy=vUp*(0.5+Math.random()*0.7);
+    const ang=Math.random()*Math.PI*2, lat=Math.random()*0.9;
+    spawnTrail(this.ox+(Math.random()-0.5)*1.0, 1.5, this.oz+(Math.random()-0.5)*1.0,
+      1.0, 0.55+Math.random()*0.25, 0.18, 0.35, 1.0, 1.4, Math.cos(ang)*lat*4, vy*4, Math.sin(ang)*lat*4);
+  }
+
   heatColor(A,d){
     const c=this.cfg.colors ? this.cfg.colors[(d.comp||0)%this.cfg.colors.length] : this.cfg.color;
     let r,g,b;
@@ -424,14 +427,12 @@ class Shell {
       return;
     }
 
-    if (this.muzzle || this.muzzleGlow){ this.muzzleAge+=dt;
-      if (this.muzzle){ const fd=0.30;
-        if (this.muzzleAge<fd){ const p=this.muzzleAge/fd; this.muzzle.material.opacity=(1-p)*0.95;
-          this.muzzle.scale.set(4+p*1.6, 9+p*2.4, 1); }
-        else { scene.remove(this.muzzle); this.muzzle.material.dispose(); this.muzzle=null; } }
-      if (this.muzzleGlow){ const gd=0.55;
-        if (this.muzzleAge<gd){ const q=this.muzzleAge/gd; this.muzzleGlow.material.opacity=(1-q)*0.28;
-          this.muzzleGlow.scale.set(34+q*16, 30+q*12, 1); }
+    if (this.muzzleGlow || this.muzzleEmit > 0){
+      this.muzzleAge += dt;
+      if (this.muzzleEmit > 0){ this.muzzleEmit -= dt; this.muzzleAcc += 2000*dt;   // ~500 étincelles / 0.25s
+        while (this.muzzleAcc>=1){ this.muzzleAcc-=1; this._emitMuzzle(); } }
+      if (this.muzzleGlow){ const gd=0.5;
+        if (this.muzzleAge<gd){ const q=this.muzzleAge/gd; this.muzzleGlow.material.opacity=(1-q)*0.26; }
         else { scene.remove(this.muzzleGlow); this.muzzleGlow.material.dispose(); this.muzzleGlow=null; } }
     }
 
