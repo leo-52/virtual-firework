@@ -45,21 +45,27 @@ if (HAS_ION) {
     try {
       const tileset = await Cesium.createGooglePhotorealistic3DTileset();
       viewer.scene.primitives.add(tileset);
-      // AMBIANCE NUIT : assombrit le terrain (les tuiles Google sont en plein jour). Le
-      // mode HIGHLIGHT (défaut) MULTIPLIE la texture par cette couleur -> sombre, bleuté.
+      // AMBIANCE NUIT : assombrit le terrain. + ALLÈGE la charge (anti-freeze) : tuiles plus
+      // grossières (mSSE haut) = bien moins de tuiles à charger/afficher, et moins de 503.
       tileset.style = new Cesium.Cesium3DTileStyle({ color: "color('#4f4f5e')" });
-      // CALER LE TIR SUR LE SOL RÉEL (tuiles les plus détaillées au lieu de tir) -> les
-      // feux partent du sol. Marche pour n'importe quel lieu.
-      try {
-        const carto = Cesium.Cartographic.fromDegrees(FIRE.lon, FIRE.lat);
-        const r = await viewer.scene.sampleHeightMostDetailed([carto]);
-        const h = (r && r[0]) ? r[0].height : NaN;
-        if (Number.isFinite(h) && h > -500 && h < 6000){
-          FIRE.height = h;
-          layer.setOrigin({ lon: FIRE.lon, lat: FIRE.lat, height: h });
-          cam.setFromLocal(CAM_LOCAL, CAM_TARGET);
-        }
-      } catch (e2) { console.warn('[PrevoFX] calage sol impossible.', e2); }
+      tileset.maximumScreenSpaceError = 24;     // (défaut 16) -> beaucoup moins de tuiles
+      tileset.cacheBytes = 256 * 1024 * 1024;   // cache plus petit -> moins de mémoire
+      // CALER LE TIR SUR LE SOL RÉEL — avec RETRY (les tuiles chargent en différé / peuvent 503).
+      // TANT que le sol n'est pas calé, la caméra reste HAUTE -> voit une énorme zone -> ça FIGE.
+      const carto = Cesium.Cartographic.fromDegrees(FIRE.lon, FIRE.lat);
+      for (let attempt = 0; attempt < 14; attempt++){
+        await new Promise(res => setTimeout(res, 700));   // laisser des tuiles charger
+        try {
+          const r = await viewer.scene.sampleHeightMostDetailed([carto]);
+          const h = (r && r[0]) ? r[0].height : NaN;
+          if (Number.isFinite(h) && h > -500 && h < 6000){
+            FIRE.height = h;
+            layer.setOrigin({ lon: FIRE.lon, lat: FIRE.lat, height: h });
+            cam.setFromLocal(CAM_LOCAL, CAM_TARGET);   // caméra recalée AU RAS DU SOL (vue public)
+            break;
+          }
+        } catch (e2) { /* tuiles pas prêtes -> on réessaie */ }
+      }
     } catch (e) {
       console.warn('[PrevoFX] Google 3D Tiles via ion indisponible — feux sans décor.', e);
     }

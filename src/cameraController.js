@@ -35,16 +35,12 @@ export class FpsCameraController {
     this._installMouse();
   }
 
-  // Hauteur du SOL (terrain 3D) sous un point ECEF. Fallback : sol du lieu de tir.
+  // Hauteur du SOL de référence = celle du LIEU DE TIR (calée précisément via
+  // sampleHeightMostDetailed). On NE sample PLUS sous la caméra : scene.sampleHeight renvoie
+  // souvent des valeurs ABERRANTES (artefacts tuiles Google -> ~700 m) qui propulsaient la
+  // caméra dans les airs (vue plongeante -> charge énorme de tuiles -> FREEZE). Le terrain
+  // autour d'un site de tir est ~plat, donc le sol du tir est la bonne référence.
   _groundUnder(cartesian){
-    if (this.scene.sampleHeightSupported){
-      try {
-        const c = Cesium.Cartographic.fromCartesian(cartesian);
-        const h = this.scene.sampleHeight(c);
-        // borne plausible : rejette les valeurs aberrantes (qui sinon envoient la caméra dans l'espace)
-        if (Number.isFinite(h) && h > -500 && h < 6000) return h;
-      } catch (e) { /* tuiles pas encore là */ }
-    }
     try { return Cesium.Cartographic.fromCartesian(this.layer.origin).height; } catch (e) { return null; }
   }
 
