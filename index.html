@@ -25,6 +25,11 @@
         "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
     } }
   </script>
-  <script type="module" src="./src/main.js"></script>
+  <script type="module">
+    // CACHE-BUST : le navigateur met en cache les MODULES JS par leur URL ; le ?v= sur la
+    // page ne rafraîchit PAS main.js/threeFireworks.js -> on voyait l'ANCIEN code après un
+    // déploiement. On ajoute un horodatage à l'import racine ; main.js le propage à ses enfants.
+    import('./src/main.js?v=' + Date.now());
+  </script>
 </body>
 </html>

@@ -1,8 +1,11 @@
 // PrevoFX Web — point d'entrée. Globe Cesium + couche de feux + démo pivoine.
 // (Cesium est chargé en global via le <script> CDN dans index.html.)
 
-import { ThreeFireworks, LABELS } from './render/threeFireworks.js';
-import { FpsCameraController } from './cameraController.js';
+// Imports DYNAMIQUES avec propagation du ?v=... (horodatage anti-cache d'index.html) : sinon
+// le navigateur garderait l'ANCIEN threeFireworks.js en cache malgré un nouveau déploiement.
+const _v = new URL(import.meta.url).search;   // ex "?v=1719..." (vide si chargé sans query)
+const { ThreeFireworks, LABELS } = await import('./render/threeFireworks.js' + _v);
+const { FpsCameraController } = await import('./cameraController.js' + _v);
 
 // DÉCOR = Google Photorealistic 3D Tiles, mais VIA CESIUM ION (token gratuit), PAS la
 // clé Google directe. Raison (vérifiée) : Google BLOQUE les 3D tiles en accès direct par

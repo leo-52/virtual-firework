@@ -174,6 +174,11 @@ que les hooks dont il a besoin : `dist` (distribution 3D), `dist2D` (forme face 
   **couleur** (faible mais non nulle) pour toujours, surtout l'amas dense d'étincelles **muzzle**
   au-dessus du tube. Fix : **zéroter la COULEUR** des grains morts dans `updateTrails` (le fondu
   des traînées ne tient QUE par la couleur, jamais par la taille).
+- **Cache des modules JS** (piège SÉRIEUX) : le navigateur met en cache chaque module ES par
+  son URL ; le `?v=` sur la page **ne rafraîchit PAS** `threeFireworks.js` → on voyait l'ANCIEN
+  code après un déploiement (des correctifs ne parvenaient jamais au navigateur). Fix :
+  `index.html` importe `main.js?v=Date.now()` et `main.js` **propage ce `?v=`** à ses imports
+  enfants (`threeFireworks.js`, `cameraController.js`) → tout est rechargé frais à chaque visite.
 - **Vérification** : screenshots de Cesium impossibles (rendu continu → timeout). On vérifie
   **numériquement** via `preview_eval` (`window.PrevoFX`) ou **visuellement sur GitHub Pages**.
 
