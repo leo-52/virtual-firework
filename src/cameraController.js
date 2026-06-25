@@ -20,6 +20,7 @@ export class FpsCameraController {
     this.camPos = new Cesium.Cartesian3();
     this.keys = Object.create(null);
     this.dragging = false; this.lastX = 0; this.lastY = 0;
+    this.userMoved = false;   // passe à true dès que l'user touche la caméra (stoppe le recalage auto)
 
     this.moveSpeed = 22;   // m/s
     this.fastMul   = 4;
@@ -60,14 +61,14 @@ export class FpsCameraController {
   }
 
   _installKeyboard(){
-    window.addEventListener('keydown', e => { this.keys[e.code] = true; });
+    window.addEventListener('keydown', e => { this.keys[e.code] = true; this.userMoved = true; });
     window.addEventListener('keyup',   e => { this.keys[e.code] = false; });
   }
 
   _installMouse(){
     // Système d'événements Cesium (fiable, pas de conflit avec le canvas WebGL).
     const h = new Cesium.ScreenSpaceEventHandler(this.scene.canvas);
-    h.setInputAction(m => { this.dragging = true;  this.lastX = m.position.x; this.lastY = m.position.y; }, Cesium.ScreenSpaceEventType.LEFT_DOWN);
+    h.setInputAction(m => { this.dragging = true; this.userMoved = true; this.lastX = m.position.x; this.lastY = m.position.y; }, Cesium.ScreenSpaceEventType.LEFT_DOWN);
     h.setInputAction(() => { this.dragging = false; }, Cesium.ScreenSpaceEventType.LEFT_UP);
     h.setInputAction(m => {
       if (!this.dragging) return;

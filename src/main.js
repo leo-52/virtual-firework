@@ -50,19 +50,29 @@ if (HAS_ION) {
       tileset.style = new Cesium.Cesium3DTileStyle({ color: "color('#4f4f5e')" });
       tileset.maximumScreenSpaceError = 24;     // (défaut 16) -> beaucoup moins de tuiles
       tileset.cacheBytes = 256 * 1024 * 1024;   // cache plus petit -> moins de mémoire
-      // CALER LE TIR SUR LE SOL RÉEL — avec RETRY (les tuiles chargent en différé / peuvent 503).
-      // TANT que le sol n'est pas calé, la caméra reste HAUTE -> voit une énorme zone -> ça FIGE.
-      const carto = Cesium.Cartographic.fromDegrees(FIRE.lon, FIRE.lat);
-      for (let attempt = 0; attempt < 14; attempt++){
+      // CALER LE SOL de façon ROBUSTE (sinon la vue par défaut marchait "pas tout le temps") :
+      // on échantillonne une GRILLE de 9 points (±15 m) autour du tir et on prend la MÉDIANE
+      // (ignore les artefacts de tuiles), avec RETRY jusqu'à une médiane STABLE. Tant que le sol
+      // n'est pas calé, la caméra reste haute -> énorme zone -> FIGE.
+      const base = Cesium.Cartographic.fromDegrees(FIRE.lon, FIRE.lat);
+      const mLat = 15/111320, mLon = 15/(111320*Math.cos(FIRE.lat*Math.PI/180));
+      const gridPts = [];
+      for (let gx=-1; gx<=1; gx++) for (let gy=-1; gy<=1; gy++)
+        gridPts.push(Cesium.Cartographic.fromRadians(base.longitude+gx*mLon, base.latitude+gy*mLat));
+      let lastMed = null, stable = 0;
+      for (let attempt = 0; attempt < 16 && stable < 2; attempt++){
         await new Promise(res => setTimeout(res, 700));   // laisser des tuiles charger
+        if (cam.userMoved && lastMed !== null) break;      // l'user a pris la main APRÈS un calage -> on ne recale plus
         try {
-          const r = await viewer.scene.sampleHeightMostDetailed([carto]);
-          const h = (r && r[0]) ? r[0].height : NaN;
-          if (Number.isFinite(h) && h > -500 && h < 6000){
-            FIRE.height = h;
-            layer.setOrigin({ lon: FIRE.lon, lat: FIRE.lat, height: h });
+          const r = await viewer.scene.sampleHeightMostDetailed(gridPts.map(p => Cesium.Cartographic.clone(p)));
+          const hs = r.map(c => c.height).filter(h => Number.isFinite(h) && h > -500 && h < 6000).sort((a,b)=>a-b);
+          if (hs.length >= 5){
+            const med = hs[Math.floor(hs.length/2)];
+            stable = (lastMed !== null && Math.abs(med - lastMed) < 2) ? stable+1 : 0;
+            lastMed = med;
+            FIRE.height = med;
+            layer.setOrigin({ lon: FIRE.lon, lat: FIRE.lat, height: med });
             cam.setFromLocal(CAM_LOCAL, CAM_TARGET);   // caméra recalée AU RAS DU SOL (vue public)
-            break;
           }
         } catch (e2) { /* tuiles pas prêtes -> on réessaie */ }
       }
