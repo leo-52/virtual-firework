@@ -92,17 +92,24 @@ pick.value = 'peony';
 pick.addEventListener('change', e => layer.setFocus(e.target.value));
 document.body.appendChild(pick);
 
-// Boucle, calée sur le rendu Cesium.
+// BOUCLE DE RENDU UNIQUE — on PREND LA MAIN sur Cesium (sinon il s'endort quand la scène
+// est stable et tout se fige). On pilote nous-mêmes : sim -> décor Cesium -> overlay feux.
+viewer.useDefaultRenderLoop = false;        // Cesium ne gère plus sa propre boucle
+viewer.scene.requestRenderMode = false;     // (au cas où) pas de rendu "à la demande"
 let last = performance.now();
-viewer.scene.preUpdate.addEventListener(() => {
+function frame(){
+  requestAnimationFrame(frame);
   const now = performance.now();
   const dt = Math.min(0.05, (now - last) / 1000);
   last = now;
-  cam.update(dt);     // caméra spectateur (QZSD + clic-glisser + sol dur)
-  layer.update(dt);   // simulation des feux (mètres locaux)
-});
-// L'overlay Three.js se rend APRÈS Cesium (caméra Cesium à jour) -> sync caméra + dessin par-dessus.
-viewer.scene.postRender.addEventListener(() => { layer.render(); });
+  try {
+    cam.update(dt);          // caméra spectateur (QZSD + clic-glisser + sol dur)
+    layer.update(dt);        // simulation des feux (mètres locaux)
+    viewer.scene.render();   // décor Cesium
+    layer.render();          // overlay feux (caméra synchronisée, par-dessus)
+  } catch (e) { console.warn('[PrevoFX] frame error (loop continue)', e); }
+}
+requestAnimationFrame(frame);
 
 // debug console : PrevoFX.focus('willow') change l'effet joué en boucle ; PrevoFX.fire('ring') tire une fois.
 window.PrevoFX = { viewer, layer, cam, fire: (a) => layer.fire(a), focus: (a) => layer.setFocus(a) };
