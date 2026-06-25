@@ -302,7 +302,7 @@ class Shell {
       const gmz=new THREE.SpriteMaterial({ map:starTex, color:0xffcc99, transparent:true,
         blending:THREE.AdditiveBlending, depthWrite:false, opacity:0.14 });   // moins de lumière
       this.muzzleGlow=new THREE.Sprite(gmz);
-      const gs=10+this.muzzleH*3; this.muzzleGlow.position.set(this.ox, Math.max(3,this.muzzleH*0.8), this.oz);
+      const gs=4+this.muzzleH*1.5; this.muzzleGlow.position.set(this.ox, Math.max(2,this.muzzleH*0.6), this.oz);
       this.muzzleGlow.scale.set(gs, gs*0.85, 1); scene.add(this.muzzleGlow);   // lumière diffuse ∝ calibre
       this.headGeo=new THREE.BufferGeometry();
       this.headGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array([this.ox,0,this.oz]),3));
@@ -394,12 +394,12 @@ class Shell {
       c.r,c.g,c.b, 1.1*g.grain, 1.0, 1.5+Math.random()*2.5, vx*4, vy*4, vz*4);
   }
 
-  _emitMuzzle(){   // CÔNE d'étincelles (comme un canon de fusil) : minuscules, forment la flamme
+  _emitMuzzle(){   // JET ÉTROIT (largeur du tube ~10 cm) qui monte -> les étincelles FORMENT la flamme
     const vUp=Math.sqrt(2*9.8*this.muzzleH), sp=vUp*(0.55+Math.random()*0.6);
-    const phi=Math.acos(1-Math.random()*0.14), az=Math.random()*Math.PI*2;  // demi-angle ~30°
+    const phi=Math.acos(1-Math.random()*0.02), az=Math.random()*Math.PI*2;  // jet ÉTROIT (~11°)
     const sphi=Math.sin(phi);
-    spawnTrail(this.ox+(Math.random()-0.5)*0.7, 1.5, this.oz+(Math.random()-0.5)*0.7,
-      0.95, 0.48, 0.14, 0.35, 1.0, 1.4, Math.cos(az)*sphi*sp*4, Math.cos(phi)*sp*4, Math.sin(az)*sphi*sp*4);
+    spawnTrail(this.ox+(Math.random()-0.5)*0.24, 1.0, this.oz+(Math.random()-0.5)*0.24,
+      0.95, 0.48, 0.14, 0.3, 1.0, 1.4, Math.cos(az)*sphi*sp*4, Math.cos(phi)*sp*4, Math.sin(az)*sphi*sp*4);
   }
 
   heatColor(A,d){
