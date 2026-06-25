@@ -410,10 +410,8 @@ class Shell {
       if (A<0.05){ const f=(1-A/0.05)*0.55; r=r+(1-r)*f; g=g+(1-g)*f; b=b+(1-b)*f; }
     } else { r=c.r; g=c.g; b=c.b;
       if (A<0.04){ const f=(1-A/0.04)*0.5; r=r+(1-r)*f; g=g+(1-g)*f; b=b+(1-b)*f; } }
-    let fade=Math.max(0,1-A*A*0.85);
-    if (A>0.7) fade *= Math.max(0,(1-A)/0.3);   // s'éteint COMPLÈTEMENT à la mort (pas de glow fantôme qui "reste")
-    const fadeIn=0.4+0.6*Math.min(1,d.age/0.25);
-    return { r,g,b, inten:2.4*fade*d.dimVar*fadeIn };
+    const fade=Math.max(0,1-A*A*0.85), fadeIn=0.4+0.6*Math.min(1,d.age/0.25);
+    return { r,g,b, inten:2.4*fade*d.dimVar*fadeIn };   // fondu d'origine (le beau) — le vrai bug etait le gel
   }
 
   update(dt){
