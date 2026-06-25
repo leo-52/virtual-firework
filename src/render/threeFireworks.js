@@ -206,6 +206,7 @@ function behaveMosaic(d,A,dt,ctx){
 // ============================================================================
 const CAL_SCALE = { 50:0.67, 75:1.0, 100:1.44, 125:1.87, 150:2.30, 200:2.58 };
 const STAR_SCALE = 1.2;   // étoiles +20% (réglage global ; user)
+const APEX_SCALE = 0.70;  // hauteurs d'éclatement -30% (trop hautes selon l'user) — knob global unique
 const BASE = {
   stars:80, nMax:0, burstRadius:13.5, speedMul:1.8, speedJit:0.05,
   apex:90, riseTime:2.5, riseLean:12, G:9.8, gravStar:1.0, dragStar:0.70,
@@ -281,12 +282,14 @@ class Shell {
   constructor(arch, ox, oz, cal){
     this.arch = EFFECTS[arch] ? arch : 'peony';
     this.cfg = Object.assign({}, BASE, EFFECTS[this.arch]);
+    this.cfg.apex *= APEX_SCALE;   // abaisse TOUTES les hauteurs d'un coup (cfg est une copie -> safe)
     this.cal = cal || 75;
     this.ox = ox||0; this.oz = oz||0;
     this.bx = this.ox + (Math.random()-0.5)*this.cfg.riseLean;
     this.bz = this.oz + (Math.random()-0.5)*this.cfg.riseLean;
     this.dead = false; this.age = 0;
-    this.riseTime = this.cfg.riseTime * (0.95 + Math.random()*0.10);
+    // riseTime suit l'apex (×APEX_SCALE) -> la vitesse de montée reste identique (pas de comète molle)
+    this.riseTime = this.cfg.riseTime * APEX_SCALE * (0.95 + Math.random()*0.10);
     this.headLastX=this.ox; this.headLastY=0; this.headLastZ=this.oz; this.headTimer=0;
     this.nMax = this.cfg.nMax || this.cfg.stars; this.nAlive = 0;
     this.data = []; this.flash=null; this.muzzle=null; this.muzzleGlow=null;
@@ -298,7 +301,7 @@ class Shell {
       // MUZZLE (sortie du tube) : la FLAMME = des CENTAINES de minuscules étincelles qui montent
       // à ~muzzleH (selon le CALIBRE : 125mm->6m, moins sinon) + une GROSSE zone de lumière DIFFUSE.
       this.muzzleH = 6 * (this.cal/125);
-      this.muzzleEmit = 0.25; this.muzzleAcc = 0; this.muzzleAge = 0;
+      this.muzzleEmit = 0.14; this.muzzleAcc = 0; this.muzzleAge = 0;   // pop COURT (<0.5s au total)
       const gmz=new THREE.SpriteMaterial({ map:starTex, color:0xffcc99, transparent:true,
         blending:THREE.AdditiveBlending, depthWrite:false, opacity:0.14 });   // moins de lumière
       this.muzzleGlow=new THREE.Sprite(gmz);
@@ -399,7 +402,7 @@ class Shell {
     const phi=Math.acos(1-Math.random()*0.02), az=Math.random()*Math.PI*2;  // jet ÉTROIT (~11°)
     const sphi=Math.sin(phi);
     spawnTrail(this.ox+(Math.random()-0.5)*0.24, 1.0, this.oz+(Math.random()-0.5)*0.24,
-      0.95, 0.48, 0.14, 0.3, 1.0, 1.4, Math.cos(az)*sphi*sp*4, Math.cos(phi)*sp*4, Math.sin(az)*sphi*sp*4);
+      0.95, 0.48, 0.14, 0.3, 1.0, 0.7, Math.cos(az)*sphi*sp*4, Math.cos(phi)*sp*4, Math.sin(az)*sphi*sp*4);
   }
 
   heatColor(A,d){
@@ -430,9 +433,9 @@ class Shell {
 
     if (this.muzzleGlow || this.muzzleEmit > 0){
       this.muzzleAge += dt;
-      if (this.muzzleEmit > 0){ this.muzzleEmit -= dt; this.muzzleAcc += 2000*dt;   // ~500 étincelles / 0.25s
+      if (this.muzzleEmit > 0){ this.muzzleEmit -= dt; this.muzzleAcc += 3500*dt;   // ~500 étincelles / 0.14s
         while (this.muzzleAcc>=1){ this.muzzleAcc-=1; this._emitMuzzle(); } }
-      if (this.muzzleGlow){ const gd=0.5;
+      if (this.muzzleGlow){ const gd=0.30;   // lueur éteinte en 0.30s
         if (this.muzzleAge<gd){ const q=this.muzzleAge/gd; this.muzzleGlow.material.opacity=(1-q)*0.14; }
         else { scene.remove(this.muzzleGlow); this.muzzleGlow.material.dispose(); this.muzzleGlow=null; } }
     }
