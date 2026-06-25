@@ -53,8 +53,13 @@ function spawnTrail(x,y,z, r,g,b, size, gF=0.4, lifeMul=1, vx0=0, vy0=0, vz0=0){
 function updateTrails(dt){
   for (let i = 0; i < TRAIL_MAX; i++){
     const t = trail[i];
-    if (!t.alive){ trailSize[i]=0; continue; }
-    t.age += dt; if (t.age >= t.life){ t.alive=false; trailSize[i]=0; continue; }
+    // BUG "la sortie du tube ne disparaît jamais" : PointsMaterial IGNORE l'attribut `size`
+    // (taille unique globale), donc mettre size=0 ne CACHE PAS un grain mort -> il restait
+    // affiché pour toujours à sa DERNIÈRE couleur (faible mais non nulle), surtout l'amas
+    // dense d'étincelles muzzle au-dessus du tube. FIX : on met la COULEUR à 0 (invisible en additif).
+    if (!t.alive){ trailCol[i*3]=trailCol[i*3+1]=trailCol[i*3+2]=0; trailSize[i]=0; continue; }
+    t.age += dt; if (t.age >= t.life){ t.alive=false;
+      trailCol[i*3]=trailCol[i*3+1]=trailCol[i*3+2]=0; trailSize[i]=0; continue; }
     t.vy -= 9.8 * t.gF * dt;
     const kd = Math.max(0, 1 - 0.42*dt); t.vx*=kd; t.vy*=kd; t.vz*=kd;
     t.x+=t.vx*dt; t.y+=t.vy*dt; t.z+=t.vz*dt;
@@ -206,7 +211,7 @@ function behaveMosaic(d,A,dt,ctx){
 // ============================================================================
 const CAL_SCALE = { 50:0.67, 75:1.0, 100:1.44, 125:1.87, 150:2.30, 200:2.58 };
 const STAR_SCALE = 1.2;   // étoiles +20% (réglage global ; user)
-const APEX_SCALE = 0.70;  // hauteurs d'éclatement -30% (trop hautes selon l'user) — knob global unique
+const APEX_SCALE = 0.89;  // pivoine 75mm -> ~80m (90×0.89, valeur voulue par l'user) — knob global de hauteur
 const BASE = {
   stars:80, nMax:0, burstRadius:13.5, speedMul:1.8, speedJit:0.05,
   apex:90, riseTime:2.5, riseLean:12, G:9.8, gravStar:1.0, dragStar:0.70,

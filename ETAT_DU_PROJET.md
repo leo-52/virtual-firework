@@ -79,17 +79,17 @@ C'est le squelette commun à tous les effets « bombe ». À chaque régression 
 flash d'allumage est OK). Brillance de référence : `2.4 · (1-A²·0.85) · dimVar · fadeIn`.
 
 **Calibrage (données catalogue « donnée A » + métier user)** :
-| Calibre | Donnée A catalogue (m) | Hauteur RENDUE (×0,70, m) | Nb étoiles pivoine | Envergure (diam., m) |
+| Calibre | Donnée A catalogue (m) | Hauteur RENDUE (×0,89, m) | Nb étoiles pivoine | Envergure (diam., m) |
 |---|---|---|---|---|
-| 50 mm | ~67 | ~47 | — | — |
-| **75 mm** | **~90** | **~63** | **80** | **~50 (rayon ~25)** |
-| 100 mm | ~117 | ~82 | **130** | (à fournir) |
-| 150 mm | ~200 | ~140 | — | (à fournir) |
+| 50 mm | ~67 | ~60 | — | — |
+| **75 mm** | **~90** | **~80** | **80** | **~50 (rayon ~25)** |
+| 100 mm | ~117 | ~104 | **130** | (à fournir) |
+| 150 mm | ~200 | ~178 | — | (à fournir) |
 
 Moteur : `apex 90` (donnée catalogue), `burstRadius 13.5` → envergure mesurée ~48 m.
-⚠️ **`APEX_SCALE = 0.70`** : toutes les hauteurs sont **abaissées de 30 %** au rendu (la donnée
-catalogue paraissait trop haute dans la scène, jugement user). `riseTime` suit le même facteur
-(montée pas plus molle). C'est **le knob unique** pour régler la hauteur globale.
+⚠️ **`APEX_SCALE = 0.89`** : hauteurs **abaissées de 11 %** au rendu pour caler la **pivoine 75 mm
+à ~80 m** (valeur voulue par l'user). `riseTime` suit le même facteur (montée pas plus molle).
+C'est **le knob unique** pour régler la hauteur globale.
 Échelle des étoiles ~`calibre^1.7`. `CAL_SCALE` pilote la durée de vie par calibre.
 `STAR_SCALE = 1.2` (toutes les étoiles +20 %, réglage global demandé).
 
@@ -169,6 +169,11 @@ que les hooks dont il a besoin : `dist` (distribution 3D), `dist2D` (forme face 
 - **Charge tuiles** : `maximumScreenSpaceError = 24` (tuiles plus grossières) pour alléger.
 - **Three.js** : `PointsMaterial` **ignore** la taille par-point → il faut régler
   `material.size` (global). La brillance vient du **punch HDR** (couleur ×~2, ACES encaisse), pas de l'accumulation de traînées.
+- **Traînée morte qui ne disparaît jamais** (corollaire du point ci-dessus) : comme `size`
+  est ignoré, mettre `trailSize=0` ne cache PAS un grain mort — il restait figé à sa dernière
+  **couleur** (faible mais non nulle) pour toujours, surtout l'amas dense d'étincelles **muzzle**
+  au-dessus du tube. Fix : **zéroter la COULEUR** des grains morts dans `updateTrails` (le fondu
+  des traînées ne tient QUE par la couleur, jamais par la taille).
 - **Vérification** : screenshots de Cesium impossibles (rendu continu → timeout). On vérifie
   **numériquement** via `preview_eval` (`window.PrevoFX`) ou **visuellement sur GitHub Pages**.
 
