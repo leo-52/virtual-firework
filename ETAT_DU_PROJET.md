@@ -138,7 +138,8 @@ que les hooks dont il a besoin : `dist` (distribution 3D), `dist2D` (forme face 
 | **feuille morte** (`fallingLeaves`) | feuilles colorées **super légères**, **tangue au gré du vent** (`sway`), **sans traînée**, durée très longue (×6). |
 
 ### Crépitant / scintillant
-| **œuf de dragon** (`crackling`) | **crépitant** : tout le break crépite en pops blancs, braise dorée stable entre les pops. |
+| **crackling** (`crackling`) | **pivoine de la couleur** (ext. pur) **+ pistil doré au centre qui crépite** (pops blancs, surtout vers la fin). Couleur via override (`crackling aqua`…). |
+| **œuf de dragon** (`dragonEgg`) | **tout** le break crépite en pops dorés (≠ crackling). |
 | **scintillant** (`strobe`) | **entre-deux** : ni noir ni éclairé, pulse doux argent (pas un on/off net). |
 | **salut** (`salute`) | détonation : **flash énorme bref** (`flashBig`), argent. |
 
