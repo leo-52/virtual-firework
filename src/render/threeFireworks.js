@@ -73,6 +73,50 @@ function updateTrails(dt){
   trailGeo.attributes.size.needsUpdate = true;
 }
 
+// --- pool de BOUFFÉES (sortie de tube : flamme + fumée) ---
+// Sprites (PAS des points) car une bouffée doit GROSSIR : PointsMaterial ne gère pas la taille
+// par particule, un Sprite a son propre scale/opacity/couleur. Additif -> sur ciel sombre, la
+// flamme brille et la fumée chaude se lit ; le fondu se fait par la couleur/opacité (=0 invisible).
+function makeSmokeTexture(){
+  const c=document.createElement('canvas'); c.width=c.height=64;
+  const x=c.getContext('2d');
+  const g=x.createRadialGradient(32,32,0, 32,32,32);
+  g.addColorStop(0.0,'rgba(255,255,255,1)');
+  g.addColorStop(0.5,'rgba(255,255,255,0.32)');
+  g.addColorStop(1.0,'rgba(255,255,255,0)');
+  x.fillStyle=g; x.fillRect(0,0,64,64);
+  const t=new THREE.CanvasTexture(c); t.needsUpdate=true; return t;
+}
+const smokeTex = makeSmokeTexture();
+const PUFF_MAX = 320;
+const puffs = [];
+for (let i=0;i<PUFF_MAX;i++){
+  const m=new THREE.SpriteMaterial({ map:smokeTex, transparent:true, blending:THREE.AdditiveBlending,
+    depthWrite:false, opacity:0 });
+  const s=new THREE.Sprite(m); s.visible=false; scene.add(s);
+  puffs.push({ spr:s, x:0,y:0,z:0, vx:0,vy:0,vz:0, age:0,life:1, s0:1,s1:1, r:1,g:1,b:1, op0:1, buoy:0, drag:1, alive:false });
+}
+let puffHead=0;
+function spawnPuff(x,y,z, vx,vy,vz, life, s0,s1, r,g,b, op0, buoy, drag){
+  const p=puffs[puffHead]; puffHead=(puffHead+1)%PUFF_MAX;
+  p.x=x; p.y=y; p.z=z; p.vx=vx; p.vy=vy; p.vz=vz; p.age=0; p.life=life;
+  p.s0=s0; p.s1=s1; p.r=r; p.g=g; p.b=b; p.op0=op0; p.buoy=buoy; p.drag=drag; p.alive=true; p.spr.visible=true;
+}
+function updatePuffs(dt){
+  for (let i=0;i<PUFF_MAX;i++){
+    const p=puffs[i]; if(!p.alive) continue;
+    p.age+=dt;
+    if(p.age>=p.life){ p.alive=false; p.spr.visible=false; continue; }
+    p.vy+=p.buoy*dt;                                   // flottabilité (le chaud monte)
+    const kd=Math.max(0,1-p.drag*dt); p.vx*=kd; p.vy*=kd; p.vz*=kd;
+    p.x+=p.vx*dt; p.y+=p.vy*dt; p.z+=p.vz*dt;
+    const a=p.age/p.life, sz=p.s0+(p.s1-p.s0)*a;       // grossit sur sa vie
+    const fade=Math.min(1,a*5)*(1-a);                  // fondu entrant rapide puis sortant
+    p.spr.position.set(p.x,p.y,p.z); p.spr.scale.set(sz,sz,1);
+    p.spr.material.color.setRGB(p.r,p.g,p.b); p.spr.material.opacity=p.op0*fade;
+  }
+}
+
 // --- helpers vecteurs ---
 function vrand(rnd){ const z=rnd()*2-1, t=rnd()*Math.PI*2, r=Math.sqrt(Math.max(0,1-z*z));
   return [Math.cos(t)*r, Math.sin(t)*r, z]; }
@@ -297,21 +341,17 @@ class Shell {
     this.riseTime = this.cfg.riseTime * APEX_SCALE * (0.95 + Math.random()*0.10);
     this.headLastX=this.ox; this.headLastY=0; this.headLastZ=this.oz; this.headTimer=0;
     this.nMax = this.cfg.nMax || this.cfg.stars; this.nAlive = 0;
-    this.data = []; this.flash=null; this.muzzle=null; this.muzzleGlow=null;
+    this.data = []; this.flash=null; this.hasMuzzle=false;
 
     if (this.cfg.gerbe){               // POT À FEU : pas de montée ni burst, gerbe au sol
       this.phase='gerbe'; this.gerbeLeft=this.cfg.gerbe.dur; this.emitAcc=0; this.head=null;
     } else {
       this.phase='rise';
-      // MUZZLE (sortie du tube) : la FLAMME = des CENTAINES de minuscules étincelles qui montent
-      // à ~muzzleH (selon le CALIBRE : 125mm->6m, moins sinon) + une GROSSE zone de lumière DIFFUSE.
-      this.muzzleH = 6 * (this.cal/125);
-      this.muzzleEmit = 0.14; this.muzzleAcc = 0; this.muzzleAge = 0;   // pop COURT (<0.5s au total)
-      const gmz=new THREE.SpriteMaterial({ map:starTex, color:0xffcc99, transparent:true,
-        blending:THREE.AdditiveBlending, depthWrite:false, opacity:0.14 });   // moins de lumière
-      this.muzzleGlow=new THREE.Sprite(gmz);
-      const gs=4+this.muzzleH*1.5; this.muzzleGlow.position.set(this.ox, Math.max(2,this.muzzleH*0.6), this.oz);
-      this.muzzleGlow.scale.set(gs, gs*0.85, 1); scene.add(this.muzzleGlow);   // lumière diffuse ∝ calibre
+      // SORTIE DU TUBE (réf vidéo tir 150mm) : JET vertical -> CHAMPIGNON jaune-blanc/orange à la
+      // gueule (lumière en bas), FLAMME BRÈVE + COLONNE DE FUMÉE qui monte + DÉBRIS. Échelle ∝ calibre.
+      this.muzzleScale = this.cal/75;          // 75mm=1 · 150mm=2 · 50mm=0.67
+      this.muAge=0; this.muFlameWin=0.15*Math.sqrt(this.muzzleScale); this.muSmokeWin=0.55;
+      this.muFlameAcc=0; this.muSmokeAcc=0; this.muDebrisDone=false; this.hasMuzzle=true;
       this.headGeo=new THREE.BufferGeometry();
       this.headGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array([this.ox,0,this.oz]),3));
       this.headMat=new THREE.PointsMaterial({ size:this.cfg.headSize, map:starTex, color:this.cfg.riseColor,
@@ -402,12 +442,30 @@ class Shell {
       c.r,c.g,c.b, 1.1*g.grain, 1.0, 1.5+Math.random()*2.5, vx*4, vy*4, vz*4);
   }
 
-  _emitMuzzle(){   // JET ÉTROIT (largeur du tube ~10 cm) qui monte -> les étincelles FORMENT la flamme
-    const vUp=Math.sqrt(2*9.8*this.muzzleH), sp=vUp*(0.55+Math.random()*0.6);
-    const phi=Math.acos(1-Math.random()*0.02), az=Math.random()*Math.PI*2;  // jet ÉTROIT (~11°)
-    const sphi=Math.sin(phi);
-    spawnTrail(this.ox+(Math.random()-0.5)*0.24, 1.0, this.oz+(Math.random()-0.5)*0.24,
-      0.95, 0.48, 0.14, 0.3, 1.0, 0.7, Math.cos(az)*sphi*sp*4, Math.cos(phi)*sp*4, Math.sin(az)*sphi*sp*4);
+  // SORTIE DU TUBE — 3 composantes (échelle ∝ calibre via muzzleScale) :
+  _emitMuzzleFlare(){   // grosse lueur de gueule = la SOURCE de lumière (en bas), très brève
+    const sc=this.muzzleScale;
+    spawnPuff(this.ox+(Math.random()-0.5)*0.4*sc, 1.0*sc, this.oz+(Math.random()-0.5)*0.4*sc,
+      0,(2+Math.random()*2)*sc,0, 0.22+Math.random()*0.12, 2.0*sc, 5.0*sc,
+      1.0,0.82,0.5, 0.85, 3*sc, 2.0);
+  }
+  _emitMuzzleFlame(){   // FLAMME : jet ÉTROIT en bas qui CHAMPIGNONNE en montant ; jaune-blanc -> orange
+    const sc=this.muzzleScale, ang=Math.random()*Math.PI*2, rad=Math.random()*Math.random();
+    const out=(1.2+rad*4.5)*sc, up=(9+Math.random()*7)*sc, hot=1-rad;   // coeur(rad~0)=chaud ; bord=orange
+    spawnPuff(this.ox+(Math.random()-0.5)*0.3*sc, 0.8, this.oz+(Math.random()-0.5)*0.3*sc,
+      Math.cos(ang)*out, up, Math.sin(ang)*out, 0.28+Math.random()*0.22, 0.7*sc, 2.4*sc,
+      1.0, 0.42+0.46*hot, 0.06+0.40*hot, 0.85, 6*sc, 2.3);
+  }
+  _emitMuzzleSmoke(){   // FUMÉE : grosses bouffées chaudes-grises qui montent longtemps (colonne)
+    const sc=this.muzzleScale, ang=Math.random()*Math.PI*2, out=(0.6+Math.random()*1.6)*sc, w=0.18+Math.random()*0.10;
+    spawnPuff(this.ox+(Math.random()-0.5)*0.6*sc, 0.7, this.oz+(Math.random()-0.5)*0.6*sc,
+      Math.cos(ang)*out, (3+Math.random()*4)*sc, Math.sin(ang)*out, 1.4+Math.random()*1.4, 1.5*sc, 6.0*sc,
+      w*1.5, w*1.25, w, 0.30, 2.0*sc, 1.1);
+  }
+  _emitMuzzleDebris(){  // quelques débris (opercule/bourre) éjectés qui retombent (trail = gravité)
+    const sc=this.muzzleScale, ang=Math.random()*Math.PI*2, out=(2+Math.random()*5)*sc, up=(7+Math.random()*9)*sc;
+    spawnTrail(this.ox+(Math.random()-0.5)*0.3, 0.9, this.oz+(Math.random()-0.5)*0.3,
+      0.5,0.30,0.12, 0.4, 1.4, 2.4, Math.cos(ang)*out*4, up*4, Math.sin(ang)*out*4);
   }
 
   heatColor(A,d){
@@ -436,13 +494,15 @@ class Shell {
       return;
     }
 
-    if (this.muzzleGlow || this.muzzleEmit > 0){
-      this.muzzleAge += dt;
-      if (this.muzzleEmit > 0){ this.muzzleEmit -= dt; this.muzzleAcc += 3500*dt;   // ~500 étincelles / 0.14s
-        while (this.muzzleAcc>=1){ this.muzzleAcc-=1; this._emitMuzzle(); } }
-      if (this.muzzleGlow){ const gd=0.30;   // lueur éteinte en 0.30s
-        if (this.muzzleAge<gd){ const q=this.muzzleAge/gd; this.muzzleGlow.material.opacity=(1-q)*0.14; }
-        else { scene.remove(this.muzzleGlow); this.muzzleGlow.material.dispose(); this.muzzleGlow=null; } }
+    if (this.hasMuzzle && this.muAge < this.muSmokeWin + 0.05){
+      this.muAge += dt;
+      if (!this.muDebrisDone){ this.muDebrisDone=true;           // au départ : flash de gueule + débris
+        for(let k=0;k<3;k++) this._emitMuzzleFlare();
+        const nd=Math.round(8*this.muzzleScale); for(let k=0;k<nd;k++) this._emitMuzzleDebris(); }
+      if (this.muAge < this.muFlameWin){ this.muFlameAcc += 700*dt;     // FLAMME : brève, haut débit
+        while(this.muFlameAcc>=1){ this.muFlameAcc-=1; this._emitMuzzleFlame(); } }
+      if (this.muAge < this.muSmokeWin){ this.muSmokeAcc += 55*dt;      // FUMÉE : fenêtre plus longue
+        while(this.muSmokeAcc>=1){ this.muSmokeAcc-=1; this._emitMuzzleSmoke(); } }
     }
 
     if (this.phase==='rise'){
@@ -565,6 +625,7 @@ export class ThreeFireworks {
       if (this.restDelay<=0){ this.fireNext(); this.restDelay=0.8; } }
     if (this.shell) this.shell.update(dt);
     updateTrails(dt);
+    updatePuffs(dt);
   }
   render(){ this.syncCamera(); this.composer.render(); }
 }

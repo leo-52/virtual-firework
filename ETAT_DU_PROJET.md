@@ -65,10 +65,12 @@ web/
 C'est le squelette commun à tous les effets « bombe ». À chaque régression visuelle,
 **ne jamais larguer cette physique** en itérant l'esthétique.
 
-1. **Sortie du tube (muzzle)** : flamme = ~500 minuscules étincelles en **jet étroit
-   (~11°, largeur du tube)** + une zone de **lumière diffuse**. Hauteur ∝ calibre
-   (`muzzleH = 6·cal/125` → 125mm=6 m, 100=4,8, 75=3,6, 50=2,4 m). **Pop COURT : entièrement
-   éteint en < 0,5 s** (émission 0,14 s, lueur coupée à 0,30 s, étincelles `lifeMul 0.7`).
+1. **Sortie du tube (muzzle)** : modèle d'après une vidéo de tir **150 mm** → **jet vertical de
+   flamme** (bouffées = *sprites* additifs, car `PointsMaterial` ne grossit pas par particule)
+   **jaune-blanc à la gueule → orange** qui **champignonne**, **flare de lumière à la gueule**
+   (source basse), **flamme BRÈVE (~0,15 s) + COLONNE DE FUMÉE** (bouffées grises chaudes qui
+   montent et se dissipent en ~3 s) + **débris** éjectés. Tout ∝ calibre (`muzzleScale = cal/75` :
+   75 mm=1, 150 mm=2, 50 mm=0,67). Pool de bouffées `PUFF_MAX=320`, mis à jour par `updatePuffs`.
 2. **Montée (rise)** : comète en `easeOut` (`y = apex·(1-(1-T)²)`) + traînée de poudre.
 3. **Apex** → **explosion depuis le centre** (vitesse = `burstRadius · speedMul`).
 4. **Vol** : `vy -= G·gravStar·dt` (gravité par type) + **frein linéaire** `v *= (1-dragStar·dt)`.
