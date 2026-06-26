@@ -160,11 +160,7 @@ const GOLD=new THREE.Color(1.0,0.72,0.32), DIMGOLD=new THREE.Color(0.55,0.40,0.1
   SILVER=new THREE.Color(0.82,0.88,1.0), PINK=new THREE.Color(1.0,0.30,0.55),
   CYAN=new THREE.Color(0.25,0.9,1.0), YEL=new THREE.Color(1.0,0.92,0.30),
   GRN=new THREE.Color(0.3,1.0,0.45), BLU=new THREE.Color(0.4,0.55,1.0),
-  RED=new THREE.Color(1.0,0.14,0.18), PURP=new THREE.Color(0.6,0.35,1.0),
-  ORANGE=new THREE.Color(1.0,0.50,0.12), WHITE=new THREE.Color(1.0,1.0,1.0);
-// "1 couleur aléatoire" de la mosaïque assortie (parmi des teintes vives distinctes)
-const MIX_RAND=[GRN,BLU,PURP,RED,ORANGE,WHITE];
-function randMixColor(){ return MIX_RAND[Math.floor(Math.random()*MIX_RAND.length)]; }
+  RED=new THREE.Color(1.0,0.14,0.18), PURP=new THREE.Color(0.6,0.35,1.0);
 
 // ============================================================================
 // DISTRIBUTIONS 3D : dist(i,n,rnd) -> {dx,dy,dz, spMul, comp?}
@@ -281,7 +277,7 @@ function behaveMosaic(d,A,dt,ctx){
     const v=vrand(Math.random), esp=base*(0.95+Math.random()*0.85);          // spray SPHÉRIQUE + PUNCH (accélération)
     const ix=v[0]+d.vx/base*0.12, iy=v[1]+d.vy/base*0.12, iz=v[2]+d.vz/base*0.12; // garde un peu l'élan de la comète
     const L=Math.hypot(ix,iy,iz)||1;
-    ctx.addStar(px,py,pz, ix/L*esp, iy/L*esp, iz/L*esp, 0.85+Math.random()*0.7, d.comp, true, d.coreColor);
+    ctx.addStar(px,py,pz, ix/L*esp, iy/L*esp, iz/L*esp, 3.0+Math.random()*0.4, d.comp, true, d.coreColor);   // étoiles divisées : durée ~3.2s
   }
   d.age=d.life;
 }
@@ -346,9 +342,9 @@ const EFFECTS = {
   saucer:  { apex:60, heat:false, stars:1, starSize:4.6, lifeBase75:3.5, gravStar:0.85, dragStar:0.22,
              color:GOLD, headSize:3.0, riseColor:GOLD, dist:distSaucer, behave:behaveSaucer,
              trailing:{emitUntil:0.9, period:0.012, grain:1.1, gF:0.4, lifeMul:1.4, color:GOLD} },
-  mosaic:  { apex:100, heat:false, stars:7, nMax:36, coreSplit:4, starSize:3.8, splitStarSize:2.2, lifeBase75:3.0, color:SILVER, speedMul:1.8,
+  mosaic:  { apex:100, heat:false, stars:7, nMax:36, coreSplit:4, starSize:4.4, splitStarSize:2.8, lifeBase75:3.0, color:SILVER, speedMul:1.8,
              dist:distMosaic, behave:behaveMosaic, trailing:{emitUntil:0.9, period:0.012, grain:1.2, gF:0.45, lifeMul:1.9, color:SILVER} },  // 75mm = 7 comètes, chacune se redivise en 4
-  mosaicMix:{ apex:100, heat:false, stars:7, nMax:36, coreSplit:4, starSize:3.8, splitStarSize:2.2, lifeBase75:3.0, speedMul:1.8, assorted:true,
+  mosaicMix:{ apex:100, heat:false, stars:7, nMax:36, coreSplit:4, starSize:4.4, splitStarSize:2.8, lifeBase75:3.0, speedMul:1.8, assorted:true,
              dist:distMosaic, behave:behaveMosaic, trailing:{emitUntil:0.9, period:0.012, grain:1.2, gF:0.45, lifeMul:1.9, color:SILVER} },  // ASSORTIE : 2 rose, 2 citron, 2 aqua, 1 aléatoire
 
   // === SOL / SPÉCIAUX ===
@@ -456,7 +452,8 @@ class Shell {
     // Chaque comète garde sa couleur quand elle se redivise (héritée par les secondaires).
     let assorted=null;
     if (this.cfg.assorted){
-      assorted=[PINK,PINK,YEL,YEL,CYAN,CYAN, randMixColor()];
+      const C3=[PINK,YEL,CYAN];   // "aléatoire" = au hasard PARMI les 3 (rose / citron / aqua)
+      assorted=[PINK,PINK,YEL,YEL,CYAN,CYAN, C3[Math.floor(Math.random()*3)]];
       for (let k=assorted.length-1;k>0;k--){ const j=Math.floor(Math.random()*(k+1));
         const t=assorted[k]; assorted[k]=assorted[j]; assorted[j]=t; }
     }
