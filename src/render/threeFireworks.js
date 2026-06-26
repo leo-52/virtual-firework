@@ -615,7 +615,7 @@ export class ThreeFireworks {
     this.composer.addPass(new OutputPass());
     this._pe=new Cesium.Cartesian3(); this._de=new Cesium.Cartesian3(); this._ue=new Cesium.Cartesian3();
     this.setOrigin(origin);
-    this.shell=null; this.restDelay=0; this.focus='peony'; this.current='peony';
+    this.shell=null; this.restDelay=0; this.focus='peony'; this.current='peony'; this.focusColor=null;
     this.hud = document.getElementById('hud');
     addEventListener('resize', () => this._resize());
   }
@@ -636,10 +636,11 @@ export class ThreeFireworks {
     const f=cam.frustum, aspect=f.aspectRatio||(innerWidth/innerHeight);
     const vfov=(aspect>=1)?2*Math.atan(Math.tan(f.fov/2)/aspect):f.fov;
     this.camera.fov=THREE.MathUtils.radToDeg(vfov); this.camera.aspect=aspect; this.camera.updateProjectionMatrix(); }
-  fire(arch){ this.current=EFFECTS[arch]?arch:'peony'; this.shell=new Shell(this.current,0,0);
+  fire(arch, color){ this.current=EFFECTS[arch]?arch:'peony';
+    this.shell=new Shell(this.current,0,0,undefined, color?{color}:undefined);
     if (this.hud) this.hud.innerHTML='<b>PrevoFX — aperçu web</b><br>'+(LABELS[this.current]||this.current)+' 75 · QZSD + clic-glisser · Espace = pause'; }
-  fireNext(){ this.fire(this.focus); }
-  setFocus(arch){ if (EFFECTS[arch]) this.focus=arch; }
+  fireNext(){ this.fire(this.focus, this.focusColor); }
+  setFocus(arch, color){ if (EFFECTS[arch]){ this.focus=arch; if (color!==undefined) this.focusColor=color; } }
   update(dt){
     if (!this.shell || this.shell.dead){ this.restDelay-=dt;
       if (this.restDelay<=0){ this.fireNext(); this.restDelay=0.8; } }

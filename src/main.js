@@ -108,9 +108,13 @@ Object.assign(pick.style, { position:'fixed', top:'10px', right:'10px', zIndex:'
 for (const [k, label] of Object.entries(LABELS)){
   const o = document.createElement('option'); o.value = k; o.textContent = label; pick.appendChild(o);
 }
-pick.value = 'peony';
-pick.addEventListener('change', e => layer.setFocus(e.target.value));
+pick.value = 'mosaic';
+// changer d'effet dans le menu -> couleur PAR DÉFAUT de l'effet (null annule l'override de la démo)
+pick.addEventListener('change', e => layer.setFocus(e.target.value, null));
 document.body.appendChild(pick);
+
+// DÉMO (pour l'instant) : MOSAÏQUE ROUGE en boucle (rouge via le focus, la mosaïque reste argent par défaut).
+layer.setFocus('mosaic', { r:1.0, g:0.14, b:0.18 });
 
 // TIMELINE de lecture (barre en bas) + ESPACE = pause/play (fige les feux, caméra libre).
 const timeline = new Timeline(layer, LABELS);
