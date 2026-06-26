@@ -78,7 +78,10 @@ C'est le squelette commun à tous les effets « bombe ». À chaque régression 
 
 **Règle couleur** (validée par l'user, pyrotechnicien) : la couleur **tient jusqu'au bout**
 (pas de refroidissement rouge-braise → `heat:false` sur la plupart des effets ; un bref
-flash d'allumage est OK). Brillance de référence : `2.4 · (1-A²·0.85) · dimVar · fadeIn`.
+flash d'allumage est OK). Brillance de référence : `3.4 · (1-A²·0.85) · dimVar · fadeIn`
+(punch HDR : les cœurs saturent en blanc-chaud, halo coloré au bloom = effet « ça brûle »).
+Chaque étoile a un **cœur d'ignition** blanc-jaune sur les premiers 15 % de sa vie (réaliste :
+incandescent → couleur tenue), ce qui donne le grain « feu / comète ».
 
 **Calibrage (données catalogue « donnée A » + métier user)** :
 | Calibre | Donnée A catalogue (m) | Hauteur RENDUE (×0,89, m) | Nb étoiles pivoine | Envergure (diam., m) |

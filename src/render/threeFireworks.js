@@ -456,11 +456,11 @@ class Shell {
       Math.cos(ang)*out, up, Math.sin(ang)*out, 0.28+Math.random()*0.22, 0.7*sc, 2.4*sc,
       1.0, 0.42+0.46*hot, 0.06+0.40*hot, 0.85, 6*sc, 2.3);
   }
-  _emitMuzzleSmoke(){   // FUMÉE : grosses bouffées chaudes-grises qui montent longtemps (colonne)
-    const sc=this.muzzleScale, ang=Math.random()*Math.PI*2, out=(0.6+Math.random()*1.6)*sc, w=0.18+Math.random()*0.10;
+  _emitMuzzleSmoke(){   // FUMÉE : plus DISCRÈTE (moins grosse / dense / visible que la flamme)
+    const sc=this.muzzleScale, ang=Math.random()*Math.PI*2, out=(0.6+Math.random()*1.4)*sc, w=0.16+Math.random()*0.09;
     spawnPuff(this.ox+(Math.random()-0.5)*0.6*sc, 0.7, this.oz+(Math.random()-0.5)*0.6*sc,
-      Math.cos(ang)*out, (3+Math.random()*4)*sc, Math.sin(ang)*out, 1.4+Math.random()*1.4, 1.5*sc, 6.0*sc,
-      w*1.5, w*1.25, w, 0.30, 2.0*sc, 1.1);
+      Math.cos(ang)*out, (3+Math.random()*4)*sc, Math.sin(ang)*out, 1.1+Math.random()*1.0, 1.2*sc, 4.0*sc,
+      w*1.5, w*1.25, w, 0.16, 2.0*sc, 1.1);
   }
   _emitMuzzleDebris(){  // quelques débris (opercule/bourre) éjectés qui retombent (trail = gravité)
     const sc=this.muzzleScale, ang=Math.random()*Math.PI*2, out=(2+Math.random()*5)*sc, up=(7+Math.random()*9)*sc;
@@ -474,11 +474,13 @@ class Shell {
     if (this.cfg.heat){ r=1.0;
       if (A<0.6){ g=(c.g+0.06)-0.06*(A/0.6); b=c.b+0.015; }
       else { const t=(A-0.6)/0.4; g=c.g-(c.g-0.05)*t; b=(c.b+0.015)*(1-t); }
-      if (A<0.05){ const f=(1-A/0.05)*0.55; r=r+(1-r)*f; g=g+(1-g)*f; b=b+(1-b)*f; }
-    } else { r=c.r; g=c.g; b=c.b;
-      if (A<0.04){ const f=(1-A/0.04)*0.5; r=r+(1-r)*f; g=g+(1-g)*f; b=b+(1-b)*f; } }
+    } else { r=c.r; g=c.g; b=c.b; }
+    // COEUR CHAUD "qui brûle" : ignition blanc-jaune VIVE sur la 1re partie de vie -> couleur tenue.
+    // Applique à toutes les étoiles (réaliste : incandescent blanc puis couleur) + donne le "feu/comète".
+    if (A<0.15){ const f=1-A/0.15, f2=f*f*0.5; r=r+(1-r)*f2; g=g+(1-g)*f2; b=b+(1-b)*f2; }
     const fade=Math.max(0,1-A*A*0.85), fadeIn=0.4+0.6*Math.min(1,d.age/0.25);
-    return { r,g,b, inten:2.4*fade*d.dimVar*fadeIn };   // fondu d'origine (le beau) — le vrai bug etait le gel
+    // +punch HDR (2.4->3.4) : le coeur sature en blanc-chaud, halo coloré au bloom => ça "brûle"
+    return { r,g,b, inten:3.4*fade*d.dimVar*fadeIn };
   }
 
   update(dt){
@@ -501,7 +503,7 @@ class Shell {
         const nd=Math.round(8*this.muzzleScale); for(let k=0;k<nd;k++) this._emitMuzzleDebris(); }
       if (this.muAge < this.muFlameWin){ this.muFlameAcc += 700*dt;     // FLAMME : brève, haut débit
         while(this.muFlameAcc>=1){ this.muFlameAcc-=1; this._emitMuzzleFlame(); } }
-      if (this.muAge < this.muSmokeWin){ this.muSmokeAcc += 55*dt;      // FUMÉE : fenêtre plus longue
+      if (this.muAge < this.muSmokeWin){ this.muSmokeAcc += 30*dt;      // FUMÉE : moins dense (rate bas)
         while(this.muSmokeAcc>=1){ this.muSmokeAcc-=1; this._emitMuzzleSmoke(); } }
     }
 
