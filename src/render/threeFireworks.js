@@ -449,12 +449,12 @@ class Shell {
       0,(1.5+Math.random()*1.5)*sc,0, 0.20+Math.random()*0.10, 1.8*sc, 4.0*sc,
       1.0,0.55,0.20, 0.62, 2*sc, 2.0);
   }
-  _emitMuzzleFlame(){   // FLAMME : jet à la gueule -> PLUS BAS, PLUS ÉTROIT (proportion), PLUS CHAUD (orange)
+  _emitMuzzleFlame(){   // FLAMME : pic ~2 m au-dessus du tube (75mm) ; étroit, chaud (orange). ∝ calibre.
     const sc=this.muzzleScale, ang=Math.random()*Math.PI*2, rad=Math.random()*Math.random();
-    const out=(0.8+rad*3.0)*sc, up=(6+Math.random()*4)*sc, hot=1-rad;   // coeur(rad~0)=chaud ; bord=orange
+    const out=(0.6+rad*2.1)*sc, up=(3+Math.random()*2.4)*sc, hot=1-rad;   // coeur(rad~0)=chaud ; bord=orange
     spawnPuff(this.ox+(Math.random()-0.5)*0.3*sc, 0.8, this.oz+(Math.random()-0.5)*0.3*sc,
-      Math.cos(ang)*out, up, Math.sin(ang)*out, 0.26+Math.random()*0.20, 0.7*sc, 2.0*sc,
-      1.0, 0.30+0.33*hot, 0.03+0.20*hot, 0.75, 3*sc, 2.5);
+      Math.cos(ang)*out, up, Math.sin(ang)*out, 0.22+Math.random()*0.16, 0.6*sc, 1.6*sc,
+      1.0, 0.30+0.33*hot, 0.03+0.20*hot, 0.75, 1.5*sc, 2.8);
   }
   _emitMuzzleSmoke(){   // FUMÉE : plus DISCRÈTE (moins grosse / dense / visible que la flamme)
     const sc=this.muzzleScale, ang=Math.random()*Math.PI*2, out=(0.6+Math.random()*1.4)*sc, w=0.16+Math.random()*0.09;
