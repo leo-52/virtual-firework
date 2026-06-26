@@ -178,6 +178,10 @@ que les hooks dont il a besoin : `dist` (distribution 3D), `dist2D` (forme face 
 - **Charge tuiles** : `maximumScreenSpaceError = 24` (tuiles plus grossières) pour alléger.
 - **Three.js** : `PointsMaterial` **ignore** la taille par-point → il faut régler
   `material.size` (global). La brillance vient du **punch HDR** (couleur ×~2, ACES encaisse), pas de l'accumulation de traînées.
+  → Les **étoiles** utilisent désormais un **ShaderMaterial** avec attribut `size` PAR point
+  (`uH=0.5·hauteurBuffer` reproduit la sizeAttenuation à l'identique) → on peut varier la taille
+  par étoile (ex. mosaïque : grosses comètes + petites secondaires via `cfg.splitStarSize`). Le pool
+  de traînées reste en `PointsMaterial` (taille globale 0.8).
 - **Traînée morte qui ne disparaît jamais** (corollaire du point ci-dessus) : comme `size`
   est ignoré, mettre `trailSize=0` ne cache PAS un grain mort — il restait figé à sa dernière
   **couleur** (faible mais non nulle) pour toujours, surtout l'amas dense d'étincelles **muzzle**
