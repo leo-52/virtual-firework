@@ -160,7 +160,11 @@ const GOLD=new THREE.Color(1.0,0.72,0.32), DIMGOLD=new THREE.Color(0.55,0.40,0.1
   SILVER=new THREE.Color(0.82,0.88,1.0), PINK=new THREE.Color(1.0,0.30,0.55),
   CYAN=new THREE.Color(0.25,0.9,1.0), YEL=new THREE.Color(1.0,0.92,0.30),
   GRN=new THREE.Color(0.3,1.0,0.45), BLU=new THREE.Color(0.4,0.55,1.0),
-  RED=new THREE.Color(1.0,0.14,0.18), PURP=new THREE.Color(0.6,0.35,1.0);
+  RED=new THREE.Color(1.0,0.14,0.18), PURP=new THREE.Color(0.6,0.35,1.0),
+  ORANGE=new THREE.Color(1.0,0.50,0.12), WHITE=new THREE.Color(1.0,1.0,1.0);
+// "1 couleur aléatoire" de la mosaïque assortie (parmi des teintes vives distinctes)
+const MIX_RAND=[GRN,BLU,PURP,RED,ORANGE,WHITE];
+function randMixColor(){ return MIX_RAND[Math.floor(Math.random()*MIX_RAND.length)]; }
 
 // ============================================================================
 // DISTRIBUTIONS 3D : dist(i,n,rnd) -> {dx,dy,dz, spMul, comp?}
@@ -277,7 +281,7 @@ function behaveMosaic(d,A,dt,ctx){
     const v=vrand(Math.random), esp=base*(0.95+Math.random()*0.85);          // spray SPHÉRIQUE + PUNCH (accélération)
     const ix=v[0]+d.vx/base*0.12, iy=v[1]+d.vy/base*0.12, iz=v[2]+d.vz/base*0.12; // garde un peu l'élan de la comète
     const L=Math.hypot(ix,iy,iz)||1;
-    ctx.addStar(px,py,pz, ix/L*esp, iy/L*esp, iz/L*esp, 0.85+Math.random()*0.7, d.comp, true);
+    ctx.addStar(px,py,pz, ix/L*esp, iy/L*esp, iz/L*esp, 0.85+Math.random()*0.7, d.comp, true, d.coreColor);
   }
   d.age=d.life;
 }
@@ -344,6 +348,8 @@ const EFFECTS = {
              trailing:{emitUntil:0.9, period:0.012, grain:1.1, gF:0.4, lifeMul:1.4, color:GOLD} },
   mosaic:  { apex:100, heat:false, stars:7, nMax:36, coreSplit:4, starSize:3.8, splitStarSize:2.2, lifeBase75:3.0, color:SILVER, speedMul:1.8,
              dist:distMosaic, behave:behaveMosaic, trailing:{emitUntil:0.9, period:0.012, grain:1.2, gF:0.45, lifeMul:1.9, color:SILVER} },  // 75mm = 7 comètes, chacune se redivise en 4
+  mosaicMix:{ apex:100, heat:false, stars:7, nMax:36, coreSplit:4, starSize:3.8, splitStarSize:2.2, lifeBase75:3.0, speedMul:1.8, assorted:true,
+             dist:distMosaic, behave:behaveMosaic, trailing:{emitUntil:0.9, period:0.012, grain:1.2, gF:0.45, lifeMul:1.9, color:SILVER} },  // ASSORTIE : 2 rose, 2 citron, 2 aqua, 1 aléatoire
 
   // === SOL / SPÉCIAUX ===
   mine:   { color:GOLD, gerbe:{ dur:2.0, rate:380, cone:0.18, speedMul:1.25, grain:1.1 } }, // pot à feu : gerbe au sol, MONTE HAUT
@@ -354,7 +360,7 @@ export const LABELS = { peony:'pivoine', chrysanthemum:'chrysanthème', willow:'
   sphere:'sphère', ring:'couronne', crackling:'crackling', dragonEgg:'œuf de dragon', strobe:'scintillant',
   fallingLeaves:'feuille morte', palm:'palme', heart:'cœur', butterfly:'papillon', smiley:'smiley',
   daisy:'marguerite', atom:'atome', halfHalf:'demi-demi', medusa:'méduse', horsetail:'queue de cheval',
-  cascade:'cascade', fish:'poisson', spinner:'tourbillon', saucer:'soucoupe', mosaic:'mosaïque',
+  cascade:'cascade', fish:'poisson', spinner:'tourbillon', saucer:'soucoupe', mosaic:'mosaïque', mosaicMix:'mosaïque assortie',
   mine:'pot à feu', salute:'salut' };
 
 // ============================================================================
@@ -423,13 +429,14 @@ class Shell {
       trailing:!!trailing, since:0, lastX:this.bx, lastY:this.cfg.apex, lastZ:this.bz };
   }
 
-  addStar(px,py,pz, vx,vy,vz, life, comp, trailing){
+  addStar(px,py,pz, vx,vy,vz, life, comp, trailing, coreColor){
     if (this.nAlive>=this.nMax) return; const i=this.nAlive++;
     this.pos[i*3]=px; this.pos[i*3+1]=py; this.pos[i*3+2]=pz;
     this.size[i]=(this.cfg.splitStarSize||this.cfg.starSize)*STAR_SCALE;   // étoiles issues d'une division = + petites
     this.geo.attributes.size.needsUpdate=true;
     const s=this._newStar(vx,vy,vz, comp, trailing);
     s.life=life; s._i=i; s._split=true; s.lastX=px; s.lastY=py; s.lastZ=pz;
+    if (coreColor) s.coreColor=coreColor;   // les secondaires héritent de la couleur de leur comète (mosaïque assortie)
     this.data[i]=s;
   }
 
@@ -445,6 +452,14 @@ class Shell {
       const aV=cross(N,aU), roll=Math.random()*Math.PI*2;
       plane={aU,aV,CR:Math.cos(roll),SR:Math.sin(roll)};
     } else n=this.cfg.stars;
+    // MOSAÏQUE ASSORTIE : 7 comètes = 2 rose, 2 citron, 2 aqua, 1 aléatoire (mélangées dans le ciel).
+    // Chaque comète garde sa couleur quand elle se redivise (héritée par les secondaires).
+    let assorted=null;
+    if (this.cfg.assorted){
+      assorted=[PINK,PINK,YEL,YEL,CYAN,CYAN, randMixColor()];
+      for (let k=assorted.length-1;k>0;k--){ const j=Math.floor(Math.random()*(k+1));
+        const t=assorted[k]; assorted[k]=assorted[j]; assorted[j]=t; }
+    }
     this.nAlive=n;
     for (let i=0;i<n;i++){
       this.pos[i*3]=bx; this.pos[i*3+1]=apex; this.pos[i*3+2]=bz;
@@ -458,7 +473,7 @@ class Shell {
       } else { dir=this.cfg.dist(i,n,Math.random); comp=dir.comp||0; }
       const sp=speed*(dir.spMul||1)*(1-jit+Math.random()*2*jit);
       const s=this._newStar(dir.dx*sp, dir.dy*sp, dir.dz*sp, comp, this.cfg.trailing);
-      s._i=i; s._split=false; this.data[i]=s;
+      s._i=i; s._split=false; if (assorted) s.coreColor=assorted[i%assorted.length]; this.data[i]=s;
     }
     // PISTIL : un cœur d'étoiles plus petit (ex CRACKLING <couleur> = pivoine couleur + pistil
     // doré qui CRÉPITE). Les étoiles du cœur (d.crackle) poppent en blanc, surtout vers la fin.
@@ -611,7 +626,7 @@ class Shell {
 
       if (tr && A<tr.emitUntil){ d.since+=dt;
         if (d.since>tr.period){ const mx=(d.lastX+px)*0.5, my=(d.lastY+py)*0.5, mz=(d.lastZ+pz)*0.5;
-          const tc=tr.color||GOLD;
+          const tc=d.coreColor||tr.color||GOLD;   // traînée colorée pour les comètes assorties
           spawnTrail(mx,my,mz, tc.r,tc.g,tc.b, tr.grain, tr.gF, tr.lifeMul, d.vx,d.vy,d.vz);
           d.lastX=px; d.lastY=py; d.lastZ=pz; d.since=0; } }
     }
