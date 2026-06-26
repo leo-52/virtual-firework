@@ -237,8 +237,8 @@ function behaveSaucer(d,A,dt,ctx){
 }
 function behaveMosaic(d,A,dt,ctx){
   if (d._split) return;                                                 // secondaires : ne re-forkent jamais
-  if (d._splitAt===undefined) d._splitAt = 0.42 + Math.random()*0.52;   // instant de fork ALÉATOIRE par comète (0.42..0.94)
-  if (A < d._splitAt) return;
+  if (d._splitAt===undefined) d._splitAt = 1.8 + Math.random()*0.4;     // DÉLAI burst->division ≈ 2s (1.8..2.2) ALÉATOIRE par comète
+  if (d.age < d._splitAt) return;
   d._split=true;                                                        // chaque comète primaire = une VRAIE MINI-EXPLOSION
   const px=ctx.pos[d._i*3],py=ctx.pos[d._i*3+1],pz=ctx.pos[d._i*3+2];
   const base=ctx.cfg.burstRadius, n=ctx.cfg.coreSplit||12;
@@ -314,7 +314,7 @@ const EFFECTS = {
   saucer:  { apex:60, heat:false, stars:1, starSize:4.6, lifeBase75:3.5, gravStar:0.85, dragStar:0.22,
              color:GOLD, headSize:3.0, riseColor:GOLD, dist:distSaucer, behave:behaveSaucer,
              trailing:{emitUntil:0.9, period:0.012, grain:1.1, gF:0.4, lifeMul:1.4, color:GOLD} },
-  mosaic:  { apex:100, heat:false, stars:7, nMax:36, coreSplit:4, starSize:2.4, lifeBase75:1.85, color:SILVER, speedMul:1.8,
+  mosaic:  { apex:100, heat:false, stars:7, nMax:36, coreSplit:4, starSize:2.4, lifeBase75:3.0, color:SILVER, speedMul:1.8,
              dist:distMosaic, behave:behaveMosaic, trailing:{emitUntil:0.9, period:0.012, grain:1.2, gF:0.45, lifeMul:1.9, color:SILVER} },  // 75mm = 7 comètes, chacune se redivise en 4
 
   // === SOL / SPÉCIAUX ===
