@@ -265,7 +265,7 @@ function behaveSaucer(d,A,dt,ctx){
 }
 function behaveMosaic(d,A,dt,ctx){
   if (d._split) return;                                                 // secondaires : ne re-forkent jamais
-  if (d._splitAt===undefined) d._splitAt = 1.8 + Math.random()*0.4;     // DÉLAI burst->division ≈ 2s (1.8..2.2) ALÉATOIRE par comète
+  if (d._splitAt===undefined) d._splitAt = 1.5 + Math.random()*0.5;     // DÉLAI burst->division : 1.5..2.0s ALÉATOIRE par comète
   if (d.age < d._splitAt) return;
   d._split=true;                                                        // chaque comète primaire = une VRAIE MINI-EXPLOSION
   const px=ctx.pos[d._i*3],py=ctx.pos[d._i*3+1],pz=ctx.pos[d._i*3+2];
