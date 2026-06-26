@@ -236,17 +236,18 @@ function behaveSaucer(d,A,dt,ctx){
     spawnTrail(px,py,pz, GOLD.r,GOLD.g,GOLD.b, 0.9,0.4,0.8, s[0]*4,s[1]*4,s[2]*4); }
 }
 function behaveMosaic(d,A,dt,ctx){
-  if (d._split || A<0.80) return; d._split=true;
-  const sp=Math.hypot(d.vx,d.vy,d.vz)||1, dir=[d.vx/sp,d.vy/sp,d.vz/sp];
-  let aU=cross(dir,[0,1,0]); if(len2(aU)<0.01)aU=cross(dir,[1,0,0]); aU=norm(aU);
-  const aV=cross(dir,aU), roll=Math.random()*Math.PI;
+  if (d._split || A<0.80) return; d._split=true;   // chaque comète primaire = une VRAIE MINI-EXPLOSION
   const px=ctx.pos[d._i*3],py=ctx.pos[d._i*3+1],pz=ctx.pos[d._i*3+2];
-  for(let c=0;c<4;c++){ const a2=roll+c*Math.PI/2+(Math.random()-0.55)*1.1;
-    let ex=aU[0]*Math.cos(a2)+aV[0]*Math.sin(a2)+dir[0]*(Math.random()*0.4-0.1);
-    let ey=aU[1]*Math.cos(a2)+aV[1]*Math.sin(a2)+dir[1]*(Math.random()*0.4-0.1);
-    let ez=aU[2]*Math.cos(a2)+aV[2]*Math.sin(a2)+dir[2]*(Math.random()*0.4-0.1);
-    const L=Math.hypot(ex,ey,ez)||1, esp=ctx.cfg.burstRadius*(0.55+Math.random()*0.5);
-    ctx.addStar(px,py,pz, ex/L*esp,ey/L*esp,ez/L*esp, 1.2+Math.random()*0.8, d.comp, true); }
+  const base=ctx.cfg.burstRadius, n=ctx.cfg.coreSplit||12;
+  // petit flash d'éclatement (la "détonation" du 2e étage)
+  spawnTrail(px,py,pz, 1.0,0.85,0.6, 1.6, 0.2, 0.5);
+  spawnTrail(px,py,pz, 1.0,0.85,0.6, 1.6, 0.2, 0.5);
+  for(let c=0;c<n && ctx.nAlive<ctx.nMax;c++){
+    const v=vrand(Math.random), esp=base*(0.95+Math.random()*0.85);          // spray SPHÉRIQUE + PUNCH (accélération)
+    const ix=v[0]+d.vx/base*0.12, iy=v[1]+d.vy/base*0.12, iz=v[2]+d.vz/base*0.12; // garde un peu l'élan de la comète
+    const L=Math.hypot(ix,iy,iz)||1;
+    ctx.addStar(px,py,pz, ix/L*esp, iy/L*esp, iz/L*esp, 0.85+Math.random()*0.7, d.comp, true);
+  }
   d.age=d.life;
 }
 
@@ -310,8 +311,8 @@ const EFFECTS = {
   saucer:  { apex:60, heat:false, stars:1, starSize:4.6, lifeBase75:3.5, gravStar:0.85, dragStar:0.22,
              color:GOLD, headSize:3.0, riseColor:GOLD, dist:distSaucer, behave:behaveSaucer,
              trailing:{emitUntil:0.9, period:0.012, grain:1.1, gF:0.4, lifeMul:1.4, color:GOLD} },
-  mosaic:  { apex:100, heat:false, stars:8, nMax:44, starSize:2.4, lifeBase75:1.85, color:SILVER, speedMul:1.8,
-             dist:distMosaic, behave:behaveMosaic, trailing:{emitUntil:0.85, period:0.014, grain:1.0, gF:0.45, lifeMul:1.4, color:SILVER} },
+  mosaic:  { apex:100, heat:false, stars:8, nMax:112, coreSplit:12, starSize:2.4, lifeBase75:1.85, color:SILVER, speedMul:1.8,
+             dist:distMosaic, behave:behaveMosaic, trailing:{emitUntil:0.9, period:0.012, grain:1.2, gF:0.45, lifeMul:1.9, color:SILVER} },
 
   // === SOL / SPÉCIAUX ===
   mine:   { color:GOLD, gerbe:{ dur:2.0, rate:380, cone:0.18, speedMul:1.25, grain:1.1 } }, // pot à feu : gerbe au sol, MONTE HAUT
