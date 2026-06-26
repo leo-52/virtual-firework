@@ -23,6 +23,34 @@ function makeStarTexture(){
 }
 const starTex = makeStarTexture();
 
+// Matériau des ÉTOILES : ShaderMaterial avec TAILLE PAR POINT (attribut `size`) — PointsMaterial
+// ne sait appliquer qu'une taille globale. `uH = 0.5·hauteurBuffer` reproduit exactement la
+// "sizeAttenuation" de PointsMaterial -> même rendu qu'avant pour une taille uniforme.
+const STAR_VS = `
+  attribute float size;
+  attribute vec3 aColor;
+  uniform float uH;
+  varying vec3 vCol;
+  void main(){
+    vCol = aColor;
+    vec4 mv = modelViewMatrix * vec4(position, 1.0);
+    gl_PointSize = size * (uH / -mv.z);
+    gl_Position = projectionMatrix * mv;
+  }`;
+const STAR_FS = `
+  uniform sampler2D uTex;
+  varying vec3 vCol;
+  void main(){
+    vec4 t = texture2D(uTex, gl_PointCoord);
+    gl_FragColor = vec4(vCol * t.rgb, t.a);   // additif : couleur HDR × alpha du sprite
+  }`;
+function makeStarMat(){
+  return new THREE.ShaderMaterial({
+    uniforms:{ uTex:{value:starTex}, uH:{value:0.5*innerHeight*Math.min(devicePixelRatio,2)} },
+    vertexShader:STAR_VS, fragmentShader:STAR_FS,
+    transparent:true, blending:THREE.AdditiveBlending, depthWrite:false });
+}
+
 // --- pool de traînées (comète, gerbe mine, grains des effets traînants) ---
 const TRAIL_MAX = 16000;
 const trailPos  = new Float32Array(TRAIL_MAX * 3);
@@ -314,7 +342,7 @@ const EFFECTS = {
   saucer:  { apex:60, heat:false, stars:1, starSize:4.6, lifeBase75:3.5, gravStar:0.85, dragStar:0.22,
              color:GOLD, headSize:3.0, riseColor:GOLD, dist:distSaucer, behave:behaveSaucer,
              trailing:{emitUntil:0.9, period:0.012, grain:1.1, gF:0.4, lifeMul:1.4, color:GOLD} },
-  mosaic:  { apex:100, heat:false, stars:7, nMax:36, coreSplit:4, starSize:2.4, lifeBase75:3.0, color:SILVER, speedMul:1.8,
+  mosaic:  { apex:100, heat:false, stars:7, nMax:36, coreSplit:4, starSize:3.8, splitStarSize:2.2, lifeBase75:3.0, color:SILVER, speedMul:1.8,
              dist:distMosaic, behave:behaveMosaic, trailing:{emitUntil:0.9, period:0.012, grain:1.2, gF:0.45, lifeMul:1.9, color:SILVER} },  // 75mm = 7 comètes, chacune se redivise en 4
 
   // === SOL / SPÉCIAUX ===
@@ -367,12 +395,13 @@ class Shell {
 
     const m=this.nMax;
     this.pos=new Float32Array(m*3); this.col=new Float32Array(m*3);
+    this.size=new Float32Array(m).fill(this.cfg.starSize*STAR_SCALE);   // taille PAR étoile (défaut = taille de l'effet)
     this.lpos=new Float32Array(m*2*3); this.lcol=new Float32Array(m*2*3);
     this.geo=new THREE.BufferGeometry();
     this.geo.setAttribute('position', new THREE.BufferAttribute(this.pos,3));
-    this.geo.setAttribute('color',    new THREE.BufferAttribute(this.col,3));
-    this.mat=new THREE.PointsMaterial({ size:this.cfg.starSize*STAR_SCALE, map:starTex, vertexColors:true,
-      transparent:true, blending:THREE.AdditiveBlending, depthWrite:false, sizeAttenuation:true });
+    this.geo.setAttribute('aColor',   new THREE.BufferAttribute(this.col,3));
+    this.geo.setAttribute('size',     new THREE.BufferAttribute(this.size,1));
+    this.mat=makeStarMat();
     this.points=new THREE.Points(this.geo,this.mat); this.points.visible=false; scene.add(this.points);
     this.lgeo=new THREE.BufferGeometry();
     this.lgeo.setAttribute('position', new THREE.BufferAttribute(this.lpos,3));
@@ -397,6 +426,8 @@ class Shell {
   addStar(px,py,pz, vx,vy,vz, life, comp, trailing){
     if (this.nAlive>=this.nMax) return; const i=this.nAlive++;
     this.pos[i*3]=px; this.pos[i*3+1]=py; this.pos[i*3+2]=pz;
+    this.size[i]=(this.cfg.splitStarSize||this.cfg.starSize)*STAR_SCALE;   // étoiles issues d'une division = + petites
+    this.geo.attributes.size.needsUpdate=true;
     const s=this._newStar(vx,vy,vz, comp, trailing);
     s.life=life; s._i=i; s._split=true; s.lastX=px; s.lastY=py; s.lastZ=pz;
     this.data[i]=s;
@@ -584,7 +615,7 @@ class Shell {
           spawnTrail(mx,my,mz, tc.r,tc.g,tc.b, tr.grain, tr.gF, tr.lifeMul, d.vx,d.vy,d.vz);
           d.lastX=px; d.lastY=py; d.lastZ=pz; d.since=0; } }
     }
-    this.geo.attributes.position.needsUpdate=true; this.geo.attributes.color.needsUpdate=true;
+    this.geo.attributes.position.needsUpdate=true; this.geo.attributes.aColor.needsUpdate=true;
     this.lgeo.attributes.position.needsUpdate=true; this.lgeo.attributes.color.needsUpdate=true;
 
     if (this.phase==='burst' && alive===0){
