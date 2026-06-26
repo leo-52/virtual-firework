@@ -275,7 +275,8 @@ const EFFECTS = {
            trailing:{emitUntil:0.97, period:0.012, grain:1.3, gF:0.35, lifeMul:1.8, color:GOLD} },
   sphere: { speedJit:0.02 },
   ring: { apex:110, burstRadius:16, stars:30, dist2D:shapeRing, orient:'random', heat:false, color:GRN },
-  crackling: { apex:95, heat:false, color:GOLD, onStar:crackleFn },
+  crackling: { apex:95, heat:false, color:CYAN, core:{ stars:18, radiusMul:0.42, color:GOLD } }, // pivoine COULEUR + pistil doré crépitant
+  dragonEgg: { apex:95, heat:false, color:GOLD, onStar:crackleFn },                                // ŒUF DE DRAGON : crackle sur TOUT le break
   strobe: { apex:112, heat:false, color:SILVER, onStar:strobeFn, lifeBase75:2.4, gravStar:0.55 },
   fallingLeaves: { apex:95, dist:distLeaves, heat:false, color:new THREE.Color(1.0,0.45,0.55),
                    gravStar:0.26, dragStar:0.85, lifeBase75:6.0, speedMul:0.7, sway:7, starSize:2.4 },
@@ -318,7 +319,7 @@ const EFFECTS = {
 };
 
 export const LABELS = { peony:'pivoine', chrysanthemum:'chrysanthème', willow:'saule (kamuro)', comet:'comète',
-  sphere:'sphère', ring:'couronne', crackling:'œuf de dragon', strobe:'scintillant',
+  sphere:'sphère', ring:'couronne', crackling:'crackling', dragonEgg:'œuf de dragon', strobe:'scintillant',
   fallingLeaves:'feuille morte', palm:'palme', heart:'cœur', butterfly:'papillon', smiley:'smiley',
   daisy:'marguerite', atom:'atome', halfHalf:'demi-demi', medusa:'méduse', horsetail:'queue de cheval',
   cascade:'cascade', fish:'poisson', spinner:'tourbillon', saucer:'soucoupe', mosaic:'mosaïque',
@@ -328,10 +329,11 @@ export const LABELS = { peony:'pivoine', chrysanthemum:'chrysanthème', willow:'
 // SHELL
 // ============================================================================
 class Shell {
-  constructor(arch, ox, oz, cal){
+  constructor(arch, ox, oz, cal, opts){
     this.arch = EFFECTS[arch] ? arch : 'peony';
     this.cfg = Object.assign({}, BASE, EFFECTS[this.arch]);
     this.cfg.apex *= APEX_SCALE;   // abaisse TOUTES les hauteurs d'un coup (cfg est une copie -> safe)
+    if (opts && opts.color) this.cfg.color = opts.color;   // override couleur (ex "crackling aqua", "mosaïque rouge")
     this.cal = cal || 75;
     this.ox = ox||0; this.oz = oz||0;
     this.bx = this.ox + (Math.random()-0.5)*this.cfg.riseLean;
@@ -340,7 +342,7 @@ class Shell {
     // riseTime suit l'apex (×APEX_SCALE) -> la vitesse de montée reste identique (pas de comète molle)
     this.riseTime = this.cfg.riseTime * APEX_SCALE * (0.95 + Math.random()*0.10);
     this.headLastX=this.ox; this.headLastY=0; this.headLastZ=this.oz; this.headTimer=0;
-    this.nMax = this.cfg.nMax || this.cfg.stars; this.nAlive = 0;
+    this.nMax = (this.cfg.nMax || this.cfg.stars) + (this.cfg.core ? this.cfg.core.stars : 0); this.nAlive = 0;
     this.data = []; this.flash=null; this.hasMuzzle=false;
 
     if (this.cfg.gerbe){               // POT À FEU : pas de montée ni burst, gerbe au sol
@@ -423,6 +425,17 @@ class Shell {
       const s=this._newStar(dir.dx*sp, dir.dy*sp, dir.dz*sp, comp, this.cfg.trailing);
       s._i=i; s._split=false; this.data[i]=s;
     }
+    // PISTIL : un cœur d'étoiles plus petit (ex CRACKLING <couleur> = pivoine couleur + pistil
+    // doré qui CRÉPITE). Les étoiles du cœur (d.crackle) poppent en blanc, surtout vers la fin.
+    if (this.cfg.core){
+      const co=this.cfg.core, cn=co.stars, csp=speed*co.radiusMul;
+      for (let j=0;j<cn && this.nAlive<this.nMax;j++){
+        const i=this.nAlive++, dir=distFibonacci(j,cn,Math.random), sp2=csp*(0.8+Math.random()*0.45);
+        this.pos[i*3]=bx; this.pos[i*3+1]=apex; this.pos[i*3+2]=bz;
+        const s=this._newStar(dir.dx*sp2, dir.dy*sp2, dir.dz*sp2, 0, false);
+        s._i=i; s._split=false; s.crackle=true; s.coreColor=co.color; this.data[i]=s;
+      }
+    }
     this.points.visible=true; this.lines.visible=true;
     const big=this.cfg.flashBig;
     const fg=new THREE.SphereGeometry(0.6,16,16);
@@ -469,7 +482,8 @@ class Shell {
   }
 
   heatColor(A,d){
-    const c=this.cfg.colors ? this.cfg.colors[(d.comp||0)%this.cfg.colors.length] : this.cfg.color;
+    const c=d.coreColor ? d.coreColor
+      : (this.cfg.colors ? this.cfg.colors[(d.comp||0)%this.cfg.colors.length] : this.cfg.color);
     let r,g,b;
     if (this.cfg.heat){ r=1.0;
       if (A<0.6){ g=(c.g+0.06)-0.06*(A/0.6); b=c.b+0.015; }
@@ -547,6 +561,10 @@ class Shell {
       if (this.cfg.onStar){ const o=this.cfg.onStar(d,A,dt); if (o){
         if (o.intenMul!=null) inten*=o.intenMul;
         if (o.whiteMix){ const w=o.whiteMix; r=r+(1-r)*w; g=g+(1-g)*w; b=b+(1-b)*w; } } }
+      // PISTIL crépitant : pops blancs vifs sur les étoiles du cœur, de + en + vers la FIN
+      if (d.crackle){ d.popOn=(d.popOn||0)-dt;
+        if (d.popOn<=0 && Math.random()<(2.5+9*A)*dt) d.popOn=0.045;
+        if (d.popOn>0){ inten*=2.6; const w=0.92; r=r+(1-r)*w; g=g+(1-g)*w; b=b+(1-b)*w; } }
       this.col[i*3]=r*inten; this.col[i*3+1]=g*inten; this.col[i*3+2]=b*inten;
 
       const mbk=0.07;

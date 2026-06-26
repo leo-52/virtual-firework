@@ -21,7 +21,9 @@
     import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
     import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
     import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
-    import { __scene, __Shell, __updateTrails, __updatePuffs } from './src/render/threeFireworks.js?preview';
+    // import DYNAMIQUE horodaté -> on charge toujours le dernier moteur (sinon ?preview reste en cache)
+    const { __scene, __Shell, __updateTrails, __updatePuffs } =
+      await import('./src/render/threeFireworks.js?preview=' + Date.now());
 
     const W = innerWidth, H = innerHeight;
     const renderer = new THREE.WebGLRenderer({ antialias:true, preserveDrawingBuffer:true });
@@ -48,9 +50,11 @@
     const settle = n => { for (let i=0;i<n;i++) step(); };   // laisse mourir le tir précédent + vide les pools
 
     // Joue un effet 75mm jusqu'au burst, +burstFrames frames, puis rend UNE image (statique = screenshot OK).
-    window.__show = (arch, burstFrames, label) => {
+    // rgb (optionnel) = [r,g,b] 0..1 -> override de couleur (ex "crackling aqua", "mosaïque rouge").
+    window.__show = (arch, burstFrames, label, rgb) => {
       settle(280);
-      shell = new __Shell(arch, 0, 0, 75);
+      const opts = rgb ? { color: new THREE.Color(rgb[0], rgb[1], rgb[2]) } : undefined;
+      shell = new __Shell(arch, 0, 0, 75, opts);
       let g = 0; while (shell.phase !== 'burst' && g++ < 500) step();
       for (let i=0;i<burstFrames;i++) step();
       document.getElementById('lbl').textContent = label || arch;
