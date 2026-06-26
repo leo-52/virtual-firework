@@ -108,13 +108,13 @@ Object.assign(pick.style, { position:'fixed', top:'10px', right:'10px', zIndex:'
 for (const [k, label] of Object.entries(LABELS)){
   const o = document.createElement('option'); o.value = k; o.textContent = label; pick.appendChild(o);
 }
-pick.value = 'mosaicMix';
+pick.value = 'palm';
 // changer d'effet dans le menu -> couleur PAR DÉFAUT de l'effet (null annule l'override de la démo)
 pick.addEventListener('change', e => layer.setFocus(e.target.value, null));
 document.body.appendChild(pick);
 
-// DÉMO (pour l'instant) : MOSAÏQUE ASSORTIE en boucle (2 rose, 2 citron, 2 aqua, 1 aléatoire).
-layer.setFocus('mosaicMix');
+// DÉMO (pour l'instant) : PALME VERTE en boucle.
+layer.setFocus('palm', { r:0.30, g:1.0, b:0.45 });
 
 // TIMELINE de lecture (barre en bas) + ESPACE = pause/play (fige les feux, caméra libre).
 const timeline = new Timeline(layer, LABELS);
