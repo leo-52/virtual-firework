@@ -619,7 +619,7 @@ export class ThreeFireworks {
     const vfov=(aspect>=1)?2*Math.atan(Math.tan(f.fov/2)/aspect):f.fov;
     this.camera.fov=THREE.MathUtils.radToDeg(vfov); this.camera.aspect=aspect; this.camera.updateProjectionMatrix(); }
   fire(arch){ this.current=EFFECTS[arch]?arch:'peony'; this.shell=new Shell(this.current,0,0);
-    if (this.hud) this.hud.innerHTML='<b>PrevoFX — aperçu web</b><br>'+(LABELS[this.current]||this.current)+' 75 · QZSD + clic-glisser'; }
+    if (this.hud) this.hud.innerHTML='<b>PrevoFX — aperçu web</b><br>'+(LABELS[this.current]||this.current)+' 75 · QZSD + clic-glisser · Espace = pause'; }
   fireNext(){ this.fire(this.focus); }
   setFocus(arch){ if (EFFECTS[arch]) this.focus=arch; }
   update(dt){

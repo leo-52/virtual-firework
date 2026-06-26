@@ -108,6 +108,9 @@ C'est **le knob unique** pour régler la hauteur globale.
   A/E bas-haut, **Shift = rapide**.
 - **Rotation** = clic gauche maintenu + glisser. **Molette** = dolly (avancer/reculer).
 - **Sol DUR** : la caméra ne descend pas sous le terrain.
+- **Espace = pause/play** (barre de lecture en bas, `src/timeline.js`) : fige la **sim des feux**
+  (artifices suspendus en l'air pour inspecter) ; la **caméra reste libre** (`main.js` passe `dt=0`
+  au layer mais le vrai `dt` à la caméra). La barre montre horloge + progression du tir + effet courant.
 
 ---
 
@@ -198,7 +201,9 @@ que les hooks dont il a besoin : `dist` (distribution 3D), `dist2D` (forme face 
       épais → rendre les étincelles plus fines (taille globale du pool de traînées).
 
 **Moyen terme (produit)**
-- [ ] **UI client** : choix du **lieu** (carte / adresse) + choix du **show** + **timeline**.
+- [x] **Timeline** v1 : barre de lecture en bas + **Espace = pause/play** (fige les feux, `src/timeline.js`).
+      Reste : un vrai **show** (séquence d'effets datés) + **scrub** ←/→ ±0,5 s (nécessite un sim rejouable déterministe).
+- [ ] **UI client** : choix du **lieu** (carte / adresse) + choix du **show**.
 - [ ] Brancher **`data/effets.json`** : dérivation auto archétype + calibre + couleurs par référence.
 - [ ] **Durées** calées sur la table Finale 3D par effet × calibre (cf `effets_reference.md`).
 - [ ] **Sons** procéduraux (crackling, sifflet, marron) — spec dans `effets_reference.md`, pas encore web.
