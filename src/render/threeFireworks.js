@@ -277,7 +277,7 @@ function behaveMosaic(d,A,dt,ctx){
     const v=vrand(Math.random), esp=base*(0.95+Math.random()*0.85);          // spray SPHÉRIQUE + PUNCH (accélération)
     const ix=v[0]+d.vx/base*0.12, iy=v[1]+d.vy/base*0.12, iz=v[2]+d.vz/base*0.12; // garde un peu l'élan de la comète
     const L=Math.hypot(ix,iy,iz)||1;
-    ctx.addStar(px,py,pz, ix/L*esp, iy/L*esp, iz/L*esp, 3.0+Math.random()*0.4, d.comp, true, d.coreColor);   // étoiles divisées : durée ~3.2s
+    ctx.addStar(px,py,pz, ix/L*esp, iy/L*esp, iz/L*esp, 2.8+Math.random()*0.4, d.comp, true, d.coreColor);   // étoiles divisées : durée 2.8..3.2s (aléatoire/étoile)
   }
   d.age=d.life;
 }
