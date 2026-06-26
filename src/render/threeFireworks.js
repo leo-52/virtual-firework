@@ -443,18 +443,18 @@ class Shell {
   }
 
   // SORTIE DU TUBE — 3 composantes (échelle ∝ calibre via muzzleScale) :
-  _emitMuzzleFlare(){   // grosse lueur de gueule = la SOURCE de lumière (en bas), très brève
+  _emitMuzzleFlare(){   // lueur de gueule (source lumière) : plus CHAUDE et plus CONTENUE (moins voyante)
     const sc=this.muzzleScale;
     spawnPuff(this.ox+(Math.random()-0.5)*0.4*sc, 1.0*sc, this.oz+(Math.random()-0.5)*0.4*sc,
-      0,(2+Math.random()*2)*sc,0, 0.22+Math.random()*0.12, 2.0*sc, 5.0*sc,
-      1.0,0.82,0.5, 0.85, 3*sc, 2.0);
+      0,(1.5+Math.random()*1.5)*sc,0, 0.20+Math.random()*0.10, 1.8*sc, 4.0*sc,
+      1.0,0.55,0.20, 0.62, 2*sc, 2.0);
   }
-  _emitMuzzleFlame(){   // FLAMME : jet ÉTROIT en bas qui CHAMPIGNONNE en montant ; jaune-blanc -> orange
+  _emitMuzzleFlame(){   // FLAMME : jet à la gueule -> PLUS BAS, PLUS ÉTROIT (proportion), PLUS CHAUD (orange)
     const sc=this.muzzleScale, ang=Math.random()*Math.PI*2, rad=Math.random()*Math.random();
-    const out=(1.2+rad*4.5)*sc, up=(9+Math.random()*7)*sc, hot=1-rad;   // coeur(rad~0)=chaud ; bord=orange
+    const out=(0.8+rad*3.0)*sc, up=(6+Math.random()*4)*sc, hot=1-rad;   // coeur(rad~0)=chaud ; bord=orange
     spawnPuff(this.ox+(Math.random()-0.5)*0.3*sc, 0.8, this.oz+(Math.random()-0.5)*0.3*sc,
-      Math.cos(ang)*out, up, Math.sin(ang)*out, 0.28+Math.random()*0.22, 0.7*sc, 2.4*sc,
-      1.0, 0.42+0.46*hot, 0.06+0.40*hot, 0.85, 6*sc, 2.3);
+      Math.cos(ang)*out, up, Math.sin(ang)*out, 0.26+Math.random()*0.20, 0.7*sc, 2.0*sc,
+      1.0, 0.30+0.33*hot, 0.03+0.20*hot, 0.75, 3*sc, 2.5);
   }
   _emitMuzzleSmoke(){   // FUMÉE : plus DISCRÈTE (moins grosse / dense / visible que la flamme)
     const sc=this.muzzleScale, ang=Math.random()*Math.PI*2, out=(0.6+Math.random()*1.4)*sc, w=0.16+Math.random()*0.09;
