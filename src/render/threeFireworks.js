@@ -631,3 +631,7 @@ export class ThreeFireworks {
   }
   render(){ this.syncCamera(); this.composer.render(); }
 }
+
+// Exports internes pour le BANC D'APERÇU hors-Cesium (_preview.html) — rendu réel d'un effet
+// pour capture d'écran. N'affecte pas l'app (rien ne les importe en prod).
+export { scene as __scene, Shell as __Shell, updateTrails as __updateTrails, updatePuffs as __updatePuffs };
