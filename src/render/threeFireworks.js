@@ -173,9 +173,11 @@ function distFibonacci(i,n,rnd){
 }
 function distComet(i,n,rnd){ let dx=(rnd()-0.5)*0.2,dy=1.0,dz=(rnd()-0.5)*0.2;
   const L=Math.hypot(dx,dy,dz)||1; return {dx:dx/L,dy:dy/L,dz:dz/L,spMul:0.45}; }
-function distPalm(i,n,rnd){ const az=2*Math.PI*(i/n)+(rnd()-0.5)*0.4, up=0.55+0.35*Math.random();
+// PALME : frondes réparties autour de l'axe mais ÉLEVÉES (~50-65°) -> elles montent haut puis
+// s'arquent/retombent en couronne de palmier (vs un anneau plat = "cercle" si l'élévation est basse).
+function distPalm(i,n,rnd){ const az=2*Math.PI*(i/n)+(rnd()-0.5)*0.5, up=1.0+Math.random()*0.7;
   let dx=Math.cos(az),dy=up,dz=Math.sin(az); const L=Math.hypot(dx,dy,dz)||1;
-  return {dx:dx/L,dy:dy/L,dz:dz/L,spMul:1.6}; }
+  return {dx:dx/L,dy:dy/L,dz:dz/L,spMul:0.85}; }   // vitesse modérée -> les frondes culminent ~1.6s puis RETOMBENT (arc)
 function distLeaves(i,n,rnd){ const v=vrand(rnd); return {dx:v[0],dy:v[1],dz:v[2],spMul:0.45+rnd()*0.45}; }
 function distMedusa(i,n,rnd){ const v=vrand(rnd); let dy=Math.abs(v[2])*0.9+0.25, dx=v[0], dz=v[1];
   const L=Math.hypot(dx,dy,dz)||1; return {dx:dx/L,dy:dy/L,dz:dz/L,spMul:0.83}; }
@@ -312,8 +314,8 @@ const EFFECTS = {
   strobe: { apex:112, heat:false, color:SILVER, onStar:strobeFn, lifeBase75:2.4, gravStar:0.55 },
   fallingLeaves: { apex:95, dist:distLeaves, heat:false, color:new THREE.Color(1.0,0.45,0.55),
                    gravStar:0.26, dragStar:0.85, lifeBase75:6.0, speedMul:0.7, sway:7, starSize:2.4 },
-  palm: { apex:105, stars:15, dist:distPalm, heat:false, color:GOLD, gravStar:0.95, dragStar:0.35,   // 75mm = 15 frondes
-          lifeBase75:2.4, starSize:3.0, trailing:{emitUntil:0.88, period:0.015, grain:1.3, gF:0.40, lifeMul:1.8, color:GOLD} },
+  palm: { apex:105, stars:15, dist:distPalm, heat:false, color:GOLD, gravStar:1.0, dragStar:0.35,   // 75mm = 15 frondes
+          lifeBase75:2.8, starSize:3.4, trailing:{emitUntil:0.92, period:0.009, grain:1.3, gF:0.45, lifeMul:4.0, color:GOLD} },  // frondes = longues queues dorées denses qui arquent et retombent
 
   // === FORMES 2D (face public) ===
   heart:     { apex:90, heat:false, stars:64, starSize:2.4, dist2D:shapeHeart, colors:[RED] },
