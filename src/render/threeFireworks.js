@@ -173,11 +173,14 @@ function distFibonacci(i,n,rnd){
 }
 function distComet(i,n,rnd){ let dx=(rnd()-0.5)*0.2,dy=1.0,dz=(rnd()-0.5)*0.2;
   const L=Math.hypot(dx,dy,dz)||1; return {dx:dx/L,dy:dy/L,dz:dz/L,spMul:0.45}; }
-// PALME : frondes réparties autour de l'axe mais ÉLEVÉES (~50-65°) -> elles montent haut puis
-// s'arquent/retombent en couronne de palmier (vs un anneau plat = "cercle" si l'élévation est basse).
-function distPalm(i,n,rnd){ const az=2*Math.PI*(i/n)+(rnd()-0.5)*0.5, up=1.0+Math.random()*0.7;
-  let dx=Math.cos(az),dy=up,dz=Math.sin(az); const L=Math.hypot(dx,dy,dz)||1;
-  return {dx:dx/L,dy:dy/L,dz:dz/L,spMul:0.85}; }   // vitesse modérée -> les frondes culminent ~1.6s puis RETOMBENT (arc)
+// PALME : BOUQUET vers le HAUT, IRRÉGULIER. Directions aléatoires (jamais vers le bas), à des
+// élévations VARIÉES (de l'horizontale à la verticale) et des LONGUEURS variées (spMul) -> éventail
+// organique de frondes. (Avant : même élévation sur 360° = un cône dont le bord = un CERCLE parfait.)
+function distPalm(i,n,rnd){
+  const az=rnd()*Math.PI*2;                      // azimut ALÉATOIRE (pas régulier -> pas d'anneau)
+  const elev=(35+rnd()*35)*Math.PI/180;          // élévation VARIÉE 35-70° par fronde (casse le cône)
+  const ce=Math.cos(elev), se=Math.sin(elev);
+  return {dx:Math.cos(az)*ce, dy:se, dz:Math.sin(az)*ce, spMul:0.85+rnd()*0.5}; }   // frondes longues, longueurs variées
 function distLeaves(i,n,rnd){ const v=vrand(rnd); return {dx:v[0],dy:v[1],dz:v[2],spMul:0.45+rnd()*0.45}; }
 function distMedusa(i,n,rnd){ const v=vrand(rnd); let dy=Math.abs(v[2])*0.9+0.25, dx=v[0], dz=v[1];
   const L=Math.hypot(dx,dy,dz)||1; return {dx:dx/L,dy:dy/L,dz:dz/L,spMul:0.83}; }
