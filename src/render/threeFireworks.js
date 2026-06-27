@@ -314,7 +314,7 @@ const EFFECTS = {
   ring: { apex:110, burstRadius:16, stars:30, dist2D:shapeRing, orient:'random', heat:false, color:GRN },
   crackling: { apex:95, heat:false, color:CYAN, core:{ stars:18, radiusMul:0.42, color:GOLD } }, // pivoine COULEUR + pistil doré crépitant
   dragonEgg: { apex:95, heat:false, color:GOLD, lifeBase75:2.2,                                     // ŒUF DE DRAGON en 3 temps :
-    trailing:{emitUntil:0.8, period:0.015, grain:0.9, gF:0.40, lifeMul:1.5, color:GOLD},            //  1) chrysanthème DORÉ (traînées)
+    trailing:{emitUntil:0.9, period:0.012, grain:1.3, gF:0.40, lifeMul:4.5, color:GOLD},            //  1) chrysanthème DORÉ (traînées OR bien visibles)
     core:{ stars:24, radiusMul:0.28, color:GOLD, crackleAt:0.35, minCal:75 },                         //  2) le CENTRE claque (cœur, tôt) — PAS en 50mm (trop petit)
     crackleStars:{ delay:0.8, jitter:0.45 } },                                                       //  3) les étoiles de la chrysanthème claquent (retardé)
   strobe: { apex:112, heat:false, color:SILVER, onStar:strobeFn, lifeBase75:2.4, gravStar:0.55 },

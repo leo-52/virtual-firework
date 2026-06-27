@@ -40,6 +40,7 @@
     window.__cam = (fov, lookY, dist) => { camera.fov=fov; camera.position.set(0,1.75,dist);
       camera.lookAt(0,lookY,0); camera.updateProjectionMatrix(); };
 
+    window.__scene = __scene;   // pour inspection (compter les grains de traînée, etc.)
     const composer = new EffectComposer(renderer);
     composer.addPass(new RenderPass(__scene, camera));
     composer.addPass(new UnrealBloomPass(new THREE.Vector2(W, H), 0.3, 0.25, 0.12));
