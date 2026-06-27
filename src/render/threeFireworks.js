@@ -315,7 +315,7 @@ const EFFECTS = {
   fallingLeaves: { apex:95, dist:distLeaves, heat:false, color:new THREE.Color(1.0,0.45,0.55),
                    gravStar:0.26, dragStar:0.85, lifeBase75:6.0, speedMul:0.7, sway:7, starSize:2.4 },
   palm: { apex:105, stars:15, dist:distPalm, heat:false, color:WHITE, onStar:glitterFn, gravStar:1.0, dragStar:0.35,   // 75mm = 15 frondes ; étoile BLANCHE qui SCINTILLE + traînée OR (= "palme or scintillant blanc")
-          lifeBase75:2.8, starSize:3.4, trailing:{emitUntil:0.92, period:0.009, grain:1.3, gF:0.45, lifeMul:4.0, color:GOLD} },  // frondes = longues queues dorées denses qui arquent et retombent
+          lifeBase75:2.8, starSize:3.4, trailing:{emitUntil:0.97, period:0.006, grain:1.3, gF:0.45, lifeMul:9.0, color:GOLD} },  // FRONDES = TRÈS LONGUES queues dorées (marquent tout le trajet centre->pointe) = la palme
 
   // === FORMES 2D (face public) ===
   heart:     { apex:90, heat:false, stars:64, starSize:2.4, dist2D:shapeHeart, colors:[RED] },
