@@ -7,6 +7,7 @@ const _v = new URL(import.meta.url).search;   // ex "?v=1719..." (vide si charg�
 const { ThreeFireworks, LABELS } = await import('./render/threeFireworks.js' + _v);
 const { FpsCameraController } = await import('./cameraController.js' + _v);
 const { Timeline } = await import('./timeline.js' + _v);
+const { PyroAudio } = await import('./audio.js' + _v);
 
 // DÉCOR = Google Photorealistic 3D Tiles, mais VIA CESIUM ION (token gratuit), PAS la
 // clé Google directe. Raison (vérifiée) : Google BLOQUE les 3D tiles en accès direct par
@@ -119,6 +120,11 @@ layer.setFocus('dragonEgg');
 // TIMELINE de lecture (barre en bas) + ESPACE = pause/play (fige les feux, caméra libre).
 const timeline = new Timeline(layer, LABELS);
 
+// SON pyro synthétisé (1er clic/touche active l'audio). Pour l'instant : crépitement à l'éclatement
+// de l'œuf de dragon. (Web Audio, 100% synthétisé — aucun fichier/licence.)
+const audio = new PyroAudio();
+layer.onBurst = (arch) => { if (arch === 'dragonEgg') audio.dragonEgg(); };
+
 // BOUCLE DE RENDU UNIQUE — on PREND LA MAIN sur Cesium (sinon il s'endort quand la scène
 // est stable et tout se fige). On pilote nous-mêmes : sim -> décor Cesium -> overlay feux.
 viewer.useDefaultRenderLoop = false;        // Cesium ne gère plus sa propre boucle
@@ -140,4 +146,4 @@ function frame(){
 requestAnimationFrame(frame);
 
 // debug console : PrevoFX.focus('willow') change l'effet joué en boucle ; PrevoFX.fire('ring') tire une fois.
-window.PrevoFX = { viewer, layer, cam, timeline, fire: (a) => layer.fire(a), focus: (a) => layer.setFocus(a) };
+window.PrevoFX = { viewer, layer, cam, timeline, audio, fire: (a) => layer.fire(a), focus: (a) => layer.setFocus(a) };

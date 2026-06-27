@@ -667,7 +667,7 @@ export class ThreeFireworks {
     this.composer.addPass(new OutputPass());
     this._pe=new Cesium.Cartesian3(); this._de=new Cesium.Cartesian3(); this._ue=new Cesium.Cartesian3();
     this.setOrigin(origin);
-    this.shell=null; this.restDelay=0; this.focus='peony'; this.current='peony'; this.focusColor=null;
+    this.shell=null; this.restDelay=0; this.focus='peony'; this.current='peony'; this.focusColor=null; this.onBurst=null;
     this.hud = document.getElementById('hud');
     addEventListener('resize', () => this._resize());
   }
@@ -696,7 +696,8 @@ export class ThreeFireworks {
   update(dt){
     if (!this.shell || this.shell.dead){ this.restDelay-=dt;
       if (this.restDelay<=0){ this.fireNext(); this.restDelay=0.8; } }
-    if (this.shell) this.shell.update(dt);
+    if (this.shell){ const ph=this.shell.phase; this.shell.update(dt);
+      if (ph!=='burst' && this.shell.phase==='burst' && this.onBurst) this.onBurst(this.current); }  // hook son à l'éclatement
     updateTrails(dt);
     updatePuffs(dt);
   }
