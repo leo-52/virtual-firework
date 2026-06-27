@@ -160,7 +160,8 @@ const GOLD=new THREE.Color(1.0,0.72,0.32), DIMGOLD=new THREE.Color(0.55,0.40,0.1
   SILVER=new THREE.Color(0.82,0.88,1.0), PINK=new THREE.Color(1.0,0.30,0.55),
   CYAN=new THREE.Color(0.25,0.9,1.0), YEL=new THREE.Color(1.0,0.92,0.30),
   GRN=new THREE.Color(0.3,1.0,0.45), BLU=new THREE.Color(0.4,0.55,1.0),
-  RED=new THREE.Color(1.0,0.14,0.18), PURP=new THREE.Color(0.6,0.35,1.0), WHITE=new THREE.Color(1.0,1.0,1.0);
+  RED=new THREE.Color(1.0,0.14,0.18), PURP=new THREE.Color(0.6,0.35,1.0), WHITE=new THREE.Color(1.0,1.0,1.0),
+  BRIGHTGOLD=new THREE.Color(1.4,1.0,0.45);   // or HDR (traînées bien visibles à distance)
 
 // ============================================================================
 // DISTRIBUTIONS 3D : dist(i,n,rnd) -> {dx,dy,dz, spMul, comp?}
@@ -314,7 +315,7 @@ const EFFECTS = {
   ring: { apex:110, burstRadius:16, stars:30, dist2D:shapeRing, orient:'random', heat:false, color:GRN },
   crackling: { apex:95, heat:false, color:CYAN, core:{ stars:18, radiusMul:0.42, color:GOLD } }, // pivoine COULEUR + pistil doré crépitant
   dragonEgg: { apex:95, heat:false, color:GOLD, lifeBase75:2.2,                                     // ŒUF DE DRAGON en 3 temps :
-    trailing:{emitUntil:0.9, period:0.012, grain:1.3, gF:0.40, lifeMul:4.5, color:GOLD},            //  1) chrysanthème DORÉ (traînées OR bien visibles)
+    trailing:{emitUntil:0.92, period:0.01, grain:1.3, gF:0.40, lifeMul:6.0, color:BRIGHTGOLD},       //  1) chrysanthème DORÉ (traînées OR longues et lumineuses)
     core:{ stars:30, radiusMul:0.28, color:GOLD, crackleAt:0.35, minCal:75, popOnly:true },           //  2) le CENTRE = juste des POPS qui crépitent (pas d'étoile) — PAS en 50mm
     crackleStars:{ delay:0.8, jitter:0.45 } },                                                       //  3) les étoiles de la chrysanthème claquent (retardé)
   strobe: { apex:112, heat:false, color:SILVER, onStar:strobeFn, lifeBase75:2.4, gravStar:0.55 },
