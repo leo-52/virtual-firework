@@ -314,7 +314,7 @@ const EFFECTS = {
   sphere: { speedJit:0.02 },
   ring: { apex:110, burstRadius:16, stars:30, dist2D:shapeRing, orient:'random', heat:false, color:GRN },
   crackling: { apex:95, heat:false, color:CYAN, core:{ stars:18, radiusMul:0.42, color:GOLD } }, // pivoine COULEUR + pistil doré crépitant
-  dragonEgg: { apex:95, heat:false, color:GOLD, lifeBase75:2.6, starSize:2.0, arrow:true, speedMul:1.15,  // ŒUF DE DRAGON (envergure réduite) :
+  dragonEgg: { apex:95, heat:false, color:GOLD, lifeBase75:2.6, starSize:2.0, arrow:true, speedMul:1.25,  // ŒUF DE DRAGON (envergure ~40m) :
     trailing:{emitUntil:0.92, period:0.01, grain:1.3, gF:0.40, lifeMul:6.0, color:BRIGHTGOLD},       //  1) chrysanthème en FLÈCHES dorées (traînée or, pointe FAIBLE)
     core:{ stars:30, radiusMul:0.28, color:GOLD, crackleAt:1.0, minCal:75, popOnly:true },            //  2) le CENTRE = pops purs ~1s APRÈS l'éclatement (PAS en 50mm)
     crackleStars:{ delay:1.1, jitter:0.5, grow:3.0 } },                                               //  3) les étoiles claquent = PÉTARD (grossissent + blanc), après le centre
