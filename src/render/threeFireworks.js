@@ -312,7 +312,7 @@ const EFFECTS = {
   strobe: { apex:112, heat:false, color:SILVER, onStar:strobeFn, lifeBase75:2.4, gravStar:0.55 },
   fallingLeaves: { apex:95, dist:distLeaves, heat:false, color:new THREE.Color(1.0,0.45,0.55),
                    gravStar:0.26, dragStar:0.85, lifeBase75:6.0, speedMul:0.7, sway:7, starSize:2.4 },
-  palm: { apex:105, stars:11, dist:distPalm, heat:false, color:GOLD, gravStar:0.95, dragStar:0.35,
+  palm: { apex:105, stars:15, dist:distPalm, heat:false, color:GOLD, gravStar:0.95, dragStar:0.35,   // 75mm = 15 frondes
           lifeBase75:2.4, starSize:3.0, trailing:{emitUntil:0.88, period:0.015, grain:1.3, gF:0.40, lifeMul:1.8, color:GOLD} },
 
   // === FORMES 2D (face public) ===
