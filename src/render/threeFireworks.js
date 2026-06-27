@@ -313,7 +313,10 @@ const EFFECTS = {
   sphere: { speedJit:0.02 },
   ring: { apex:110, burstRadius:16, stars:30, dist2D:shapeRing, orient:'random', heat:false, color:GRN },
   crackling: { apex:95, heat:false, color:CYAN, core:{ stars:18, radiusMul:0.42, color:GOLD } }, // pivoine COULEUR + pistil doré crépitant
-  dragonEgg: { apex:95, heat:false, color:GOLD, onStar:crackleFn },                                // ŒUF DE DRAGON : crackle sur TOUT le break
+  dragonEgg: { apex:95, heat:false, color:GOLD, lifeBase75:2.2,                                     // ŒUF DE DRAGON en 3 temps :
+    trailing:{emitUntil:0.8, period:0.015, grain:0.9, gF:0.40, lifeMul:1.5, color:GOLD},            //  1) chrysanthème DORÉ (traînées)
+    core:{ stars:24, radiusMul:0.28, color:GOLD, crackleAt:0.35 },                                   //  2) le CENTRE claque (cœur, tôt)
+    crackleStars:{ delay:0.8, jitter:0.45 } },                                                       //  3) les étoiles de la chrysanthème claquent (retardé)
   strobe: { apex:112, heat:false, color:SILVER, onStar:strobeFn, lifeBase75:2.4, gravStar:0.55 },
   fallingLeaves: { apex:95, dist:distLeaves, heat:false, color:new THREE.Color(1.0,0.45,0.55),
                    gravStar:0.26, dragStar:0.85, lifeBase75:6.0, speedMul:0.7, sway:7, starSize:2.4 },
@@ -475,7 +478,9 @@ class Shell {
       } else { dir=this.cfg.dist(i,n,Math.random); comp=dir.comp||0; }
       const sp=speed*(dir.spMul||1)*(1-jit+Math.random()*2*jit);
       const s=this._newStar(dir.dx*sp, dir.dy*sp, dir.dz*sp, comp, this.cfg.trailing);
-      s._i=i; s._split=false; if (assorted) s.coreColor=assorted[i%assorted.length]; this.data[i]=s;
+      s._i=i; s._split=false; if (assorted) s.coreColor=assorted[i%assorted.length];
+      if (this.cfg.crackleStars){ s.crackle=true; s.crackleAt=this.cfg.crackleStars.delay+Math.random()*this.cfg.crackleStars.jitter; }  // crépite après délai (œuf de dragon)
+      this.data[i]=s;
     }
     // PISTIL : un cœur d'étoiles plus petit (ex CRACKLING <couleur> = pivoine couleur + pistil
     // doré qui CRÉPITE). Les étoiles du cœur (d.crackle) poppent en blanc, surtout vers la fin.
@@ -485,7 +490,7 @@ class Shell {
         const i=this.nAlive++, dir=distFibonacci(j,cn,Math.random), sp2=csp*(0.8+Math.random()*0.45);
         this.pos[i*3]=bx; this.pos[i*3+1]=apex; this.pos[i*3+2]=bz;
         const s=this._newStar(dir.dx*sp2, dir.dy*sp2, dir.dz*sp2, 0, false);
-        s._i=i; s._split=false; s.crackle=true; s.coreColor=co.color; this.data[i]=s;
+        s._i=i; s._split=false; s.crackle=true; s.crackleAt=co.crackleAt||0; s.coreColor=co.color; this.data[i]=s;
       }
     }
     this.points.visible=true; this.lines.visible=true;
@@ -614,9 +619,9 @@ class Shell {
         if (o.intenMul!=null) inten*=o.intenMul;
         if (o.whiteMix){ const w=o.whiteMix; r=r+(1-r)*w; g=g+(1-g)*w; b=b+(1-b)*w; } } }
       // PISTIL crépitant : pops blancs vifs sur les étoiles du cœur, de + en + vers la FIN
-      if (d.crackle){ d.popOn=(d.popOn||0)-dt;
-        if (d.popOn<=0 && Math.random()<(2.5+9*A)*dt) d.popOn=0.045;
-        if (d.popOn>0){ inten*=2.6; const w=0.92; r=r+(1-r)*w; g=g+(1-g)*w; b=b+(1-b)*w; } }
+      if (d.crackle && d.age>=(d.crackleAt||0)){ d.popOn=(d.popOn||0)-dt;
+        if (d.popOn<=0 && Math.random()<(6+10*A)*dt) d.popOn=0.04;     // pops DENSES
+        if (d.popOn>0){ inten*=2.8; const w=0.95; r=r+(1-r)*w; g=g+(1-g)*w; b=b+(1-b)*w; } }   // claquement BLANC vif
       this.col[i*3]=r*inten; this.col[i*3+1]=g*inten; this.col[i*3+2]=b*inten;
 
       const mbk=0.07;
