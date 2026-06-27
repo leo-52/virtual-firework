@@ -314,10 +314,10 @@ const EFFECTS = {
   sphere: { speedJit:0.02 },
   ring: { apex:110, burstRadius:16, stars:30, dist2D:shapeRing, orient:'random', heat:false, color:GRN },
   crackling: { apex:95, heat:false, color:CYAN, core:{ stars:18, radiusMul:0.42, color:GOLD } }, // pivoine COULEUR + pistil doré crépitant
-  dragonEgg: { apex:95, heat:false, color:GOLD, lifeBase75:2.2,                                     // ŒUF DE DRAGON en 3 temps :
-    trailing:{emitUntil:0.92, period:0.01, grain:1.3, gF:0.40, lifeMul:6.0, color:BRIGHTGOLD},       //  1) chrysanthème DORÉ (traînées OR longues et lumineuses)
-    core:{ stars:30, radiusMul:0.28, color:GOLD, crackleAt:0.35, minCal:75, popOnly:true },           //  2) le CENTRE = juste des POPS qui crépitent (pas d'étoile) — PAS en 50mm
-    crackleStars:{ delay:0.8, jitter:0.45 } },                                                       //  3) les étoiles de la chrysanthème claquent (retardé)
+  dragonEgg: { apex:95, heat:false, color:GOLD, lifeBase75:2.6, starSize:2.0, arrow:true, speedMul:1.15,  // ŒUF DE DRAGON (envergure réduite) :
+    trailing:{emitUntil:0.92, period:0.01, grain:1.3, gF:0.40, lifeMul:6.0, color:BRIGHTGOLD},       //  1) chrysanthème en FLÈCHES dorées (traînée or, pointe FAIBLE)
+    core:{ stars:30, radiusMul:0.28, color:GOLD, crackleAt:1.0, minCal:75, popOnly:true },            //  2) le CENTRE = pops purs ~1s APRÈS l'éclatement (PAS en 50mm)
+    crackleStars:{ delay:1.1, jitter:0.5, grow:3.0 } },                                               //  3) les étoiles claquent = PÉTARD (grossissent + blanc), après le centre
   strobe: { apex:112, heat:false, color:SILVER, onStar:strobeFn, lifeBase75:2.4, gravStar:0.55 },
   fallingLeaves: { apex:95, dist:distLeaves, heat:false, color:new THREE.Color(1.0,0.45,0.55),
                    gravStar:0.26, dragStar:0.85, lifeBase75:6.0, speedMul:0.7, sway:7, starSize:2.4 },
@@ -622,11 +622,16 @@ class Shell {
         if (o.intenMul!=null) inten*=o.intenMul;
         if (o.whiteMix){ const w=o.whiteMix; r=r+(1-r)*w; g=g+(1-g)*w; b=b+(1-b)*w; } } }
       // PISTIL crépitant : pops blancs vifs sur les étoiles du cœur, de + en + vers la FIN
-      if (d.crackle && d.age>=(d.crackleAt||0)){ d.popOn=(d.popOn||0)-dt;
-        if (d.popOn<=0 && Math.random()<(6+10*A)*dt) d.popOn=0.04;     // pops DENSES
-        if (d.popOnly){ inten = d.popOn>0 ? 3.2 : 0;                   // CŒUR : INVISIBLE entre 2 pops, juste un flash blanc
-          if (d.popOn>0){ r=1; g=1; b=0.95; } }
-        else if (d.popOn>0){ inten*=2.8; const w=0.95; r=r+(1-r)*w; g=g+(1-g)*w; b=b+(1-b)*w; } }  // étoile qui claque (garde son corps)
+      const crk = d.crackle && d.age>=(d.crackleAt||0);
+      if (crk){ d.popOn=(d.popOn||0)-dt;
+        if (d.popOn<=0 && Math.random()<(8+12*A)*dt) d.popOn=0.05;
+        if (d.popOnly){ inten = d.popOn>0 ? 3.4 : 0; if (d.popOn>0){ r=1; g=1; b=0.95; } }   // CŒUR : pops purs (invisible entre)
+        else if (this.cfg.crackleStars){                                                       // ÉTOILE = PÉTARD : GROSSIT + blanc + pulse
+          if (!d._grown){ d._grown=true; this.size[d._i]=this.cfg.starSize*(this.cfg.crackleStars.grow||2.5)*STAR_SCALE; this.geo.attributes.size.needsUpdate=true; }
+          r=1; g=1; b=0.95; inten *= (d.popOn>0 ? 3.0 : 1.15); }
+        else if (d.popOn>0){ inten*=2.8; const w=0.95; r=r+(1-r)*w; g=g+(1-g)*w; b=b+(1-b)*w; }  // pistil simple (crackling-aqua)
+      } else if (d.popOnly){ inten = 0; }                          // cœur : INVISIBLE avant de claquer
+        else if (this.cfg.arrow){ inten *= 0.22; }                 // FLÈCHE : pointe FAIBLE (la traînée or domine)
       this.col[i*3]=r*inten; this.col[i*3+1]=g*inten; this.col[i*3+2]=b*inten;
 
       const mbk=0.07;
@@ -636,7 +641,7 @@ class Shell {
       this.lcol[li]=hr*0.8; this.lcol[li+1]=hg*0.8; this.lcol[li+2]=hb*0.8;
       this.lcol[li+3]=hr*0.10; this.lcol[li+4]=hg*0.10; this.lcol[li+5]=hb*0.10;
 
-      if (tr && A<tr.emitUntil && !d.popOnly){ d.since+=dt;   // les pops du cœur n'ont pas de traînée
+      if (tr && A<tr.emitUntil && !d.popOnly && !d._grown){ d.since+=dt;   // pas de traînée pour le cœur ni les pétards (une fois éclatés)
         if (d.since>tr.period){ const mx=(d.lastX+px)*0.5, my=(d.lastY+py)*0.5, mz=(d.lastZ+pz)*0.5;
           const tc=d.coreColor||tr.color||GOLD;   // traînée colorée pour les comètes assorties
           spawnTrail(mx,my,mz, tc.r,tc.g,tc.b, tr.grain, tr.gF, tr.lifeMul, d.vx,d.vy,d.vz);
