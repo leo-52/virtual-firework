@@ -113,8 +113,8 @@ pick.value = 'palm';
 pick.addEventListener('change', e => layer.setFocus(e.target.value, null));
 document.body.appendChild(pick);
 
-// DÉMO (pour l'instant) : PALME VERTE en boucle.
-layer.setFocus('palm', { r:0.30, g:1.0, b:0.45 });
+// DÉMO (pour l'instant) : PALME OR SCINTILLANT BLANC (étoile blanche qui scintille + traînée or).
+layer.setFocus('palm');
 
 // TIMELINE de lecture (barre en bas) + ESPACE = pause/play (fige les feux, caméra libre).
 const timeline = new Timeline(layer, LABELS);
