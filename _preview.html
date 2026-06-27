@@ -51,10 +51,11 @@
 
     // Joue un effet 75mm jusqu'au burst, +burstFrames frames, puis rend UNE image (statique = screenshot OK).
     // rgb (optionnel) = [r,g,b] 0..1 -> override de couleur (ex "crackling aqua", "mosaïque rouge").
-    window.__show = (arch, burstFrames, label, rgb) => {
+    window.__show = (arch, burstFrames, label, rgb, cal) => {
       settle(280);
       const opts = rgb ? { color: new THREE.Color(rgb[0], rgb[1], rgb[2]) } : undefined;
-      shell = new __Shell(arch, 0, 0, 75, opts);
+      shell = new __Shell(arch, 0, 0, cal||75, opts);
+      window.__lastShell = shell;
       let g = 0; while (shell.phase !== 'burst' && g++ < 500) step();
       for (let i=0;i<burstFrames;i++) step();
       document.getElementById('lbl').textContent = label || arch;

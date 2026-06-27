@@ -315,7 +315,7 @@ const EFFECTS = {
   crackling: { apex:95, heat:false, color:CYAN, core:{ stars:18, radiusMul:0.42, color:GOLD } }, // pivoine COULEUR + pistil doré crépitant
   dragonEgg: { apex:95, heat:false, color:GOLD, lifeBase75:2.2,                                     // ŒUF DE DRAGON en 3 temps :
     trailing:{emitUntil:0.8, period:0.015, grain:0.9, gF:0.40, lifeMul:1.5, color:GOLD},            //  1) chrysanthème DORÉ (traînées)
-    core:{ stars:24, radiusMul:0.28, color:GOLD, crackleAt:0.35 },                                   //  2) le CENTRE claque (cœur, tôt)
+    core:{ stars:24, radiusMul:0.28, color:GOLD, crackleAt:0.35, minCal:75 },                         //  2) le CENTRE claque (cœur, tôt) — PAS en 50mm (trop petit)
     crackleStars:{ delay:0.8, jitter:0.45 } },                                                       //  3) les étoiles de la chrysanthème claquent (retardé)
   strobe: { apex:112, heat:false, color:SILVER, onStar:strobeFn, lifeBase75:2.4, gravStar:0.55 },
   fallingLeaves: { apex:95, dist:distLeaves, heat:false, color:new THREE.Color(1.0,0.45,0.55),
@@ -484,7 +484,7 @@ class Shell {
     }
     // PISTIL : un cœur d'étoiles plus petit (ex CRACKLING <couleur> = pivoine couleur + pistil
     // doré qui CRÉPITE). Les étoiles du cœur (d.crackle) poppent en blanc, surtout vers la fin.
-    if (this.cfg.core){
+    if (this.cfg.core && this.cal >= (this.cfg.core.minCal||0)){   // pas de cœur central sous minCal (ex 50mm = juste les étoiles)
       const co=this.cfg.core, cn=co.stars, csp=speed*co.radiusMul;
       for (let j=0;j<cn && this.nAlive<this.nMax;j++){
         const i=this.nAlive++, dir=distFibonacci(j,cn,Math.random), sp2=csp*(0.8+Math.random()*0.45);
