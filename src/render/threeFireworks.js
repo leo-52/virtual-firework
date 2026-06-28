@@ -52,7 +52,7 @@ function makeStarMat(){
 }
 
 // --- pool de traînées (comète, gerbe mine, grains des effets traînants) ---
-const TRAIL_MAX = 16000;
+const TRAIL_MAX = 20000;
 const trailPos  = new Float32Array(TRAIL_MAX * 3);
 const trailCol  = new Float32Array(TRAIL_MAX * 3);
 const trailSize = new Float32Array(TRAIL_MAX);
@@ -315,7 +315,7 @@ const EFFECTS = {
   ring: { apex:110, burstRadius:16, stars:30, dist2D:shapeRing, orient:'random', heat:false, color:GRN },
   crackling: { apex:95, heat:false, color:CYAN, core:{ stars:18, radiusMul:0.42, color:GOLD } }, // pivoine COULEUR + pistil doré crépitant
   dragonEgg: { apex:95, heat:false, color:GOLD, lifeBase75:2.4, starSize:2.0, arrow:true, speedMul:1.25,  // ŒUF DE DRAGON (~40m) :
-    trailing:{emitUntil:0.95, period:0.01, grain:1.3, gF:0.40, lifeMul:9.0, color:BRIGHTGOLD},       //  1) chrysanthème : LONGUES flèches dorées
+    trailing:{emitUntil:0.95, period:0.013, grain:1.3, gF:0.40, lifeMul:9.0, color:BRIGHTGOLD},      //  1) chrysanthème : LONGUES flèches dorées
     core:{ stars:30, radiusMul:0.28, color:GOLD, crackleAt:0.4, life:1.0, minCal:75, popOnly:true },  //  2) le CŒUR pétille PENDANT la dispersion (0.4→1.0s) puis s'arrête. PAS en 50mm
     crackleStars:{ delay:1.15, jitter:0.3, snaps:8 } },                                               //  3) PUIS chaque étoile fait 7-9 claquements dorés (crépitement) puis meurt
   strobe: { apex:112, heat:false, color:SILVER, onStar:strobeFn, lifeBase75:2.4, gravStar:0.55 },
@@ -632,8 +632,9 @@ class Shell {
           if (d.snaps===undefined) d.snaps=(this.cfg.crackleStars.snaps||8)-1+(Math.random()*3|0);   // 7-9
           d.snapOn=(d.snapOn||0)-dt; d.snapTimer=(d.snapTimer||0)-dt;
           if (d.snapTimer<=0 && d.snaps>0){ d.snaps--; d.snapOn=0.035; d.snapTimer=0.04+Math.random()*0.07;  // rafale rapide
-            const v=vrand(Math.random), spk=1.4+Math.random()*1.8;                                   // une petite étincelle dorée par claquement
-            spawnTrail(this.pos[i*3],this.pos[i*3+1],this.pos[i*3+2], 1.0,0.82,0.4, 0.8,0.6,1.0, v[0]*spk*4,v[1]*spk*4,v[2]*spk*4); }
+            const px=this.pos[i*3],py=this.pos[i*3+1],pz=this.pos[i*3+2];
+            for (let q=0;q<12;q++){ const v=vrand(Math.random), spk=0.8+Math.random()*2.4;            // ~12 étincelles dorées / claquement => ~100 par étoile
+              spawnTrail(px,py,pz, 1.0,0.82,0.4, 0.7,0.6,0.85, v[0]*spk*4,v[1]*spk*4,v[2]*spk*4); } }
           if (d.snapOn>0){ r=1; g=0.82; b=0.4; inten=3.4; } else { inten*=0.12; }                     // claquement doré vif / quasi éteint entre
           if (d.snaps<=0 && d.snapOn<=0) d.age=d.life; }                                              // rafale finie -> l'étoile meurt
         else { d.popOn=(d.popOn||0)-dt;                            // pistil simple (crackling-aqua)
