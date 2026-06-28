@@ -317,7 +317,7 @@ const EFFECTS = {
   dragonEgg: { apex:95, heat:false, color:GOLD, lifeBase75:2.4, starSize:2.0, arrow:true, speedMul:1.25,  // ŒUF DE DRAGON (~40m) :
     trailing:{emitUntil:0.95, period:0.01, grain:1.3, gF:0.40, lifeMul:9.0, color:BRIGHTGOLD},       //  1) chrysanthème : LONGUES flèches dorées
     core:{ stars:30, radiusMul:0.28, color:GOLD, crackleAt:0.4, life:1.0, minCal:75, popOnly:true },  //  2) le CŒUR pétille PENDANT la dispersion (0.4→1.0s) puis s'arrête. PAS en 50mm
-    crackleStars:{ delay:1.15, jitter:0.3, sparks:8 } },                                              //  3) PUIS chaque étoile claque UNE fois -> petit amas blanc creux
+    crackleStars:{ delay:1.15, jitter:0.3, snaps:8 } },                                               //  3) PUIS chaque étoile fait 7-9 claquements dorés (crépitement) puis meurt
   strobe: { apex:112, heat:false, color:SILVER, onStar:strobeFn, lifeBase75:2.4, gravStar:0.55 },
   fallingLeaves: { apex:95, dist:distLeaves, heat:false, color:new THREE.Color(1.0,0.45,0.55),
                    gravStar:0.26, dragStar:0.85, lifeBase75:6.0, speedMul:0.7, sway:7, starSize:2.4 },
@@ -625,16 +625,17 @@ class Shell {
       // PISTIL crépitant : pops blancs vifs sur les étoiles du cœur, de + en + vers la FIN
       const crk = d.crackle && d.age>=(d.crackleAt||0);
       if (crk){
-        if (d.popOnly){                                            // CŒUR : pops répétés (granules) pendant la dispersion
+        if (d.popOnly){                                            // CŒUR : pops dorés répétés pendant la dispersion
           d.popOn=(d.popOn||0)-dt; if (d.popOn<=0 && Math.random()<16*dt) d.popOn=0.04;
-          inten = d.popOn>0 ? 3.4 : 0; if (d.popOn>0){ r=1; g=1; b=0.95; } }
-        else if (this.cfg.crackleStars){                           // ÉTOILE : UN SEUL pop -> petit amas blanc CREUX, puis l'étoile disparaît
-          if (!d._popped){ d._popped=true;
-            const ns=this.cfg.crackleStars.sparks||8, px=this.pos[i*3], py=this.pos[i*3+1], pz=this.pos[i*3+2];
-            for (let k=0;k<ns;k++){ const v=vrand(Math.random), spk=2.5+Math.random()*3.5;
-              spawnTrail(px,py,pz, 1,1,0.95, 1.0, 0.5, 1.6, v[0]*spk*4, v[1]*spk*4, v[2]*spk*4); }
-            d.age=d.life; }
-          inten = 0; }
+          inten = d.popOn>0 ? 3.4 : 0; if (d.popOn>0){ r=1; g=0.82; b=0.4; } }
+        else if (this.cfg.crackleStars){                           // ÉTOILE œuf de dragon : 7-9 CLAQUEMENTS dorés (crépitement) PUIS meurt
+          if (d.snaps===undefined) d.snaps=(this.cfg.crackleStars.snaps||8)-1+(Math.random()*3|0);   // 7-9
+          d.snapOn=(d.snapOn||0)-dt; d.snapTimer=(d.snapTimer||0)-dt;
+          if (d.snapTimer<=0 && d.snaps>0){ d.snaps--; d.snapOn=0.035; d.snapTimer=0.04+Math.random()*0.07;  // rafale rapide
+            const v=vrand(Math.random), spk=1.4+Math.random()*1.8;                                   // une petite étincelle dorée par claquement
+            spawnTrail(this.pos[i*3],this.pos[i*3+1],this.pos[i*3+2], 1.0,0.82,0.4, 0.8,0.6,1.0, v[0]*spk*4,v[1]*spk*4,v[2]*spk*4); }
+          if (d.snapOn>0){ r=1; g=0.82; b=0.4; inten=3.4; } else { inten*=0.12; }                     // claquement doré vif / quasi éteint entre
+          if (d.snaps<=0 && d.snapOn<=0) d.age=d.life; }                                              // rafale finie -> l'étoile meurt
         else { d.popOn=(d.popOn||0)-dt;                            // pistil simple (crackling-aqua)
           if (d.popOn<=0 && Math.random()<(8+10*A)*dt) d.popOn=0.045;
           if (d.popOn>0){ inten*=2.8; const w=0.95; r=r+(1-r)*w; g=g+(1-g)*w; b=b+(1-b)*w; } }
@@ -649,7 +650,7 @@ class Shell {
       this.lcol[li]=hr*0.8; this.lcol[li+1]=hg*0.8; this.lcol[li+2]=hb*0.8;
       this.lcol[li+3]=hr*0.10; this.lcol[li+4]=hg*0.10; this.lcol[li+5]=hb*0.10;
 
-      if (tr && A<tr.emitUntil && !d.popOnly && !d._popped){ d.since+=dt;   // pas de traînée pour le cœur ni une étoile déjà éclatée
+      if (tr && A<tr.emitUntil && !d.popOnly && d.age<(d.crackleAt||1e9)){ d.since+=dt;   // traînée tant que l'étoile n'a pas commencé à claquer
         if (d.since>tr.period){ const mx=(d.lastX+px)*0.5, my=(d.lastY+py)*0.5, mz=(d.lastZ+pz)*0.5;
           const tc=d.coreColor||tr.color||GOLD;   // traînée colorée pour les comètes assorties
           spawnTrail(mx,my,mz, tc.r,tc.g,tc.b, tr.grain, tr.gF, tr.lifeMul, d.vx,d.vy,d.vz);
