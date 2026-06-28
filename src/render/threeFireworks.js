@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B50';   // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B51';   // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -65,10 +65,12 @@ for (let i = 0; i < TRAIL_MAX; i++){
 let trailHead = 0;
 const trailGeo = new THREE.BufferGeometry();
 trailGeo.setAttribute('position', new THREE.BufferAttribute(trailPos, 3));
-trailGeo.setAttribute('color',    new THREE.BufferAttribute(trailCol, 3));
+trailGeo.setAttribute('aColor',   new THREE.BufferAttribute(trailCol, 3));
 trailGeo.setAttribute('size',     new THREE.BufferAttribute(trailSize, 1));
-const trailMat = new THREE.PointsMaterial({ size:0.8, map:starTex, vertexColors:true,
-  transparent:true, blending:THREE.AdditiveBlending, depthWrite:false, sizeAttenuation:true });
+// TAILLE PAR GRAIN (ShaderMaterial) : avant, PointsMaterial forçait 0.8 px pour TOUS -> à la
+// distance de la vue public les traînées étaient sous-pixel (invisibles). Maintenant chaque grain
+// a sa taille (grosses frondes/traînées visibles, muzzle fin).
+const trailMat = makeStarMat();
 scene.add(new THREE.Points(trailGeo, trailMat));
 
 function spawnTrail(x,y,z, r,g,b, size, gF=0.4, lifeMul=1, vx0=0, vy0=0, vz0=0){
@@ -98,7 +100,7 @@ function updateTrails(dt){
     trailSize[i]=t.size*a;
   }
   trailGeo.attributes.position.needsUpdate = true;
-  trailGeo.attributes.color.needsUpdate = true;
+  trailGeo.attributes.aColor.needsUpdate = true;
   trailGeo.attributes.size.needsUpdate = true;
 }
 
@@ -316,7 +318,7 @@ const EFFECTS = {
   ring: { apex:110, burstRadius:16, stars:30, dist2D:shapeRing, orient:'random', heat:false, color:GRN },
   crackling: { apex:95, heat:false, color:CYAN, core:{ stars:18, radiusMul:0.42, color:GOLD } }, // pivoine COULEUR + pistil doré crépitant
   dragonEgg: { apex:95, heat:false, color:GOLD, lifeBase75:2.4, starSize:2.0, arrow:true, speedMul:1.25,  // ŒUF DE DRAGON (~40m) :
-    trailing:{emitUntil:0.95, period:0.013, grain:1.3, gF:0.40, lifeMul:9.0, color:BRIGHTGOLD},      //  1) chrysanthème : LONGUES flèches dorées
+    trailing:{emitUntil:0.95, period:0.013, grain:2.5, gF:0.40, lifeMul:9.0, color:GOLD},            //  1) chrysanthème : LONGUES flèches dorées (grosses pour être vues à distance, doré modéré)
     core:{ stars:30, radiusMul:0.28, color:GOLD, crackleAt:0.4, life:1.0, minCal:75, popOnly:true },  //  2) le CŒUR pétille PENDANT la dispersion (0.4→1.0s) puis s'arrête. PAS en 50mm
     crackleStars:{ delay:1.15, jitter:0.3, snaps:8 } },                                               //  3) PUIS chaque étoile fait 7-9 claquements dorés (crépitement) puis meurt
   strobe: { apex:112, heat:false, color:SILVER, onStar:strobeFn, lifeBase75:2.4, gravStar:0.55 },
@@ -635,7 +637,7 @@ class Shell {
           if (d.snapTimer<=0 && d.snaps>0){ d.snaps--; d.snapOn=0.035; d.snapTimer=0.04+Math.random()*0.07;  // rafale rapide
             const px=this.pos[i*3],py=this.pos[i*3+1],pz=this.pos[i*3+2];
             for (let q=0;q<12;q++){ const v=vrand(Math.random), spk=0.8+Math.random()*2.4;            // ~12 étincelles dorées / claquement => ~100 par étoile
-              spawnTrail(px,py,pz, 1.0,0.82,0.4, 0.7,0.6,0.85, v[0]*spk*4,v[1]*spk*4,v[2]*spk*4); } }
+              spawnTrail(px,py,pz, 1.0,0.82,0.4, 1.6,0.6,0.85, v[0]*spk*4,v[1]*spk*4,v[2]*spk*4); } }
           if (d.snapOn>0){ r=1; g=0.82; b=0.4; inten=3.4; } else { inten*=0.12; }                     // claquement doré vif / quasi éteint entre
           if (d.snaps<=0 && d.snapOn<=0) d.age=d.life; }                                              // rafale finie -> l'étoile meurt
         else { d.popOn=(d.popOn||0)-dt;                            // pistil simple (crackling-aqua)
