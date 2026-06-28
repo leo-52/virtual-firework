@@ -11,6 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
+const BUILD = 'B50';   // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -715,7 +716,7 @@ export class ThreeFireworks {
     this.camera.fov=THREE.MathUtils.radToDeg(vfov); this.camera.aspect=aspect; this.camera.updateProjectionMatrix(); }
   fire(arch, color){ this.current=EFFECTS[arch]?arch:'peony';
     this.shell=new Shell(this.current,0,0,undefined, color?{color}:undefined);
-    if (this.hud) this.hud.innerHTML='<b>PrevoFX — aperçu web</b><br>'+(LABELS[this.current]||this.current)+' 75 · QZSD + clic-glisser · Espace = pause'; }
+    if (this.hud) this.hud.innerHTML='<b>PrevoFX — aperçu web</b> <span style="color:#7fff7f">['+BUILD+']</span><br>'+(LABELS[this.current]||this.current)+' 75 · QZSD + clic-glisser · Espace = pause'; }
   fireNext(){ this.fire(this.focus, this.focusColor); }
   setFocus(arch, color){ if (EFFECTS[arch]){ this.focus=arch; if (color!==undefined) this.focusColor=color; } }
   update(dt){
