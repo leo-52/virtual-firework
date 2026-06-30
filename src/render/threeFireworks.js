@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B51';   // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B52';   // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -71,7 +71,9 @@ trailGeo.setAttribute('size',     new THREE.BufferAttribute(trailSize, 1));
 // distance de la vue public les traînées étaient sous-pixel (invisibles). Maintenant chaque grain
 // a sa taille (grosses frondes/traînées visibles, muzzle fin).
 const trailMat = makeStarMat();
-scene.add(new THREE.Points(trailGeo, trailMat));
+const trailPoints = new THREE.Points(trailGeo, trailMat);
+trailPoints.frustumCulled = false;   // CRITIQUE : sa bounding sphere reste à l'origine (grains nés à 0,0,0) ->
+scene.add(trailPoints);              // sinon Three.js CULL tout le pool quand la caméra vise le burst (origine hors champ) = "pas de traînées"
 
 function spawnTrail(x,y,z, r,g,b, size, gF=0.4, lifeMul=1, vx0=0, vy0=0, vz0=0){
   const i = trailHead; trailHead = (trailHead + 1) % TRAIL_MAX;
@@ -124,7 +126,7 @@ const puffs = [];
 for (let i=0;i<PUFF_MAX;i++){
   const m=new THREE.SpriteMaterial({ map:smokeTex, transparent:true, blending:THREE.AdditiveBlending,
     depthWrite:false, opacity:0 });
-  const s=new THREE.Sprite(m); s.visible=false; scene.add(s);
+  const s=new THREE.Sprite(m); s.visible=false; s.frustumCulled=false; scene.add(s);
   puffs.push({ spr:s, x:0,y:0,z:0, vx:0,vy:0,vz:0, age:0,life:1, s0:1,s1:1, r:1,g:1,b:1, op0:1, buoy:0, drag:1, alive:false });
 }
 let puffHead=0;
@@ -319,8 +321,8 @@ const EFFECTS = {
   crackling: { apex:95, heat:false, color:CYAN, core:{ stars:18, radiusMul:0.42, color:GOLD } }, // pivoine COULEUR + pistil doré crépitant
   dragonEgg: { apex:95, heat:false, color:GOLD, lifeBase75:2.4, starSize:2.0, arrow:true, speedMul:1.25,  // ŒUF DE DRAGON (~40m) :
     trailing:{emitUntil:0.95, period:0.013, grain:2.5, gF:0.40, lifeMul:9.0, color:GOLD},            //  1) chrysanthème : LONGUES flèches dorées (grosses pour être vues à distance, doré modéré)
-    core:{ stars:30, radiusMul:0.28, color:GOLD, crackleAt:0.4, life:1.0, minCal:75, popOnly:true },  //  2) le CŒUR pétille PENDANT la dispersion (0.4→1.0s) puis s'arrête. PAS en 50mm
-    crackleStars:{ delay:1.15, jitter:0.3, snaps:8 } },                                               //  3) PUIS chaque étoile fait 7-9 claquements dorés (crépitement) puis meurt
+    core:{ stars:30, radiusMul:0.28, color:GOLD, crackleAt:0.6, life:1.1, minCal:75, popOnly:true },  //  2) le CŒUR apparaît à ~0.6s et pétille pendant la dispersion (0.6→1.1s). PAS en 50mm
+    crackleStars:{ delay:1.2, jitter:0.3, snaps:8 } },                                                //  3) PUIS chaque étoile fait 7-9 claquements dorés (crépitement) puis meurt
   strobe: { apex:112, heat:false, color:SILVER, onStar:strobeFn, lifeBase75:2.4, gravStar:0.55 },
   fallingLeaves: { apex:95, dist:distLeaves, heat:false, color:new THREE.Color(1.0,0.45,0.55),
                    gravStar:0.26, dragStar:0.85, lifeBase75:6.0, speedMul:0.7, sway:7, starSize:2.4 },
@@ -404,7 +406,7 @@ class Shell {
       this.headGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array([this.ox,0,this.oz]),3));
       this.headMat=new THREE.PointsMaterial({ size:this.cfg.headSize, map:starTex, color:this.cfg.riseColor,
         transparent:true, blending:THREE.AdditiveBlending, depthWrite:false, sizeAttenuation:true });
-      this.head=new THREE.Points(this.headGeo,this.headMat); scene.add(this.head);
+      this.head=new THREE.Points(this.headGeo,this.headMat); this.head.frustumCulled=false; scene.add(this.head);
     }
 
     const m=this.nMax;
@@ -416,13 +418,13 @@ class Shell {
     this.geo.setAttribute('aColor',   new THREE.BufferAttribute(this.col,3));
     this.geo.setAttribute('size',     new THREE.BufferAttribute(this.size,1));
     this.mat=makeStarMat();
-    this.points=new THREE.Points(this.geo,this.mat); this.points.visible=false; scene.add(this.points);
+    this.points=new THREE.Points(this.geo,this.mat); this.points.visible=false; this.points.frustumCulled=false; scene.add(this.points);
     this.lgeo=new THREE.BufferGeometry();
     this.lgeo.setAttribute('position', new THREE.BufferAttribute(this.lpos,3));
     this.lgeo.setAttribute('color',    new THREE.BufferAttribute(this.lcol,3));
     this.lmat=new THREE.LineBasicMaterial({ vertexColors:true, transparent:true,
       blending:THREE.AdditiveBlending, depthWrite:false });
-    this.lines=new THREE.LineSegments(this.lgeo,this.lmat); this.lines.visible=false; scene.add(this.lines);
+    this.lines=new THREE.LineSegments(this.lgeo,this.lmat); this.lines.visible=false; this.lines.frustumCulled=false; scene.add(this.lines);
   }
 
   _numColors(){ return this.cfg.colors ? this.cfg.colors.length : 1; }
