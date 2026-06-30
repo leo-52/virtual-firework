@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B52';   // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B53';   // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -319,8 +319,8 @@ const EFFECTS = {
   sphere: { speedJit:0.02 },
   ring: { apex:110, burstRadius:16, stars:30, dist2D:shapeRing, orient:'random', heat:false, color:GRN },
   crackling: { apex:95, heat:false, color:CYAN, core:{ stars:18, radiusMul:0.42, color:GOLD } }, // pivoine COULEUR + pistil doré crépitant
-  dragonEgg: { apex:95, heat:false, color:GOLD, lifeBase75:2.4, starSize:2.0, arrow:true, speedMul:1.25,  // ŒUF DE DRAGON (~40m) :
-    trailing:{emitUntil:0.95, period:0.013, grain:2.5, gF:0.40, lifeMul:9.0, color:GOLD},            //  1) chrysanthème : LONGUES flèches dorées (grosses pour être vues à distance, doré modéré)
+  dragonEgg: { apex:95, heat:false, color:GOLD, lifeBase75:2.4, starSize:2.0, arrow:true, speedMul:1.25, gravStar:0.5,  // ŒUF DE DRAGON (~40m, retombe peu = pivoine, pas saule) :
+    trailing:{emitUntil:0.95, period:0.013, grain:2.5, gF:0.12, lifeMul:9.0, color:GOLD},            //  1) chrysanthème : flèches dorées RADIALES (gF bas = ne pendent pas)
     core:{ stars:30, radiusMul:0.28, color:GOLD, crackleAt:0.6, life:1.1, minCal:75, popOnly:true },  //  2) le CŒUR apparaît à ~0.6s et pétille pendant la dispersion (0.6→1.1s). PAS en 50mm
     crackleStars:{ delay:1.2, jitter:0.3, snaps:8 } },                                                //  3) PUIS chaque étoile fait 7-9 claquements dorés (crépitement) puis meurt
   strobe: { apex:112, heat:false, color:SILVER, onStar:strobeFn, lifeBase75:2.4, gravStar:0.55 },
