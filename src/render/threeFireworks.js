@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B65';   // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B66';   // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -657,8 +657,10 @@ class Shell {
             d.cx=this.pos[i*3]; d.cy=this.pos[i*3+1]; d.cz=this.pos[i*3+2]; }                          // CENTRE FIGÉ -> amas ROND
           d.flashT=(d.flashT||0)-dt; d.snapTimer=(d.snapTimer||0)-dt;
           if (d.snapTimer<=0 && d.snaps>0){ d.snaps--; d.snapTimer=0.03+Math.random()*0.04;
-            const nq=d.first?24:10, DG=3.4, life=d.isCore?1.9:1.45;                                    // coquille : vie -0,2s = crépitement plus BREF que le cœur (bien temporisé)
-            for (let q=0;q<nq;q++){ const v=vrand(Math.random), R=0.8+Math.random()*4.2;               // rayon CIBLE varié -> boule pleine
+            const core=d.isCore, DG=3.4;
+            const nq=d.first?(core?24:36):(core?10:15);                                                // COQUILLE = +50% d'étincelles (proportionnel à la taille -> reste PLEINE) ; cœur inchangé
+            const Rmax=core?5.0:6.0, life=core?2.35:1.9;                                                // COQUILLE plus GROSSE (Rmax 5->6) à densité conservée ; +0,2s de vie pour les DEUX (cœur 1.9->2.35, coquille 1.45->1.9). Cœur : taille/densité inchangées
+            for (let q=0;q<nq;q++){ const v=vrand(Math.random), R=0.8+Math.random()*(Rmax-0.8);        // distribution linéaire (centre plus dense = amas net, pas diffus), comme B65 mais plus gros
               const sp=R*DG*4;                                                                          // vitesse radiale ∝ R + drag DG -> l'étincelle JAILLIT puis se FIGE à ~R (*4 compense le ×0.25 interne de spawnTrail)
               spawnTrail(d.cx,d.cy,d.cz, EGGGOLD.r,EGGGOLD.g,EGGGOLD.b, d.first?1.6:1.2, 0.05, life, v[0]*sp,v[1]*sp,v[2]*sp, 0.1, DG); }  // jit 0.1 (pas de "nage"), gF 0.05 (ne tombe pas) -> s'écarte VITE puis se fige et s'éteint
             d.first=false; }

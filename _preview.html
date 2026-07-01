@@ -25,7 +25,7 @@
     const { __scene, __Shell, __updateTrails, __updatePuffs } =
       await import('./src/render/threeFireworks.js?preview=' + Date.now());
 
-    const W = innerWidth, H = innerHeight;
+    const W = innerWidth || 1280, H = innerHeight || 800;   // fallback si la fenêtre preview est à 0×0 (headless) -> le canvas rend quand même
     const renderer = new THREE.WebGLRenderer({ antialias:true, preserveDrawingBuffer:true });
     renderer.setSize(W, H); renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
     renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.3;
