@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B64';   // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B65';   // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -512,7 +512,7 @@ class Shell {
         const s=this._newStar(dir.dx*sp2, dir.dy*sp2, dir.dz*sp2, 0, this.cfg.crackleStars?this.cfg.trailing:false);
         s._i=i; s._split=false; s.crackle=true; s.coreColor=co.color;
         if (this.cfg.crackleStars){        // ŒUF DE DRAGON : cœur = étoiles crépitantes (explosent -> ~50 points), MÊME couleur, mais crépite PLUS TÔT que la coquille (~0,5s, cf 3 temps)
-          s.crackleAt=(co.crackleAt||0)+Math.random()*(co.jitter||0);
+          s.crackleAt=(co.crackleAt||0)+Math.random()*(co.jitter||0); s.isCore=true;   // tag : le cœur garde sa durée (bien temporisé), la coquille crépite 0,2s + court
         } else {                           // CRACKLING <couleur> : pistil doré à pops simples (comportement d'origine)
           s.crackleAt=co.crackleAt||0;
           if (co.popOnly) s.popOnly=true;  // pops (pas d'étoile, pas de scintillement)
@@ -652,14 +652,15 @@ class Shell {
         if (d.popOnly){                                            // CŒUR : pops dorés répétés pendant la dispersion
           d.popOn=(d.popOn||0)-dt; if (d.popOn<=0 && Math.random()<16*dt) d.popOn=0.04;
           inten = d.popOn>0 ? 3.4 : 0; if (d.popOn>0){ r=1; g=0.82; b=0.4; } }
-        else if (this.cfg.crackleStars){                           // ŒUF DE DRAGON (étape 2) : l'étoile EXPLOSE en BOULE RONDE (retour B61) puis S'ÉTEINT SUR PLACE (pas de vol plané façon poisson/feuille)
+        else if (this.cfg.crackleStars){                           // ŒUF DE DRAGON (étape 2) : l'étoile EXPLOSE = ses étincelles JAILLISSENT du point et s'écartent en BOULE, puis se FIGENT et s'éteignent
           if (d.snaps===undefined){ d.snaps=(this.cfg.crackleStars.snaps||5)-1+(Math.random()*2|0); d.first=true; d.flashT=0.06;
             d.cx=this.pos[i*3]; d.cy=this.pos[i*3+1]; d.cz=this.pos[i*3+2]; }                          // CENTRE FIGÉ -> amas ROND
           d.flashT=(d.flashT||0)-dt; d.snapTimer=(d.snapTimer||0)-dt;
           if (d.snapTimer<=0 && d.snaps>0){ d.snaps--; d.snapTimer=0.03+Math.random()*0.04;
-            const nq=d.first?24:10;                                                                    // 1re salve = grosse boule (24) puis remplissage (10/vague) => ~60 pts
-            for (let q=0;q<nq;q++){ const v=vrand(Math.random), rr=1.2+Math.random()*3.6;              // POSITION dans une boule (rayon ~5) -> l'amas est DÉJÀ formé (pas besoin de "voler" pour se répartir)
-              spawnTrail(d.cx+v[0]*rr, d.cy+v[1]*rr, d.cz+v[2]*rr, EGGGOLD.r,EGGGOLD.g,EGGGOLD.b, d.first?1.6:1.2, 0.05, 1.9, v[0]*0.8,v[1]*0.8,v[2]*0.8, 0.1, 4.0); }  // vitesse ~nulle + drag TRÈS haut (4) + gF 0.05 -> apparaît en boule puis s'éteint SUR PLACE, ne "vole" pas
+            const nq=d.first?24:10, DG=3.4, life=d.isCore?1.9:1.45;                                    // coquille : vie -0,2s = crépitement plus BREF que le cœur (bien temporisé)
+            for (let q=0;q<nq;q++){ const v=vrand(Math.random), R=0.8+Math.random()*4.2;               // rayon CIBLE varié -> boule pleine
+              const sp=R*DG*4;                                                                          // vitesse radiale ∝ R + drag DG -> l'étincelle JAILLIT puis se FIGE à ~R (*4 compense le ×0.25 interne de spawnTrail)
+              spawnTrail(d.cx,d.cy,d.cz, EGGGOLD.r,EGGGOLD.g,EGGGOLD.b, d.first?1.6:1.2, 0.05, life, v[0]*sp,v[1]*sp,v[2]*sp, 0.1, DG); }  // jit 0.1 (pas de "nage"), gF 0.05 (ne tombe pas) -> s'écarte VITE puis se fige et s'éteint
             d.first=false; }
           if (d.flashT>0){ r=1.5; g=1.3; b=1.0; inten=Math.max(inten,1.2)*4.0; }                       // FLASH clair : l'étoile ÉCLATE
           else inten=0;                                                                                // puis DISPARUE (désintégrée en sa boule)
