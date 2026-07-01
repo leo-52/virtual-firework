@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B54';   // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B56';   // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -23,6 +23,16 @@ function makeStarTexture(){
   const t = new THREE.CanvasTexture(c); t.needsUpdate = true; return t;
 }
 const starTex = makeStarTexture();
+// Texture NEUTRE (blanc -> transparent, SANS dégradé orange) : pour que la COULEUR du grain décide
+// vraiment de la teinte (blanc=blanc, or=or). La texture étoile, elle, teinte tout en orange.
+function makeNeutralTexture(){
+  const c=document.createElement('canvas'); c.width=c.height=64; const x=c.getContext('2d');
+  const g=x.createRadialGradient(32,32,0, 32,32,32);
+  g.addColorStop(0.0,'rgba(255,255,255,1)'); g.addColorStop(0.4,'rgba(255,255,255,0.55)'); g.addColorStop(1.0,'rgba(255,255,255,0)');
+  x.fillStyle=g; x.fillRect(0,0,64,64);
+  const t=new THREE.CanvasTexture(c); t.needsUpdate=true; return t;
+}
+const neutralTex = makeNeutralTexture();
 
 // Matériau des ÉTOILES : ShaderMaterial avec TAILLE PAR POINT (attribut `size`) — PointsMaterial
 // ne sait appliquer qu'une taille globale. `uH = 0.5·hauteurBuffer` reproduit exactement la
@@ -45,9 +55,9 @@ const STAR_FS = `
     vec4 t = texture2D(uTex, gl_PointCoord);
     gl_FragColor = vec4(vCol * t.rgb, t.a);   // additif : couleur HDR × alpha du sprite
   }`;
-function makeStarMat(){
+function makeStarMat(tex){
   return new THREE.ShaderMaterial({
-    uniforms:{ uTex:{value:starTex}, uH:{value:0.5*innerHeight*Math.min(devicePixelRatio,2)} },
+    uniforms:{ uTex:{value:tex||starTex}, uH:{value:0.5*innerHeight*Math.min(devicePixelRatio,2)} },
     vertexShader:STAR_VS, fragmentShader:STAR_FS,
     transparent:true, blending:THREE.AdditiveBlending, depthWrite:false });
 }
@@ -70,7 +80,7 @@ trailGeo.setAttribute('size',     new THREE.BufferAttribute(trailSize, 1));
 // TAILLE PAR GRAIN (ShaderMaterial) : avant, PointsMaterial forçait 0.8 px pour TOUS -> à la
 // distance de la vue public les traînées étaient sous-pixel (invisibles). Maintenant chaque grain
 // a sa taille (grosses frondes/traînées visibles, muzzle fin).
-const trailMat = makeStarMat();
+const trailMat = makeStarMat(neutralTex);   // traînées/points : texture NEUTRE -> la couleur du grain décide (blanc reste blanc, or reste or)
 const trailPoints = new THREE.Points(trailGeo, trailMat);
 trailPoints.frustumCulled = false;   // CRITIQUE : sa bounding sphere reste à l'origine (grains nés à 0,0,0) ->
 scene.add(trailPoints);              // sinon Three.js CULL tout le pool quand la caméra vise le burst (origine hors champ) = "pas de traînées"
@@ -167,7 +177,8 @@ const GOLD=new THREE.Color(1.0,0.72,0.32), DIMGOLD=new THREE.Color(0.55,0.40,0.1
   GRN=new THREE.Color(0.3,1.0,0.45), BLU=new THREE.Color(0.4,0.55,1.0),
   RED=new THREE.Color(1.0,0.14,0.18), PURP=new THREE.Color(0.6,0.35,1.0), WHITE=new THREE.Color(1.0,1.0,1.0),
   BRIGHTGOLD=new THREE.Color(1.4,1.0,0.45),   // or HDR (traînées bien visibles à distance, ex saule kamuro)
-  PALEGOLD=new THREE.Color(1.0,0.88,0.68);    // or PÂLE (moins orangé, plus blanc) pour l'œuf de dragon
+  PALEGOLD=new THREE.Color(1.0,0.88,0.68),    // or PÂLE pour autres usages
+  EGGWHITE=new THREE.Color(1.0,0.95,0.92);    // BLANC (œuf de dragon : traînées fines blanches, pas dorées)
 
 // ============================================================================
 // DISTRIBUTIONS 3D : dist(i,n,rnd) -> {dx,dy,dz, spMul, comp?}
@@ -321,7 +332,7 @@ const EFFECTS = {
   ring: { apex:110, burstRadius:16, stars:30, dist2D:shapeRing, orient:'random', heat:false, color:GRN },
   crackling: { apex:95, heat:false, color:CYAN, core:{ stars:18, radiusMul:0.42, color:GOLD } }, // pivoine COULEUR + pistil doré crépitant
   dragonEgg: { apex:95, heat:false, color:GOLD, lifeBase75:2.4, starSize:2.0, arrow:true, speedMul:1.25, gravStar:0.5,  // ŒUF DE DRAGON (~40m, retombe peu = pivoine, pas saule) :
-    trailing:{emitUntil:0.95, period:0.013, grain:1.7, gF:0.12, lifeMul:9.0, color:PALEGOLD},        //  1) chrysanthème : flèches RADIALES, or PÂLE (moins orangé) et moins grosses
+    trailing:{emitUntil:0.95, period:0.013, grain:1.3, gF:0.12, lifeMul:4.0, color:EGGWHITE},        //  1) traînées FINES BLANCHES, COURTES (s'estompent avant le crépitement -> les amas blancs ressortent)
     core:{ stars:30, radiusMul:0.28, color:GOLD, crackleAt:0.6, life:1.1, minCal:75, popOnly:true },  //  2) le CŒUR apparaît à ~0.6s et pétille pendant la dispersion (0.6→1.1s). PAS en 50mm
     crackleStars:{ delay:1.2, jitter:0.3, snaps:8 } },                                                //  3) PUIS chaque étoile fait 7-9 claquements dorés (crépitement) puis meurt
   strobe: { apex:112, heat:false, color:SILVER, onStar:strobeFn, lifeBase75:2.4, gravStar:0.55 },
@@ -640,7 +651,7 @@ class Shell {
           if (d.snapTimer<=0 && d.snaps>0){ d.snaps--; d.snapTimer=0.04+Math.random()*0.07;          // rafale rapide
             const px=this.pos[i*3],py=this.pos[i*3+1],pz=this.pos[i*3+2];
             for (let q=0;q<6;q++){ const v=vrand(Math.random), spk=0.8+Math.random()*2.4;            // ~6 points / vague => ~50 par étoile
-              spawnTrail(px,py,pz, 1.0,0.95,0.82, 1.2,0.5,1.1, v[0]*spk*4,v[1]*spk*4,v[2]*spk*4); } }
+              spawnTrail(px,py,pz, 1.0,0.99,0.96, 1.2,0.5,1.8, v[0]*spk*4,v[1]*spk*4,v[2]*spk*4); } }   // points BLANCS (vie + longue -> amas denses simultanés)
           inten=0;                                                                                     // l'ÉTOILE DISPARAÎT (remplacée par les points)
           if (d.snaps<=0) d.age=d.life; }
         else { d.popOn=(d.popOn||0)-dt;                            // pistil simple (crackling-aqua)
