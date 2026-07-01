@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B66';   // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B67';   // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -335,7 +335,7 @@ const EFFECTS = {
   dragonEgg: { apex:95, heat:false, color:GOLD, stars:84, lifeBase75:2.4, starSize:0.7, arrow:true, speedMul:1.25, gravStar:0.5,  // ŒUF DE DRAGON (~40m, retombe peu = pivoine, pas saule) — 3 TEMPS :
     trailing:{emitUntil:0.95, period:0.013, grain:1.0, gF:0.12, lifeMul:2.0, color:EGGGOLD},          //  1) T=0 : éclate comme une pivoine mais étoiles TRÈS PETITES/DISCRÈTES (à peine une boule, on voit surtout la traînée : starSize 0.7 + arrow=dim 0.45)
     core:{ stars:30, radiusMul:0.30, color:GOLD, minCal:75, crackleAt:0.5, jitter:0.15 },             //  2) T≈0,5s : le CŒUR crépite (explose en boules) PENDANT que les étoiles se dispersent. 84+30 amas -> REMPLIT la sphère. PAS en 50mm
-    crackleStars:{ delay:1.3, jitter:0.3, snaps:5 } },                                                //  3) une fois le cœur FINI (~1,3s), chaque ÉTOILE explose en BOULE RONDE (retour B61) qui S'ÉTEINT sur place
+    crackleStars:{ delay:1.3, jitter:0.6, snaps:5 } },                                                //  3) chaque ÉTOILE explose entre 1,3 s et 1,9 s (jitter 0,6 = très étalé/aléatoire) en BOULE qui S'ÉTEINT sur place
   strobe: { apex:112, heat:false, color:SILVER, onStar:strobeFn, lifeBase75:2.4, gravStar:0.55 },
   fallingLeaves: { apex:95, dist:distLeaves, heat:false, color:new THREE.Color(1.0,0.45,0.55),
                    gravStar:0.26, dragStar:0.85, lifeBase75:6.0, speedMul:0.7, sway:7, starSize:2.4 },
