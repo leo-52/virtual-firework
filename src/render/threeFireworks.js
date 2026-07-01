@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B56';   // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B57';   // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -178,7 +178,8 @@ const GOLD=new THREE.Color(1.0,0.72,0.32), DIMGOLD=new THREE.Color(0.55,0.40,0.1
   RED=new THREE.Color(1.0,0.14,0.18), PURP=new THREE.Color(0.6,0.35,1.0), WHITE=new THREE.Color(1.0,1.0,1.0),
   BRIGHTGOLD=new THREE.Color(1.4,1.0,0.45),   // or HDR (traînées bien visibles à distance, ex saule kamuro)
   PALEGOLD=new THREE.Color(1.0,0.88,0.68),    // or PÂLE pour autres usages
-  EGGWHITE=new THREE.Color(1.0,0.95,0.92);    // BLANC (œuf de dragon : traînées fines blanches, pas dorées)
+  EGGWHITE=new THREE.Color(1.0,0.95,0.92),    // BLANC (ancien œuf de dragon, trop froid)
+  EGGGOLD=new THREE.Color(1.5,0.72,0.20);     // AMBRE / DORÉ-ORANGE saturé, HDR ; BLEU très bas -> reste orange même empilé en additif (œuf de dragon : traînée + points de crépitement)
 
 // ============================================================================
 // DISTRIBUTIONS 3D : dist(i,n,rnd) -> {dx,dy,dz, spMul, comp?}
@@ -331,10 +332,10 @@ const EFFECTS = {
   sphere: { speedJit:0.02 },
   ring: { apex:110, burstRadius:16, stars:30, dist2D:shapeRing, orient:'random', heat:false, color:GRN },
   crackling: { apex:95, heat:false, color:CYAN, core:{ stars:18, radiusMul:0.42, color:GOLD } }, // pivoine COULEUR + pistil doré crépitant
-  dragonEgg: { apex:95, heat:false, color:GOLD, lifeBase75:2.4, starSize:2.0, arrow:true, speedMul:1.25, gravStar:0.5,  // ŒUF DE DRAGON (~40m, retombe peu = pivoine, pas saule) :
-    trailing:{emitUntil:0.95, period:0.013, grain:1.3, gF:0.12, lifeMul:4.0, color:EGGWHITE},        //  1) traînées FINES BLANCHES, COURTES (s'estompent avant le crépitement -> les amas blancs ressortent)
-    core:{ stars:30, radiusMul:0.28, color:GOLD, crackleAt:0.6, life:1.1, minCal:75, popOnly:true },  //  2) le CŒUR apparaît à ~0.6s et pétille pendant la dispersion (0.6→1.1s). PAS en 50mm
-    crackleStars:{ delay:1.2, jitter:0.3, snaps:8 } },                                                //  3) PUIS chaque étoile fait 7-9 claquements dorés (crépitement) puis meurt
+  dragonEgg: { apex:95, heat:false, color:GOLD, stars:60, lifeBase75:2.4, starSize:2.0, arrow:true, speedMul:1.25, gravStar:0.5,  // ŒUF DE DRAGON (~40m, retombe peu = pivoine, pas saule) :
+    trailing:{emitUntil:0.95, period:0.013, grain:1.0, gF:0.12, lifeMul:2.0, color:EGGGOLD},          //  1) traînée FINE DORÉE-ORANGE, COURTE (s'estompe avant le crépitement -> les amas ressortent)
+    core:{ stars:22, radiusMul:0.28, color:GOLD, minCal:75 },                                         //  2) le CŒUR = étoiles crépitantes INTÉRIEURES, MÊME couleur + MÊME crépitement que les étoiles (cf code : hérite de crackleStars). PAS en 50mm
+    crackleStars:{ delay:1.15, jitter:0.35, snaps:5 } },                                              //  3) chaque étoile (cœur + coquille) DISPARAÎT puis claque 4-5 fois -> ~50 points dorés dans le ciel
   strobe: { apex:112, heat:false, color:SILVER, onStar:strobeFn, lifeBase75:2.4, gravStar:0.55 },
   fallingLeaves: { apex:95, dist:distLeaves, heat:false, color:new THREE.Color(1.0,0.45,0.55),
                    gravStar:0.26, dragStar:0.85, lifeBase75:6.0, speedMul:0.7, sway:7, starSize:2.4 },
@@ -507,10 +508,16 @@ class Shell {
       for (let j=0;j<cn && this.nAlive<this.nMax;j++){
         const i=this.nAlive++, dir=distFibonacci(j,cn,Math.random), sp2=csp*(0.8+Math.random()*0.45);
         this.pos[i*3]=bx; this.pos[i*3+1]=apex; this.pos[i*3+2]=bz;
-        const s=this._newStar(dir.dx*sp2, dir.dy*sp2, dir.dz*sp2, 0, false);
-        s._i=i; s._split=false; s.crackle=true; s.crackleAt=co.crackleAt||0; s.coreColor=co.color;
-        if (co.popOnly) s.popOnly=true;   // CŒUR = juste des pops (pas d'étoile, pas de scintillement)
-        if (co.life) s.life=co.life;      // le cœur s'arrête (meurt) avant que les étoiles claquent
+        // ŒUF DE DRAGON : les étoiles du cœur reçoivent la MÊME traînée que la coquille ; sinon (crackling) pas de traînée.
+        const s=this._newStar(dir.dx*sp2, dir.dy*sp2, dir.dz*sp2, 0, this.cfg.crackleStars?this.cfg.trailing:false);
+        s._i=i; s._split=false; s.crackle=true; s.coreColor=co.color;
+        if (this.cfg.crackleStars){        // ŒUF DE DRAGON : cœur = étoiles crépitantes normales (disparaissent -> ~50 points), MÊME timing/couleur que la coquille
+          s.crackleAt=this.cfg.crackleStars.delay+Math.random()*this.cfg.crackleStars.jitter;
+        } else {                           // CRACKLING <couleur> : pistil doré à pops simples (comportement d'origine)
+          s.crackleAt=co.crackleAt||0;
+          if (co.popOnly) s.popOnly=true;  // pops (pas d'étoile, pas de scintillement)
+          if (co.life) s.life=co.life;     // le cœur s'arrête avant les étoiles
+        }
         this.data[i]=s;
       }
     }
@@ -645,14 +652,14 @@ class Shell {
         if (d.popOnly){                                            // CŒUR : pops dorés répétés pendant la dispersion
           d.popOn=(d.popOn||0)-dt; if (d.popOn<=0 && Math.random()<16*dt) d.popOn=0.04;
           inten = d.popOn>0 ? 3.4 : 0; if (d.popOn>0){ r=1; g=0.82; b=0.4; } }
-        else if (this.cfg.crackleStars){                           // ÉTOILE œuf de dragon : DISPARAÎT, remplacée par ~50 points lumineux qui crépitent
-          if (d.snaps===undefined) d.snaps=(this.cfg.crackleStars.snaps||8)-1+(Math.random()*3|0);   // 7-9 vagues
+        else if (this.cfg.crackleStars){                           // ŒUF DE DRAGON : l'étoile (1-2cm) DISPARAÎT et claque 4-5 fois -> ~50 points dorés
+          if (d.snaps===undefined) d.snaps=4+(Math.random()*2|0);   // 4-5 "claqués de doigt"
           d.snapTimer=(d.snapTimer||0)-dt;
-          if (d.snapTimer<=0 && d.snaps>0){ d.snaps--; d.snapTimer=0.04+Math.random()*0.07;          // rafale rapide
+          if (d.snapTimer<=0 && d.snaps>0){ d.snaps--; d.snapTimer=0.05+Math.random()*0.08;           // claquements espacés (on les distingue)
             const px=this.pos[i*3],py=this.pos[i*3+1],pz=this.pos[i*3+2];
-            for (let q=0;q<6;q++){ const v=vrand(Math.random), spk=0.8+Math.random()*2.4;            // ~6 points / vague => ~50 par étoile
-              spawnTrail(px,py,pz, 1.0,0.99,0.96, 1.2,0.5,1.8, v[0]*spk*4,v[1]*spk*4,v[2]*spk*4); } }   // points BLANCS (vie + longue -> amas denses simultanés)
-          inten=0;                                                                                     // l'ÉTOILE DISPARAÎT (remplacée par les points)
+            for (let q=0;q<11;q++){ const v=vrand(Math.random), spk=0.6+Math.random()*2.0;            // ~11 points / claqué => ~50 par étoile
+              spawnTrail(px,py,pz, EGGGOLD.r,EGGGOLD.g,EGGGOLD.b, 1.3,0.5,3.0, v[0]*spk*3,v[1]*spk*3,v[2]*spk*3); } }  // points DORÉS, cluster serré, tiennent ~1s (amas visibles)
+          inten=0;                                                                                     // l'ÉTOILE A DISPARU (remplacée par ses points)
           if (d.snaps<=0) d.age=d.life; }
         else { d.popOn=(d.popOn||0)-dt;                            // pistil simple (crackling-aqua)
           if (d.popOn<=0 && Math.random()<(8+10*A)*dt) d.popOn=0.045;
