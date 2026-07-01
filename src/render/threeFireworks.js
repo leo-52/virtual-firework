@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B63';   // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B64';   // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -332,8 +332,8 @@ const EFFECTS = {
   sphere: { speedJit:0.02 },
   ring: { apex:110, burstRadius:16, stars:30, dist2D:shapeRing, orient:'random', heat:false, color:GRN },
   crackling: { apex:95, heat:false, color:CYAN, core:{ stars:18, radiusMul:0.42, color:GOLD } }, // pivoine COULEUR + pistil doré crépitant
-  dragonEgg: { apex:95, heat:false, color:GOLD, stars:84, lifeBase75:2.4, starSize:1.1, arrow:true, speedMul:1.25, gravStar:0.5,  // ŒUF DE DRAGON (~40m, retombe peu = pivoine, pas saule) — 3 TEMPS :
-    trailing:{emitUntil:0.95, period:0.013, grain:1.0, gF:0.12, lifeMul:2.0, color:EGGGOLD},          //  1) T=0 : éclate comme une pivoine mais étoiles PETITES/DISCRÈTES (juste une traînée, à peine une boule : starSize 1.1 + arrow=dim)
+  dragonEgg: { apex:95, heat:false, color:GOLD, stars:84, lifeBase75:2.4, starSize:0.7, arrow:true, speedMul:1.25, gravStar:0.5,  // ŒUF DE DRAGON (~40m, retombe peu = pivoine, pas saule) — 3 TEMPS :
+    trailing:{emitUntil:0.95, period:0.013, grain:1.0, gF:0.12, lifeMul:2.0, color:EGGGOLD},          //  1) T=0 : éclate comme une pivoine mais étoiles TRÈS PETITES/DISCRÈTES (à peine une boule, on voit surtout la traînée : starSize 0.7 + arrow=dim 0.45)
     core:{ stars:30, radiusMul:0.30, color:GOLD, minCal:75, crackleAt:0.5, jitter:0.15 },             //  2) T≈0,5s : le CŒUR crépite (explose en boules) PENDANT que les étoiles se dispersent. 84+30 amas -> REMPLIT la sphère. PAS en 50mm
     crackleStars:{ delay:1.3, jitter:0.3, snaps:5 } },                                                //  3) une fois le cœur FINI (~1,3s), chaque ÉTOILE explose en BOULE RONDE (retour B61) qui S'ÉTEINT sur place
   strobe: { apex:112, heat:false, color:SILVER, onStar:strobeFn, lifeBase75:2.4, gravStar:0.55 },
@@ -658,8 +658,8 @@ class Shell {
           d.flashT=(d.flashT||0)-dt; d.snapTimer=(d.snapTimer||0)-dt;
           if (d.snapTimer<=0 && d.snaps>0){ d.snaps--; d.snapTimer=0.03+Math.random()*0.04;
             const nq=d.first?24:10;                                                                    // 1re salve = grosse boule (24) puis remplissage (10/vague) => ~60 pts
-            for (let q=0;q<nq;q++){ const v=vrand(Math.random), S=2.5+Math.random()*3.2;               // projetés RADIALEMENT depuis le centre figé -> boule ronde
-              spawnTrail(d.cx,d.cy,d.cz, EGGGOLD.r,EGGGOLD.g,EGGGOLD.b, d.first?1.6:1.2, 0.08, 1.9, v[0]*S*5,v[1]*S*5,v[2]*S*5, 0.12, 1.7); }  // gF 0.08 (ne tombe pas), vie 1.9 COURTE (s'éteint), jitter 0.12 + drag 1.7 (explose puis fige et s'éteint, PAS de dérive)
+            for (let q=0;q<nq;q++){ const v=vrand(Math.random), rr=1.2+Math.random()*3.6;              // POSITION dans une boule (rayon ~5) -> l'amas est DÉJÀ formé (pas besoin de "voler" pour se répartir)
+              spawnTrail(d.cx+v[0]*rr, d.cy+v[1]*rr, d.cz+v[2]*rr, EGGGOLD.r,EGGGOLD.g,EGGGOLD.b, d.first?1.6:1.2, 0.05, 1.9, v[0]*0.8,v[1]*0.8,v[2]*0.8, 0.1, 4.0); }  // vitesse ~nulle + drag TRÈS haut (4) + gF 0.05 -> apparaît en boule puis s'éteint SUR PLACE, ne "vole" pas
             d.first=false; }
           if (d.flashT>0){ r=1.5; g=1.3; b=1.0; inten=Math.max(inten,1.2)*4.0; }                       // FLASH clair : l'étoile ÉCLATE
           else inten=0;                                                                                // puis DISPARUE (désintégrée en sa boule)
@@ -668,7 +668,7 @@ class Shell {
           if (d.popOn<=0 && Math.random()<(8+10*A)*dt) d.popOn=0.045;
           if (d.popOn>0){ inten*=2.8; const w=0.95; r=r+(1-r)*w; g=g+(1-g)*w; b=b+(1-b)*w; } }
       } else if (d.popOnly){ inten = 0; }                          // cœur : invisible avant de claquer
-        else if (this.cfg.arrow){ inten *= 0.55; }                 // œuf de dragon : étoile PETITE et DISCRÈTE avant de claquer (à peine une boule, la traînée domine)
+        else if (this.cfg.arrow){ inten *= 0.45; }                 // œuf de dragon : étoile TRÈS DISCRÈTE avant de claquer (à peine une boule, la traînée domine)
       this.col[i*3]=r*inten; this.col[i*3+1]=g*inten; this.col[i*3+2]=b*inten;
 
       const mbk=0.07;
