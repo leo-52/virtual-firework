@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B62';   // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B63';   // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -85,13 +85,13 @@ const trailPoints = new THREE.Points(trailGeo, trailMat);
 trailPoints.frustumCulled = false;   // CRITIQUE : sa bounding sphere reste à l'origine (grains nés à 0,0,0) ->
 scene.add(trailPoints);              // sinon Three.js CULL tout le pool quand la caméra vise le burst (origine hors champ) = "pas de traînées"
 
-function spawnTrail(x,y,z, r,g,b, size, gF=0.4, lifeMul=1, vx0=0, vy0=0, vz0=0){
+function spawnTrail(x,y,z, r,g,b, size, gF=0.4, lifeMul=1, vx0=0, vy0=0, vz0=0, jit=0.8, drag=0.42){
   const i = trailHead; trailHead = (trailHead + 1) % TRAIL_MAX;
   const t = trail[i];
   t.x=x; t.y=y; t.z=z;
-  t.vx=vx0*0.25+(Math.random()-0.5)*0.8; t.vy=vy0*0.25-Math.random()*0.6; t.vz=vz0*0.25+(Math.random()-0.5)*0.8;
+  t.vx=vx0*0.25+(Math.random()-0.5)*jit; t.vy=vy0*0.25-Math.random()*(jit*0.75); t.vz=vz0*0.25+(Math.random()-0.5)*jit;   // jit bas = pas de "nage" aléatoire (poissons/feuilles)
   t.age=0; t.life = lifeMul * 0.26 * (0.35 + 1.45*Math.pow(Math.random(),1.6));
-  t.size = size*(0.7+Math.random()*0.6); t.r=r; t.g=g; t.b=b; t.gF=gF; t.alive=true;
+  t.size = size*(0.7+Math.random()*0.6); t.r=r; t.g=g; t.b=b; t.gF=gF; t.drag=drag; t.alive=true;   // drag haut = décélère vite (explose puis s'éteint sur place)
 }
 function updateTrails(dt){
   for (let i = 0; i < TRAIL_MAX; i++){
@@ -104,7 +104,7 @@ function updateTrails(dt){
     t.age += dt; if (t.age >= t.life){ t.alive=false;
       trailCol[i*3]=trailCol[i*3+1]=trailCol[i*3+2]=0; trailSize[i]=0; continue; }
     t.vy -= 9.8 * t.gF * dt;
-    const kd = Math.max(0, 1 - 0.42*dt); t.vx*=kd; t.vy*=kd; t.vz*=kd;
+    const kd = Math.max(0, 1 - (t.drag||0.42)*dt); t.vx*=kd; t.vy*=kd; t.vz*=kd;
     t.x+=t.vx*dt; t.y+=t.vy*dt; t.z+=t.vz*dt;
     const a = 1 - t.age/t.life;
     trailPos[i*3]=t.x; trailPos[i*3+1]=t.y; trailPos[i*3+2]=t.z;
@@ -179,7 +179,7 @@ const GOLD=new THREE.Color(1.0,0.72,0.32), DIMGOLD=new THREE.Color(0.55,0.40,0.1
   BRIGHTGOLD=new THREE.Color(1.4,1.0,0.45),   // or HDR (traînées bien visibles à distance, ex saule kamuro)
   PALEGOLD=new THREE.Color(1.0,0.88,0.68),    // or PÂLE pour autres usages
   EGGWHITE=new THREE.Color(1.0,0.95,0.92),    // BLANC (ancien œuf de dragon, trop froid)
-  EGGGOLD=new THREE.Color(1.35,1.22,1.0);     // BLANC (à peine chaud), HDR (œuf de dragon : encore + vers le blanc que B61 ; réf photo = amas blancs à reflets chauds). MÊME couleur traînée + points + cœur
+  EGGGOLD=new THREE.Color(1.4,1.18,0.88);     // BLANC CHAUD / champagne, HDR (œuf de dragon, retour B61 ; réf photo = amas blancs à reflets chauds). MÊME couleur traînée + points + cœur
 
 // ============================================================================
 // DISTRIBUTIONS 3D : dist(i,n,rnd) -> {dx,dy,dz, spMul, comp?}
@@ -332,10 +332,10 @@ const EFFECTS = {
   sphere: { speedJit:0.02 },
   ring: { apex:110, burstRadius:16, stars:30, dist2D:shapeRing, orient:'random', heat:false, color:GRN },
   crackling: { apex:95, heat:false, color:CYAN, core:{ stars:18, radiusMul:0.42, color:GOLD } }, // pivoine COULEUR + pistil doré crépitant
-  dragonEgg: { apex:95, heat:false, color:GOLD, stars:64, lifeBase75:2.4, starSize:2.0, speedMul:1.25, gravStar:0.5,  // ŒUF DE DRAGON (~40m, retombe peu = pivoine, pas saule) — 3 TEMPS :
-    trailing:{emitUntil:0.95, period:0.013, grain:1.0, gF:0.12, lifeMul:2.0, color:EGGGOLD},          //  1) T=0 : éclate COMME UNE PIVOINE, étoiles or visibles + traînée fine (étape 1 du croquis, VALIDÉE par l'user)
-    core:{ stars:24, radiusMul:0.30, color:GOLD, minCal:75, crackleAt:0.5, jitter:0.15 },             //  2) T≈0,5s : le CŒUR crépite (explose en dandelions) PENDANT que les étoiles se dispersent. 64+24 amas GROS -> REMPLIT la sphère (quasi pas de trous). PAS en 50mm
-    crackleStars:{ delay:1.3, jitter:0.3, snaps:3 } },                                                //  3) une fois le cœur FINI (~1,3s), chaque ÉTOILE explose en petit CHRYSANTHÈME à rayons (dandelion)
+  dragonEgg: { apex:95, heat:false, color:GOLD, stars:84, lifeBase75:2.4, starSize:1.1, arrow:true, speedMul:1.25, gravStar:0.5,  // ŒUF DE DRAGON (~40m, retombe peu = pivoine, pas saule) — 3 TEMPS :
+    trailing:{emitUntil:0.95, period:0.013, grain:1.0, gF:0.12, lifeMul:2.0, color:EGGGOLD},          //  1) T=0 : éclate comme une pivoine mais étoiles PETITES/DISCRÈTES (juste une traînée, à peine une boule : starSize 1.1 + arrow=dim)
+    core:{ stars:30, radiusMul:0.30, color:GOLD, minCal:75, crackleAt:0.5, jitter:0.15 },             //  2) T≈0,5s : le CŒUR crépite (explose en boules) PENDANT que les étoiles se dispersent. 84+30 amas -> REMPLIT la sphère. PAS en 50mm
+    crackleStars:{ delay:1.3, jitter:0.3, snaps:5 } },                                                //  3) une fois le cœur FINI (~1,3s), chaque ÉTOILE explose en BOULE RONDE (retour B61) qui S'ÉTEINT sur place
   strobe: { apex:112, heat:false, color:SILVER, onStar:strobeFn, lifeBase75:2.4, gravStar:0.55 },
   fallingLeaves: { apex:95, dist:distLeaves, heat:false, color:new THREE.Color(1.0,0.45,0.55),
                    gravStar:0.26, dragStar:0.85, lifeBase75:6.0, speedMul:0.7, sway:7, starSize:2.4 },
@@ -652,27 +652,23 @@ class Shell {
         if (d.popOnly){                                            // CŒUR : pops dorés répétés pendant la dispersion
           d.popOn=(d.popOn||0)-dt; if (d.popOn<=0 && Math.random()<16*dt) d.popOn=0.04;
           inten = d.popOn>0 ? 3.4 : 0; if (d.popOn>0){ r=1; g=0.82; b=0.4; } }
-        else if (this.cfg.crackleStars){                           // ŒUF DE DRAGON (étape 2) : l'étoile EXPLOSE en un petit CHRYSANTHÈME ROND (dandelion) = rayons fins, comme la photo réf
-          if (d.snaps===undefined){ d.snaps=this.cfg.crackleStars.snaps||3; d.first=true; d.flashT=0.06;
-            d.cx=this.pos[i*3]; d.cy=this.pos[i*3+1]; d.cz=this.pos[i*3+2]; }                          // CENTRE FIGÉ -> amas ROND (pas étiré par le déplacement de l'étoile)
+        else if (this.cfg.crackleStars){                           // ŒUF DE DRAGON (étape 2) : l'étoile EXPLOSE en BOULE RONDE (retour B61) puis S'ÉTEINT SUR PLACE (pas de vol plané façon poisson/feuille)
+          if (d.snaps===undefined){ d.snaps=(this.cfg.crackleStars.snaps||5)-1+(Math.random()*2|0); d.first=true; d.flashT=0.06;
+            d.cx=this.pos[i*3]; d.cy=this.pos[i*3+1]; d.cz=this.pos[i*3+2]; }                          // CENTRE FIGÉ -> amas ROND
           d.flashT=(d.flashT||0)-dt; d.snapTimer=(d.snapTimer||0)-dt;
           if (d.snapTimer<=0 && d.snaps>0){ d.snaps--; d.snapTimer=0.03+Math.random()*0.04;
-            const nDir=d.first?16:6, spokes=d.first?4:2;                                               // 1re salve = le gros dandelion (16 rayons × 4 points) puis crépitement
-            for (let k=0;k<nDir;k++){ const v=vrand(Math.random);
-              for (let j=1;j<=spokes;j++){ const dist=j*1.7*(0.8+Math.random()*0.4);                  // points ALIGNÉS le long du rayon = un SPOKE -> structure radiante (dandelion), plus GROS
-                const warm=Math.random()<0.22;                                                         // ~22% de points ambre parmi le blanc (réf : blanc à reflets chauds)
-                spawnTrail(d.cx+v[0]*dist, d.cy+v[1]*dist, d.cz+v[2]*dist,
-                  warm?1.5:EGGGOLD.r, warm?0.9:EGGGOLD.g, warm?0.5:EGGGOLD.b,
-                  1.5-j*0.12, 0.3, 3.2, v[0]*2.4,v[1]*2.4,v[2]*2.4); } }                                // léger drift radial -> le dandelion s'ouvre
+            const nq=d.first?24:10;                                                                    // 1re salve = grosse boule (24) puis remplissage (10/vague) => ~60 pts
+            for (let q=0;q<nq;q++){ const v=vrand(Math.random), S=2.5+Math.random()*3.2;               // projetés RADIALEMENT depuis le centre figé -> boule ronde
+              spawnTrail(d.cx,d.cy,d.cz, EGGGOLD.r,EGGGOLD.g,EGGGOLD.b, d.first?1.6:1.2, 0.08, 1.9, v[0]*S*5,v[1]*S*5,v[2]*S*5, 0.12, 1.7); }  // gF 0.08 (ne tombe pas), vie 1.9 COURTE (s'éteint), jitter 0.12 + drag 1.7 (explose puis fige et s'éteint, PAS de dérive)
             d.first=false; }
-          if (d.flashT>0){ r=1.4; g=1.25; b=1.05; inten=Math.max(inten,1.2)*3.5; }                     // FLASH blanc : l'étoile ÉCLATE
-          else inten=0;                                                                                // puis DISPARUE (désintégrée en son dandelion)
+          if (d.flashT>0){ r=1.5; g=1.3; b=1.0; inten=Math.max(inten,1.2)*4.0; }                       // FLASH clair : l'étoile ÉCLATE
+          else inten=0;                                                                                // puis DISPARUE (désintégrée en sa boule)
           if (d.snaps<=0) d.age=d.life; }
         else { d.popOn=(d.popOn||0)-dt;                            // pistil simple (crackling-aqua)
           if (d.popOn<=0 && Math.random()<(8+10*A)*dt) d.popOn=0.045;
           if (d.popOn>0){ inten*=2.8; const w=0.95; r=r+(1-r)*w; g=g+(1-g)*w; b=b+(1-b)*w; } }
       } else if (d.popOnly){ inten = 0; }                          // cœur : invisible avant de claquer
-        else if (this.cfg.arrow){ inten *= 0.22; }                 // FLÈCHE : pointe FAIBLE (la traînée or domine)
+        else if (this.cfg.arrow){ inten *= 0.55; }                 // œuf de dragon : étoile PETITE et DISCRÈTE avant de claquer (à peine une boule, la traînée domine)
       this.col[i*3]=r*inten; this.col[i*3+1]=g*inten; this.col[i*3+2]=b*inten;
 
       const mbk=0.07;
