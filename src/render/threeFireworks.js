@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B67';   // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B68';   // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -331,7 +331,7 @@ const EFFECTS = {
            trailing:{emitUntil:0.97, period:0.012, grain:1.3, gF:0.35, lifeMul:1.8, color:GOLD} },
   sphere: { speedJit:0.02 },
   ring: { apex:110, burstRadius:16, stars:30, dist2D:shapeRing, orient:'random', heat:false, color:GRN },
-  crackling: { apex:95, heat:false, color:CYAN, core:{ stars:18, radiusMul:0.42, color:GOLD } }, // pivoine COULEUR + pistil doré crépitant
+  crackling: { apex:95, heat:false, color:GRN, pureColor:true, core:{ stars:18, radiusMul:0.42, color:GOLD } }, // crackling VERT = pivoine VERTE pure (texture neutre = vert franc) + pistil doré crépitant (pops blancs, surtout vers la fin) ; décliner via override {color}
   dragonEgg: { apex:95, heat:false, color:GOLD, stars:84, lifeBase75:2.4, starSize:0.7, arrow:true, speedMul:1.25, gravStar:0.5,  // ŒUF DE DRAGON (~40m, retombe peu = pivoine, pas saule) — 3 TEMPS :
     trailing:{emitUntil:0.95, period:0.013, grain:1.0, gF:0.12, lifeMul:2.0, color:EGGGOLD},          //  1) T=0 : éclate comme une pivoine mais étoiles TRÈS PETITES/DISCRÈTES (à peine une boule, on voit surtout la traînée : starSize 0.7 + arrow=dim 0.45)
     core:{ stars:30, radiusMul:0.30, color:GOLD, minCal:75, crackleAt:0.5, jitter:0.15 },             //  2) T≈0,5s : le CŒUR crépite (explose en boules) PENDANT que les étoiles se dispersent. 84+30 amas -> REMPLIT la sphère. PAS en 50mm
@@ -430,7 +430,7 @@ class Shell {
     this.geo.setAttribute('position', new THREE.BufferAttribute(this.pos,3));
     this.geo.setAttribute('aColor',   new THREE.BufferAttribute(this.col,3));
     this.geo.setAttribute('size',     new THREE.BufferAttribute(this.size,1));
-    this.mat=makeStarMat();
+    this.mat=makeStarMat(this.cfg.pureColor ? neutralTex : null);   // pureColor -> texture NEUTRE (la texture orange par défaut salit les couleurs franches, ex vert du crackling)
     this.points=new THREE.Points(this.geo,this.mat); this.points.visible=false; this.points.frustumCulled=false; scene.add(this.points);
     this.lgeo=new THREE.BufferGeometry();
     this.lgeo.setAttribute('position', new THREE.BufferAttribute(this.lpos,3));

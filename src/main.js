@@ -109,13 +109,13 @@ Object.assign(pick.style, { position:'fixed', top:'10px', right:'10px', zIndex:'
 for (const [k, label] of Object.entries(LABELS)){
   const o = document.createElement('option'); o.value = k; o.textContent = label; pick.appendChild(o);
 }
-pick.value = 'dragonEgg';
+pick.value = 'crackling';
 // changer d'effet dans le menu -> couleur PAR DÉFAUT de l'effet (null annule l'override de la démo)
 pick.addEventListener('change', e => layer.setFocus(e.target.value, null));
 document.body.appendChild(pick);
 
-// DÉMO (pour l'instant) : ŒUF DE DRAGON 75mm (tout le break crépite, doré).
-layer.setFocus('dragonEgg');
+// DÉMO (réglage en cours) : CRACKLING VERT 75mm (pivoine verte pure + pistil doré crépitant).
+layer.setFocus('crackling');
 
 // TIMELINE de lecture (barre en bas) + ESPACE = pause/play (fige les feux, caméra libre).
 const timeline = new Timeline(layer, LABELS);
