@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B82';   // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B83';   // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -75,12 +75,12 @@ const STAR_FS = `
     float m = 1.0 - 1.0/vStretch;                                    // position de la TÊTE vers l'avant (0 si à l'arrêt)
     // TÊTE : boule RONDE à pleine taille (croquis user : le rond)
     vec2 relH = vec2(q.x - m, q.y) * vStretch;
-    vec4 tH = texture2D(uTex, relH*0.5 + 0.5);
+    vec4 tH = texture2D(uTex, relH*0.5 + 0.5) * step(length(relH), 1.0);   // step : ZÉRO hors de la boule (le clamp de texture laissait ~1% d'alpha -> bandes en CROIX avec HDR+bloom)
     // QUEUE : CÔNE effilé derrière — part aussi LARGE que la boule et finit en POINTE (croquis user)
     float f = clamp((q.x + 1.0) / max(m + 1.0, 0.001), 0.0, 1.0);    // 1 à la boule -> 0 à la pointe arrière
     float w = f / vStretch;                                          // demi-largeur locale du cône
     float dy = abs(q.y) / max(w, 0.0001);                            // 0 = axe, 1 = bord du cône
-    vec4 tT = texture2D(uTex, vec2(0.5, 0.5 + dy*0.5));              // falloff radial du sprite en travers de la queue
+    vec4 tT = texture2D(uTex, vec2(0.5, 0.5 + dy*0.5)) * step(dy, 1.0);    // step : ZÉRO hors du cône (même piège de clamp)
     float tailMask = (q.x < m ? 1.0 : 0.0) * f * f * 0.85;           // fondu vers la pointe, un peu plus faible que la tête
     vec4 t = max(tH, tT * tailMask);                                  // rond seul à l'arrêt (la queue rentre dans la boule)
     gl_FragColor = vec4(vCol * t.rgb, t.a);                          // additif : couleur HDR × alpha du sprite
