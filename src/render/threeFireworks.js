@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B78';   // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B79';   // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -289,10 +289,9 @@ function strobeFn(d){ const ph=(d.age*d.strobeF+d.phase)%1; return {intenMul: ph
 // la poudre EXTÉRIEURE (couleur) crame pendant la course ; ~0,3s avant l'arrêt de l'étoile elle
 // est FINIE -> l'étoile DISPARAÎT ; puis, une fois arrêtée, l'INTÉRIEUR clignote BLANC franc.
 function finalCliFn(d,A){
-  const t1=0.36+d.phase*0.06;                                  // fin de combustion couleur (~0,85-1,0s ; léger décalage par étoile)
+  const t1=0.36+d.phase*0.06;                                  // fin de combustion couleur (~0,85-1,0s = ~0,3s avant l'arrêt ; léger décalage par étoile)
   if (A<t1) return null;                                       // 1) COULEUR pendant la course
-  if (A<t1+0.13) return { intenMul:0 };                        // 2) ÉTEINTE ~0,3s (poudre ext. finie, l'étoile finit de freiner)
-  const ph=(d.age*d.strobeF*3+d.phase)%1;                      // 3) l'INTÉRIEUR clignote BLANC ~6-13 Hz (rythme propre à chaque étoile)
+  const ph=(d.age*d.strobeF*3+d.phase)%1;                      // 2) DÈS l'extinction de la couleur : l'INTÉRIEUR clignote BLANC ~6-13 Hz (pas de pause — le "trou noir" = les creux du clignotement)
   return { intenMul: ph<0.25?1.7:0.12, whiteMix:1 };           // flash blanc vif / quasi éteint entre les flashs
 }
 function crackleFn(d,A,dt){ d.popOn=(d.popOn||0)-dt;
