@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B68';   // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B69';   // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -331,7 +331,8 @@ const EFFECTS = {
            trailing:{emitUntil:0.97, period:0.012, grain:1.3, gF:0.35, lifeMul:1.8, color:GOLD} },
   sphere: { speedJit:0.02 },
   ring: { apex:110, burstRadius:16, stars:30, dist2D:shapeRing, orient:'random', heat:false, color:GRN },
-  crackling: { apex:95, heat:false, color:GRN, pureColor:true, core:{ stars:18, radiusMul:0.42, color:GOLD } }, // crackling VERT = pivoine VERTE pure (texture neutre = vert franc) + pistil doré crépitant (pops blancs, surtout vers la fin) ; décliner via override {color}
+  crackling: { apex:95, heat:false, color:GRN, pureColor:true, stars:83,                              // crackling VERT 75mm = pivoine VERTE pure 83 étoiles (texture neutre = vert franc) ; décliner via override {color}
+    core:{ stars:20, radiusMul:0.42, color:GOLD, eggSplode:true, crackleAt:0.5, jitter:0.6 } },       // + pistil = ~20 étoiles ŒUF DE DRAGON : chacune explose en boule d'étincelles dorées, étalées 0,5→1,1s (surtout vers la fin)
   dragonEgg: { apex:95, heat:false, color:GOLD, stars:84, lifeBase75:2.4, starSize:0.7, arrow:true, speedMul:1.25, gravStar:0.5,  // ŒUF DE DRAGON (~40m, retombe peu = pivoine, pas saule) — 3 TEMPS :
     trailing:{emitUntil:0.95, period:0.013, grain:1.0, gF:0.12, lifeMul:2.0, color:EGGGOLD},          //  1) T=0 : éclate comme une pivoine mais étoiles TRÈS PETITES/DISCRÈTES (à peine une boule, on voit surtout la traînée : starSize 0.7 + arrow=dim 0.45)
     core:{ stars:30, radiusMul:0.30, color:GOLD, minCal:75, crackleAt:0.5, jitter:0.15 },             //  2) T≈0,5s : le CŒUR crépite (explose en boules) PENDANT que les étoiles se dispersent. 84+30 amas -> REMPLIT la sphère. PAS en 50mm
@@ -511,9 +512,10 @@ class Shell {
         // ŒUF DE DRAGON : les étoiles du cœur reçoivent la MÊME traînée que la coquille ; sinon (crackling) pas de traînée.
         const s=this._newStar(dir.dx*sp2, dir.dy*sp2, dir.dz*sp2, 0, this.cfg.crackleStars?this.cfg.trailing:false);
         s._i=i; s._split=false; s.crackle=true; s.coreColor=co.color;
-        if (this.cfg.crackleStars){        // ŒUF DE DRAGON : cœur = étoiles crépitantes (explosent -> ~50 points), MÊME couleur, mais crépite PLUS TÔT que la coquille (~0,5s, cf 3 temps)
-          s.crackleAt=(co.crackleAt||0)+Math.random()*(co.jitter||0); s.isCore=true;   // tag : le cœur garde sa durée (bien temporisé), la coquille crépite 0,2s + court
-        } else {                           // CRACKLING <couleur> : pistil doré à pops simples (comportement d'origine)
+        if (this.cfg.crackleStars || co.eggSplode){   // ŒUF DE DRAGON (cœur) OU pistil "étoiles œuf de dragon" (crackling <couleur>) : explosent en boule d'étincelles
+          s.crackleAt=(co.crackleAt||0)+Math.random()*(co.jitter||0); s.isCore=true;   // tag : explosion taille "cœur" (params isCore), timing propre au cœur
+          if (co.eggSplode) s.eggSplode=true;
+        } else {                           // pistil doré à pops simples (autres effets à pistil)
           s.crackleAt=co.crackleAt||0;
           if (co.popOnly) s.popOnly=true;  // pops (pas d'étoile, pas de scintillement)
           if (co.life) s.life=co.life;     // le cœur s'arrête avant les étoiles
@@ -652,8 +654,8 @@ class Shell {
         if (d.popOnly){                                            // CŒUR : pops dorés répétés pendant la dispersion
           d.popOn=(d.popOn||0)-dt; if (d.popOn<=0 && Math.random()<16*dt) d.popOn=0.04;
           inten = d.popOn>0 ? 3.4 : 0; if (d.popOn>0){ r=1; g=0.82; b=0.4; } }
-        else if (this.cfg.crackleStars){                           // ŒUF DE DRAGON (étape 2) : l'étoile EXPLOSE = ses étincelles JAILLISSENT du point et s'écartent en BOULE, puis se FIGENT et s'éteignent
-          if (d.snaps===undefined){ d.snaps=(this.cfg.crackleStars.snaps||5)-1+(Math.random()*2|0); d.first=true; d.flashT=0.06;
+        else if (this.cfg.crackleStars || d.eggSplode){            // ŒUF DE DRAGON (étape 2) ou pistil eggSplode : l'étoile EXPLOSE = ses étincelles JAILLISSENT du point et s'écartent en BOULE, puis se FIGENT et s'éteignent
+          if (d.snaps===undefined){ d.snaps=((this.cfg.crackleStars||{}).snaps||5)-1+(Math.random()*2|0); d.first=true; d.flashT=0.06;
             d.cx=this.pos[i*3]; d.cy=this.pos[i*3+1]; d.cz=this.pos[i*3+2]; }                          // CENTRE FIGÉ -> amas ROND
           d.flashT=(d.flashT||0)-dt; d.snapTimer=(d.snapTimer||0)-dt;
           if (d.snapTimer<=0 && d.snaps>0){ d.snaps--; d.snapTimer=0.03+Math.random()*0.04;
