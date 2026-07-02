@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B87';   // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B88';   // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -392,8 +392,8 @@ const EFFECTS = {
                    gravStar:0.26, dragStar:0.85, lifeBase75:6.0, speedMul:0.7, sway:7, starSize:2.4 },
   palm: { apex:105, stars:15, dist:distFibonacci, heat:false, color:WHITE, onStar:glitterFn, gravStar:1.0, dragStar:0.6,   // PIVOINE (sphère, bien écartée) + traînée, 15 étoiles ; blanc scintillant + traînée OR
           lifeBase75:2.8, starSize:4.1, trailing:{emitUntil:0.97, period:0.006, grain:1.3, gF:0.45, lifeMul:9.0, color:GOLD} },  // FRONDES = TRÈS LONGUES queues dorées = la palme (compensé, taille inchangée = 3.4×1.2)
-  palmMulti: { apex:105, stars:15, dist:distFibonacci, heat:false, pureColor:true, assorted:[GRN,RED,BLU], gravStar:1.0, dragStar:0.6,   // PALME MULTICOLORE 75mm (catalogue, user : 15 étoiles vertes/rouges/bleues)
-          lifeBase75:2.8, starSize:3.3, trailing:{emitUntil:0.97, period:0.0032, grain:0.8, gF:0.45, lifeMul:9.0, color:GOLD, fixedColor:true, spark:true} },  // étoiles -20% (B87) ; traînée = MILLIERS d'ÉTINCELLES dorées-orangées (décomposition de l'étoile : grains fins, denses, brillances variées, dispersés) ; pointe verte/rouge/bleue
+  palmMulti: { apex:105, stars:15, dist:distFibonacci, heat:false, pureColor:true, assorted:[GRN,RED,BLU], gravStar:1.0, dragStar:0.6, shrink:true,   // PALME MULTICOLORE 75mm (catalogue, user : 15 étoiles vertes/rouges/bleues)
+          lifeBase75:2.8, starSize:2.6, trailing:{emitUntil:0.97, period:0.0032, grain:0.8, gF:0.45, lifeMul:9.0, color:GOLD, fixedColor:true, spark:true} },  // étoiles encore réduites (B88) + shrink : elles RÉTRÉCISSENT progressivement jusqu'à disparaître ; traînée = MILLIERS d'ÉTINCELLES dorées ; pointe verte/rouge/bleue
 
   // === FORMES 2D (face public) ===
   heart:     { apex:90, heat:false, stars:64, starSize:2.4, dist2D:shapeHeart, colors:[RED] },
@@ -740,6 +740,8 @@ class Shell {
       // FLOU DE MOUVEMENT (B82, croquis user) : ROND + QUEUE EN CÔNE au shader — tête ronde pleine
       // taille + cône effilé derrière (part large comme la boule, finit en pointe), rond à l'arrêt.
       this.vel[i*3]=d.vx; this.vel[i*3+1]=d.vy; this.vel[i*3+2]=d.vz;
+      // SHRINK (B88, palme multicolore) : l'étoile RÉTRÉCIT progressivement -> disparaît de plus en plus petite
+      if (this.cfg.shrink) this.size[i]=this.cfg.starSize*STAR_SCALE*(1-A*0.9);
 
       if (tr && A<tr.emitUntil && !d.popOnly && d.age<(d.crackleAt||1e9)){ d.since+=dt;   // traînée tant que l'étoile n'a pas commencé à claquer
         // ÉMISSION AU VRAI DÉBIT (B87) : n grains par frame si period < dt (avant : 1 max/frame ->
@@ -758,6 +760,7 @@ class Shell {
     }
     this.geo.attributes.position.needsUpdate=true; this.geo.attributes.aColor.needsUpdate=true;
     this.geo.attributes.aVel.needsUpdate=true;
+    if (this.cfg.shrink) this.geo.attributes.size.needsUpdate=true;
 
     if (this.phase==='burst' && alive===0){
       this.dead=true; scene.remove(this.points); scene.remove(this.lines);
