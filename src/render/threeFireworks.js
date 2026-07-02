@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B77';   // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B78';   // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -285,11 +285,14 @@ function shapeRing(){ const pts=[]; for(let k=0;k<26;k++){const t=2*Math.PI*k/26
 // HOOKS onStar(d,A,dt) -> {intenMul?,whiteMix?} (visuel)  /  behave(d,A,dt,ctx) (physique)
 // ============================================================================
 function strobeFn(d){ const ph=(d.age*d.strobeF+d.phase)%1; return {intenMul: ph<0.18?1.4:0.4}; }
-// FINAL CLI. BLANC (catalogue « bombe à final cli. blanc <couleur> ») : pivoine COULEUR, puis au
-// « final » (~55% de la vie) l'étoile CHANGE -> clignotant BLANC franc jusqu'à extinction.
+// FINAL CLI. BLANC (catalogue « bombe à final cli. blanc <couleur> ») — cycle réel (user) :
+// la poudre EXTÉRIEURE (couleur) crame pendant la course ; ~0,3s avant l'arrêt de l'étoile elle
+// est FINIE -> l'étoile DISPARAÎT ; puis, une fois arrêtée, l'INTÉRIEUR clignote BLANC franc.
 function finalCliFn(d,A){
-  if (A<0.55) return null;                                     // 1) phase COULEUR (pivoine normale)
-  const ph=(d.age*d.strobeF*3+d.phase)%1;                      // 2) FINAL : cli. BLANC ~6-13 Hz (rythme propre à chaque étoile)
+  const t1=0.36+d.phase*0.06;                                  // fin de combustion couleur (~0,85-1,0s ; léger décalage par étoile)
+  if (A<t1) return null;                                       // 1) COULEUR pendant la course
+  if (A<t1+0.13) return { intenMul:0 };                        // 2) ÉTEINTE ~0,3s (poudre ext. finie, l'étoile finit de freiner)
+  const ph=(d.age*d.strobeF*3+d.phase)%1;                      // 3) l'INTÉRIEUR clignote BLANC ~6-13 Hz (rythme propre à chaque étoile)
   return { intenMul: ph<0.25?1.7:0.12, whiteMix:1 };           // flash blanc vif / quasi éteint entre les flashs
 }
 function crackleFn(d,A,dt){ d.popOn=(d.popOn||0)-dt;
