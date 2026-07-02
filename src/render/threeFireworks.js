@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B79';   // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B80';   // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -59,7 +59,7 @@ const STAR_VS = `
     vec2 dpx = (p1.xy/p1.w - p2.xy/p2.w) * uVp;                     // déplacement écran en px
     float lenPx = length(dpx);
     float st = 1.0 + lenPx / max(basePx, 0.001);
-    vStretch = min(st, 3.5);
+    vStretch = min(st, 2.5);
     vDir = lenPx > 0.0001 ? dpx/lenPx : vec2(1.0, 0.0);
     gl_PointSize = basePx * vStretch;                               // le sprite s'agrandit pour contenir l'ovale
     gl_Position = p1;
@@ -70,10 +70,12 @@ const STAR_FS = `
   varying vec2 vDir;
   varying float vStretch;
   void main(){
-    vec2 pc = gl_PointCoord*2.0 - 1.0;
-    vec2 q = vec2(dot(pc, vDir), pc.x*(-vDir.y) + pc.y*vDir.x);     // repère aligné sur la vitesse
-    q.y *= vStretch;                                                 // largeur = boule d'origine -> OVALE orienté
-    vec4 t = texture2D(uTex, q*0.5 + 0.5);                           // hors de l'ovale : clamp -> transparent
+    vec2 pc = vec2(gl_PointCoord.x, 1.0-gl_PointCoord.y)*2.0 - 1.0;  // y remis vers le HAUT (même repère que la vitesse écran)
+    vec2 q = vec2(dot(pc, vDir), pc.x*(-vDir.y) + pc.y*vDir.x);      // repère aligné sur la vitesse
+    float m = 1.0 - 1.0/vStretch;                                    // demi-longueur du segment central (0 si à l'arrêt)
+    float ax = clamp(q.x, -m, m);
+    vec2 rel = vec2(q.x-ax, q.y) * vStretch;                         // CAPSULE : disque de la boule d'origine étiré le long du segment
+    vec4 t = texture2D(uTex, rel*0.5 + 0.5);                         //  -> OVALE ÉPAIS à bouts ronds (pas une aiguille), rond à l'arrêt
     gl_FragColor = vec4(vCol * t.rgb, t.a);                          // additif : couleur HDR × alpha du sprite
   }`;
 function makeStarMat(tex){
