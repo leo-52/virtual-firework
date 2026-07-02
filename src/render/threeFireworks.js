@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B70';   // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B71';   // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -311,6 +311,9 @@ function behaveMosaic(d,A,dt,ctx){
 // ============================================================================
 const CAL_SCALE = { 50:0.67, 75:1.0, 100:1.44, 125:1.87, 150:2.30, 200:2.58 };
 const STAR_SCALE = 1.2;   // étoiles +20% (réglage global ; user)
+const BURST_PUNCH = 2.0;  // PUNCH d'explosion (user, vidéos réelles) : vitesse initiale ×2 ET freinage ×2 -> même envergure
+                          // finale (distance ≈ v/drag), mais l'expansion se fait VITE au début (flou de mouvement fort à
+                          // l'ouverture, proportionnel à la vitesse) puis les étoiles FREINENT -> boule quasi figée à l'extinction.
 const APEX_SCALE = 0.89;  // pivoine 75mm -> ~80m (90×0.89, valeur voulue par l'user) — knob global de hauteur
 const BASE = {
   stars:80, nMax:0, burstRadius:13.5, speedMul:1.8, speedJit:0.05,
@@ -332,7 +335,7 @@ const EFFECTS = {
   sphere: { speedJit:0.02 },
   ring: { apex:110, burstRadius:16, stars:30, dist2D:shapeRing, orient:'random', heat:false, color:GRN },
   crackling: { apex:95, heat:false, color:GRN, pureColor:true, stars:83,                              // crackling VERT 75mm = pivoine VERTE pure 83 étoiles (texture neutre = vert franc) ; décliner via override {color}
-    core:{ stars:20, radiusMul:0.42, color:GOLD, eggSplode:true, crackleAt:0.7, jitter:0.6 } },       // + pistil = ~20 étoiles ŒUF DE DRAGON INVISIBLES (on ne voit QUE le crépitement) : explosent étalées 0,7→1,3s après l'éclatement
+    core:{ stars:20, radiusMul:0.42, color:GOLD, eggSplode:true, crackleAt:0.9, jitter:0.6 } },       // + pistil = ~20 étoiles ŒUF DE DRAGON INVISIBLES (on ne voit QUE le crépitement) : explosent étalées 0,9→1,5s après l'éclatement
   dragonEgg: { apex:95, heat:false, color:GOLD, stars:84, lifeBase75:2.4, starSize:0.7, arrow:true, speedMul:1.25, gravStar:0.5,  // ŒUF DE DRAGON (~40m, retombe peu = pivoine, pas saule) — 3 TEMPS :
     trailing:{emitUntil:0.95, period:0.013, grain:1.0, gF:0.12, lifeMul:2.0, color:EGGGOLD},          //  1) T=0 : éclate comme une pivoine mais étoiles TRÈS PETITES/DISCRÈTES (à peine une boule, on voit surtout la traînée : starSize 0.7 + arrow=dim 0.45)
     core:{ stars:30, radiusMul:0.30, color:GOLD, minCal:75, crackleAt:0.5, jitter:0.15 },             //  2) T≈0,5s : le CŒUR crépite (explose en boules) PENDANT que les étoiles se dispersent. 84+30 amas -> REMPLIT la sphère. PAS en 50mm
@@ -466,7 +469,7 @@ class Shell {
 
   burst(){
     const apex=this.cfg.apex, bx=this.bx, bz=this.bz;
-    const speed=this.cfg.burstRadius*this.cfg.speedMul, jit=this.cfg.speedJit;
+    const speed=this.cfg.burstRadius*this.cfg.speedMul*BURST_PUNCH, jit=this.cfg.speedJit;   // ×PUNCH : l'explosion PROPULSE (le drag ×PUNCH compense -> même envergure)
     let plane=null, pts=null, n;
     if (this.cfg.dist2D){
       pts=this.cfg.dist2D(Math.random, this.cal, this._numColors());
@@ -638,7 +641,7 @@ class Shell {
       alive++; d.age+=dt; const A=d.age/d.life;
 
       d.vy -= this.cfg.G*this.cfg.gravStar*dt;
-      const kd=Math.max(0,1-this.cfg.dragStar*dt); d.vx*=kd; d.vy*=kd; d.vz*=kd;
+      const kd=Math.max(0,1-this.cfg.dragStar*BURST_PUNCH*dt); d.vx*=kd; d.vy*=kd; d.vz*=kd;   // ×PUNCH : freinage fort -> l'étoile finit quasi immobile (boule figée), flou de mouvement seulement dans sa course
       if (sway){ d.vx+=Math.sin(d.age*d.swF+d.phase)*sway*dt; d.vz+=Math.cos(d.age*d.swF2+d.phase2)*sway*dt; }
       if (behave) behave(d,A,dt,this);
       const px=this.pos[i*3]+d.vx*dt, py=this.pos[i*3+1]+d.vy*dt, pz=this.pos[i*3+2]+d.vz*dt;
