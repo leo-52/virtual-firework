@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B86';   // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B87';   // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -393,7 +393,7 @@ const EFFECTS = {
   palm: { apex:105, stars:15, dist:distFibonacci, heat:false, color:WHITE, onStar:glitterFn, gravStar:1.0, dragStar:0.6,   // PIVOINE (sphère, bien écartée) + traînée, 15 étoiles ; blanc scintillant + traînée OR
           lifeBase75:2.8, starSize:4.1, trailing:{emitUntil:0.97, period:0.006, grain:1.3, gF:0.45, lifeMul:9.0, color:GOLD} },  // FRONDES = TRÈS LONGUES queues dorées = la palme (compensé, taille inchangée = 3.4×1.2)
   palmMulti: { apex:105, stars:15, dist:distFibonacci, heat:false, pureColor:true, assorted:[GRN,RED,BLU], gravStar:1.0, dragStar:0.6,   // PALME MULTICOLORE 75mm (catalogue, user : 15 étoiles vertes/rouges/bleues)
-          lifeBase75:2.8, starSize:4.1, trailing:{emitUntil:0.97, period:0.006, grain:1.3, gF:0.45, lifeMul:9.0, color:GOLD, fixedColor:true} },  // traînées DORÉES-ORANGÉES fixes (user B86) ; seule la POINTE (étoile) est verte/rouge/bleue
+          lifeBase75:2.8, starSize:3.3, trailing:{emitUntil:0.97, period:0.0032, grain:0.8, gF:0.45, lifeMul:9.0, color:GOLD, fixedColor:true, spark:true} },  // étoiles -20% (B87) ; traînée = MILLIERS d'ÉTINCELLES dorées-orangées (décomposition de l'étoile : grains fins, denses, brillances variées, dispersés) ; pointe verte/rouge/bleue
 
   // === FORMES 2D (face public) ===
   heart:     { apex:90, heat:false, stars:64, starSize:2.4, dist2D:shapeHeart, colors:[RED] },
@@ -742,10 +742,19 @@ class Shell {
       this.vel[i*3]=d.vx; this.vel[i*3+1]=d.vy; this.vel[i*3+2]=d.vz;
 
       if (tr && A<tr.emitUntil && !d.popOnly && d.age<(d.crackleAt||1e9)){ d.since+=dt;   // traînée tant que l'étoile n'a pas commencé à claquer
-        if (d.since>tr.period){ const mx=(d.lastX+px)*0.5, my=(d.lastY+py)*0.5, mz=(d.lastZ+pz)*0.5;
+        // ÉMISSION AU VRAI DÉBIT (B87) : n grains par frame si period < dt (avant : 1 max/frame ->
+        // impossible d'avoir des "milliers d'étincelles"). Répartis le long du trajet de la frame.
+        let nEmit=Math.floor(d.since/tr.period); if (nEmit>0){ if (nEmit>8) nEmit=8; d.since-=nEmit*tr.period;
           const tc=tr.fixedColor ? (tr.color||GOLD) : (d.coreColor||tr.color||GOLD);   // fixedColor : la traînée garde SA couleur (ex palme multicolore = queue OR, pointe colorée) ; sinon héritée de l'étoile (mosaïque assortie)
-          spawnTrail(mx,my,mz, tc.r,tc.g,tc.b, tr.grain, tr.gF, tr.lifeMul, d.vx,d.vy,d.vz);
-          d.lastX=px; d.lastY=py; d.lastZ=pz; d.since=0; } }
+          for (let e=0;e<nEmit;e++){ const fq=Math.random();                            // position aléatoire entre l'ancienne et la nouvelle -> pas de paquets
+            const mx=d.lastX+(px-d.lastX)*fq, my=d.lastY+(py-d.lastY)*fq, mz=d.lastZ+(pz-d.lastZ)*fq;
+            if (tr.spark){   // ÉTINCELLES (décomposition de l'étoile) : brillance TRÈS variable + dispersion -> nuée qui pétille, pas un ruban lisse
+              const tw=0.35+Math.pow(Math.random(),1.6)*1.65;
+              spawnTrail(mx,my,mz, tc.r*tw,tc.g*tw,tc.b*tw, tr.grain, tr.gF, tr.lifeMul, d.vx,d.vy,d.vz, 2.4);
+            } else {
+              spawnTrail(mx,my,mz, tc.r,tc.g,tc.b, tr.grain, tr.gF, tr.lifeMul, d.vx,d.vy,d.vz);
+            } }
+          d.lastX=px; d.lastY=py; d.lastZ=pz; } }
     }
     this.geo.attributes.position.needsUpdate=true; this.geo.attributes.aColor.needsUpdate=true;
     this.geo.attributes.aVel.needsUpdate=true;
