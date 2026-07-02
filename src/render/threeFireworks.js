@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B73';   // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B74';   // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -261,6 +261,13 @@ function shapeRing(){ const pts=[]; for(let k=0;k<26;k++){const t=2*Math.PI*k/26
 // HOOKS onStar(d,A,dt) -> {intenMul?,whiteMix?} (visuel)  /  behave(d,A,dt,ctx) (physique)
 // ============================================================================
 function strobeFn(d){ const ph=(d.age*d.strobeF+d.phase)%1; return {intenMul: ph<0.18?1.4:0.4}; }
+// FINAL CLI. BLANC (catalogue « bombe à final cli. blanc <couleur> ») : pivoine COULEUR, puis au
+// « final » (~55% de la vie) l'étoile CHANGE -> clignotant BLANC franc jusqu'à extinction.
+function finalCliFn(d,A){
+  if (A<0.55) return null;                                     // 1) phase COULEUR (pivoine normale)
+  const ph=(d.age*d.strobeF*3+d.phase)%1;                      // 2) FINAL : cli. BLANC ~6-13 Hz (rythme propre à chaque étoile)
+  return { intenMul: ph<0.25?1.7:0.12, whiteMix:1 };           // flash blanc vif / quasi éteint entre les flashs
+}
 function crackleFn(d,A,dt){ d.popOn=(d.popOn||0)-dt;
   if (d.popOn<=0 && Math.random()<7*dt) d.popOn=0.045;
   if (d.popOn>0) return {intenMul:2.3,whiteMix:0.9}; return null; }
@@ -343,6 +350,7 @@ const EFFECTS = {
     core:{ stars:30, radiusMul:0.30, color:GOLD, minCal:75, crackleAt:0.5, jitter:0.15 },             //  2) T≈0,5s : le CŒUR crépite (explose en boules) PENDANT que les étoiles se dispersent. 84+30 amas -> REMPLIT la sphère. PAS en 50mm
     crackleStars:{ delay:1.3, jitter:0.6, snaps:5 } },                                                //  3) chaque ÉTOILE explose entre 1,3 s et 1,9 s (jitter 0,6 = très étalé/aléatoire) en BOULE qui S'ÉTEINT sur place
   strobe: { apex:112, heat:false, color:SILVER, onStar:strobeFn, lifeBase75:2.4, gravStar:0.55 },
+  finalCli: { apex:95, heat:false, color:PINK, pureColor:true, onStar:finalCliFn, lifeBase75:2.3, gravStar:0.7 },  // FINAL CLI. BLANC ROSE 75mm (catalogue, 95m) : pivoine rose -> les étoiles finissent en CLIGNOTANT BLANC ; décliner via {color} (citron/rouge/verte/bleue/violette)
   fallingLeaves: { apex:95, dist:distLeaves, heat:false, color:new THREE.Color(1.0,0.45,0.55),
                    gravStar:0.26, dragStar:0.85, lifeBase75:6.0, speedMul:0.7, sway:7, starSize:2.4 },
   palm: { apex:105, stars:15, dist:distFibonacci, heat:false, color:WHITE, onStar:glitterFn, gravStar:1.0, dragStar:0.6,   // PIVOINE (sphère, bien écartée) + traînée, 15 étoiles ; blanc scintillant + traînée OR
@@ -386,7 +394,7 @@ const EFFECTS = {
 };
 
 export const LABELS = { peony:'pivoine', chrysanthemum:'chrysanthème', willow:'saule (kamuro)', comet:'comète',
-  sphere:'sphère', ring:'couronne', crackling:'crackling', dragonEgg:'œuf de dragon', strobe:'scintillant',
+  sphere:'sphère', ring:'couronne', crackling:'crackling', dragonEgg:'œuf de dragon', strobe:'scintillant', finalCli:'final cli. blanc rose',
   fallingLeaves:'feuille morte', palm:'palme', heart:'cœur', butterfly:'papillon', smiley:'smiley',
   daisy:'marguerite', atom:'atome', halfHalf:'demi-demi', medusa:'méduse', horsetail:'queue de cheval',
   cascade:'cascade', fish:'poisson', spinner:'tourbillon', saucer:'soucoupe', mosaic:'mosaïque', mosaicMix:'mosaïque assortie',
