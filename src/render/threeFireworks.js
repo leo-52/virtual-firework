@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B80';   // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B81';   // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -567,7 +567,7 @@ class Shell {
         this.data[i]=s;
       }
     }
-    this.points.visible=true;   // lines (aiguilles 1px) restent ÉTEINTES : le flou = la déformation ovale au shader (B77)
+    this.points.visible=true; this.lines.visible=true;   // ROND + QUEUE (B81, choix user) : la fine ligne derrière l'étoile est rallumée
     const big=this.cfg.flashBig;
     const fg=new THREE.SphereGeometry(0.6,16,16);
     const fm=new THREE.MeshBasicMaterial({ color:0xffd9a0, transparent:true, blending:THREE.AdditiveBlending, depthWrite:false });
@@ -720,9 +720,14 @@ class Shell {
         else if (this.cfg.arrow){ inten *= 0.45; }                 // œuf de dragon : étoile TRÈS DISCRÈTE avant de claquer (à peine une boule, la traînée domine)
       this.col[i*3]=r*inten; this.col[i*3+1]=g*inten; this.col[i*3+2]=b*inten;
 
-      // FLOU DE MOUVEMENT = DÉFORMATION (B77) : on passe la vitesse au shader -> l'étoile est un
-      // OVALE orienté dans sa course, redevient un ROND en freinant (cf STAR_VS/STAR_FS).
-      this.vel[i*3]=d.vx; this.vel[i*3+1]=d.vy; this.vel[i*3+2]=d.vz;
+      // FLOU DE MOUVEMENT (B81, choix user) : retour ROND + QUEUE — étoile ronde (aVel reste à 0,
+      // le shader capsule est inerte) + fine ligne lumineuse derrière, proportionnelle à la vitesse.
+      const mbk=0.07;
+      this.lpos[li]=px; this.lpos[li+1]=py; this.lpos[li+2]=pz;
+      this.lpos[li+3]=px-d.vx*mbk; this.lpos[li+4]=py-d.vy*mbk; this.lpos[li+5]=pz-d.vz*mbk;
+      const hr=r*inten, hg=g*inten, hb=b*inten;
+      this.lcol[li]=hr*0.8; this.lcol[li+1]=hg*0.8; this.lcol[li+2]=hb*0.8;
+      this.lcol[li+3]=hr*0.10; this.lcol[li+4]=hg*0.10; this.lcol[li+5]=hb*0.10;
 
       if (tr && A<tr.emitUntil && !d.popOnly && d.age<(d.crackleAt||1e9)){ d.since+=dt;   // traînée tant que l'étoile n'a pas commencé à claquer
         if (d.since>tr.period){ const mx=(d.lastX+px)*0.5, my=(d.lastY+py)*0.5, mz=(d.lastZ+pz)*0.5;
@@ -731,7 +736,7 @@ class Shell {
           d.lastX=px; d.lastY=py; d.lastZ=pz; d.since=0; } }
     }
     this.geo.attributes.position.needsUpdate=true; this.geo.attributes.aColor.needsUpdate=true;
-    this.geo.attributes.aVel.needsUpdate=true;
+    this.lgeo.attributes.position.needsUpdate=true; this.lgeo.attributes.color.needsUpdate=true;
 
     if (this.phase==='burst' && alive===0){
       this.dead=true; scene.remove(this.points); scene.remove(this.lines);
