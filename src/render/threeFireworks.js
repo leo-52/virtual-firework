@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B71';   // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B72';   // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -310,7 +310,8 @@ function behaveMosaic(d,A,dt,ctx){
 // TABLE DES EFFETS (clé absente -> BASE = profil pivoine)
 // ============================================================================
 const CAL_SCALE = { 50:0.67, 75:1.0, 100:1.44, 125:1.87, 150:2.30, 200:2.58 };
-const STAR_SCALE = 1.2;   // étoiles +20% (réglage global ; user)
+const STAR_SCALE = 1.1;   // taille globale des étoiles (user 2026-07-02 : "réduis un tout petit peu toutes les bombes" ; 1.2 -> 1.1.
+                          //  Les effets à GROSSES étoiles — comète, palme, toupie, soucoupe, mosaïques — sont COMPENSÉS ×1.09 pour ne pas changer.)
 const BURST_PUNCH = 2.0;  // PUNCH d'explosion (user, vidéos réelles) : vitesse initiale ×2 ET freinage ×2 -> même envergure
                           // finale (distance ≈ v/drag), mais l'expansion se fait VITE au début (flou de mouvement fort à
                           // l'ouverture, proportionnel à la vitesse) puis les étoiles FREINENT -> boule quasi figée à l'extinction.
@@ -330,7 +331,7 @@ const EFFECTS = {
   willow: { apex:100, heat:false, color:DIMGOLD, gravStar:0.92, dragStar:0.25, lifeBase75:3.2,
             starSize:1.8, speedMul:1.5, trailing:{emitUntil:0.95, period:0.013, grain:2.5, gF:0.22, lifeMul:9.0, color:GOLD} },  // KAMURO : longues traînées or PENDANTES (les belles traînées)
   comet: { apex:96, stars:1, dist:distComet, heat:false, color:GOLD, gravStar:0.90, dragStar:0.30,
-           lifeBase75:3.0, starSize:4.5, speedMul:1.0, headSize:4.0, riseColor:GOLD,
+           lifeBase75:3.0, starSize:4.9, speedMul:1.0, headSize:4.0, riseColor:GOLD,   // 4.5×1.09 : compensé (STAR_SCALE 1.2->1.1), taille inchangée
            trailing:{emitUntil:0.97, period:0.012, grain:1.3, gF:0.35, lifeMul:1.8, color:GOLD} },
   sphere: { speedJit:0.02 },
   ring: { apex:110, burstRadius:16, stars:30, dist2D:shapeRing, orient:'random', heat:false, color:GRN },
@@ -344,7 +345,7 @@ const EFFECTS = {
   fallingLeaves: { apex:95, dist:distLeaves, heat:false, color:new THREE.Color(1.0,0.45,0.55),
                    gravStar:0.26, dragStar:0.85, lifeBase75:6.0, speedMul:0.7, sway:7, starSize:2.4 },
   palm: { apex:105, stars:15, dist:distFibonacci, heat:false, color:WHITE, onStar:glitterFn, gravStar:1.0, dragStar:0.6,   // PIVOINE (sphère, bien écartée) + traînée, 15 étoiles ; blanc scintillant + traînée OR
-          lifeBase75:2.8, starSize:3.4, trailing:{emitUntil:0.97, period:0.006, grain:1.3, gF:0.45, lifeMul:9.0, color:GOLD} },  // FRONDES = TRÈS LONGUES queues dorées (marquent tout le trajet centre->pointe) = la palme
+          lifeBase75:2.8, starSize:3.7, trailing:{emitUntil:0.97, period:0.006, grain:1.3, gF:0.45, lifeMul:9.0, color:GOLD} },  // FRONDES = TRÈS LONGUES queues dorées = la palme (3.4×1.09 : compensé, taille inchangée)
 
   // === FORMES 2D (face public) ===
   heart:     { apex:90, heat:false, stars:64, starSize:2.4, dist2D:shapeHeart, colors:[RED] },
@@ -368,14 +369,14 @@ const EFFECTS = {
   // === BEHAVE (mouvement/forks) ===
   fish:    { apex:85, heat:false, stars:40, starSize:2.0, lifeBase75:0.95, gravStar:0.20, dragStar:0.30,
              color:GRN, dist:distFish, behave:behaveFish, trailing:{emitUntil:0.6,period:0.02,grain:0.7,gF:0.3,lifeMul:0.7,color:GRN} },
-  spinner: { apex:70, heat:false, stars:3, starSize:4.4, lifeBase75:2.2, gravStar:0.30, dragStar:0.18,
+  spinner: { apex:70, heat:false, stars:3, starSize:4.8, lifeBase75:2.2, gravStar:0.30, dragStar:0.18,   // 4.4×1.09 : compensé, taille inchangée
              color:SILVER, dist:distSpinner, behave:behaveSpinner },
-  saucer:  { apex:60, heat:false, stars:1, starSize:4.6, lifeBase75:3.5, gravStar:0.85, dragStar:0.22,
+  saucer:  { apex:60, heat:false, stars:1, starSize:5.0, lifeBase75:3.5, gravStar:0.85, dragStar:0.22,   // 4.6×1.09 : compensé, taille inchangée
              color:GOLD, headSize:3.0, riseColor:GOLD, dist:distSaucer, behave:behaveSaucer,
              trailing:{emitUntil:0.9, period:0.012, grain:1.1, gF:0.4, lifeMul:1.4, color:GOLD} },
-  mosaic:  { apex:100, heat:false, stars:7, nMax:36, coreSplit:4, starSize:4.4, splitStarSize:2.8, lifeBase75:3.0, color:SILVER, speedMul:1.8,
+  mosaic:  { apex:100, heat:false, stars:7, nMax:36, coreSplit:4, starSize:4.8, splitStarSize:3.05, lifeBase75:3.0, color:SILVER, speedMul:1.8,   // ×1.09 : compensé, taille inchangée
              dist:distMosaic, behave:behaveMosaic, trailing:{emitUntil:0.9, period:0.012, grain:1.2, gF:0.45, lifeMul:1.9, color:SILVER} },  // 75mm = 7 comètes, chacune se redivise en 4
-  mosaicMix:{ apex:100, heat:false, stars:7, nMax:36, coreSplit:4, starSize:4.4, splitStarSize:2.8, lifeBase75:3.0, speedMul:1.8, assorted:true,
+  mosaicMix:{ apex:100, heat:false, stars:7, nMax:36, coreSplit:4, starSize:4.8, splitStarSize:3.05, lifeBase75:3.0, speedMul:1.8, assorted:true,   // ×1.09 : compensé, taille inchangée
              dist:distMosaic, behave:behaveMosaic, trailing:{emitUntil:0.9, period:0.012, grain:1.2, gF:0.45, lifeMul:1.9, color:SILVER} },  // ASSORTIE : 2 rose, 2 citron, 2 aqua, 1 aléatoire
 
   // === SOL / SPÉCIAUX ===
