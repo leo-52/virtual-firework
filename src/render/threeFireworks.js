@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B81';   // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B82';   // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -59,7 +59,7 @@ const STAR_VS = `
     vec2 dpx = (p1.xy/p1.w - p2.xy/p2.w) * uVp;                     // déplacement écran en px
     float lenPx = length(dpx);
     float st = 1.0 + lenPx / max(basePx, 0.001);
-    vStretch = min(st, 2.5);
+    vStretch = min(st, 3.0);
     vDir = lenPx > 0.0001 ? dpx/lenPx : vec2(1.0, 0.0);
     gl_PointSize = basePx * vStretch;                               // le sprite s'agrandit pour contenir l'ovale
     gl_Position = p1;
@@ -71,11 +71,18 @@ const STAR_FS = `
   varying float vStretch;
   void main(){
     vec2 pc = vec2(gl_PointCoord.x, 1.0-gl_PointCoord.y)*2.0 - 1.0;  // y remis vers le HAUT (même repère que la vitesse écran)
-    vec2 q = vec2(dot(pc, vDir), pc.x*(-vDir.y) + pc.y*vDir.x);      // repère aligné sur la vitesse
-    float m = 1.0 - 1.0/vStretch;                                    // demi-longueur du segment central (0 si à l'arrêt)
-    float ax = clamp(q.x, -m, m);
-    vec2 rel = vec2(q.x-ax, q.y) * vStretch;                         // CAPSULE : disque de la boule d'origine étiré le long du segment
-    vec4 t = texture2D(uTex, rel*0.5 + 0.5);                         //  -> OVALE ÉPAIS à bouts ronds (pas une aiguille), rond à l'arrêt
+    vec2 q = vec2(dot(pc, vDir), pc.x*(-vDir.y) + pc.y*vDir.x);      // repère aligné sur la vitesse (x+ = sens du mouvement)
+    float m = 1.0 - 1.0/vStretch;                                    // position de la TÊTE vers l'avant (0 si à l'arrêt)
+    // TÊTE : boule RONDE à pleine taille (croquis user : le rond)
+    vec2 relH = vec2(q.x - m, q.y) * vStretch;
+    vec4 tH = texture2D(uTex, relH*0.5 + 0.5);
+    // QUEUE : CÔNE effilé derrière — part aussi LARGE que la boule et finit en POINTE (croquis user)
+    float f = clamp((q.x + 1.0) / max(m + 1.0, 0.001), 0.0, 1.0);    // 1 à la boule -> 0 à la pointe arrière
+    float w = f / vStretch;                                          // demi-largeur locale du cône
+    float dy = abs(q.y) / max(w, 0.0001);                            // 0 = axe, 1 = bord du cône
+    vec4 tT = texture2D(uTex, vec2(0.5, 0.5 + dy*0.5));              // falloff radial du sprite en travers de la queue
+    float tailMask = (q.x < m ? 1.0 : 0.0) * f * f * 0.85;           // fondu vers la pointe, un peu plus faible que la tête
+    vec4 t = max(tH, tT * tailMask);                                  // rond seul à l'arrêt (la queue rentre dans la boule)
     gl_FragColor = vec4(vCol * t.rgb, t.a);                          // additif : couleur HDR × alpha du sprite
   }`;
 function makeStarMat(tex){
@@ -567,7 +574,7 @@ class Shell {
         this.data[i]=s;
       }
     }
-    this.points.visible=true; this.lines.visible=true;   // ROND + QUEUE (B81, choix user) : la fine ligne derrière l'étoile est rallumée
+    this.points.visible=true;   // la queue-cône est dessinée par le shader (B82) ; lignes 1px éteintes
     const big=this.cfg.flashBig;
     const fg=new THREE.SphereGeometry(0.6,16,16);
     const fm=new THREE.MeshBasicMaterial({ color:0xffd9a0, transparent:true, blending:THREE.AdditiveBlending, depthWrite:false });
@@ -720,14 +727,9 @@ class Shell {
         else if (this.cfg.arrow){ inten *= 0.45; }                 // œuf de dragon : étoile TRÈS DISCRÈTE avant de claquer (à peine une boule, la traînée domine)
       this.col[i*3]=r*inten; this.col[i*3+1]=g*inten; this.col[i*3+2]=b*inten;
 
-      // FLOU DE MOUVEMENT (B81, choix user) : retour ROND + QUEUE — étoile ronde (aVel reste à 0,
-      // le shader capsule est inerte) + fine ligne lumineuse derrière, proportionnelle à la vitesse.
-      const mbk=0.07;
-      this.lpos[li]=px; this.lpos[li+1]=py; this.lpos[li+2]=pz;
-      this.lpos[li+3]=px-d.vx*mbk; this.lpos[li+4]=py-d.vy*mbk; this.lpos[li+5]=pz-d.vz*mbk;
-      const hr=r*inten, hg=g*inten, hb=b*inten;
-      this.lcol[li]=hr*0.8; this.lcol[li+1]=hg*0.8; this.lcol[li+2]=hb*0.8;
-      this.lcol[li+3]=hr*0.10; this.lcol[li+4]=hg*0.10; this.lcol[li+5]=hb*0.10;
+      // FLOU DE MOUVEMENT (B82, croquis user) : ROND + QUEUE EN CÔNE au shader — tête ronde pleine
+      // taille + cône effilé derrière (part large comme la boule, finit en pointe), rond à l'arrêt.
+      this.vel[i*3]=d.vx; this.vel[i*3+1]=d.vy; this.vel[i*3+2]=d.vz;
 
       if (tr && A<tr.emitUntil && !d.popOnly && d.age<(d.crackleAt||1e9)){ d.since+=dt;   // traînée tant que l'étoile n'a pas commencé à claquer
         if (d.since>tr.period){ const mx=(d.lastX+px)*0.5, my=(d.lastY+py)*0.5, mz=(d.lastZ+pz)*0.5;
@@ -736,7 +738,7 @@ class Shell {
           d.lastX=px; d.lastY=py; d.lastZ=pz; d.since=0; } }
     }
     this.geo.attributes.position.needsUpdate=true; this.geo.attributes.aColor.needsUpdate=true;
-    this.lgeo.attributes.position.needsUpdate=true; this.lgeo.attributes.color.needsUpdate=true;
+    this.geo.attributes.aVel.needsUpdate=true;
 
     if (this.phase==='burst' && alive===0){
       this.dead=true; scene.remove(this.points); scene.remove(this.lines);
