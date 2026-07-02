@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B76';   // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B77';   // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -37,27 +37,50 @@ const neutralTex = makeNeutralTexture();
 // Matériau des ÉTOILES : ShaderMaterial avec TAILLE PAR POINT (attribut `size`) — PointsMaterial
 // ne sait appliquer qu'une taille globale. `uH = 0.5·hauteurBuffer` reproduit exactement la
 // "sizeAttenuation" de PointsMaterial -> même rendu qu'avant pour une taille uniforme.
+// FLOU DE MOUVEMENT = DÉFORMATION (B77, photo user) : l'étoile elle-même est étirée en OVALE le long
+// de sa vitesse projetée à l'écran (attribut aVel) ; plus elle freine, plus l'ovale redevient un ROND.
+// La LARGEUR reste celle de la boule, seule la LONGUEUR suit la vitesse. aVel absent (traînées) -> rond.
 const STAR_VS = `
   attribute float size;
   attribute vec3 aColor;
+  attribute vec3 aVel;
   uniform float uH;
+  uniform vec2 uVp;
   varying vec3 vCol;
+  varying vec2 vDir;
+  varying float vStretch;
   void main(){
     vCol = aColor;
     vec4 mv = modelViewMatrix * vec4(position, 1.0);
-    gl_PointSize = size * (uH / -mv.z);
-    gl_Position = projectionMatrix * mv;
+    vec4 p1 = projectionMatrix * mv;
+    float basePx = size * (uH / -mv.z);
+    vec4 mv2 = modelViewMatrix * vec4(position - aVel*0.07, 1.0);   // où était l'étoile il y a ~70ms
+    vec4 p2 = projectionMatrix * mv2;
+    vec2 dpx = (p1.xy/p1.w - p2.xy/p2.w) * uVp;                     // déplacement écran en px
+    float lenPx = length(dpx);
+    float st = 1.0 + lenPx / max(basePx, 0.001);
+    vStretch = min(st, 3.5);
+    vDir = lenPx > 0.0001 ? dpx/lenPx : vec2(1.0, 0.0);
+    gl_PointSize = basePx * vStretch;                               // le sprite s'agrandit pour contenir l'ovale
+    gl_Position = p1;
   }`;
 const STAR_FS = `
   uniform sampler2D uTex;
   varying vec3 vCol;
+  varying vec2 vDir;
+  varying float vStretch;
   void main(){
-    vec4 t = texture2D(uTex, gl_PointCoord);
-    gl_FragColor = vec4(vCol * t.rgb, t.a);   // additif : couleur HDR × alpha du sprite
+    vec2 pc = gl_PointCoord*2.0 - 1.0;
+    vec2 q = vec2(dot(pc, vDir), pc.x*(-vDir.y) + pc.y*vDir.x);     // repère aligné sur la vitesse
+    q.y *= vStretch;                                                 // largeur = boule d'origine -> OVALE orienté
+    vec4 t = texture2D(uTex, q*0.5 + 0.5);                           // hors de l'ovale : clamp -> transparent
+    gl_FragColor = vec4(vCol * t.rgb, t.a);                          // additif : couleur HDR × alpha du sprite
   }`;
 function makeStarMat(tex){
+  const k=Math.min(devicePixelRatio,2);
   return new THREE.ShaderMaterial({
-    uniforms:{ uTex:{value:tex||starTex}, uH:{value:0.5*innerHeight*Math.min(devicePixelRatio,2)} },
+    uniforms:{ uTex:{value:tex||starTex}, uH:{value:0.5*(innerHeight||800)*k},
+               uVp:{value:new THREE.Vector2(0.5*(innerWidth||1280)*k, 0.5*(innerHeight||800)*k)} },
     vertexShader:STAR_VS, fragmentShader:STAR_FS,
     transparent:true, blending:THREE.AdditiveBlending, depthWrite:false });
 }
@@ -77,6 +100,7 @@ const trailGeo = new THREE.BufferGeometry();
 trailGeo.setAttribute('position', new THREE.BufferAttribute(trailPos, 3));
 trailGeo.setAttribute('aColor',   new THREE.BufferAttribute(trailCol, 3));
 trailGeo.setAttribute('size',     new THREE.BufferAttribute(trailSize, 1));
+trailGeo.setAttribute('aVel',     new THREE.BufferAttribute(new Float32Array(TRAIL_MAX*3), 3));   // zéro = grains RONDS (pas d'étirement sur les traînées)
 // TAILLE PAR GRAIN (ShaderMaterial) : avant, PointsMaterial forçait 0.8 px pour TOUS -> à la
 // distance de la vue public les traînées étaient sous-pixel (invisibles). Maintenant chaque grain
 // a sa taille (grosses frondes/traînées visibles, muzzle fin).
@@ -452,15 +476,9 @@ class Shell {
     this.lmat=new THREE.LineBasicMaterial({ vertexColors:true, transparent:true,
       blending:THREE.AdditiveBlending, depthWrite:false });
     this.lines=new THREE.LineSegments(this.lgeo,this.lmat); this.lines.visible=false; this.lines.frustumCulled=false; scene.add(this.lines);
-    // FLOU DE MOUVEMENT "fantômes" (B76) : la ligne 1px derrière l'étoile faisait "boule + aiguille" (moche).
-    // Remplacée par 2 COPIES du sprite de l'étoile (plus petites/faibles) derrière elle le long de la vitesse :
-    // rapide = étoile étirée en goutte ; freinée = les copies se superposent -> boule nette. (lines gardées mais éteintes.)
-    this.gpos=new Float32Array(m*2*3); this.gcol=new Float32Array(m*2*3); this.gsize=new Float32Array(m*2);
-    this.ggeo=new THREE.BufferGeometry();
-    this.ggeo.setAttribute('position', new THREE.BufferAttribute(this.gpos,3));
-    this.ggeo.setAttribute('aColor',   new THREE.BufferAttribute(this.gcol,3));
-    this.ggeo.setAttribute('size',     new THREE.BufferAttribute(this.gsize,1));
-    this.ghosts=new THREE.Points(this.ggeo,this.mat); this.ghosts.visible=false; this.ghosts.frustumCulled=false; scene.add(this.ghosts);
+    // (B76 "fantômes" retirés — remplacés en B77 par la déformation OVALE dans le shader, cf STAR_VS/STAR_FS.)
+    this.vel=new Float32Array(m*3);   // vitesse par étoile -> attribut aVel (étirement ovale au shader)
+    this.geo.setAttribute('aVel', new THREE.BufferAttribute(this.vel,3));
   }
 
   _numColors(){ return this.cfg.colors ? this.cfg.colors.length : 1; }
@@ -545,7 +563,7 @@ class Shell {
         this.data[i]=s;
       }
     }
-    this.points.visible=true; this.ghosts.visible=true;   // lines (aiguilles 1px) restent ÉTEINTES : le flou = les fantômes (B76)
+    this.points.visible=true;   // lines (aiguilles 1px) restent ÉTEINTES : le flou = la déformation ovale au shader (B77)
     const big=this.cfg.flashBig;
     const fg=new THREE.SphereGeometry(0.6,16,16);
     const fm=new THREE.MeshBasicMaterial({ color:0xffd9a0, transparent:true, blending:THREE.AdditiveBlending, depthWrite:false });
@@ -656,8 +674,7 @@ class Shell {
     for (let i=0;i<this.nAlive;i++){
       const d=this.data[i], li=i*6;
       if (!d || d.age>=d.life){ this.col[i*3]=this.col[i*3+1]=this.col[i*3+2]=0;
-        this.lcol[li]=this.lcol[li+1]=this.lcol[li+2]=this.lcol[li+3]=this.lcol[li+4]=this.lcol[li+5]=0;
-        this.gcol[li]=this.gcol[li+1]=this.gcol[li+2]=this.gcol[li+3]=this.gcol[li+4]=this.gcol[li+5]=0; continue; }   // fantômes éteints aussi (sinon figés à jamais — piège classique)
+        this.lcol[li]=this.lcol[li+1]=this.lcol[li+2]=this.lcol[li+3]=this.lcol[li+4]=this.lcol[li+5]=0; continue; }
       alive++; d.age+=dt; const A=d.age/d.life;
 
       d.vy -= this.cfg.G*this.cfg.gravStar*dt;
@@ -699,14 +716,9 @@ class Shell {
         else if (this.cfg.arrow){ inten *= 0.45; }                 // œuf de dragon : étoile TRÈS DISCRÈTE avant de claquer (à peine une boule, la traînée domine)
       this.col[i*3]=r*inten; this.col[i*3+1]=g*inten; this.col[i*3+2]=b*inten;
 
-      // FLOU DE MOUVEMENT (B76) : 2 fantômes du sprite derrière l'étoile (plus la ligne-aiguille).
-      // Rapide -> étirée en goutte ; freinée -> les fantômes rentrent dans la boule (plus de queue).
-      const hr=r*inten, hg=g*inten, hb=b*inten, k1=0.035, k2=0.07, gb=li;   // gb = i*2*3
-      this.gpos[gb]=px-d.vx*k1; this.gpos[gb+1]=py-d.vy*k1; this.gpos[gb+2]=pz-d.vz*k1;
-      this.gpos[gb+3]=px-d.vx*k2; this.gpos[gb+4]=py-d.vy*k2; this.gpos[gb+5]=pz-d.vz*k2;
-      this.gcol[gb]=hr*0.40; this.gcol[gb+1]=hg*0.40; this.gcol[gb+2]=hb*0.40;
-      this.gcol[gb+3]=hr*0.16; this.gcol[gb+4]=hg*0.16; this.gcol[gb+5]=hb*0.16;
-      this.gsize[i*2]=this.size[i]*0.82; this.gsize[i*2+1]=this.size[i]*0.62;
+      // FLOU DE MOUVEMENT = DÉFORMATION (B77) : on passe la vitesse au shader -> l'étoile est un
+      // OVALE orienté dans sa course, redevient un ROND en freinant (cf STAR_VS/STAR_FS).
+      this.vel[i*3]=d.vx; this.vel[i*3+1]=d.vy; this.vel[i*3+2]=d.vz;
 
       if (tr && A<tr.emitUntil && !d.popOnly && d.age<(d.crackleAt||1e9)){ d.since+=dt;   // traînée tant que l'étoile n'a pas commencé à claquer
         if (d.since>tr.period){ const mx=(d.lastX+px)*0.5, my=(d.lastY+py)*0.5, mz=(d.lastZ+pz)*0.5;
@@ -715,11 +727,11 @@ class Shell {
           d.lastX=px; d.lastY=py; d.lastZ=pz; d.since=0; } }
     }
     this.geo.attributes.position.needsUpdate=true; this.geo.attributes.aColor.needsUpdate=true;
-    this.ggeo.attributes.position.needsUpdate=true; this.ggeo.attributes.aColor.needsUpdate=true; this.ggeo.attributes.size.needsUpdate=true;
+    this.geo.attributes.aVel.needsUpdate=true;
 
     if (this.phase==='burst' && alive===0){
-      this.dead=true; scene.remove(this.points); scene.remove(this.lines); scene.remove(this.ghosts);
-      this.geo.dispose(); this.mat.dispose(); this.lgeo.dispose(); this.lmat.dispose(); this.ggeo.dispose();
+      this.dead=true; scene.remove(this.points); scene.remove(this.lines);
+      this.geo.dispose(); this.mat.dispose(); this.lgeo.dispose(); this.lmat.dispose();
       if (this.flash){ scene.remove(this.flash); this.flash.geometry.dispose(); this.flash.material.dispose(); }
     }
   }
