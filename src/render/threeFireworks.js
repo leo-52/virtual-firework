@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B84';   // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B85';   // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -392,6 +392,8 @@ const EFFECTS = {
                    gravStar:0.26, dragStar:0.85, lifeBase75:6.0, speedMul:0.7, sway:7, starSize:2.4 },
   palm: { apex:105, stars:15, dist:distFibonacci, heat:false, color:WHITE, onStar:glitterFn, gravStar:1.0, dragStar:0.6,   // PIVOINE (sphère, bien écartée) + traînée, 15 étoiles ; blanc scintillant + traînée OR
           lifeBase75:2.8, starSize:4.1, trailing:{emitUntil:0.97, period:0.006, grain:1.3, gF:0.45, lifeMul:9.0, color:GOLD} },  // FRONDES = TRÈS LONGUES queues dorées = la palme (compensé, taille inchangée = 3.4×1.2)
+  palmMulti: { apex:105, stars:15, dist:distFibonacci, heat:false, pureColor:true, assorted:[GRN,RED,BLU], gravStar:1.0, dragStar:0.6,   // PALME MULTICOLORE 75mm (catalogue, user : 15 étoiles vertes/rouges/bleues)
+          lifeBase75:2.8, starSize:4.1, trailing:{emitUntil:0.97, period:0.006, grain:1.3, gF:0.45, lifeMul:9.0, color:GOLD} },  // chaque fronde ENTIÈRE (étoile + traînée) d'UNE couleur via coreColor ; pas de scintillant (= la variante "scintillant")
 
   // === FORMES 2D (face public) ===
   heart:     { apex:90, heat:false, stars:64, starSize:2.4, dist2D:shapeHeart, colors:[RED] },
@@ -431,7 +433,7 @@ const EFFECTS = {
 };
 
 export const LABELS = { peony:'pivoine', chrysanthemum:'chrysanthème', willow:'saule (kamuro)', comet:'comète',
-  sphere:'sphère', ring:'couronne', crackling:'crackling', dragonEgg:'œuf de dragon', strobe:'scintillant', finalCli:'final cli. blanc rose',
+  sphere:'sphère', ring:'couronne', crackling:'crackling', dragonEgg:'œuf de dragon', strobe:'scintillant', finalCli:'final cli. blanc rose', palmMulti:'palme multicolore',
   fallingLeaves:'feuille morte', palm:'palme', heart:'cœur', butterfly:'papillon', smiley:'smiley',
   daisy:'marguerite', atom:'atome', halfHalf:'demi-demi', medusa:'méduse', horsetail:'queue de cheval',
   cascade:'cascade', fish:'poisson', spinner:'tourbillon', saucer:'soucoupe', mosaic:'mosaïque', mosaicMix:'mosaïque assortie',
@@ -529,12 +531,18 @@ class Shell {
       const aV=cross(N,aU), roll=Math.random()*Math.PI*2;
       plane={aU,aV,CR:Math.cos(roll),SR:Math.sin(roll)};
     } else n=this.cfg.stars;
-    // MOSAÏQUE ASSORTIE : 7 comètes = 2 rose, 2 citron, 2 aqua, 1 aléatoire (mélangées dans le ciel).
-    // Chaque comète garde sa couleur quand elle se redivise (héritée par les secondaires).
+    // COULEURS ASSORTIES par étoile (coreColor -> étoile ET traînée de la même couleur) :
+    // - assorted:true  = palette MOSAÏQUE (2 rose, 2 citron, 2 aqua, 1 aléatoire)
+    // - assorted:[...] = palette de l'effet, répartie équitablement (ex palme multicolore [vert,rouge,bleu])
     let assorted=null;
     if (this.cfg.assorted){
-      const C3=[PINK,YEL,CYAN];   // "aléatoire" = au hasard PARMI les 3 (rose / citron / aqua)
-      assorted=[PINK,PINK,YEL,YEL,CYAN,CYAN, C3[Math.floor(Math.random()*3)]];
+      if (Array.isArray(this.cfg.assorted)){
+        const src=this.cfg.assorted; assorted=[];
+        for (let k=0;k<n;k++) assorted.push(src[k%src.length]);
+      } else {
+        const C3=[PINK,YEL,CYAN];   // "aléatoire" = au hasard PARMI les 3 (rose / citron / aqua)
+        assorted=[PINK,PINK,YEL,YEL,CYAN,CYAN, C3[Math.floor(Math.random()*3)]];
+      }
       for (let k=assorted.length-1;k>0;k--){ const j=Math.floor(Math.random()*(k+1));
         const t=assorted[k]; assorted[k]=assorted[j]; assorted[j]=t; }
     }
