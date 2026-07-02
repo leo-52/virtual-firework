@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B83';   // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B84';   // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -58,8 +58,8 @@ const STAR_VS = `
     vec4 p2 = projectionMatrix * mv2;
     vec2 dpx = (p1.xy/p1.w - p2.xy/p2.w) * uVp;                     // déplacement écran en px
     float lenPx = length(dpx);
-    float st = 1.0 + lenPx / max(basePx, 0.001);
-    vStretch = min(st, 3.0);
+    float st = 1.0 + 1.1 * lenPx / max(basePx, 0.001);   // ×1.1 : goutte ~10% plus étirée (user B84)
+    vStretch = min(st, 3.3);
     vDir = lenPx > 0.0001 ? dpx/lenPx : vec2(1.0, 0.0);
     gl_PointSize = basePx * vStretch;                               // le sprite s'agrandit pour contenir l'ovale
     gl_Position = p1;
@@ -300,6 +300,8 @@ function strobeFn(d){ const ph=(d.age*d.strobeF+d.phase)%1; return {intenMul: ph
 function finalCliFn(d,A){
   const t1=0.36+d.phase*0.06;                                  // fin de combustion couleur (~0,85-1,0s = ~0,3s avant l'arrêt ; léger décalage par étoile)
   if (A<t1) return null;                                       // 1) COULEUR pendant la course
+  if (d.cliEnd===undefined) d.cliEnd=0.72+Math.random()*0.28;  // chaque étoile FINIT de clignoter à SON moment (72-100% de la vie -> fins bien étalées/aléatoires, user B84)
+  if (A>=d.cliEnd) return { intenMul:0 };                      // plus de poudre cli. : éteinte
   const ph=(d.age*d.strobeF*3+d.phase)%1;                      // 2) DÈS l'extinction de la couleur : l'INTÉRIEUR clignote BLANC ~6-13 Hz (pas de pause — le "trou noir" = les creux du clignotement)
   return { intenMul: ph<0.25?1.7:0.12, whiteMix:1 };           // flash blanc vif / quasi éteint entre les flashs
 }
@@ -594,23 +596,23 @@ class Shell {
   }
 
   // SORTIE DU TUBE — 3 composantes (échelle ∝ calibre via muzzleScale) :
-  _emitMuzzleFlare(){   // lueur de gueule (source lumière) : plus CHAUDE et plus CONTENUE (moins voyante)
+  _emitMuzzleFlare(){   // lueur de gueule (source lumière) : PETITE et contenue (user B84 : "- ronde, - grosse")
     const sc=this.muzzleScale;
-    spawnPuff(this.ox+(Math.random()-0.5)*0.4*sc, 1.0*sc, this.oz+(Math.random()-0.5)*0.4*sc,
-      0,(1.5+Math.random()*1.5)*sc,0, 0.20+Math.random()*0.10, 1.8*sc, 4.0*sc,
-      1.0,0.55,0.20, 0.62, 2*sc, 2.0);
+    spawnPuff(this.ox+(Math.random()-0.5)*0.3*sc, 1.0*sc, this.oz+(Math.random()-0.5)*0.3*sc,
+      0,(1.5+Math.random()*1.5)*sc,0, 0.18+Math.random()*0.08, 1.2*sc, 2.4*sc,
+      1.0,0.55,0.20, 0.50, 2*sc, 2.0);
   }
-  _emitMuzzleFlame(){   // FLAMME : pic ~2 m au-dessus du tube (75mm) ; étroit, chaud (orange). ∝ calibre.
+  _emitMuzzleFlame(){   // FLAMME : jet CONIQUE étroit (user B84 : "+ conique") — base serrée, monte plus haut, gonfle peu
     const sc=this.muzzleScale, ang=Math.random()*Math.PI*2, rad=Math.random()*Math.random();
-    const out=(0.6+rad*2.1)*sc, up=(3+Math.random()*2.4)*sc, hot=1-rad;   // coeur(rad~0)=chaud ; bord=orange
-    spawnPuff(this.ox+(Math.random()-0.5)*0.3*sc, 0.8, this.oz+(Math.random()-0.5)*0.3*sc,
-      Math.cos(ang)*out, up, Math.sin(ang)*out, 0.22+Math.random()*0.16, 0.6*sc, 1.6*sc,
+    const out=(0.3+rad*1.1)*sc, up=(3.6+Math.random()*2.6)*sc, hot=1-rad;   // écart latéral réduit + vertical accru = cône
+    spawnPuff(this.ox+(Math.random()-0.5)*0.18*sc, 0.8, this.oz+(Math.random()-0.5)*0.18*sc,
+      Math.cos(ang)*out, up, Math.sin(ang)*out, 0.22+Math.random()*0.16, 0.5*sc, 1.0*sc,
       1.0, 0.30+0.33*hot, 0.03+0.20*hot, 0.75, 1.5*sc, 2.8);
   }
-  _emitMuzzleSmoke(){   // FUMÉE : plus DISCRÈTE (moins grosse / dense / visible que la flamme)
-    const sc=this.muzzleScale, ang=Math.random()*Math.PI*2, out=(0.6+Math.random()*1.4)*sc, w=0.16+Math.random()*0.09;
-    spawnPuff(this.ox+(Math.random()-0.5)*0.6*sc, 0.7, this.oz+(Math.random()-0.5)*0.6*sc,
-      Math.cos(ang)*out, (3+Math.random()*4)*sc, Math.sin(ang)*out, 1.1+Math.random()*1.0, 1.2*sc, 4.0*sc,
+  _emitMuzzleSmoke(){   // FUMÉE : colonne étroite et discrète (resserrée avec la flamme conique, B84)
+    const sc=this.muzzleScale, ang=Math.random()*Math.PI*2, out=(0.4+Math.random()*1.0)*sc, w=0.16+Math.random()*0.09;
+    spawnPuff(this.ox+(Math.random()-0.5)*0.45*sc, 0.7, this.oz+(Math.random()-0.5)*0.45*sc,
+      Math.cos(ang)*out, (3+Math.random()*4)*sc, Math.sin(ang)*out, 1.1+Math.random()*1.0, 1.0*sc, 3.2*sc,
       w*1.5, w*1.25, w, 0.16, 2.0*sc, 1.1);
   }
   _emitMuzzleDebris(){  // quelques débris (opercule/bourre) éjectés qui retombent (trail = gravité)
