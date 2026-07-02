@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B75';   // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B76';   // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -452,6 +452,15 @@ class Shell {
     this.lmat=new THREE.LineBasicMaterial({ vertexColors:true, transparent:true,
       blending:THREE.AdditiveBlending, depthWrite:false });
     this.lines=new THREE.LineSegments(this.lgeo,this.lmat); this.lines.visible=false; this.lines.frustumCulled=false; scene.add(this.lines);
+    // FLOU DE MOUVEMENT "fantômes" (B76) : la ligne 1px derrière l'étoile faisait "boule + aiguille" (moche).
+    // Remplacée par 2 COPIES du sprite de l'étoile (plus petites/faibles) derrière elle le long de la vitesse :
+    // rapide = étoile étirée en goutte ; freinée = les copies se superposent -> boule nette. (lines gardées mais éteintes.)
+    this.gpos=new Float32Array(m*2*3); this.gcol=new Float32Array(m*2*3); this.gsize=new Float32Array(m*2);
+    this.ggeo=new THREE.BufferGeometry();
+    this.ggeo.setAttribute('position', new THREE.BufferAttribute(this.gpos,3));
+    this.ggeo.setAttribute('aColor',   new THREE.BufferAttribute(this.gcol,3));
+    this.ggeo.setAttribute('size',     new THREE.BufferAttribute(this.gsize,1));
+    this.ghosts=new THREE.Points(this.ggeo,this.mat); this.ghosts.visible=false; this.ghosts.frustumCulled=false; scene.add(this.ghosts);
   }
 
   _numColors(){ return this.cfg.colors ? this.cfg.colors.length : 1; }
@@ -536,7 +545,7 @@ class Shell {
         this.data[i]=s;
       }
     }
-    this.points.visible=true; this.lines.visible=true;
+    this.points.visible=true; this.ghosts.visible=true;   // lines (aiguilles 1px) restent ÉTEINTES : le flou = les fantômes (B76)
     const big=this.cfg.flashBig;
     const fg=new THREE.SphereGeometry(0.6,16,16);
     const fm=new THREE.MeshBasicMaterial({ color:0xffd9a0, transparent:true, blending:THREE.AdditiveBlending, depthWrite:false });
@@ -647,7 +656,8 @@ class Shell {
     for (let i=0;i<this.nAlive;i++){
       const d=this.data[i], li=i*6;
       if (!d || d.age>=d.life){ this.col[i*3]=this.col[i*3+1]=this.col[i*3+2]=0;
-        this.lcol[li]=this.lcol[li+1]=this.lcol[li+2]=this.lcol[li+3]=this.lcol[li+4]=this.lcol[li+5]=0; continue; }
+        this.lcol[li]=this.lcol[li+1]=this.lcol[li+2]=this.lcol[li+3]=this.lcol[li+4]=this.lcol[li+5]=0;
+        this.gcol[li]=this.gcol[li+1]=this.gcol[li+2]=this.gcol[li+3]=this.gcol[li+4]=this.gcol[li+5]=0; continue; }   // fantômes éteints aussi (sinon figés à jamais — piège classique)
       alive++; d.age+=dt; const A=d.age/d.life;
 
       d.vy -= this.cfg.G*this.cfg.gravStar*dt;
@@ -689,12 +699,14 @@ class Shell {
         else if (this.cfg.arrow){ inten *= 0.45; }                 // œuf de dragon : étoile TRÈS DISCRÈTE avant de claquer (à peine une boule, la traînée domine)
       this.col[i*3]=r*inten; this.col[i*3+1]=g*inten; this.col[i*3+2]=b*inten;
 
-      const mbk=0.07;
-      this.lpos[li]=px; this.lpos[li+1]=py; this.lpos[li+2]=pz;
-      this.lpos[li+3]=px-d.vx*mbk; this.lpos[li+4]=py-d.vy*mbk; this.lpos[li+5]=pz-d.vz*mbk;
-      const hr=r*inten, hg=g*inten, hb=b*inten;
-      this.lcol[li]=hr*0.8; this.lcol[li+1]=hg*0.8; this.lcol[li+2]=hb*0.8;
-      this.lcol[li+3]=hr*0.10; this.lcol[li+4]=hg*0.10; this.lcol[li+5]=hb*0.10;
+      // FLOU DE MOUVEMENT (B76) : 2 fantômes du sprite derrière l'étoile (plus la ligne-aiguille).
+      // Rapide -> étirée en goutte ; freinée -> les fantômes rentrent dans la boule (plus de queue).
+      const hr=r*inten, hg=g*inten, hb=b*inten, k1=0.035, k2=0.07, gb=li;   // gb = i*2*3
+      this.gpos[gb]=px-d.vx*k1; this.gpos[gb+1]=py-d.vy*k1; this.gpos[gb+2]=pz-d.vz*k1;
+      this.gpos[gb+3]=px-d.vx*k2; this.gpos[gb+4]=py-d.vy*k2; this.gpos[gb+5]=pz-d.vz*k2;
+      this.gcol[gb]=hr*0.40; this.gcol[gb+1]=hg*0.40; this.gcol[gb+2]=hb*0.40;
+      this.gcol[gb+3]=hr*0.16; this.gcol[gb+4]=hg*0.16; this.gcol[gb+5]=hb*0.16;
+      this.gsize[i*2]=this.size[i]*0.82; this.gsize[i*2+1]=this.size[i]*0.62;
 
       if (tr && A<tr.emitUntil && !d.popOnly && d.age<(d.crackleAt||1e9)){ d.since+=dt;   // traînée tant que l'étoile n'a pas commencé à claquer
         if (d.since>tr.period){ const mx=(d.lastX+px)*0.5, my=(d.lastY+py)*0.5, mz=(d.lastZ+pz)*0.5;
@@ -703,11 +715,11 @@ class Shell {
           d.lastX=px; d.lastY=py; d.lastZ=pz; d.since=0; } }
     }
     this.geo.attributes.position.needsUpdate=true; this.geo.attributes.aColor.needsUpdate=true;
-    this.lgeo.attributes.position.needsUpdate=true; this.lgeo.attributes.color.needsUpdate=true;
+    this.ggeo.attributes.position.needsUpdate=true; this.ggeo.attributes.aColor.needsUpdate=true; this.ggeo.attributes.size.needsUpdate=true;
 
     if (this.phase==='burst' && alive===0){
-      this.dead=true; scene.remove(this.points); scene.remove(this.lines);
-      this.geo.dispose(); this.mat.dispose(); this.lgeo.dispose(); this.lmat.dispose();
+      this.dead=true; scene.remove(this.points); scene.remove(this.lines); scene.remove(this.ghosts);
+      this.geo.dispose(); this.mat.dispose(); this.lgeo.dispose(); this.lmat.dispose(); this.ggeo.dispose();
       if (this.flash){ scene.remove(this.flash); this.flash.geometry.dispose(); this.flash.material.dispose(); }
     }
   }
