@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B106';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B107';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -413,7 +413,7 @@ const EFFECTS = {
   horsetail: { apex:80, heat:false, stars:11, starSize:0.9, lifeBase75:3.2, gravStar:0.78, dragStar:0.55,   // tête = POINTE, pas une boule (user B94, effets dorés)
                color:GOLD, dist:distHorsetail, onStar:glitterFn,
                trailing:{emitUntil:0.95, period:0.014, grain:1.0, gF:0.55, lifeMul:3.0, color:GOLD} },
-  cascade:   { apex:110, heat:false, stars:42, starSize:0.9, lifeBase75:3.0, gravStar:0.12, dragStar:0.55, randomAxis:true, restExtra:6.5,   // CASCADE (B105) : mèches en LIGNE DROITE (gravité tête quasi nulle) qui s'arrêtent net (~18m) -> silhouette DROITE, pas de virgule arrondie
+  cascade:   { apex:110, heat:false, stars:42, starSize:0.9, lifeBase75:3.0, gravStar:1.35, dragStar:0.55, randomAxis:true, restExtra:6.5,   // CASCADE (B107) : la TÊTE est LOURDE (terminal ~12 m/s) -> elle PLONGE plus vite que ses étincelles (7.5 m/s) qui restent suspendues au-dessus, comme en vrai
                color:GOLD, dist:distCascade, trailing:{emitUntil:0.94, period:0.004, grain:0.95, gF:0.42, lifeMul:25, color:EMBER, spark:true, jit:0.5, bright:0.5, fall:0.55, flatLife:true} },   // paillettes : vies QUASI ÉGALES ~5.5-7.5s (flatLife) -> la nappe descend d'un bloc sans "sol" ; grains NORMAUX (B106 : le brouillard venait du BLOOM, pas des grains)
 
   // === BEHAVE (mouvement/forks) ===
