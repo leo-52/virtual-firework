@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B112';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B113';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -241,9 +241,9 @@ function distMedusa(i,n,rnd){ const v=vrand(rnd); let dy=Math.abs(v[2])*0.9+0.25
   const L=Math.hypot(dx,dy,dz)||1; return {dx:dx/L,dy:dy/L,dz:dz/L,spMul:0.83}; }
 function distHorsetail(i,n,rnd){ const dx=(rnd()-0.5)*0.18, dz=(rnd()-0.5)*0.18, dy=1.0;
   const L=Math.hypot(dx,dy,dz)||1; return {dx:dx/L,dy:dy/L,dz:dz/L,spMul:0.33}; }
-function distCascade(i,n,rnd){ const dx=(rnd()-0.5)*0.9, dz=(rnd()-0.5)*0.9, dy=1.0;    // CASCADE (B112, user) : ÉCLAT MINUSCULE — les boules ne s'écartent que de ~5 m MAX du centre
-  const L=Math.hypot(dx,dy,dz)||1;                                                      // (75 mm), puis c'est la CHUTE CONTINUE qui fait la cascade (même si l'éclat pointe vers le haut).
-  return {dx:dx/L,dy:dy/L,dz:dz/L,spMul:0.115}; }
+function distCascade(i,n,rnd){ const dx=(rnd()-0.5)*0.9, dz=(rnd()-0.5)*0.9, dy=1.0;    // CASCADE (B112/B113, user) : ÉCLAT PETIT — les boules s'écartent de ~7 m MAX du centre (B113 « un peu
+  const L=Math.hypot(dx,dy,dz)||1;                                                      // plus gros »), puis c'est la CHUTE CONTINUE qui fait la cascade (même si l'éclat pointe vers le haut).
+  return {dx:dx/L,dy:dy/L,dz:dz/L,spMul:0.155}; }
 function distFish(i,n,rnd){ const v=vrand(rnd); return {dx:v[0],dy:v[1],dz:v[2],spMul:0.28}; }
 function distSalute(i,n,rnd){ const v=vrand(rnd); return {dx:v[0],dy:v[1],dz:v[2],spMul:0.33}; }
 function distMosaic(i,n,rnd){ const v=vrand(rnd); return {dx:v[0],dy:v[1],dz:v[2],spMul:1.0}; }
@@ -414,7 +414,7 @@ const EFFECTS = {
                color:GOLD, dist:distHorsetail, onStar:glitterFn,
                trailing:{emitUntil:0.95, period:0.014, grain:1.0, gF:0.55, lifeMul:3.0, color:GOLD} },
   cascade:   { apex:110, heat:false, stars:30, starSize:0.9, lifeBase75:5.5, gravStar:1.0, dragStar:0.55, randomAxis:true, restExtra:2.5, noFlash:true,   // CASCADE (B112) : 30 BOULES qui tombent SANS CESSE (~9 m/s, jamais de surplace) pendant ~5,5s en se désintégrant
-               color:GOLD, dist:distCascade, trailing:{emitUntil:0.96, period:0.004, grain:0.95, gF:0.37, lifeMul:4.8, color:EMBER, spark:true, jit:0.5, bright:0.5, fall:0.9, flatLife:true, rampIn:true} },   // SILLAGE uniforme : CHAQUE étincelle fait ~5 m (~1,2s à ~4 m/s) puis meurt — la 1re comme la dernière ; effet global ≈ 7s
+               color:GOLD, dist:distCascade, trailing:{emitUntil:0.96, period:0.004, grain:1.05, gF:0.37, lifeMul:6.0, color:EMBER, spark:true, jit:0.5, bright:0.5, fall:0.9, flatLife:true, rampIn:true} },   // SILLAGE uniforme : CHAQUE étincelle fait ~6,5 m (~1,55s à ~4 m/s) puis meurt — la 1re comme la dernière ; effet global ≈ 7s ; +gros (B113)
 
   // === BEHAVE (mouvement/forks) ===
   fish:    { apex:85, heat:false, stars:40, starSize:2.0, lifeBase75:0.95, gravStar:0.20, dragStar:0.30,
