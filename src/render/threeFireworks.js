@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B96';   // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B97';   // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -412,8 +412,8 @@ const EFFECTS = {
   horsetail: { apex:80, heat:false, stars:11, starSize:0.9, lifeBase75:3.2, gravStar:0.78, dragStar:0.55,   // tête = POINTE, pas une boule (user B94, effets dorés)
                color:GOLD, dist:distHorsetail, onStar:glitterFn,
                trailing:{emitUntil:0.95, period:0.014, grain:1.0, gF:0.55, lifeMul:3.0, color:GOLD} },
-  cascade:   { apex:110, heat:false, stars:32, starSize:0.9, lifeBase75:3.9, gravStar:1.0, dragStar:0.22,   // CASCADE (B96, user) : CÔNE INVERSÉ resserré, arc court, LONGUE RETOMBÉE (vie 3.9s)
-               color:GOLD, dist:distCascade, trailing:{emitUntil:0.94, period:0.0022, grain:1.35, gF:0.5, lifeMul:3.5, color:EMBER, spark:true, jit:1.1} },   // étincelles DENSES et peu dispersées (jit 1.1) -> chaque point quasi relié, pas de trou
+  cascade:   { apex:110, heat:false, stars:42, starSize:0.9, lifeBase75:3.0, gravStar:1.0, dragStar:0.22, randomAxis:true,   // CASCADE (B97, user) : CÔNE INVERSÉ resserré, SENS ALÉATOIRE par bombe (haut/bas/gauche/droite…), vie 3s, 42 mèches = vraie queue sans trou
+               color:GOLD, dist:distCascade, trailing:{emitUntil:0.94, period:0.0022, grain:1.1, gF:0.5, lifeMul:3.5, color:EMBER, spark:true, jit:1.1, bright:0.75} },   // étincelles denses/reliées, glow RÉDUIT (grain 1.1 + bright 0.75)
 
   // === BEHAVE (mouvement/forks) ===
   fish:    { apex:85, heat:false, stars:40, starSize:2.0, lifeBase75:0.95, gravStar:0.20, dragStar:0.30,
@@ -547,6 +547,12 @@ class Shell {
       for (let k=assorted.length-1;k>0;k--){ const j=Math.floor(Math.random()*(k+1));
         const t=assorted[k]; assorted[k]=assorted[j]; assorted[j]=t; }
     }
+    // SENS ALÉATOIRE de la gerbe (B97, cascade) : un AXE au hasard par bombe (haut/bas/gauche/droite…),
+    // toute la queue part dans ce sens (base orthonormée U/axe/V appliquée aux directions du dist).
+    this._rAxis=null;
+    if (this.cfg.randomAxis){ this._rAxis=vrand(Math.random);
+      let u=cross(this._rAxis,[0,1,0]); if(len2(u)<0.01)u=cross(this._rAxis,[1,0,0]);
+      this._rU=norm(u); this._rV=norm(cross(this._rAxis,this._rU)); }
     this.nAlive=n;
     for (let i=0;i<n;i++){
       this.pos[i*3]=bx; this.pos[i*3+1]=apex; this.pos[i*3+2]=bz;
@@ -557,7 +563,9 @@ class Shell {
         const v=vrand(Math.random); dx+=v[0]*0.05; dy+=v[1]*0.05; dz+=v[2]*0.05;
         const L=Math.hypot(dx,dy,dz)||1;
         dir={dx:dx/L,dy:dy/L,dz:dz/L,spMul:0.9*(0.92+Math.random()*0.16)}; comp=p.comp||0;
-      } else { dir=this.cfg.dist(i,n,Math.random); comp=dir.comp||0; }
+      } else { dir=this.cfg.dist(i,n,Math.random); comp=dir.comp||0;
+        if (this._rAxis){ const A2=this._rAxis, U=this._rU, V=this._rV;   // AXE ALÉATOIRE (B97, cascade) : la gerbe "haut" est réorientée vers l'axe tiré au sort pour CETTE bombe
+          dir={ dx:U[0]*dir.dx+A2[0]*dir.dy+V[0]*dir.dz, dy:U[1]*dir.dx+A2[1]*dir.dy+V[1]*dir.dz, dz:U[2]*dir.dx+A2[2]*dir.dy+V[2]*dir.dz, spMul:dir.spMul, comp:dir.comp }; } }
       const sp=speed*(dir.spMul||1)*(1-jit+Math.random()*2*jit);
       const s=this._newStar(dir.dx*sp, dir.dy*sp, dir.dz*sp, comp, this.cfg.trailing);
       s._i=i; s._split=false; if (assorted) s.coreColor=assorted[i%assorted.length];
@@ -758,7 +766,7 @@ class Shell {
           for (let e=0;e<nEmit;e++){ const fq=Math.random();                            // position aléatoire entre l'ancienne et la nouvelle -> pas de paquets
             const mx=d.lastX+(px-d.lastX)*fq, my=d.lastY+(py-d.lastY)*fq, mz=d.lastZ+(pz-d.lastZ)*fq;
             if (tr.spark){   // ÉTINCELLES (décomposition de l'étoile) : brillance TRÈS variable + dispersion -> nuée qui pétille, pas un ruban lisse
-              const tw=0.35+Math.pow(Math.random(),1.6)*1.65;
+              const tw=(0.35+Math.pow(Math.random(),1.6)*1.65)*(tr.bright||1);   // bright : atténue le glow par effet (cascade 0.75)
               spawnTrail(mx,my,mz, tc.r*tw,tc.g*tw,tc.b*tw, tr.grain, tr.gF, tr.lifeMul, d.vx,d.vy,d.vz, tr.jit||2.4);   // jit réglable par effet (cascade 1.1 = mèches serrées/reliées)
             } else {
               spawnTrail(mx,my,mz, tc.r,tc.g,tc.b, tr.grain, tr.gF, tr.lifeMul, d.vx,d.vy,d.vz);
