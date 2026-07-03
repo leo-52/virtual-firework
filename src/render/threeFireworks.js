@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B98';   // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B99';   // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -240,8 +240,8 @@ function distMedusa(i,n,rnd){ const v=vrand(rnd); let dy=Math.abs(v[2])*0.9+0.25
   const L=Math.hypot(dx,dy,dz)||1; return {dx:dx/L,dy:dy/L,dz:dz/L,spMul:0.83}; }
 function distHorsetail(i,n,rnd){ const dx=(rnd()-0.5)*0.18, dz=(rnd()-0.5)*0.18, dy=1.0;
   const L=Math.hypot(dx,dy,dz)||1; return {dx:dx/L,dy:dy/L,dz:dz/L,spMul:0.33}; }
-function distCascade(i,n,rnd){ const dx=(rnd()-0.5)*0.6, dz=(rnd()-0.5)*0.6, dy=1.0;   // CASCADE (B93→B96, user) : queue qui part FINE puis s'élargit en retombant = CÔNE INVERSÉ,
-  const L=Math.hypot(dx,dy,dz)||1;                                                     // resserré ±16° (B96 « encore plus groupé ») ; vitesses latérales persistantes (drag bas).
+function distCascade(i,n,rnd){ const dx=(rnd()-0.5)*0.26, dz=(rnd()-0.5)*0.26, dy=1.0;   // CASCADE (B93→B99, user) : queue qui part FINE puis s'élargit en retombant = CÔNE INVERSÉ,
+  const L=Math.hypot(dx,dy,dz)||1;                                                       // TRÈS resserré ±7° (B99 : « ça s'ouvre trop vite, ~10 m d'envergure à la fin »).
   return {dx:dx/L,dy:dy/L,dz:dz/L,spMul:0.5}; }
 function distFish(i,n,rnd){ const v=vrand(rnd); return {dx:v[0],dy:v[1],dz:v[2],spMul:0.28}; }
 function distSalute(i,n,rnd){ const v=vrand(rnd); return {dx:v[0],dy:v[1],dz:v[2],spMul:0.33}; }
