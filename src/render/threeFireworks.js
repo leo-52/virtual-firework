@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B110';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B111';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -413,7 +413,7 @@ const EFFECTS = {
   horsetail: { apex:80, heat:false, stars:11, starSize:0.9, lifeBase75:3.2, gravStar:0.78, dragStar:0.55,   // tête = POINTE, pas une boule (user B94, effets dorés)
                color:GOLD, dist:distHorsetail, onStar:glitterFn,
                trailing:{emitUntil:0.95, period:0.014, grain:1.0, gF:0.55, lifeMul:3.0, color:GOLD} },
-  cascade:   { apex:110, heat:false, stars:42, starSize:0.9, lifeBase75:3.0, gravStar:0.85, dragStar:0.32, randomAxis:true, restExtra:6.5, noFlash:true,   // CASCADE (B109) : drag desserré -> base ~20 m ; tête LOURDE (~13 m/s) qui plonge devant ses étincelles (7.5) ; pas de flash
+  cascade:   { apex:110, heat:false, stars:30, starSize:0.9, lifeBase75:3.0, gravStar:0.85, dragStar:0.32, randomAxis:true, restExtra:6.5, noFlash:true,   // CASCADE (B111) : 30 mèches (user) ; tête LOURDE (~13 m/s) qui plonge devant ses étincelles (7.5) ; pas de flash
                color:GOLD, dist:distCascade, trailing:{emitUntil:0.94, period:0.004, grain:0.95, gF:0.42, lifeMul:15.5, color:EMBER, spark:true, jit:0.5, bright:0.5, fall:0.55, flatLife:true, rampIn:true} },   // UNE étincelle ≈ 4s (B110), l'effet GLOBAL ≈ 7s (les têtes sèment ~3s, les dernières meurent à ~7s) -> l'effet s'efface progressivement du haut vers le bas
 
   // === BEHAVE (mouvement/forks) ===
