@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B93';   // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B94';   // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -375,7 +375,7 @@ const EFFECTS = {
   peony: {},
   chrysanthemum: { trailing:{emitUntil:0.85, period:0.015, grain:0.9, gF:0.40, lifeMul:1.6, color:GOLD} },
   willow: { apex:100, heat:false, color:DIMGOLD, gravStar:0.92, dragStar:0.25, lifeBase75:3.2,
-            starSize:1.8, speedMul:1.5, trailing:{emitUntil:0.95, period:0.013, grain:2.5, gF:0.22, lifeMul:9.0, color:GOLD} },  // KAMURO : longues traînées or PENDANTES (les belles traînées)
+            starSize:0.9, speedMul:1.5, trailing:{emitUntil:0.95, period:0.013, grain:2.5, gF:0.22, lifeMul:9.0, color:GOLD} },  // KAMURO : longues traînées or PENDANTES ; tête = POINTE, pas une boule (user B94, effets dorés)
   comet: { apex:96, stars:1, dist:distComet, heat:false, color:GOLD, gravStar:0.90, dragStar:0.30,
            lifeBase75:3.0, starSize:5.4, speedMul:1.0, headSize:4.0, riseColor:GOLD,   // compensé (STAR_SCALE 1.2->1.0), taille inchangée (4.5×1.2)
            trailing:{emitUntil:0.97, period:0.012, grain:1.3, gF:0.35, lifeMul:1.8, color:GOLD} },
@@ -409,11 +409,11 @@ const EFFECTS = {
   // === MOUVEMENT / TRAÎNE (hooks existants) ===
   medusa:    { apex:95, heat:false, stars:70, starSize:2.2, lifeBase75:2.3, gravStar:0.72, dragStar:0.55,
                color:CYAN, dist:distMedusa, trailing:{emitUntil:0.80, period:0.018, grain:1.0, gF:0.42, lifeMul:1.0, color:CYAN} },
-  horsetail: { apex:80, heat:false, stars:11, starSize:1.7, lifeBase75:3.2, gravStar:0.78, dragStar:0.55,
+  horsetail: { apex:80, heat:false, stars:11, starSize:0.9, lifeBase75:3.2, gravStar:0.78, dragStar:0.55,   // tête = POINTE, pas une boule (user B94, effets dorés)
                color:GOLD, dist:distHorsetail, onStar:glitterFn,
                trailing:{emitUntil:0.95, period:0.014, grain:1.0, gF:0.55, lifeMul:3.0, color:GOLD} },
-  cascade:   { apex:110, heat:false, stars:90, starSize:2.0, lifeBase75:3.1, gravStar:0.80, dragStar:0.70,
-               color:GOLD, dist:distCascade, trailing:{emitUntil:0.80, period:0.014, grain:1.1, gF:0.5, lifeMul:3.5, color:GOLD} },
+  cascade:   { apex:110, heat:false, stars:22, starSize:0.9, lifeBase75:3.1, gravStar:0.80, dragStar:0.70,   // CASCADE (photo réf B94) : ~22 MÈCHES distinctes, tête = POINTE (pas une boule)
+               color:GOLD, dist:distCascade, trailing:{emitUntil:0.92, period:0.0032, grain:1.35, gF:0.5, lifeMul:3.5, color:EMBER, spark:true} },   // chaque mèche = traînée dense d'ÉTINCELLES orangées/braise qui pétillent
 
   // === BEHAVE (mouvement/forks) ===
   fish:    { apex:85, heat:false, stars:40, starSize:2.0, lifeBase75:0.95, gravStar:0.20, dragStar:0.30,
