@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B108';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B109';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -241,9 +241,9 @@ function distMedusa(i,n,rnd){ const v=vrand(rnd); let dy=Math.abs(v[2])*0.9+0.25
   const L=Math.hypot(dx,dy,dz)||1; return {dx:dx/L,dy:dy/L,dz:dz/L,spMul:0.83}; }
 function distHorsetail(i,n,rnd){ const dx=(rnd()-0.5)*0.18, dz=(rnd()-0.5)*0.18, dy=1.0;
   const L=Math.hypot(dx,dy,dz)||1; return {dx:dx/L,dy:dy/L,dz:dz/L,spMul:0.33}; }
-function distCascade(i,n,rnd){ const dx=(rnd()-0.5)*0.5, dz=(rnd()-0.5)*0.5, dy=1.0;   // CASCADE (B93→B101, user) : éjection DOUCE (~10 m/s, quasi pas d'explosion), cône ±13° qui
-  const L=Math.hypot(dx,dy,dz)||1;                                                     // s'ouvre LENTEMENT en TRIANGLE net (pointe fine) ; retombe direct, porté par le vent ; ~10 m à la fin.
-  return {dx:dx/L,dy:dy/L,dz:dz/L,spMul:0.22}; }
+function distCascade(i,n,rnd){ const dx=(rnd()-0.5)*1.45, dz=(rnd()-0.5)*1.45, dy=1.0;  // CASCADE (B93→B109, user) : éjection DOUCE (~15 m/s), cône ±36° ;
+  const L=Math.hypot(dx,dy,dz)||1;                                                      // base finale = CERCLE d'environ 20 m (B109), triangle net, plongeon inchangé.
+  return {dx:dx/L,dy:dy/L,dz:dz/L,spMul:0.30}; }
 function distFish(i,n,rnd){ const v=vrand(rnd); return {dx:v[0],dy:v[1],dz:v[2],spMul:0.28}; }
 function distSalute(i,n,rnd){ const v=vrand(rnd); return {dx:v[0],dy:v[1],dz:v[2],spMul:0.33}; }
 function distMosaic(i,n,rnd){ const v=vrand(rnd); return {dx:v[0],dy:v[1],dz:v[2],spMul:1.0}; }
@@ -413,7 +413,7 @@ const EFFECTS = {
   horsetail: { apex:80, heat:false, stars:11, starSize:0.9, lifeBase75:3.2, gravStar:0.78, dragStar:0.55,   // tête = POINTE, pas une boule (user B94, effets dorés)
                color:GOLD, dist:distHorsetail, onStar:glitterFn,
                trailing:{emitUntil:0.95, period:0.014, grain:1.0, gF:0.55, lifeMul:3.0, color:GOLD} },
-  cascade:   { apex:110, heat:false, stars:42, starSize:0.9, lifeBase75:3.0, gravStar:1.35, dragStar:0.55, randomAxis:true, restExtra:6.5, noFlash:true,   // CASCADE (B108) : PAS de flash d'ouverture ; tête LOURDE (~12 m/s) qui plonge devant ses étincelles (7.5)
+  cascade:   { apex:110, heat:false, stars:42, starSize:0.9, lifeBase75:3.0, gravStar:0.85, dragStar:0.32, randomAxis:true, restExtra:6.5, noFlash:true,   // CASCADE (B109) : drag desserré -> base ~20 m ; tête LOURDE (~13 m/s) qui plonge devant ses étincelles (7.5) ; pas de flash
                color:GOLD, dist:distCascade, trailing:{emitUntil:0.94, period:0.004, grain:0.95, gF:0.42, lifeMul:25, color:EMBER, spark:true, jit:0.5, bright:0.5, fall:0.55, flatLife:true, rampIn:true} },   // rampIn : étincelles tamisées tant que serrées -> plus de BOULE lumineuse au break ; nappe d'un bloc (flatLife)
 
   // === BEHAVE (mouvement/forks) ===
