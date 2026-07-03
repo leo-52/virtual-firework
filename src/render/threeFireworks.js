@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B95';   // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B96';   // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -240,8 +240,8 @@ function distMedusa(i,n,rnd){ const v=vrand(rnd); let dy=Math.abs(v[2])*0.9+0.25
   const L=Math.hypot(dx,dy,dz)||1; return {dx:dx/L,dy:dy/L,dz:dz/L,spMul:0.83}; }
 function distHorsetail(i,n,rnd){ const dx=(rnd()-0.5)*0.18, dz=(rnd()-0.5)*0.18, dy=1.0;
   const L=Math.hypot(dx,dy,dz)||1; return {dx:dx/L,dy:dy/L,dz:dz/L,spMul:0.33}; }
-function distCascade(i,n,rnd){ const dx=(rnd()-0.5)*0.9, dz=(rnd()-0.5)*0.9, dy=1.0;   // CASCADE (B93/B95, user) : queue qui part FINE (toutes du même point, vers le haut) puis
-  const L=Math.hypot(dx,dy,dz)||1;                                                     // s'ÉLARGIT en retombant = CÔNE INVERSÉ (les vitesses latérales ±24° persistent grâce au drag bas).
+function distCascade(i,n,rnd){ const dx=(rnd()-0.5)*0.6, dz=(rnd()-0.5)*0.6, dy=1.0;   // CASCADE (B93→B96, user) : queue qui part FINE puis s'élargit en retombant = CÔNE INVERSÉ,
+  const L=Math.hypot(dx,dy,dz)||1;                                                     // resserré ±16° (B96 « encore plus groupé ») ; vitesses latérales persistantes (drag bas).
   return {dx:dx/L,dy:dy/L,dz:dz/L,spMul:0.5}; }
 function distFish(i,n,rnd){ const v=vrand(rnd); return {dx:v[0],dy:v[1],dz:v[2],spMul:0.28}; }
 function distSalute(i,n,rnd){ const v=vrand(rnd); return {dx:v[0],dy:v[1],dz:v[2],spMul:0.33}; }
@@ -412,8 +412,8 @@ const EFFECTS = {
   horsetail: { apex:80, heat:false, stars:11, starSize:0.9, lifeBase75:3.2, gravStar:0.78, dragStar:0.55,   // tête = POINTE, pas une boule (user B94, effets dorés)
                color:GOLD, dist:distHorsetail, onStar:glitterFn,
                trailing:{emitUntil:0.95, period:0.014, grain:1.0, gF:0.55, lifeMul:3.0, color:GOLD} },
-  cascade:   { apex:110, heat:false, stars:30, starSize:0.9, lifeBase75:3.1, gravStar:1.0, dragStar:0.22,   // CASCADE (B95, user) : CÔNE INVERSÉ — part FIN au sommet, arc court, et S'ÉLARGIT en RETOMBANT
-               color:GOLD, dist:distCascade, trailing:{emitUntil:0.92, period:0.0032, grain:1.35, gF:0.5, lifeMul:3.5, color:EMBER, spark:true} },   // drag BAS (0.22) = les mèches continuent de s'écarter pendant TOUTE la chute ; 30 mèches = quasi pas de trou
+  cascade:   { apex:110, heat:false, stars:32, starSize:0.9, lifeBase75:3.9, gravStar:1.0, dragStar:0.22,   // CASCADE (B96, user) : CÔNE INVERSÉ resserré, arc court, LONGUE RETOMBÉE (vie 3.9s)
+               color:GOLD, dist:distCascade, trailing:{emitUntil:0.94, period:0.0022, grain:1.35, gF:0.5, lifeMul:3.5, color:EMBER, spark:true, jit:1.1} },   // étincelles DENSES et peu dispersées (jit 1.1) -> chaque point quasi relié, pas de trou
 
   // === BEHAVE (mouvement/forks) ===
   fish:    { apex:85, heat:false, stars:40, starSize:2.0, lifeBase75:0.95, gravStar:0.20, dragStar:0.30,
@@ -759,7 +759,7 @@ class Shell {
             const mx=d.lastX+(px-d.lastX)*fq, my=d.lastY+(py-d.lastY)*fq, mz=d.lastZ+(pz-d.lastZ)*fq;
             if (tr.spark){   // ÉTINCELLES (décomposition de l'étoile) : brillance TRÈS variable + dispersion -> nuée qui pétille, pas un ruban lisse
               const tw=0.35+Math.pow(Math.random(),1.6)*1.65;
-              spawnTrail(mx,my,mz, tc.r*tw,tc.g*tw,tc.b*tw, tr.grain, tr.gF, tr.lifeMul, d.vx,d.vy,d.vz, 2.4);
+              spawnTrail(mx,my,mz, tc.r*tw,tc.g*tw,tc.b*tw, tr.grain, tr.gF, tr.lifeMul, d.vx,d.vy,d.vz, tr.jit||2.4);   // jit réglable par effet (cascade 1.1 = mèches serrées/reliées)
             } else {
               spawnTrail(mx,my,mz, tc.r,tc.g,tc.b, tr.grain, tr.gF, tr.lifeMul, d.vx,d.vy,d.vz);
             } }
