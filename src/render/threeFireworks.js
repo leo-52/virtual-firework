@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B99';   // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B100';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -240,9 +240,9 @@ function distMedusa(i,n,rnd){ const v=vrand(rnd); let dy=Math.abs(v[2])*0.9+0.25
   const L=Math.hypot(dx,dy,dz)||1; return {dx:dx/L,dy:dy/L,dz:dz/L,spMul:0.83}; }
 function distHorsetail(i,n,rnd){ const dx=(rnd()-0.5)*0.18, dz=(rnd()-0.5)*0.18, dy=1.0;
   const L=Math.hypot(dx,dy,dz)||1; return {dx:dx/L,dy:dy/L,dz:dz/L,spMul:0.33}; }
-function distCascade(i,n,rnd){ const dx=(rnd()-0.5)*0.26, dz=(rnd()-0.5)*0.26, dy=1.0;   // CASCADE (B93→B99, user) : queue qui part FINE puis s'élargit en retombant = CÔNE INVERSÉ,
-  const L=Math.hypot(dx,dy,dz)||1;                                                       // TRÈS resserré ±7° (B99 : « ça s'ouvre trop vite, ~10 m d'envergure à la fin »).
-  return {dx:dx/L,dy:dy/L,dz:dz/L,spMul:0.5}; }
+function distCascade(i,n,rnd){ const dx=(rnd()-0.5)*0.6, dz=(rnd()-0.5)*0.6, dy=1.0;   // CASCADE (B93→B100, user) : « quasiment pas d'explosion en vrai » — éjection DOUCE (spMul 0.22,
+  const L=Math.hypot(dx,dy,dz)||1;                                                     // ~10 m/s), cône ±16° MAIS lent -> ça retombe direct, porté par le vent ; envergure finale ~10 m.
+  return {dx:dx/L,dy:dy/L,dz:dz/L,spMul:0.22}; }
 function distFish(i,n,rnd){ const v=vrand(rnd); return {dx:v[0],dy:v[1],dz:v[2],spMul:0.28}; }
 function distSalute(i,n,rnd){ const v=vrand(rnd); return {dx:v[0],dy:v[1],dz:v[2],spMul:0.33}; }
 function distMosaic(i,n,rnd){ const v=vrand(rnd); return {dx:v[0],dy:v[1],dz:v[2],spMul:1.0}; }
@@ -412,7 +412,7 @@ const EFFECTS = {
   horsetail: { apex:80, heat:false, stars:11, starSize:0.9, lifeBase75:3.2, gravStar:0.78, dragStar:0.55,   // tête = POINTE, pas une boule (user B94, effets dorés)
                color:GOLD, dist:distHorsetail, onStar:glitterFn,
                trailing:{emitUntil:0.95, period:0.014, grain:1.0, gF:0.55, lifeMul:3.0, color:GOLD} },
-  cascade:   { apex:110, heat:false, stars:42, starSize:0.9, lifeBase75:3.0, gravStar:1.0, dragStar:0.22, randomAxis:true,   // CASCADE (B97, user) : CÔNE INVERSÉ resserré, SENS ALÉATOIRE par bombe (haut/bas/gauche/droite…), vie 3s, 42 mèches = vraie queue sans trou
+  cascade:   { apex:110, heat:false, stars:42, starSize:0.9, lifeBase75:3.0, gravStar:0.4, dragStar:0.22, randomAxis:true,   // CASCADE (B100) : éjection DOUCE + chute LENTE (gravStar 0.4 = mèches portées par le vent), SENS ALÉATOIRE, 42 mèches
                color:GOLD, dist:distCascade, trailing:{emitUntil:0.94, period:0.0026, grain:1.1, gF:0.11, lifeMul:11, color:EMBER, spark:true, jit:1.1, bright:0.75} },   // PAILLETTES (B98) : retombée LENTE (gF 0.11 ≈ 2.6 m/s) qui scintille ~7s (lifeMul 11) ; glow réduit
 
   // === BEHAVE (mouvement/forks) ===
