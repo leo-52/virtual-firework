@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B114';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B115';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -118,14 +118,14 @@ const trailPoints = new THREE.Points(trailGeo, trailMat);
 trailPoints.frustumCulled = false;   // CRITIQUE : sa bounding sphere reste à l'origine (grains nés à 0,0,0) ->
 scene.add(trailPoints);              // sinon Three.js CULL tout le pool quand la caméra vise le burst (origine hors champ) = "pas de traînées"
 
-function spawnTrail(x,y,z, r,g,b, size, gF=0.4, lifeMul=1, vx0=0, vy0=0, vz0=0, jit=0.8, drag=0.42, flatLife=false){
+function spawnTrail(x,y,z, r,g,b, size, gF=0.4, lifeMul=1, vx0=0, vy0=0, vz0=0, jit=0.8, drag=0.42, flatLife=false, rin=0){
   const i = trailHead; trailHead = (trailHead + 1) % TRAIL_MAX;
   const t = trail[i];
   t.x=x; t.y=y; t.z=z;
   t.vx=vx0*0.25+(Math.random()-0.5)*jit; t.vy=vy0*0.25-Math.random()*(jit*0.75); t.vz=vz0*0.25+(Math.random()-0.5)*jit;   // jit bas = pas de "nage" aléatoire (poissons/feuilles)
   t.age=0; t.life = lifeMul * 0.26 * (flatLife ? (0.85+Math.random()*0.3)                       // flatLife : vies QUASI ÉGALES (±15%) -> la nappe tombe d'un bloc et s'éteint ensemble
                                               : (0.35 + 1.45*Math.pow(Math.random(),1.6)));    // sinon : vies très inégales (fondu organique) — MAIS les profondes meurent d'abord => enveloppe qui "bute sur un sol"
-  t.size = size*(0.7+Math.random()*0.6); t.r=r; t.g=g; t.b=b; t.gF=gF; t.drag=drag; t.alive=true;   // drag haut = décélère vite (explose puis s'éteint sur place)
+  t.size = size*(0.7+Math.random()*0.6); t.r=r; t.g=g; t.b=b; t.gF=gF; t.drag=drag; t.rin=rin; t.alive=true;   // rin : FONDU d'apparition (s) -> les grains frais empilés près de la tête ne crament plus en blanc
 }
 function updateTrails(dt){
   for (let i = 0; i < TRAIL_MAX; i++){
@@ -140,7 +140,8 @@ function updateTrails(dt){
     t.vy -= 9.8 * t.gF * dt;
     const kd = Math.max(0, 1 - (t.drag||0.42)*dt); t.vx*=kd; t.vy*=kd; t.vz*=kd;
     t.x+=t.vx*dt; t.y+=t.vy*dt; t.z+=t.vz*dt;
-    const a = 1 - t.age/t.life;
+    let a = 1 - t.age/t.life;
+    if (t.rin>0 && t.age<t.rin) a *= t.age/t.rin;   // fondu d'apparition (cascade : anti "blanc cramé" près des têtes)
     trailPos[i*3]=t.x; trailPos[i*3+1]=t.y; trailPos[i*3+2]=t.z;
     trailCol[i*3]=t.r*a*0.85; trailCol[i*3+1]=t.g*a*0.85; trailCol[i*3+2]=t.b*a*0.85;
     trailSize[i]=t.size*a;
@@ -413,8 +414,8 @@ const EFFECTS = {
   horsetail: { apex:80, heat:false, stars:11, starSize:0.9, lifeBase75:3.2, gravStar:0.78, dragStar:0.55,   // tête = POINTE, pas une boule (user B94, effets dorés)
                color:GOLD, dist:distHorsetail, onStar:glitterFn,
                trailing:{emitUntil:0.95, period:0.014, grain:1.0, gF:0.55, lifeMul:3.0, color:GOLD} },
-  cascade:   { apex:110, heat:false, stars:30, starSize:0.9, lifeBase75:5.5, lifeJitter:0.30, gravStar:1.0, dragStar:0.55, randomAxis:true, restExtra:2.5, noFlash:true,   // CASCADE (B114) : 30 BOULES en chute continue (~9 m/s) qui meurent de façon ALÉATOIRE entre ~3,9 et ~7,1s (lifeJitter 0.30)
-               color:GOLD, dist:distCascade, trailing:{emitUntil:0.96, period:0.004, grain:1.05, gF:0.37, lifeMul:6.0, color:EMBER, spark:true, jit:0.5, bright:0.5, fall:0.9, flatLife:true, rampIn:true} },   // SILLAGE uniforme : CHAQUE étincelle fait ~6,5 m (~1,55s à ~4 m/s) puis meurt — la 1re comme la dernière ; effet global ≈ 7s ; +gros (B113)
+  cascade:   { apex:110, heat:false, stars:30, starSize:0.9, lifeBase75:5.5, lifeJitter:0.30, gravStar:1.0, dragStar:0.55, randomAxis:true, restExtra:2.5, noFlash:true, arrow:true,   // CASCADE (B115) : 30 boules en chute continue, morts aléatoires ; tête TAMISÉE (arrow, anti blanc-cramé)
+               color:GOLD, dist:distCascade, trailing:{emitUntil:0.96, period:0.004, grain:1.05, gF:0.37, lifeMul:8.5, color:EMBER, spark:true, jit:0.5, bright:0.5, fall:0.9, flatLife:true, rampIn:true, grainRampIn:0.18} },   // traînées PLUS LONGUES (vie ~2,2s -> sillage ~20m) + fondu d'apparition des grains (anti blanc-cramé près des têtes)
 
   // === BEHAVE (mouvement/forks) ===
   fish:    { apex:85, heat:false, stars:40, starSize:2.0, lifeBase75:0.95, gravStar:0.20, dragStar:0.30,
@@ -771,7 +772,7 @@ class Shell {
             if (tr.spark){   // ÉTINCELLES (décomposition de l'étoile) : brillance TRÈS variable + dispersion -> nuée qui pétille, pas un ruban lisse
               let tw=(0.35+Math.pow(Math.random(),1.6)*1.65)*(tr.bright||1);   // bright : atténue le glow par effet
               if (tr.rampIn) tw*=0.25+0.75*Math.min(1, A/0.4);                 // rampIn (cascade) : étincelles TAMISÉES tant que les mèches sont serrées (anti boule lumineuse au break), pleine brillance une fois écartées
-              spawnTrail(mx,my,mz, tc.r*tw,tc.g*tw,tc.b*tw, tr.grain, tr.gF, tr.lifeMul, d.vx,d.vy,d.vz, tr.jit||2.4, tr.fall||0.42, !!tr.flatLife);   // jit / fall / flatLife réglables par effet (cascade : mèches serrées, chute constante, vies égales)
+              spawnTrail(mx,my,mz, tc.r*tw,tc.g*tw,tc.b*tw, tr.grain, tr.gF, tr.lifeMul, d.vx,d.vy,d.vz, tr.jit||2.4, tr.fall||0.42, !!tr.flatLife, tr.grainRampIn||0);   // jit / fall / flatLife / grainRampIn réglables par effet
             } else {
               spawnTrail(mx,my,mz, tc.r,tc.g,tc.b, tr.grain, tr.gF, tr.lifeMul, d.vx,d.vy,d.vz);
             } }
