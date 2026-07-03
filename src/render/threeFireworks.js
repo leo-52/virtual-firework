@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B102';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B103';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -413,7 +413,7 @@ const EFFECTS = {
                color:GOLD, dist:distHorsetail, onStar:glitterFn,
                trailing:{emitUntil:0.95, period:0.014, grain:1.0, gF:0.55, lifeMul:3.0, color:GOLD} },
   cascade:   { apex:110, heat:false, stars:42, starSize:0.9, lifeBase75:3.0, gravStar:0.35, dragStar:0.22, randomAxis:true, restExtra:6.5,   // CASCADE (B102) : éjection douce, TRIANGLE net ; restExtra 6.5 = la démo attend la VRAIE fin des paillettes (~10s) avant de retirer
-               color:GOLD, dist:distCascade, trailing:{emitUntil:0.94, period:0.0032, grain:0.95, gF:0.14, lifeMul:16, color:EMBER, spark:true, jit:0.5, bright:0.55} },   // paillettes qui VIVENT 7s+ (lifeMul 16) et descendent PLUS BAS (gF 0.14 ≈ 3.3 m/s) ; mèches nettes ; glow réduit
+               color:GOLD, dist:distCascade, trailing:{emitUntil:0.94, period:0.0032, grain:0.95, gF:0.30, lifeMul:16, color:EMBER, spark:true, jit:0.5, bright:0.55, fall:0.24} },   // paillettes 7s+ : chute qui ACCÉLÈRE doucement (départ ~2.5 m/s, fin ~9 m/s) -> le front DESCEND franchement jusqu'au bout, plus de "faux sol" entre 5 et 7s
 
   // === BEHAVE (mouvement/forks) ===
   fish:    { apex:85, heat:false, stars:40, starSize:2.0, lifeBase75:0.95, gravStar:0.20, dragStar:0.30,
@@ -767,7 +767,7 @@ class Shell {
             const mx=d.lastX+(px-d.lastX)*fq, my=d.lastY+(py-d.lastY)*fq, mz=d.lastZ+(pz-d.lastZ)*fq;
             if (tr.spark){   // ÉTINCELLES (décomposition de l'étoile) : brillance TRÈS variable + dispersion -> nuée qui pétille, pas un ruban lisse
               const tw=(0.35+Math.pow(Math.random(),1.6)*1.65)*(tr.bright||1);   // bright : atténue le glow par effet (cascade 0.75)
-              spawnTrail(mx,my,mz, tc.r*tw,tc.g*tw,tc.b*tw, tr.grain, tr.gF, tr.lifeMul, d.vx,d.vy,d.vz, tr.jit||2.4);   // jit réglable par effet (cascade 1.1 = mèches serrées/reliées)
+              spawnTrail(mx,my,mz, tc.r*tw,tc.g*tw,tc.b*tw, tr.grain, tr.gF, tr.lifeMul, d.vx,d.vy,d.vz, tr.jit||2.4, tr.fall||0.42);   // jit + fall (drag de chute) réglables par effet (cascade : mèches serrées, chute qui accélère)
             } else {
               spawnTrail(mx,my,mz, tc.r,tc.g,tc.b, tr.grain, tr.gF, tr.lifeMul, d.vx,d.vy,d.vz);
             } }
