@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B94';   // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B95';   // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -240,9 +240,9 @@ function distMedusa(i,n,rnd){ const v=vrand(rnd); let dy=Math.abs(v[2])*0.9+0.25
   const L=Math.hypot(dx,dy,dz)||1; return {dx:dx/L,dy:dy/L,dz:dz/L,spMul:0.83}; }
 function distHorsetail(i,n,rnd){ const dx=(rnd()-0.5)*0.18, dz=(rnd()-0.5)*0.18, dy=1.0;
   const L=Math.hypot(dx,dy,dz)||1; return {dx:dx/L,dy:dy/L,dz:dz/L,spMul:0.33}; }
-function distCascade(i,n,rnd){ const dx=(rnd()-0.5)*0.9, dz=(rnd()-0.5)*0.9, dy=1.0;   // CASCADE (B93, user) : comme une QUEUE DE CHEVAL — toutes les étoiles dans UNE direction (vers le haut),
-  const L=Math.hypot(dx,dy,dz)||1;                                                     // gerbe LARGE (±24°) qui monte en arc puis DRAPE en rideau. Plus d'anneau 360°.
-  return {dx:dx/L,dy:dy/L,dz:dz/L,spMul:0.85}; }
+function distCascade(i,n,rnd){ const dx=(rnd()-0.5)*0.9, dz=(rnd()-0.5)*0.9, dy=1.0;   // CASCADE (B93/B95, user) : queue qui part FINE (toutes du même point, vers le haut) puis
+  const L=Math.hypot(dx,dy,dz)||1;                                                     // s'ÉLARGIT en retombant = CÔNE INVERSÉ (les vitesses latérales ±24° persistent grâce au drag bas).
+  return {dx:dx/L,dy:dy/L,dz:dz/L,spMul:0.5}; }
 function distFish(i,n,rnd){ const v=vrand(rnd); return {dx:v[0],dy:v[1],dz:v[2],spMul:0.28}; }
 function distSalute(i,n,rnd){ const v=vrand(rnd); return {dx:v[0],dy:v[1],dz:v[2],spMul:0.33}; }
 function distMosaic(i,n,rnd){ const v=vrand(rnd); return {dx:v[0],dy:v[1],dz:v[2],spMul:1.0}; }
@@ -412,8 +412,8 @@ const EFFECTS = {
   horsetail: { apex:80, heat:false, stars:11, starSize:0.9, lifeBase75:3.2, gravStar:0.78, dragStar:0.55,   // tête = POINTE, pas une boule (user B94, effets dorés)
                color:GOLD, dist:distHorsetail, onStar:glitterFn,
                trailing:{emitUntil:0.95, period:0.014, grain:1.0, gF:0.55, lifeMul:3.0, color:GOLD} },
-  cascade:   { apex:110, heat:false, stars:22, starSize:0.9, lifeBase75:3.1, gravStar:0.80, dragStar:0.70,   // CASCADE (photo réf B94) : ~22 MÈCHES distinctes, tête = POINTE (pas une boule)
-               color:GOLD, dist:distCascade, trailing:{emitUntil:0.92, period:0.0032, grain:1.35, gF:0.5, lifeMul:3.5, color:EMBER, spark:true} },   // chaque mèche = traînée dense d'ÉTINCELLES orangées/braise qui pétillent
+  cascade:   { apex:110, heat:false, stars:30, starSize:0.9, lifeBase75:3.1, gravStar:1.0, dragStar:0.22,   // CASCADE (B95, user) : CÔNE INVERSÉ — part FIN au sommet, arc court, et S'ÉLARGIT en RETOMBANT
+               color:GOLD, dist:distCascade, trailing:{emitUntil:0.92, period:0.0032, grain:1.35, gF:0.5, lifeMul:3.5, color:EMBER, spark:true} },   // drag BAS (0.22) = les mèches continuent de s'écarter pendant TOUTE la chute ; 30 mèches = quasi pas de trou
 
   // === BEHAVE (mouvement/forks) ===
   fish:    { apex:85, heat:false, stars:40, starSize:2.0, lifeBase75:0.95, gravStar:0.20, dragStar:0.30,
