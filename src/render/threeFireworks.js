@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B105';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B106';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -414,7 +414,7 @@ const EFFECTS = {
                color:GOLD, dist:distHorsetail, onStar:glitterFn,
                trailing:{emitUntil:0.95, period:0.014, grain:1.0, gF:0.55, lifeMul:3.0, color:GOLD} },
   cascade:   { apex:110, heat:false, stars:42, starSize:0.9, lifeBase75:3.0, gravStar:0.12, dragStar:0.55, randomAxis:true, restExtra:6.5,   // CASCADE (B105) : mèches en LIGNE DROITE (gravité tête quasi nulle) qui s'arrêtent net (~18m) -> silhouette DROITE, pas de virgule arrondie
-               color:GOLD, dist:distCascade, trailing:{emitUntil:0.94, period:0.004, grain:0.8, gF:0.42, lifeMul:25, color:EMBER, spark:true, jit:0.5, bright:0.38, fall:0.55, flatLife:true} },   // paillettes : vies QUASI ÉGALES ~5.5-7.5s (flatLife) -> la nappe DESCEND D'UN BLOC ~45m sans "sol" et s'éteint ensemble ; grains fins/sombres = fini le brouillard
+               color:GOLD, dist:distCascade, trailing:{emitUntil:0.94, period:0.004, grain:0.95, gF:0.42, lifeMul:25, color:EMBER, spark:true, jit:0.5, bright:0.5, fall:0.55, flatLife:true} },   // paillettes : vies QUASI ÉGALES ~5.5-7.5s (flatLife) -> la nappe descend d'un bloc sans "sol" ; grains NORMAUX (B106 : le brouillard venait du BLOOM, pas des grains)
 
   // === BEHAVE (mouvement/forks) ===
   fish:    { apex:85, heat:false, stars:40, starSize:2.0, lifeBase75:0.95, gravStar:0.20, dragStar:0.30,
@@ -806,7 +806,7 @@ export class ThreeFireworks {
     scene.add(this.camera);
     this.composer = new EffectComposer(this.renderer);
     this.composer.addPass(new RenderPass(scene, this.camera));
-    this.composer.addPass(new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), 0.3, 0.25, 0.12)); // moins de bloom
+    this.composer.addPass(new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), 0.3, 0.22, 0.55)); // B106 anti-BROUILLARD : seuil 0.12->0.55 = seuls les CŒURS brillants blooment (la masse faible ne fait plus de halo), rayon resserré
     this.composer.addPass(new OutputPass());
     this._pe=new Cesium.Cartesian3(); this._de=new Cesium.Cartesian3(); this._ue=new Cesium.Cartesian3();
     this.setOrigin(origin);
