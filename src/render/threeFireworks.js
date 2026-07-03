@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B104';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B105';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -118,12 +118,13 @@ const trailPoints = new THREE.Points(trailGeo, trailMat);
 trailPoints.frustumCulled = false;   // CRITIQUE : sa bounding sphere reste à l'origine (grains nés à 0,0,0) ->
 scene.add(trailPoints);              // sinon Three.js CULL tout le pool quand la caméra vise le burst (origine hors champ) = "pas de traînées"
 
-function spawnTrail(x,y,z, r,g,b, size, gF=0.4, lifeMul=1, vx0=0, vy0=0, vz0=0, jit=0.8, drag=0.42){
+function spawnTrail(x,y,z, r,g,b, size, gF=0.4, lifeMul=1, vx0=0, vy0=0, vz0=0, jit=0.8, drag=0.42, flatLife=false){
   const i = trailHead; trailHead = (trailHead + 1) % TRAIL_MAX;
   const t = trail[i];
   t.x=x; t.y=y; t.z=z;
   t.vx=vx0*0.25+(Math.random()-0.5)*jit; t.vy=vy0*0.25-Math.random()*(jit*0.75); t.vz=vz0*0.25+(Math.random()-0.5)*jit;   // jit bas = pas de "nage" aléatoire (poissons/feuilles)
-  t.age=0; t.life = lifeMul * 0.26 * (0.35 + 1.45*Math.pow(Math.random(),1.6));
+  t.age=0; t.life = lifeMul * 0.26 * (flatLife ? (0.85+Math.random()*0.3)                       // flatLife : vies QUASI ÉGALES (±15%) -> la nappe tombe d'un bloc et s'éteint ensemble
+                                              : (0.35 + 1.45*Math.pow(Math.random(),1.6)));    // sinon : vies très inégales (fondu organique) — MAIS les profondes meurent d'abord => enveloppe qui "bute sur un sol"
   t.size = size*(0.7+Math.random()*0.6); t.r=r; t.g=g; t.b=b; t.gF=gF; t.drag=drag; t.alive=true;   // drag haut = décélère vite (explose puis s'éteint sur place)
 }
 function updateTrails(dt){
@@ -412,8 +413,8 @@ const EFFECTS = {
   horsetail: { apex:80, heat:false, stars:11, starSize:0.9, lifeBase75:3.2, gravStar:0.78, dragStar:0.55,   // tête = POINTE, pas une boule (user B94, effets dorés)
                color:GOLD, dist:distHorsetail, onStar:glitterFn,
                trailing:{emitUntil:0.95, period:0.014, grain:1.0, gF:0.55, lifeMul:3.0, color:GOLD} },
-  cascade:   { apex:110, heat:false, stars:42, starSize:0.9, lifeBase75:3.0, gravStar:0.35, dragStar:0.22, randomAxis:true, restExtra:6.5,   // CASCADE (B102) : éjection douce, TRIANGLE net ; restExtra 6.5 = la démo attend la VRAIE fin des paillettes (~10s) avant de retirer
-               color:GOLD, dist:distCascade, trailing:{emitUntil:0.94, period:0.0032, grain:0.95, gF:0.42, lifeMul:16, color:EMBER, spark:true, jit:0.5, bright:0.55, fall:0.55} },   // paillettes 7s+ : régime de chute ~7.5 m/s atteint en ~1.8s et TENU jusqu'à extinction (physique respectée : ça tombe jusqu'au bout, ~40m)
+  cascade:   { apex:110, heat:false, stars:42, starSize:0.9, lifeBase75:3.0, gravStar:0.12, dragStar:0.55, randomAxis:true, restExtra:6.5,   // CASCADE (B105) : mèches en LIGNE DROITE (gravité tête quasi nulle) qui s'arrêtent net (~18m) -> silhouette DROITE, pas de virgule arrondie
+               color:GOLD, dist:distCascade, trailing:{emitUntil:0.94, period:0.004, grain:0.8, gF:0.42, lifeMul:25, color:EMBER, spark:true, jit:0.5, bright:0.38, fall:0.55, flatLife:true} },   // paillettes : vies QUASI ÉGALES ~5.5-7.5s (flatLife) -> la nappe DESCEND D'UN BLOC ~45m sans "sol" et s'éteint ensemble ; grains fins/sombres = fini le brouillard
 
   // === BEHAVE (mouvement/forks) ===
   fish:    { apex:85, heat:false, stars:40, starSize:2.0, lifeBase75:0.95, gravStar:0.20, dragStar:0.30,
@@ -767,7 +768,7 @@ class Shell {
             const mx=d.lastX+(px-d.lastX)*fq, my=d.lastY+(py-d.lastY)*fq, mz=d.lastZ+(pz-d.lastZ)*fq;
             if (tr.spark){   // ÉTINCELLES (décomposition de l'étoile) : brillance TRÈS variable + dispersion -> nuée qui pétille, pas un ruban lisse
               const tw=(0.35+Math.pow(Math.random(),1.6)*1.65)*(tr.bright||1);   // bright : atténue le glow par effet (cascade 0.75)
-              spawnTrail(mx,my,mz, tc.r*tw,tc.g*tw,tc.b*tw, tr.grain, tr.gF, tr.lifeMul, d.vx,d.vy,d.vz, tr.jit||2.4, tr.fall||0.42);   // jit + fall (drag de chute) réglables par effet (cascade : mèches serrées, chute qui accélère)
+              spawnTrail(mx,my,mz, tc.r*tw,tc.g*tw,tc.b*tw, tr.grain, tr.gF, tr.lifeMul, d.vx,d.vy,d.vz, tr.jit||2.4, tr.fall||0.42, !!tr.flatLife);   // jit / fall / flatLife réglables par effet (cascade : mèches serrées, chute constante, vies égales)
             } else {
               spawnTrail(mx,my,mz, tc.r,tc.g,tc.b, tr.grain, tr.gF, tr.lifeMul, d.vx,d.vy,d.vz);
             } }

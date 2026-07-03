@@ -63,6 +63,8 @@
       composer.render();
       return { arch, phase: shell.phase, nAlive: shell.nAlive };
     };
+    // __step(n) : avance le MÊME tir de n frames puis rend (suivi temporel d'un seul tir, sans re-tirer)
+    window.__step = (n) => { for (let i=0;i<n;i++) step(); composer.render(); return shell ? {phase:shell.phase} : null; };
     window.__ready = true;
   </script>
 </body>
