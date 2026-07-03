@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B109';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B110';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -241,9 +241,9 @@ function distMedusa(i,n,rnd){ const v=vrand(rnd); let dy=Math.abs(v[2])*0.9+0.25
   const L=Math.hypot(dx,dy,dz)||1; return {dx:dx/L,dy:dy/L,dz:dz/L,spMul:0.83}; }
 function distHorsetail(i,n,rnd){ const dx=(rnd()-0.5)*0.18, dz=(rnd()-0.5)*0.18, dy=1.0;
   const L=Math.hypot(dx,dy,dz)||1; return {dx:dx/L,dy:dy/L,dz:dz/L,spMul:0.33}; }
-function distCascade(i,n,rnd){ const dx=(rnd()-0.5)*1.45, dz=(rnd()-0.5)*1.45, dy=1.0;  // CASCADE (B93→B109, user) : éjection DOUCE (~15 m/s), cône ±36° ;
-  const L=Math.hypot(dx,dy,dz)||1;                                                      // base finale = CERCLE d'environ 20 m (B109), triangle net, plongeon inchangé.
-  return {dx:dx/L,dy:dy/L,dz:dz/L,spMul:0.30}; }
+function distCascade(i,n,rnd){ const dx=(rnd()-0.5)*0.9, dz=(rnd()-0.5)*0.9, dy=1.0;    // CASCADE (B93→B110, user) : éjection DOUCE (~14 m/s), cône ±24° ;
+  const L=Math.hypot(dx,dy,dz)||1;                                                      // base finale = CERCLE d'environ 16 m (B110), triangle net, plongeon inchangé.
+  return {dx:dx/L,dy:dy/L,dz:dz/L,spMul:0.28}; }
 function distFish(i,n,rnd){ const v=vrand(rnd); return {dx:v[0],dy:v[1],dz:v[2],spMul:0.28}; }
 function distSalute(i,n,rnd){ const v=vrand(rnd); return {dx:v[0],dy:v[1],dz:v[2],spMul:0.33}; }
 function distMosaic(i,n,rnd){ const v=vrand(rnd); return {dx:v[0],dy:v[1],dz:v[2],spMul:1.0}; }
@@ -414,7 +414,7 @@ const EFFECTS = {
                color:GOLD, dist:distHorsetail, onStar:glitterFn,
                trailing:{emitUntil:0.95, period:0.014, grain:1.0, gF:0.55, lifeMul:3.0, color:GOLD} },
   cascade:   { apex:110, heat:false, stars:42, starSize:0.9, lifeBase75:3.0, gravStar:0.85, dragStar:0.32, randomAxis:true, restExtra:6.5, noFlash:true,   // CASCADE (B109) : drag desserré -> base ~20 m ; tête LOURDE (~13 m/s) qui plonge devant ses étincelles (7.5) ; pas de flash
-               color:GOLD, dist:distCascade, trailing:{emitUntil:0.94, period:0.004, grain:0.95, gF:0.42, lifeMul:25, color:EMBER, spark:true, jit:0.5, bright:0.5, fall:0.55, flatLife:true, rampIn:true} },   // rampIn : étincelles tamisées tant que serrées -> plus de BOULE lumineuse au break ; nappe d'un bloc (flatLife)
+               color:GOLD, dist:distCascade, trailing:{emitUntil:0.94, period:0.004, grain:0.95, gF:0.42, lifeMul:15.5, color:EMBER, spark:true, jit:0.5, bright:0.5, fall:0.55, flatLife:true, rampIn:true} },   // UNE étincelle ≈ 4s (B110), l'effet GLOBAL ≈ 7s (les têtes sèment ~3s, les dernières meurent à ~7s) -> l'effet s'efface progressivement du haut vers le bas
 
   // === BEHAVE (mouvement/forks) ===
   fish:    { apex:85, heat:false, stars:40, starSize:2.0, lifeBase75:0.95, gravStar:0.20, dragStar:0.30,
