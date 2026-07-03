@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B116';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B117';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -414,7 +414,7 @@ const EFFECTS = {
   horsetail: { apex:80, heat:false, stars:11, starSize:0.9, lifeBase75:3.2, gravStar:0.78, dragStar:0.55,   // tête = POINTE, pas une boule (user B94, effets dorés)
                color:GOLD, dist:distHorsetail, onStar:glitterFn,
                trailing:{emitUntil:0.95, period:0.014, grain:1.0, gF:0.55, lifeMul:3.0, color:GOLD} },
-  cascade:   { apex:110, heat:false, stars:30, starSize:0.9, lifeBase75:5.5, lifeJitter:0.30, speedJit:0.30, gravStar:1.0, dragStar:0.55, randomAxis:true, restExtra:2.5, noFlash:true, arrow:true,   // CASCADE (B116) : vitesses variées ±30% -> de l'ESPACE entre les boules (échelonnées ~5-9 m du centre) ; morts aléatoires ; tête tamisée
+  cascade:   { apex:110, heat:false, stars:30, starSize:0.9, lifeBase75:5.5, lifeJitter:0.30, speedJit:0.30, gravStar:1.0, dragStar:0.55, randomAxis:true, restExtra:2.5, noFlash:true, hideStars:true,   // CASCADE (B117) : étoiles-gouttes INVISIBLES — on ne voit que la POINTE du sillage ; espacées, morts aléatoires
                color:GOLD, dist:distCascade, trailing:{emitUntil:0.96, period:0.004, grain:1.05, gF:0.37, lifeMul:8.5, color:EMBER, spark:true, jit:0.5, bright:0.5, fall:0.9, flatLife:true, rampIn:true, grainRampIn:0.18} },   // traînées PLUS LONGUES (vie ~2,2s -> sillage ~20m) + fondu d'apparition des grains (anti blanc-cramé près des têtes)
 
   // === BEHAVE (mouvement/forks) ===
@@ -747,6 +747,7 @@ class Shell {
           if (d.popOn<=0 && Math.random()<(8+10*A)*dt) d.popOn=0.045;
           if (d.popOn>0){ inten*=2.8; const w=0.95; r=r+(1-r)*w; g=g+(1-g)*w; b=b+(1-b)*w; } }
       } else if (d.popOnly || d.eggSplode){ inten = 0; }           // cœur/pistil œuf de dragon : INVISIBLE avant de claquer (on ne voit que le crépitement)
+        else if (this.cfg.hideStars){ inten = 0; }                 // cascade : l'étoile-goutte est INVISIBLE — on ne voit que la POINTE du sillage (étincelles fraîches)
         else if (this.cfg.arrow){ inten *= 0.45; }                 // œuf de dragon : étoile TRÈS DISCRÈTE avant de claquer (à peine une boule, la traînée domine)
       this.col[i*3]=r*inten; this.col[i*3+1]=g*inten; this.col[i*3+2]=b*inten;
 
