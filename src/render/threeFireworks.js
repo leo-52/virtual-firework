@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B100';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B101';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -240,8 +240,8 @@ function distMedusa(i,n,rnd){ const v=vrand(rnd); let dy=Math.abs(v[2])*0.9+0.25
   const L=Math.hypot(dx,dy,dz)||1; return {dx:dx/L,dy:dy/L,dz:dz/L,spMul:0.83}; }
 function distHorsetail(i,n,rnd){ const dx=(rnd()-0.5)*0.18, dz=(rnd()-0.5)*0.18, dy=1.0;
   const L=Math.hypot(dx,dy,dz)||1; return {dx:dx/L,dy:dy/L,dz:dz/L,spMul:0.33}; }
-function distCascade(i,n,rnd){ const dx=(rnd()-0.5)*0.6, dz=(rnd()-0.5)*0.6, dy=1.0;   // CASCADE (B93→B100, user) : « quasiment pas d'explosion en vrai » — éjection DOUCE (spMul 0.22,
-  const L=Math.hypot(dx,dy,dz)||1;                                                     // ~10 m/s), cône ±16° MAIS lent -> ça retombe direct, porté par le vent ; envergure finale ~10 m.
+function distCascade(i,n,rnd){ const dx=(rnd()-0.5)*0.5, dz=(rnd()-0.5)*0.5, dy=1.0;   // CASCADE (B93→B101, user) : éjection DOUCE (~10 m/s, quasi pas d'explosion), cône ±13° qui
+  const L=Math.hypot(dx,dy,dz)||1;                                                     // s'ouvre LENTEMENT en TRIANGLE net (pointe fine) ; retombe direct, porté par le vent ; ~10 m à la fin.
   return {dx:dx/L,dy:dy/L,dz:dz/L,spMul:0.22}; }
 function distFish(i,n,rnd){ const v=vrand(rnd); return {dx:v[0],dy:v[1],dz:v[2],spMul:0.28}; }
 function distSalute(i,n,rnd){ const v=vrand(rnd); return {dx:v[0],dy:v[1],dz:v[2],spMul:0.33}; }
@@ -412,8 +412,8 @@ const EFFECTS = {
   horsetail: { apex:80, heat:false, stars:11, starSize:0.9, lifeBase75:3.2, gravStar:0.78, dragStar:0.55,   // tête = POINTE, pas une boule (user B94, effets dorés)
                color:GOLD, dist:distHorsetail, onStar:glitterFn,
                trailing:{emitUntil:0.95, period:0.014, grain:1.0, gF:0.55, lifeMul:3.0, color:GOLD} },
-  cascade:   { apex:110, heat:false, stars:42, starSize:0.9, lifeBase75:3.0, gravStar:0.4, dragStar:0.22, randomAxis:true,   // CASCADE (B100) : éjection DOUCE + chute LENTE (gravStar 0.4 = mèches portées par le vent), SENS ALÉATOIRE, 42 mèches
-               color:GOLD, dist:distCascade, trailing:{emitUntil:0.94, period:0.0026, grain:1.1, gF:0.11, lifeMul:11, color:EMBER, spark:true, jit:1.1, bright:0.75} },   // PAILLETTES (B98) : retombée LENTE (gF 0.11 ≈ 2.6 m/s) qui scintille ~7s (lifeMul 11) ; glow réduit
+  cascade:   { apex:110, heat:false, stars:42, starSize:0.9, lifeBase75:3.0, gravStar:0.35, dragStar:0.22, randomAxis:true, restExtra:4.5,   // CASCADE (B101) : éjection douce, TRIANGLE net, chute portée par le vent ; restExtra = la démo attend la FIN des paillettes (~7s) avant de retirer
+               color:GOLD, dist:distCascade, trailing:{emitUntil:0.94, period:0.0026, grain:0.95, gF:0.11, lifeMul:11, color:EMBER, spark:true, jit:0.5, bright:0.55} },   // paillettes ~7s ; mèches NETTES (jit 0.5 = pointe fine) ; GLOW encore réduit (grain 0.95, bright 0.55)
 
   // === BEHAVE (mouvement/forks) ===
   fish:    { apex:85, heat:false, stars:40, starSize:2.0, lifeBase75:0.95, gravStar:0.20, dragStar:0.30,
@@ -837,7 +837,10 @@ export class ThreeFireworks {
   setFocus(arch, color){ if (EFFECTS[arch]){ this.focus=arch; if (color!==undefined) this.focusColor=color; } }
   update(dt){
     if (!this.shell || this.shell.dead){ this.restDelay-=dt;
-      if (this.restDelay<=0){ this.fireNext(); this.restDelay=0.8; } }
+      if (this.restDelay<=0){ this.fireNext();
+        // repos APRÈS la mort des étoiles : 0.8s par défaut + restExtra de l'effet tiré (ex cascade 4.5s :
+        // ses PAILLETTES vivent ~7s après l'éclatement -> sans ça, le tir suivant noyait la fin de la traîne)
+        this.restDelay=0.8+((EFFECTS[this.current]&&EFFECTS[this.current].restExtra)||0); } }
     if (this.shell){ const ph=this.shell.phase; this.shell.update(dt);
       if (ph!=='burst' && this.shell.phase==='burst' && this.onBurst) this.onBurst(this.current); }  // hook son à l'éclatement
     updateTrails(dt);
