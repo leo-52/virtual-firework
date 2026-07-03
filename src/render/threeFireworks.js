@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B89';   // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B90';   // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -393,7 +393,7 @@ const EFFECTS = {
   palm: { apex:105, stars:15, dist:distFibonacci, heat:false, color:WHITE, onStar:glitterFn, gravStar:1.0, dragStar:0.6,   // PIVOINE (sphère, bien écartée) + traînée, 15 étoiles ; blanc scintillant + traînée OR
           lifeBase75:2.8, starSize:4.1, trailing:{emitUntil:0.97, period:0.006, grain:1.3, gF:0.45, lifeMul:9.0, color:GOLD} },  // FRONDES = TRÈS LONGUES queues dorées = la palme (compensé, taille inchangée = 3.4×1.2)
   palmMulti: { apex:105, stars:15, dist:distFibonacci, heat:false, pureColor:true, assorted:[GRN,RED,BLU], gravStar:1.0, dragStar:0.6, shrink:true,   // PALME MULTICOLORE 75mm (catalogue, user : 15 étoiles vertes/rouges/bleues)
-          lifeBase75:3.0, starSize:2.6, trailing:{emitUntil:0.97, period:0.0032, grain:0.8, gF:0.45, lifeMul:9.0, color:GOLD, fixedColor:true, spark:true} },  // vie +0,2s (B89) ; étoiles réduites + shrink (rétrécissent jusqu'à disparaître) ; traînée = MILLIERS d'ÉTINCELLES dorées ; pointe verte/rouge/bleue
+          lifeBase75:3.0, starSize:2.6, trailing:{emitUntil:0.97, period:0.0032, grain:0.8, gF:0.45, lifeMul:8.15, color:GOLD, fixedColor:true, spark:true} },  // étincelles -0,2s (B90 : vie moyenne 2,1->1,9s, lifeMul 9->8.15) ; étoiles réduites + shrink ; MILLIERS d'étincelles dorées ; pointe verte/rouge/bleue
 
   // === FORMES 2D (face public) ===
   heart:     { apex:90, heat:false, stars:64, starSize:2.4, dist2D:shapeHeart, colors:[RED] },
