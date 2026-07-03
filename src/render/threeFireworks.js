@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B97';   // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B98';   // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -95,7 +95,7 @@ function makeStarMat(tex){
 }
 
 // --- pool de traînées (comète, gerbe mine, grains des effets traînants) ---
-const TRAIL_MAX = 20000;
+const TRAIL_MAX = 30000;   // agrandi B98 : les paillettes de la cascade vivent ~7s -> jusqu'à ~20k grains vivants (sinon le ring buffer écraserait des paillettes en vol)
 const trailPos  = new Float32Array(TRAIL_MAX * 3);
 const trailCol  = new Float32Array(TRAIL_MAX * 3);
 const trailSize = new Float32Array(TRAIL_MAX);
@@ -413,7 +413,7 @@ const EFFECTS = {
                color:GOLD, dist:distHorsetail, onStar:glitterFn,
                trailing:{emitUntil:0.95, period:0.014, grain:1.0, gF:0.55, lifeMul:3.0, color:GOLD} },
   cascade:   { apex:110, heat:false, stars:42, starSize:0.9, lifeBase75:3.0, gravStar:1.0, dragStar:0.22, randomAxis:true,   // CASCADE (B97, user) : CÔNE INVERSÉ resserré, SENS ALÉATOIRE par bombe (haut/bas/gauche/droite…), vie 3s, 42 mèches = vraie queue sans trou
-               color:GOLD, dist:distCascade, trailing:{emitUntil:0.94, period:0.0022, grain:1.1, gF:0.5, lifeMul:3.5, color:EMBER, spark:true, jit:1.1, bright:0.75} },   // étincelles denses/reliées, glow RÉDUIT (grain 1.1 + bright 0.75)
+               color:GOLD, dist:distCascade, trailing:{emitUntil:0.94, period:0.0026, grain:1.1, gF:0.11, lifeMul:11, color:EMBER, spark:true, jit:1.1, bright:0.75} },   // PAILLETTES (B98) : retombée LENTE (gF 0.11 ≈ 2.6 m/s) qui scintille ~7s (lifeMul 11) ; glow réduit
 
   // === BEHAVE (mouvement/forks) ===
   fish:    { apex:85, heat:false, stars:40, starSize:2.0, lifeBase75:0.95, gravStar:0.20, dragStar:0.30,
