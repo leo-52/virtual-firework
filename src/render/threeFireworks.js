@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B113';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B114';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -413,7 +413,7 @@ const EFFECTS = {
   horsetail: { apex:80, heat:false, stars:11, starSize:0.9, lifeBase75:3.2, gravStar:0.78, dragStar:0.55,   // tête = POINTE, pas une boule (user B94, effets dorés)
                color:GOLD, dist:distHorsetail, onStar:glitterFn,
                trailing:{emitUntil:0.95, period:0.014, grain:1.0, gF:0.55, lifeMul:3.0, color:GOLD} },
-  cascade:   { apex:110, heat:false, stars:30, starSize:0.9, lifeBase75:5.5, gravStar:1.0, dragStar:0.55, randomAxis:true, restExtra:2.5, noFlash:true,   // CASCADE (B112) : 30 BOULES qui tombent SANS CESSE (~9 m/s, jamais de surplace) pendant ~5,5s en se désintégrant
+  cascade:   { apex:110, heat:false, stars:30, starSize:0.9, lifeBase75:5.5, lifeJitter:0.30, gravStar:1.0, dragStar:0.55, randomAxis:true, restExtra:2.5, noFlash:true,   // CASCADE (B114) : 30 BOULES en chute continue (~9 m/s) qui meurent de façon ALÉATOIRE entre ~3,9 et ~7,1s (lifeJitter 0.30)
                color:GOLD, dist:distCascade, trailing:{emitUntil:0.96, period:0.004, grain:1.05, gF:0.37, lifeMul:6.0, color:EMBER, spark:true, jit:0.5, bright:0.5, fall:0.9, flatLife:true, rampIn:true} },   // SILLAGE uniforme : CHAQUE étincelle fait ~6,5 m (~1,55s à ~4 m/s) puis meurt — la 1re comme la dernière ; effet global ≈ 7s ; +gros (B113)
 
   // === BEHAVE (mouvement/forks) ===
