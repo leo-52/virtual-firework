@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B107';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B108';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -413,8 +413,8 @@ const EFFECTS = {
   horsetail: { apex:80, heat:false, stars:11, starSize:0.9, lifeBase75:3.2, gravStar:0.78, dragStar:0.55,   // tête = POINTE, pas une boule (user B94, effets dorés)
                color:GOLD, dist:distHorsetail, onStar:glitterFn,
                trailing:{emitUntil:0.95, period:0.014, grain:1.0, gF:0.55, lifeMul:3.0, color:GOLD} },
-  cascade:   { apex:110, heat:false, stars:42, starSize:0.9, lifeBase75:3.0, gravStar:1.35, dragStar:0.55, randomAxis:true, restExtra:6.5,   // CASCADE (B107) : la TÊTE est LOURDE (terminal ~12 m/s) -> elle PLONGE plus vite que ses étincelles (7.5 m/s) qui restent suspendues au-dessus, comme en vrai
-               color:GOLD, dist:distCascade, trailing:{emitUntil:0.94, period:0.004, grain:0.95, gF:0.42, lifeMul:25, color:EMBER, spark:true, jit:0.5, bright:0.5, fall:0.55, flatLife:true} },   // paillettes : vies QUASI ÉGALES ~5.5-7.5s (flatLife) -> la nappe descend d'un bloc sans "sol" ; grains NORMAUX (B106 : le brouillard venait du BLOOM, pas des grains)
+  cascade:   { apex:110, heat:false, stars:42, starSize:0.9, lifeBase75:3.0, gravStar:1.35, dragStar:0.55, randomAxis:true, restExtra:6.5, noFlash:true,   // CASCADE (B108) : PAS de flash d'ouverture ; tête LOURDE (~12 m/s) qui plonge devant ses étincelles (7.5)
+               color:GOLD, dist:distCascade, trailing:{emitUntil:0.94, period:0.004, grain:0.95, gF:0.42, lifeMul:25, color:EMBER, spark:true, jit:0.5, bright:0.5, fall:0.55, flatLife:true, rampIn:true} },   // rampIn : étincelles tamisées tant que serrées -> plus de BOULE lumineuse au break ; nappe d'un bloc (flatLife)
 
   // === BEHAVE (mouvement/forks) ===
   fish:    { apex:85, heat:false, stars:40, starSize:2.0, lifeBase75:0.95, gravStar:0.20, dragStar:0.30,
@@ -595,12 +595,14 @@ class Shell {
       }
     }
     this.points.visible=true;   // la queue-cône est dessinée par le shader (B82) ; lignes 1px éteintes
-    const big=this.cfg.flashBig;
-    const fg=new THREE.SphereGeometry(0.6,16,16);
-    const fm=new THREE.MeshBasicMaterial({ color:0xffd9a0, transparent:true, blending:THREE.AdditiveBlending, depthWrite:false });
-    this.flash=new THREE.Mesh(fg,fm); this.flash.position.set(bx,apex,bz); this.flashAge=0;
-    this.flashScale=big?12:5; this.flashOp=big?0.9:0.4; this.flashDur=big?0.30:0.12;
-    scene.add(this.flash);
+    if (!this.cfg.noFlash){   // cascade : PAS de flash d'ouverture (« quasiment pas d'explosion » -> pas de boule lumineuse au break)
+      const big=this.cfg.flashBig;
+      const fg=new THREE.SphereGeometry(0.6,16,16);
+      const fm=new THREE.MeshBasicMaterial({ color:0xffd9a0, transparent:true, blending:THREE.AdditiveBlending, depthWrite:false });
+      this.flash=new THREE.Mesh(fg,fm); this.flash.position.set(bx,apex,bz); this.flashAge=0;
+      this.flashScale=big?12:5; this.flashOp=big?0.9:0.4; this.flashDur=big?0.30:0.12;
+      scene.add(this.flash);
+    }
     if (this.head){ scene.remove(this.head); this.headGeo.dispose(); this.headMat.dispose(); this.head=null; }
   }
 
@@ -767,7 +769,8 @@ class Shell {
           for (let e=0;e<nEmit;e++){ const fq=Math.random();                            // position aléatoire entre l'ancienne et la nouvelle -> pas de paquets
             const mx=d.lastX+(px-d.lastX)*fq, my=d.lastY+(py-d.lastY)*fq, mz=d.lastZ+(pz-d.lastZ)*fq;
             if (tr.spark){   // ÉTINCELLES (décomposition de l'étoile) : brillance TRÈS variable + dispersion -> nuée qui pétille, pas un ruban lisse
-              const tw=(0.35+Math.pow(Math.random(),1.6)*1.65)*(tr.bright||1);   // bright : atténue le glow par effet (cascade 0.75)
+              let tw=(0.35+Math.pow(Math.random(),1.6)*1.65)*(tr.bright||1);   // bright : atténue le glow par effet
+              if (tr.rampIn) tw*=0.25+0.75*Math.min(1, A/0.4);                 // rampIn (cascade) : étincelles TAMISÉES tant que les mèches sont serrées (anti boule lumineuse au break), pleine brillance une fois écartées
               spawnTrail(mx,my,mz, tc.r*tw,tc.g*tw,tc.b*tw, tr.grain, tr.gF, tr.lifeMul, d.vx,d.vy,d.vz, tr.jit||2.4, tr.fall||0.42, !!tr.flatLife);   // jit / fall / flatLife réglables par effet (cascade : mèches serrées, chute constante, vies égales)
             } else {
               spawnTrail(mx,my,mz, tc.r,tc.g,tc.b, tr.grain, tr.gF, tr.lifeMul, d.vx,d.vy,d.vz);
