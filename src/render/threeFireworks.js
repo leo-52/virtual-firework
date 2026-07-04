@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B121';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B122';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -392,7 +392,7 @@ const EFFECTS = {
   strobe: { apex:112, heat:false, color:SILVER, onStar:strobeFn, lifeBase75:2.4, gravStar:0.55 },
   finalCli: { apex:95, heat:false, color:PINK, pureColor:true, onStar:finalCliFn, lifeBase75:2.3, gravStar:0.7 },  // FINAL CLI. BLANC ROSE 75mm (catalogue, 95m) : pivoine rose -> les étoiles finissent en CLIGNOTANT BLANC ; décliner via {color} (citron/rouge/verte/bleue/violette)
   fallingLeaves: { apex:95, dist:distLeaves, heat:false, color:new THREE.Color(1.0,0.45,0.55),
-                   gravStar:0.58, dragStar:0.5, lifeBase75:6.0, speedMul:0.7, sway:2.5, wind:2.5, noRise:true, starSize:2.4 },   // B121 (user) : descente un poil + rapide (~5,5 m/s) ; vent commun + tangage ; presque jamais vers le haut
+                   gravStar:0.65, dragStar:0.5, lifeBase75:6.0, speedMul:0.7, sway:1.5, wind:1.8, noRise:true, starSize:2.1 },   // B122 (user) : étoiles un peu + petites ; moins "paillette qui vole" = du POIDS (chute ~6 m/s, tangage/vent réduits — des étoiles qui brûlent, pas des confettis)
   palm: { apex:105, stars:15, dist:distFibonacci, heat:false, color:WHITE, onStar:glitterFn, gravStar:1.0, dragStar:0.6,   // PIVOINE (sphère, bien écartée) + traînée, 15 étoiles ; blanc scintillant + traînée OR
           lifeBase75:2.8, starSize:4.1, trailing:{emitUntil:0.97, period:0.006, grain:1.3, gF:0.45, lifeMul:9.0, color:GOLD} },  // FRONDES = TRÈS LONGUES queues dorées = la palme (compensé, taille inchangée = 3.4×1.2)
   palmMulti: { apex:105, stars:15, dist:distFibonacci, heat:false, pureColor:true, assorted:[GRN,RED,BLU], gravStar:1.0, dragStar:0.6, shrink:true,   // PALME MULTICOLORE 75mm (catalogue, user : 15 étoiles vertes/rouges/bleues)
