@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B122';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B123';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -392,7 +392,7 @@ const EFFECTS = {
   strobe: { apex:112, heat:false, color:SILVER, onStar:strobeFn, lifeBase75:2.4, gravStar:0.55 },
   finalCli: { apex:95, heat:false, color:PINK, pureColor:true, onStar:finalCliFn, lifeBase75:2.3, gravStar:0.7 },  // FINAL CLI. BLANC ROSE 75mm (catalogue, 95m) : pivoine rose -> les étoiles finissent en CLIGNOTANT BLANC ; décliner via {color} (citron/rouge/verte/bleue/violette)
   fallingLeaves: { apex:95, dist:distLeaves, heat:false, color:new THREE.Color(1.0,0.45,0.55),
-                   gravStar:0.65, dragStar:0.5, lifeBase75:6.0, speedMul:0.7, sway:1.5, wind:1.8, noRise:true, starSize:2.1 },   // B122 (user) : étoiles un peu + petites ; moins "paillette qui vole" = du POIDS (chute ~6 m/s, tangage/vent réduits — des étoiles qui brûlent, pas des confettis)
+                   gravStar:0.75, gravJit:0.2, dragStar:0.5, lifeBase75:6.0, speedMul:0.7, sway:1.5, wind:1.8, noRise:true, starSize:2.1 },   // B123 (user) : encore un poil + rapide (~6,5 m/s) et vitesse de chute ALÉATOIRE ±20% par feuille (gravJit)
   palm: { apex:105, stars:15, dist:distFibonacci, heat:false, color:WHITE, onStar:glitterFn, gravStar:1.0, dragStar:0.6,   // PIVOINE (sphère, bien écartée) + traînée, 15 étoiles ; blanc scintillant + traînée OR
           lifeBase75:2.8, starSize:4.1, trailing:{emitUntil:0.97, period:0.006, grain:1.3, gF:0.45, lifeMul:9.0, color:GOLD} },  // FRONDES = TRÈS LONGUES queues dorées = la palme (compensé, taille inchangée = 3.4×1.2)
   palmMulti: { apex:105, stars:15, dist:distFibonacci, heat:false, pureColor:true, assorted:[GRN,RED,BLU], gravStar:1.0, dragStar:0.6, shrink:true,   // PALME MULTICOLORE 75mm (catalogue, user : 15 étoiles vertes/rouges/bleues)
@@ -506,6 +506,7 @@ class Shell {
 
   _newStar(vx,vy,vz, comp, trailing){
     return { vx,vy,vz, age:0, life:this.life(), dimVar:0.95+Math.random()*0.10,
+      gMul:this.cfg.gravJit ? 1+(Math.random()*2-1)*this.cfg.gravJit : 1,   // gravité PAR ÉTOILE (feuilles mortes B123 : chute ±20%)
       phase:Math.random(), strobeF:2+Math.random()*2.5, swF:1.5+Math.random()*1.5,
       swF2:1.5+Math.random()*1.5, phase2:Math.random()*6.28, comp:comp||0,
       trailing:!!trailing, since:0, lastX:this.bx, lastY:this.cfg.apex, lastZ:this.bz };
@@ -716,7 +717,7 @@ class Shell {
         this.lcol[li]=this.lcol[li+1]=this.lcol[li+2]=this.lcol[li+3]=this.lcol[li+4]=this.lcol[li+5]=0; continue; }
       alive++; d.age+=dt; const A=d.age/d.life;
 
-      d.vy -= this.cfg.G*this.cfg.gravStar*dt;
+      d.vy -= this.cfg.G*this.cfg.gravStar*(d.gMul||1)*dt;
       const kd=Math.max(0,1-this.cfg.dragStar*BURST_PUNCH*dt); d.vx*=kd; d.vy*=kd; d.vz*=kd;   // ×PUNCH : freinage fort -> l'étoile finit quasi immobile (boule figée), flou de mouvement seulement dans sa course
       if (sway){ d.vx+=Math.sin(d.age*d.swF+d.phase)*sway*dt; d.vz+=Math.cos(d.age*d.swF2+d.phase2)*sway*dt; }
       if (this._windX||this._windZ){ d.vx+=this._windX*dt; d.vz+=this._windZ*dt; }        // vent commun du tir (feuilles mortes B120)
