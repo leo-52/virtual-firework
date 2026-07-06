@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B135';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B136';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -95,7 +95,7 @@ function makeStarMat(tex){
 }
 
 // --- pool de traînées (comète, gerbe mine, grains des effets traînants) ---
-const TRAIL_MAX = 30000;   // agrandi B98 : les paillettes de la cascade vivent ~7s -> jusqu'à ~20k grains vivants (sinon le ring buffer écraserait des paillettes en vol)
+const TRAIL_MAX = 45000;   // agrandi B98 (cascade ~20k) puis B136 (saule kamuro photo : brins denses period 0.008 ET longs lifeMul 18 -> ~26k grains vivants) — sinon le ring buffer écraserait la queue des brins en vol
 const trailPos  = new Float32Array(TRAIL_MAX * 3);
 const trailCol  = new Float32Array(TRAIL_MAX * 3);
 const trailSize = new Float32Array(TRAIL_MAX);
@@ -213,6 +213,7 @@ const GOLD=new THREE.Color(1.0,0.72,0.32), DIMGOLD=new THREE.Color(0.55,0.40,0.1
   GRN=new THREE.Color(0.3,1.0,0.45), BLU=new THREE.Color(0.4,0.55,1.0),
   RED=new THREE.Color(1.0,0.14,0.18), PURP=new THREE.Color(0.6,0.35,1.0), WHITE=new THREE.Color(1.0,1.0,1.0),
   BRIGHTGOLD=new THREE.Color(1.4,1.0,0.45),   // or HDR (traînées bien visibles à distance, ex saule kamuro)
+  COPPER=new THREE.Color(1.22,0.60,0.16),     // orange CUIVRÉ braise (photos user B136, saule kamuro réel — plus chaud que GOLD, un peu plus doré qu'EMBER)
   PALEGOLD=new THREE.Color(1.0,0.88,0.68),    // or PÂLE pour autres usages
   EGGWHITE=new THREE.Color(1.0,0.95,0.92),    // BLANC (ancien œuf de dragon, trop froid)
   EGGGOLD=new THREE.Color(1.4,1.18,0.88),     // BLANC CHAUD / champagne, HDR (œuf de dragon, retour B61 ; réf photo = amas blancs à reflets chauds). MÊME couleur traînée + points + cœur
@@ -373,8 +374,8 @@ const EFFECTS = {
   // === EXISTANTS (intacts ; ring/couronne supprimé en B127, cf note plus bas) ===
   peony: {},
   chrysanthemum: { trailing:{emitUntil:0.85, period:0.015, grain:0.9, gF:0.40, lifeMul:1.6, color:GOLD} },
-  willow: { apex:95, heat:false, color:DIMGOLD, gravStar:0.92, dragStar:0.25, lifeBase75:2.7,   // « bombe 75 mm à effet saule kamuro » (catalogue : 95 m, B133) ; B135 (user) : durée -0,5 s
-            starSize:0.9, speedMul:0.8, trailing:{emitUntil:0.95, period:0.013, grain:2.5, gF:0.13, lifeMul:10.5, color:GOLD, spark:true, jit:0.35} },  // B135 (user) : queues + LONGUES et - de RÉSIDU — ça marche de paire : jit 2.4(défaut spark)->0.35 + gF 0.22->0.13 (les grains se DÉTACHENT moins du sillage, tombent moins) + lifeMul 9->10.5 (brins plus longs). B134 : speedMul 0.8 (dôme réduit de moitié). SAULE = forme qui PEND ; KAMURO = or PAILLETÉ (spark) ; tête = POINTE (user B94)
+  willow: { apex:95, heat:false, color:DIMGOLD, gravStar:0.92, dragStar:0.25, lifeBase75:2.7, lifeJitter:0.28, restExtra:4,   // « bombe 75 mm à effet saule kamuro » (catalogue 95 m). B136 (photos user) : vies d'étoiles PLUS VARIABLES (±28% -> branches inégales, extinction échelonnée) ; restExtra 4 = laisser s'éteindre les longs brins (~1.9k grains résiduels au tir suivant, mesuré)
+            starSize:0.9, speedMul:0.8, trailing:{emitUntil:0.95, period:0.008, grain:1.4, gF:0.13, lifeMul:18, color:COPPER, spark:true, jit:0.22} },  // B136 (photos) : brin = COLLIER DE PERLES fines et serrées (grain 2.5->1.4, period 0.013->0.008), BEAUCOUP plus long (lifeMul 18 : le brin couvre ~tout le trajet, visible dès le break), couleur CUIVRE chaude, jit 0.22 = zéro poussière entre les brins. B135 : gF 0.13 (les grains suivent le sillage). B134 : speedMul 0.8 (dôme ~69 m). SAULE = forme qui PEND ; KAMURO = or pailleté (spark) ; tête = POINTE (user B94)
   comet: { apex:96, stars:1, dist:distComet, heat:false, color:GOLD, gravStar:0.90, dragStar:0.30,
            lifeBase75:3.0, starSize:5.4, speedMul:1.0, headSize:4.0, riseColor:GOLD,   // compensé (STAR_SCALE 1.2->1.0), taille inchangée (4.5×1.2)
            trailing:{emitUntil:0.97, period:0.012, grain:1.3, gF:0.35, lifeMul:1.8, color:GOLD} },
