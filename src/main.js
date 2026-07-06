@@ -109,14 +109,14 @@ Object.assign(pick.style, { position:'fixed', top:'10px', right:'10px', zIndex:'
 for (const [k, label] of Object.entries(LABELS)){
   const o = document.createElement('option'); o.value = k; o.textContent = label; pick.appendChild(o);
 }
-pick.value = 'smiley';
+pick.value = 'halfHalf';
 // changer d'effet dans le menu -> couleur PAR DÉFAUT de l'effet (null annule l'override de la démo)
 pick.addEventListener('change', e => layer.setFocus(e.target.value, null));
 document.body.appendChild(pick);
 
-// DÉMO (réglage en cours) : FORMES 2D — sourire 75mm + cœur 100mm tirés EN MÊME TEMPS en éventail
-// (focus sur l'une des 2 formes -> le moteur tire le duo, cf SHAPES_DUO dans threeFireworks.js).
-layer.setFocus('smiley');
+// DÉMO (réglage en cours) : DEMI-DEMI 75mm — pivoine à 2 hémisphères, paire de couleurs du
+// catalogue tirée au sort à chaque volée, plan de coupe aléatoire.
+layer.setFocus('halfHalf');
 
 // TIMELINE de lecture (barre en bas) + ESPACE = pause/play (fige les feux, caméra libre).
 const timeline = new Timeline(layer, LABELS);

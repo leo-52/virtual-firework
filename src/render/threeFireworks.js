@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B130';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B131';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -262,9 +262,12 @@ function distAtom(i,n,rnd){
           dz:U[2]*Math.cos(az)+V[2]*Math.sin(az), spMul:0.55, comp:r%3};
 }
 function distHalfHalf(i,n,rnd){
+  // sphère fibonacci (= pivoine) coupée en 2 HÉMISPHÈRES de couleur. Le plan de coupe est fixe
+  // ici : c'est randomAxis (cfg) qui fait tourner TOUT le motif -> orientation aléatoire par tir.
+  // Petite BAVURE à la couture (±0.06) : quelques étoiles débordent, comme une vraie demi-demi.
   const off=2/n, inc=2.399963229728653, yy=i*off-1+off/2, rr=Math.sqrt(Math.max(0,1-yy*yy)), a=i*inc;
   const dx=Math.cos(a)*rr, dy=yy, dz=Math.sin(a)*rr;
-  const comp=(dx*0.7+dy*0.2+dz*0.68)>=0?0:1;
+  const comp=(dx*0.7+dy*0.2+dz*0.68+(rnd()-0.5)*0.12)>=0?0:1;
   return {dx,dy,dz,spMul:1.0,comp};
 }
 function distSpinner(i,n,rnd){ const a0=Math.random()*Math.PI*2, rH=rnd(11,16), vUp=rnd(2.5,4.2);
@@ -410,7 +413,12 @@ const EFFECTS = {
 
   // === MOTIFS 3D multi-couleurs ===
   atom:    { apex:100, heat:false, stars:60, starSize:2.2, lifeBase75:1.7, speedJit:0.08, dist:distAtom, colors:[CYAN,PINK,YEL] },
-  halfHalf:{ apex:90, heat:false, stars:90, starSize:2.2, dist:distHalfHalf, colors:[new THREE.Color(1.0,0.2,0.2), BLU] },
+  // DEMI-DEMI (user B131 : « comme une pivoine normale mais avec deux couleurs différentes »).
+  // Catalogue : 7 réfs 75mm à 95 m (« bombe 75 mm moitié X moitié Y ») -> profil PIVOINE (80 étoiles,
+  // BASE inchangée), plan de coupe ALÉATOIRE par tir (randomAxis), et une PAIRE du catalogue tirée
+  // au sort à chaque volée (comme le pack « 5 bombes assorties »).
+  halfHalf:{ apex:95, heat:false, pureColor:true, stars:80, dist:distHalfHalf, randomAxis:true,
+             colorPairs:[[BLU,YEL],[RED,WHITE],[RED,BLU],[PINK,YEL],[GOLD,GRN],[YEL,PURP]] },   // bleu/citron · rouge/blanc · rouge/bleu · rose/jaune · or/vert · citron/violet
 
   // === MOUVEMENT / TRAÎNE (hooks existants) ===
   medusa:    { apex:95, heat:false, stars:70, starSize:2.2, lifeBase75:2.3, gravStar:0.72, dragStar:0.55,
@@ -455,6 +463,8 @@ class Shell {
     this.cfg = Object.assign({}, BASE, EFFECTS[this.arch]);
     this.cfg.apex *= APEX_SCALE;   // abaisse TOUTES les hauteurs d'un coup (cfg est une copie -> safe)
     if (opts && opts.color) this.cfg.color = opts.color;   // override couleur (ex "crackling aqua", "mosaïque rouge")
+    // PAIRES du catalogue (demi-demi) : chaque TIR pioche sa paire de couleurs (cfg = copie -> safe)
+    if (this.cfg.colorPairs) this.cfg.colors = this.cfg.colorPairs[Math.floor(Math.random()*this.cfg.colorPairs.length)];
     this.cal = cal || this.cfg.cal || 75;   // cfg.cal = calibre PAR DÉFAUT de l'effet (ex cœur : n'existe qu'en 100mm)
     this.ox = ox||0; this.oz = oz||0;
     this.bx = this.ox + (Math.random()-0.5)*this.cfg.riseLean;
