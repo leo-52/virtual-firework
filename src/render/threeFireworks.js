@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B133';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B134';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -374,7 +374,7 @@ const EFFECTS = {
   peony: {},
   chrysanthemum: { trailing:{emitUntil:0.85, period:0.015, grain:0.9, gF:0.40, lifeMul:1.6, color:GOLD} },
   willow: { apex:95, heat:false, color:DIMGOLD, gravStar:0.92, dragStar:0.25, lifeBase75:3.2,   // « bombe 75 mm à effet saule kamuro » (catalogue : 95 m, B133)
-            starSize:0.9, speedMul:1.5, trailing:{emitUntil:0.95, period:0.013, grain:2.5, gF:0.22, lifeMul:9.0, color:GOLD, spark:true} },  // SAULE = la forme qui PEND ; KAMURO = la couleur OR PAILLETÉ -> spark:true (scintillement des grains, B133) ; tête = POINTE, pas une boule (user B94)
+            starSize:0.9, speedMul:0.8, trailing:{emitUntil:0.95, period:0.013, grain:2.5, gF:0.22, lifeMul:9.0, color:GOLD, spark:true} },  // B134 (user) : explosion réduite de MOITIÉ presque (speedMul 1.5->0.8) — le bas du dôme ne touche plus le sol. SAULE = la forme qui PEND ; KAMURO = or PAILLETÉ (spark) ; tête = POINTE (user B94)
   comet: { apex:96, stars:1, dist:distComet, heat:false, color:GOLD, gravStar:0.90, dragStar:0.30,
            lifeBase75:3.0, starSize:5.4, speedMul:1.0, headSize:4.0, riseColor:GOLD,   // compensé (STAR_SCALE 1.2->1.0), taille inchangée (4.5×1.2)
            trailing:{emitUntil:0.97, period:0.012, grain:1.3, gF:0.35, lifeMul:1.8, color:GOLD} },
