@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B125';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B126';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -166,7 +166,8 @@ function makeSmokeTexture(){
   const t=new THREE.CanvasTexture(c); t.needsUpdate=true; return t;
 }
 const smokeTex = makeSmokeTexture();
-const PUFF_MAX = 320;
+const PUFF_MAX = 512;   // B126 : le trio de formes tire 3 bombes la MÊME frame -> ~330 bouffées de gueule
+                        // simultanées ; à 320 le ring buffer recyclait des flammes encore vivantes
 const puffs = [];
 for (let i=0;i<PUFF_MAX;i++){
   const m=new THREE.SpriteMaterial({ map:smokeTex, transparent:true, blending:THREE.AdditiveBlending,
@@ -279,7 +280,9 @@ function shapeHeart(){ const pts=[]; for(let k=0;k<26;k++){ const t=2*Math.PI*k/
   pts.push({x:x/16,y:y/16,comp:0}); } return pts; }
 function shapeButterfly(_r,_c,nc){ const C2=(nc>1)?1:0, pts=[]; for(let k=0;k<34;k++){
   const t=2*Math.PI*k/34, r=Math.exp(Math.sin(t))-2*Math.cos(4*t);
-  pts.push({x:Math.sin(t)*r/3.2,y:Math.cos(t)*r/3.2,comp:(k%2===0)?0:C2}); } return pts; }
+  // /4.06 (B126) : |r|max=4.06 -> respecte le CONTRAT disque unité (avec spMul∝L, /3.2 faisait
+  // partir les pointes d'ailes 23% plus loin que les autres formes)
+  pts.push({x:Math.sin(t)*r/4.06,y:Math.cos(t)*r/4.06,comp:(k%2===0)?0:C2}); } return pts; }
 function shapeSmiley(_r,_c,nc){ const C2=(nc>1)?1:0, pts=[];
   for(let k=0;k<20;k++){const t=2*Math.PI*k/20; pts.push({x:Math.cos(t),y:Math.sin(t),comp:0});}
   pts.push({x:-0.35,y:0.32,comp:C2}); pts.push({x:0.35,y:0.32,comp:C2});
@@ -373,7 +376,7 @@ const BASE = {
   gerbe:null, flashBig:false
 };
 const EFFECTS = {
-  // === 10 EXISTANTS (intacts ; ring passé en orientation aléatoire) ===
+  // === 10 EXISTANTS (intacts ; ring = "cercle", aligné sur les formes 2D cœur/smiley — user B126) ===
   peony: {},
   chrysanthemum: { trailing:{emitUntil:0.85, period:0.015, grain:0.9, gF:0.40, lifeMul:1.6, color:GOLD} },
   willow: { apex:100, heat:false, color:DIMGOLD, gravStar:0.92, dragStar:0.25, lifeBase75:3.2,
@@ -382,7 +385,7 @@ const EFFECTS = {
            lifeBase75:3.0, starSize:5.4, speedMul:1.0, headSize:4.0, riseColor:GOLD,   // compensé (STAR_SCALE 1.2->1.0), taille inchangée (4.5×1.2)
            trailing:{emitUntil:0.97, period:0.012, grain:1.3, gF:0.35, lifeMul:1.8, color:GOLD} },
   sphere: { speedJit:0.02 },
-  ring: { apex:110, burstRadius:16, stars:30, dist2D:shapeRing, orient:'random', heat:false, color:GRN },
+  ring: { apex:90, heat:false, stars:64, starSize:2.4, dist2D:shapeRing, colors:[GRN] },   // CERCLE (user B126) : MÊMES attributs que cœur/smiley, seule la FORME change ; face public
   crackling: { apex:95, heat:false, color:CKGRN, pureColor:true, stars:83,                            // crackling VERT 75mm = pivoine VERT FLASHY 83 étoiles (texture neutre = vert franc) ; décliner via override {color}
     core:{ stars:20, radiusMul:0.42, color:GOLD, eggSplode:true, crackleAt:0.9, jitter:0.6 } },       // + pistil = ~20 étoiles ŒUF DE DRAGON INVISIBLES (on ne voit QUE le crépitement) : explosent étalées 0,9→1,5s après l'éclatement
   dragonEgg: { apex:95, heat:false, color:GOLD, stars:84, lifeBase75:2.4, starSize:0.7, arrow:true, speedMul:1.25, gravStar:0.5,  // ŒUF DE DRAGON (~40m, retombe peu = pivoine, pas saule) — 3 TEMPS :
@@ -436,7 +439,7 @@ const EFFECTS = {
 };
 
 export const LABELS = { peony:'pivoine', chrysanthemum:'chrysanthème', willow:'saule (kamuro)', comet:'comète',
-  sphere:'sphère', ring:'couronne', crackling:'crackling', dragonEgg:'œuf de dragon', strobe:'scintillant', finalCli:'final cli. blanc rose', palmMulti:'palme multicolore',
+  sphere:'sphère', ring:'cercle (couronne)', crackling:'crackling', dragonEgg:'œuf de dragon', strobe:'scintillant', finalCli:'final cli. blanc rose', palmMulti:'palme multicolore',
   fallingLeaves:'feuille morte', palm:'palme', heart:'cœur', butterfly:'papillon', smiley:'smiley',
   daisy:'marguerite', atom:'atome', halfHalf:'demi-demi', medusa:'méduse', horsetail:'queue de cheval',
   cascade:'cascade', fish:'poisson', spinner:'tourbillon', saucer:'soucoupe', mosaic:'mosaïque', mosaicMix:'mosaïque assortie',
@@ -455,6 +458,12 @@ class Shell {
     this.ox = ox||0; this.oz = oz||0;
     this.bx = this.ox + (Math.random()-0.5)*this.cfg.riseLean;
     this.bz = this.oz + (Math.random()-0.5)*this.cfg.riseLean;
+    // ANGLE DE TIR (démo formes B126) : mortier INCLINÉ -> la montée penche et la bombe éclate
+    // décalée de [dx,dz] mètres (la trajectoire interpolée ox->bx dessine déjà la pente).
+    if (opts && opts.lean){ this.bx += opts.lean[0]; this.bz += opts.lean[1]; }
+    // direction du TUBE (≈ tangente de la pente de tir) : la SORTIE DE GUEULE (flamme/fumée/débris)
+    // doit jaillir DANS L'AXE du mortier, pas à la verticale, sinon l'inclinaison ne se lit pas au sol.
+    this.muTX=(this.bx-this.ox)/this.cfg.apex; this.muTZ=(this.bz-this.oz)/this.cfg.apex;
     this.dead = false; this.age = 0;
     // riseTime suit l'apex (×APEX_SCALE) -> la vitesse de montée reste identique (pas de comète molle)
     this.riseTime = this.cfg.riseTime * APEX_SCALE * (0.95 + Math.random()*0.10);
@@ -532,7 +541,10 @@ class Shell {
       n=Math.min(pts.length, this.nMax);
       const N=(this.cfg.orient==='random')?vrand(Math.random):this.faceNormal();
       let aU=cross(N,[0,1,0]); if(len2(aU)<0.01)aU=cross(N,[1,0,0]); aU=norm(aU);
-      const aV=cross(N,aU), roll=Math.random()*Math.PI*2;
+      // ROLL : aléatoire complet SEULEMENT si orientation aléatoire. Face public -> la forme reste
+      // DEBOUT (π = haut de la forme vers le haut avec cette base aU/aV) ± ~17° de tilt naturel,
+      // sinon le smiley sort à l'envers ou le cœur couché une fois sur deux.
+      const aV=cross(N,aU), roll=(this.cfg.orient==='random')?Math.random()*Math.PI*2:Math.PI+(Math.random()-0.5)*0.6;
       plane={aU,aV,CR:Math.cos(roll),SR:Math.sin(roll)};
     } else n=this.cfg.stars;
     // COULEURS ASSORTIES par étoile (coreColor -> étoile ET traînée de la même couleur) :
@@ -570,7 +582,10 @@ class Shell {
         let dx=plane.aU[0]*px+plane.aV[0]*py, dy=plane.aU[1]*px+plane.aV[1]*py, dz=plane.aU[2]*px+plane.aV[2]*py;
         const v=vrand(Math.random); dx+=v[0]*0.05; dy+=v[1]*0.05; dz+=v[2]*0.05;
         const L=Math.hypot(dx,dy,dz)||1;
-        dir={dx:dx/L,dy:dy/L,dz:dz/L,spMul:0.9*(0.92+Math.random()*0.16)}; comp=p.comp||0;
+        // vitesse ∝ RAYON du point dans la forme (L) : un point intérieur (œil/bouche du smiley,
+        // creux du cœur) doit finir PLUS PRÈS du centre. Sans ce ×L, toutes les étoiles partaient
+        // à la même vitesse -> tout finissait sur un CERCLE (la forme était détruite).
+        dir={dx:dx/L,dy:dy/L,dz:dz/L,spMul:L*0.9*(0.96+Math.random()*0.08)}; comp=p.comp||0;
       } else { dir=this.cfg.dist(i,n,Math.random); comp=dir.comp||0;
         if (this._rAxis){ const A2=this._rAxis, U=this._rU, V=this._rV;   // AXE ALÉATOIRE (B97, cascade) : la gerbe "haut" est réorientée vers l'axe tiré au sort pour CETTE bombe
           dir={ dx:U[0]*dir.dx+A2[0]*dir.dy+V[0]*dir.dz, dy:U[1]*dir.dx+A2[1]*dir.dy+V[1]*dir.dz, dz:U[2]*dir.dx+A2[2]*dir.dy+V[2]*dir.dz, spMul:dir.spMul, comp:dir.comp }; } }
@@ -623,29 +638,31 @@ class Shell {
   }
 
   // SORTIE DU TUBE — 3 composantes (échelle ∝ calibre via muzzleScale) :
+  // (B126) chaque jet suit l'AXE DU TUBE : + up×muTX/muTZ (mortier incliné -> la gueule crache en biais)
   _emitMuzzleFlare(){   // lueur de gueule (source lumière) : PETITE et contenue (user B84 : "- ronde, - grosse")
-    const sc=this.muzzleScale;
+    const sc=this.muzzleScale, up=(1.5+Math.random()*1.5)*sc;
     spawnPuff(this.ox+(Math.random()-0.5)*0.3*sc, 1.0*sc, this.oz+(Math.random()-0.5)*0.3*sc,
-      0,(1.5+Math.random()*1.5)*sc,0, 0.18+Math.random()*0.08, 1.2*sc, 2.4*sc,
+      up*this.muTX, up, up*this.muTZ, 0.18+Math.random()*0.08, 1.2*sc, 2.4*sc,
       1.0,0.55,0.20, 0.50, 2*sc, 2.0);
   }
   _emitMuzzleFlame(){   // FLAMME : jet CONIQUE étroit (user B84 : "+ conique") — base serrée, monte plus haut, gonfle peu
     const sc=this.muzzleScale, ang=Math.random()*Math.PI*2, rad=Math.random()*Math.random();
     const out=(0.3+rad*1.1)*sc, up=(3.6+Math.random()*2.6)*sc, hot=1-rad;   // écart latéral réduit + vertical accru = cône
     spawnPuff(this.ox+(Math.random()-0.5)*0.18*sc, 0.8, this.oz+(Math.random()-0.5)*0.18*sc,
-      Math.cos(ang)*out, up, Math.sin(ang)*out, 0.22+Math.random()*0.16, 0.5*sc, 1.0*sc,
+      Math.cos(ang)*out+up*this.muTX, up, Math.sin(ang)*out+up*this.muTZ, 0.22+Math.random()*0.16, 0.5*sc, 1.0*sc,
       1.0, 0.30+0.33*hot, 0.03+0.20*hot, 0.75, 1.5*sc, 2.8);
   }
   _emitMuzzleSmoke(){   // FUMÉE : colonne étroite et discrète (resserrée avec la flamme conique, B84)
     const sc=this.muzzleScale, ang=Math.random()*Math.PI*2, out=(0.4+Math.random()*1.0)*sc, w=0.16+Math.random()*0.09;
+    const up=(3+Math.random()*4)*sc;
     spawnPuff(this.ox+(Math.random()-0.5)*0.45*sc, 0.7, this.oz+(Math.random()-0.5)*0.45*sc,
-      Math.cos(ang)*out, (3+Math.random()*4)*sc, Math.sin(ang)*out, 1.1+Math.random()*1.0, 1.0*sc, 3.2*sc,
+      Math.cos(ang)*out+up*this.muTX, up, Math.sin(ang)*out+up*this.muTZ, 1.1+Math.random()*1.0, 1.0*sc, 3.2*sc,
       w*1.5, w*1.25, w, 0.16, 2.0*sc, 1.1);
   }
   _emitMuzzleDebris(){  // quelques débris (opercule/bourre) éjectés qui retombent (trail = gravité)
     const sc=this.muzzleScale, ang=Math.random()*Math.PI*2, out=(2+Math.random()*5)*sc, up=(7+Math.random()*9)*sc;
     spawnTrail(this.ox+(Math.random()-0.5)*0.3, 0.9, this.oz+(Math.random()-0.5)*0.3,
-      0.5,0.30,0.12, 0.4, 1.4, 2.4, Math.cos(ang)*out*4, up*4, Math.sin(ang)*out*4);
+      0.5,0.30,0.12, 0.4, 1.4, 2.4, (Math.cos(ang)*out+up*this.muTX)*4, up*4, (Math.sin(ang)*out+up*this.muTZ)*4);
   }
 
   heatColor(A,d){
@@ -662,6 +679,17 @@ class Shell {
     const fade=Math.max(0,1-A*A*0.85), fadeIn=0.4+0.6*Math.min(1,d.age/0.25);
     // +punch HDR (2.4->3.4) : le coeur sature en blanc-chaud, halo coloré au bloom => ça "brûle"
     return { r,g,b, inten:3.4*fade*d.dimVar*fadeIn };
+  }
+
+  // ABANDON PROPRE (B126) : une bombe remplacée alors qu'elle vit encore (PrevoFX.fire en console
+  // pendant un tir) doit retirer/disposer ses objets de la scène — sinon étoiles FIGÉES à jamais
+  // dans le ciel + fuite GPU (la libération normale n'existe que dans update() quand tout est mort).
+  destroy(){
+    if (this.dead) return; this.dead=true;
+    if (this.head){ scene.remove(this.head); this.headGeo.dispose(); this.headMat.dispose(); this.head=null; }
+    scene.remove(this.points); scene.remove(this.lines);
+    this.geo.dispose(); this.mat.dispose(); this.lgeo.dispose(); this.lmat.dispose();
+    if (this.flash){ scene.remove(this.flash); this.flash.geometry.dispose(); this.flash.material.dispose(); this.flash=null; }
   }
 
   update(dt){
@@ -799,6 +827,14 @@ class Shell {
   }
 }
 
+// DÉMO FORMES (user B126) : cœur / smiley / cercle = MÊMES attributs, seule la forme change.
+// Focus sur l'une des trois -> on tire les 3 EN MÊME TEMPS depuis la même batterie, avec des
+// ANGLES DE TIR différents (mortiers inclinés) pour que les bombes n'éclatent pas au même endroit.
+const SHAPES_TRIO = ['heart','smiley','ring'];
+const TRIO_LEAN = 60;   // décalage horizontal du point d'éclatement (m) — ≈ 37° d'inclinaison sur apex 80 m ;
+                        // formes ≈ 26 m de rayon -> ~8 m de vide entre elles, et bords à ±86 m = encore dans
+                        // le champ de la caméra public par défaut (150 m, fov 60° -> demi-largeur 86 m)
+
 // ============================================================================
 // OVERLAY : canvas Three transparent (screen) au-dessus de Cesium + sync caméra.
 // ============================================================================
@@ -823,7 +859,7 @@ export class ThreeFireworks {
     this.composer.addPass(new OutputPass());
     this._pe=new Cesium.Cartesian3(); this._de=new Cesium.Cartesian3(); this._ue=new Cesium.Cartesian3();
     this.setOrigin(origin);
-    this.shell=null; this.restDelay=0; this.focus='peony'; this.current='peony'; this.focusColor=null; this.onBurst=null;
+    this.shells=[]; this.restDelay=0; this.focus='peony'; this.current='peony'; this.focusColor=null; this.onBurst=null;
     this.hud = document.getElementById('hud');
     addEventListener('resize', () => this._resize());
   }
@@ -844,19 +880,35 @@ export class ThreeFireworks {
     const f=cam.frustum, aspect=f.aspectRatio||(innerWidth/innerHeight);
     const vfov=(aspect>=1)?2*Math.atan(Math.tan(f.fov/2)/aspect):f.fov;
     this.camera.fov=THREE.MathUtils.radToDeg(vfov); this.camera.aspect=aspect; this.camera.updateProjectionMatrix(); }
+  // compat : timeline.js lit layer.shell (barre de progression) -> 1re bombe encore VIVANTE du
+  // groupe (sinon en trio la barre retombait à 0 dès la mort de la 1re alors que 2 brillent encore)
+  get shell(){ for (const s of this.shells) if (!s.dead) return s; return this.shells[0]||null; }
+  _hud(txt){ if (this.hud) this.hud.innerHTML='<b>PrevoFX — aperçu web</b> <span style="color:#7fff7f">['+BUILD+']</span><br>'+txt+' · QZSD + clic-glisser · Espace = pause'; }
+  _clear(){ for (const s of this.shells) s.destroy(); }   // abandon propre des bombes remplacées
   fire(arch, color){ this.current=EFFECTS[arch]?arch:'peony';
-    this.shell=new Shell(this.current,0,0,undefined, color?{color}:undefined);
-    if (this.hud) this.hud.innerHTML='<b>PrevoFX — aperçu web</b> <span style="color:#7fff7f">['+BUILD+']</span><br>'+(LABELS[this.current]||this.current)+' 75 · QZSD + clic-glisser · Espace = pause'; }
-  fireNext(){ this.fire(this.focus, this.focusColor); }
+    this._clear();
+    this.shells=[new Shell(this.current,0,0,undefined, color?{color}:undefined)];
+    this._hud((LABELS[this.current]||this.current)+' 75'); }
+  fireNext(){
+    // DÉMO FORMES (user B126) : focus sur cœur, smiley ou cercle -> on tire les TROIS EN MÊME TEMPS,
+    // même batterie mais mortiers INCLINÉS (éventail gauche/centre/droite) pour qu'elles n'éclatent
+    // pas au même endroit : cœur à -TRIO_LEAN m, smiley au centre, cercle à +TRIO_LEAN m.
+    if (SHAPES_TRIO.indexOf(this.focus)>=0){
+      this.current=this.focus;
+      this._clear();
+      this.shells=SHAPES_TRIO.map((a,i)=>new Shell(a,0,0,undefined,{lean:[(i-1)*TRIO_LEAN,0]}));
+      this._hud('cœur + smiley + cercle 75 (éventail)');
+    } else this.fire(this.focus, this.focusColor);
+  }
   setFocus(arch, color){ if (EFFECTS[arch]){ this.focus=arch; if (color!==undefined) this.focusColor=color; } }
   update(dt){
-    if (!this.shell || this.shell.dead){ this.restDelay-=dt;
+    if (!this.shells.length || this.shells.every(s=>s.dead)){ this.restDelay-=dt;
       if (this.restDelay<=0){ this.fireNext();
         // repos APRÈS la mort des étoiles : 0.8s par défaut + restExtra de l'effet tiré (ex cascade 4.5s :
         // ses PAILLETTES vivent ~7s après l'éclatement -> sans ça, le tir suivant noyait la fin de la traîne)
         this.restDelay=0.8+((EFFECTS[this.current]&&EFFECTS[this.current].restExtra)||0); } }
-    if (this.shell){ const ph=this.shell.phase; this.shell.update(dt);
-      if (ph!=='burst' && this.shell.phase==='burst' && this.onBurst) this.onBurst(this.current); }  // hook son à l'éclatement
+    for (const s of this.shells){ const ph=s.phase; s.update(dt);
+      if (ph!=='burst' && s.phase==='burst' && this.onBurst) this.onBurst(s.arch); }  // hook son à CHAQUE éclatement
     updateTrails(dt);
     updatePuffs(dt);
   }

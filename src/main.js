@@ -109,13 +109,14 @@ Object.assign(pick.style, { position:'fixed', top:'10px', right:'10px', zIndex:'
 for (const [k, label] of Object.entries(LABELS)){
   const o = document.createElement('option'); o.value = k; o.textContent = label; pick.appendChild(o);
 }
-pick.value = 'fallingLeaves';
+pick.value = 'smiley';
 // changer d'effet dans le menu -> couleur PAR DÉFAUT de l'effet (null annule l'override de la démo)
 pick.addEventListener('change', e => layer.setFocus(e.target.value, null));
 document.body.appendChild(pick);
 
-// DÉMO (réglage en cours) : FEUILLES MORTES 75mm (feuilles colorées qui tombent au gré du vent).
-layer.setFocus('fallingLeaves');
+// DÉMO (réglage en cours) : FORMES 2D — smiley/cœur/cercle tirés EN MÊME TEMPS en éventail
+// (focus sur l'une des 3 formes -> le moteur tire le trio, cf SHAPES_TRIO dans threeFireworks.js).
+layer.setFocus('smiley');
 
 // TIMELINE de lecture (barre en bas) + ESPACE = pause/play (fige les feux, caméra libre).
 const timeline = new Timeline(layer, LABELS);
