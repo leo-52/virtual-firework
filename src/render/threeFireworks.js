@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B128';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B129';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -889,7 +889,7 @@ export class ThreeFireworks {
   fire(arch, color){ this.current=EFFECTS[arch]?arch:'peony';
     this._clear();
     this.shells=[new Shell(this.current,0,0,undefined, color?{color}:undefined)];
-    this._hud((LABELS[this.current]||this.current)+' 75'); }
+    this._hud((LABELS[this.current]||this.current)+' '+this.shells[0].cal); }   // calibre RÉEL (cfg.cal, ex cœur=100), plus le « 75 » codé en dur
   fireNext(){
     // DÉMO FORMES (user B127) : focus sur sourire ou cœur -> on tire les DEUX EN MÊME TEMPS,
     // même batterie mais mortiers INCLINÉS (éventail) : sourire 75mm à -DUO_LEAN m, cœur 100mm

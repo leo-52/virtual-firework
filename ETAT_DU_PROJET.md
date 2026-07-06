@@ -144,12 +144,12 @@ que les hooks dont il a besoin : `dist` (distribution 3D), `dist2D` (forme face 
 | **salut** (`salute`) | détonation : **flash énorme bref** (`flashBig`), argent. |
 
 ### Formes 2D (face public)
-| **cœur** (`heart`) · **papillon** (`butterfly`) · **smiley** (`smiley`) · **marguerite** (`daisy`) | dessin projeté **face au spectateur** (`dist2D`), multi-couleurs. |
+| **cœur** (`heart`) · **papillon** (`butterfly`) · **smiley** (`smiley`) · **marguerite** (`daisy`) | dessin projeté **face au spectateur** (`dist2D`), multi-couleurs. Catalogue vérifié (B127) : cœur = **21 étoiles, 100 mm uniquement** (116 m) ; sourire 75 mm = **15 cercle orange + 2 yeux verts + 5 bouche rouge** (95 m). Focus sourire/cœur → **duo tiré en éventail** (mortiers inclinés, `SHAPES_DUO`). |
 
 ### Motifs 3D multi-couleurs
 | **atome** (`atom`) | 3 anneaux croisés, cyan/rose/jaune. |
 | **demi-demi** (`halfHalf`) | sphère à 2 hémisphères de couleurs ≠ (rouge / bleu). |
-| **couronne** (`ring`) | anneau plan, **orientation 3D aléatoire** (pas toujours droit). |
+| ~~couronne (`ring`)~~ | **SUPPRIMÉ (B127)** — plus aucune bombe « effet cercle » seule au catalogue (production 75 mm arrêtée). |
 
 ### Mouvement (hook `behave`)
 | **poisson** (`fish`) | étoiles qui **serpentent**, vert, rapide. |
@@ -161,7 +161,7 @@ que les hooks dont il a besoin : `dist` (distribution 3D), `dist2D` (forme face 
 | **pot à feu** (`mine`) | **gerbe au sol** qui **monte haut** (pas de montée ni de burst), or. |
 
 > Démo : l'effet sélectionné **tourne en boucle** (`PrevoFX.focus`) — jamais un défilé.
-> Sélecteur en haut à droite. Console : `PrevoFX.focus('willow')` ou `PrevoFX.fire('ring')`.
+> Sélecteur en haut à droite. Console : `PrevoFX.focus('willow')` ou `PrevoFX.fire('atom')`.
 
 ---
 
