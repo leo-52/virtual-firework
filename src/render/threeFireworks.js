@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B129';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B130';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -540,12 +540,20 @@ class Shell {
     if (this.cfg.dist2D){
       pts=this.cfg.dist2D(Math.random, this.cal, this._numColors());
       n=Math.min(pts.length, this.nMax);
-      const N=(this.cfg.orient==='random')?vrand(Math.random):this.faceNormal();
+      // SENS ALÉATOIRE (user B130) : la bombe tourne sur elle-même, le plan du dessin part comme
+      // il veut — mais avec une proba de « BON SENS » LÉGÈREMENT supérieure : ~55% face public
+      // (±~25°) et dessin DEBOUT (±20°), sinon plan ET roulis complètement aléatoires (profil,
+      // penché, tête en bas…). orient:'random' = toujours aléatoire complet.
+      let N, roll;
+      if (this.cfg.orient==='random' || Math.random()>=0.55){
+        N=vrand(Math.random); roll=Math.random()*Math.PI*2;
+      } else {
+        const F=this.faceNormal(), tp=0.35;   // perturbation ≈ tan(19°) : un tir « bon sens » reste VRAIMENT lisible
+        N=norm([F[0]+(Math.random()*2-1)*tp, F[1]+(Math.random()*2-1)*tp, F[2]+(Math.random()*2-1)*tp]);
+        roll=Math.PI+(Math.random()-0.5)*0.7;   // π = debout avec la base aU/aV ci-dessous
+      }
       let aU=cross(N,[0,1,0]); if(len2(aU)<0.01)aU=cross(N,[1,0,0]); aU=norm(aU);
-      // ROLL : aléatoire complet SEULEMENT si orientation aléatoire. Face public -> la forme reste
-      // DEBOUT (π = haut de la forme vers le haut avec cette base aU/aV) ± ~17° de tilt naturel,
-      // sinon le smiley sort à l'envers ou le cœur couché une fois sur deux.
-      const aV=cross(N,aU), roll=(this.cfg.orient==='random')?Math.random()*Math.PI*2:Math.PI+(Math.random()-0.5)*0.6;
+      const aV=cross(N,aU);
       plane={aU,aV,CR:Math.cos(roll),SR:Math.sin(roll)};
     } else n=this.cfg.stars;
     // COULEURS ASSORTIES par étoile (coreColor -> étoile ET traînée de la même couleur) :
@@ -579,14 +587,17 @@ class Shell {
       this.pos[i*3]=bx; this.pos[i*3+1]=apex; this.pos[i*3+2]=bz;
       let dir, comp=0;
       if (plane){ const p=pts[i];
-        const px=p.x*plane.CR-p.y*plane.SR, py=p.x*plane.SR+p.y*plane.CR;
+        // DÉFAUTS légers (user B130) : les étoiles ne sont PAS exactement sur la courbe idéale
+        // (±0.05 du rayon unité ≈ ±1,2 m à l'échelle) — une vraie bombe à motif est imparfaite.
+        const ix=p.x+(Math.random()-0.5)*0.10, iy=p.y+(Math.random()-0.5)*0.10;
+        const px=ix*plane.CR-iy*plane.SR, py=ix*plane.SR+iy*plane.CR;
         let dx=plane.aU[0]*px+plane.aV[0]*py, dy=plane.aU[1]*px+plane.aV[1]*py, dz=plane.aU[2]*px+plane.aV[2]*py;
-        const v=vrand(Math.random); dx+=v[0]*0.05; dy+=v[1]*0.05; dz+=v[2]*0.05;
+        const v=vrand(Math.random); dx+=v[0]*0.08; dy+=v[1]*0.08; dz+=v[2]*0.08;   // + un peu d'ÉPAISSEUR hors-plan
         const L=Math.hypot(dx,dy,dz)||1;
         // vitesse ∝ RAYON du point dans la forme (L) : un point intérieur (œil/bouche du smiley,
         // creux du cœur) doit finir PLUS PRÈS du centre. Sans ce ×L, toutes les étoiles partaient
         // à la même vitesse -> tout finissait sur un CERCLE (la forme était détruite).
-        dir={dx:dx/L,dy:dy/L,dz:dz/L,spMul:L*0.9*(0.96+Math.random()*0.08)}; comp=p.comp||0;
+        dir={dx:dx/L,dy:dy/L,dz:dz/L,spMul:L*0.9*(0.94+Math.random()*0.12)}; comp=p.comp||0;
       } else { dir=this.cfg.dist(i,n,Math.random); comp=dir.comp||0;
         if (this._rAxis){ const A2=this._rAxis, U=this._rU, V=this._rV;   // AXE ALÉATOIRE (B97, cascade) : la gerbe "haut" est réorientée vers l'axe tiré au sort pour CETTE bombe
           dir={ dx:U[0]*dir.dx+A2[0]*dir.dy+V[0]*dir.dz, dy:U[1]*dir.dx+A2[1]*dir.dy+V[1]*dir.dz, dz:U[2]*dir.dx+A2[2]*dir.dy+V[2]*dir.dz, spMul:dir.spMul, comp:dir.comp }; } }
