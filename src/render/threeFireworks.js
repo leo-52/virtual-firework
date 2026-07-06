@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B127';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B128';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -283,10 +283,10 @@ function shapeButterfly(_r,_c,nc){ const C2=(nc>1)?1:0, pts=[]; for(let k=0;k<34
   // /4.06 (B126) : |r|max=4.06 -> respecte le CONTRAT disque unité (avec spMul∝L, /3.2 faisait
   // partir les pointes d'ailes 23% plus loin que les autres formes)
   pts.push({x:Math.sin(t)*r/4.06,y:Math.cos(t)*r/4.06,comp:(k%2===0)?0:C2}); } return pts; }
-function shapeSmiley(_r,_c,nc){ const C2=(nc>1)?1:0, pts=[];   // 15 + 2 + 5 = 22 étoiles (user B127) :
-  for(let k=0;k<15;k++){const t=2*Math.PI*k/15; pts.push({x:Math.cos(t),y:Math.sin(t),comp:0});}   // 15 = le cercle du visage
-  pts.push({x:-0.35,y:0.32,comp:C2}); pts.push({x:0.35,y:0.32,comp:C2});                           //  2 = les yeux
-  for(let k=0;k<=4;k++){const a=(205+(335-205)*k/4)*Math.PI/180; pts.push({x:Math.cos(a)*0.55,y:Math.sin(a)*0.55,comp:C2});}   //  5 = la bouche
+function shapeSmiley(_r,_c,nc){ const CE=Math.min(1,nc-1), CB=Math.min(2,nc-1), pts=[];   // 15 + 2 + 5 = 22 étoiles (user B127), 3 GROUPES de couleur (user B128)
+  for(let k=0;k<15;k++){const t=2*Math.PI*k/15; pts.push({x:Math.cos(t),y:Math.sin(t),comp:0});}   // 15 = le cercle du visage (couleur 0 = orange)
+  pts.push({x:-0.35,y:0.32,comp:CE}); pts.push({x:0.35,y:0.32,comp:CE});                           //  2 = les yeux (couleur 1 = vert)
+  for(let k=0;k<=4;k++){const a=(205+(335-205)*k/4)*Math.PI/180; pts.push({x:Math.cos(a)*0.55,y:Math.sin(a)*0.55,comp:CB});}   //  5 = la bouche (couleur 2 = rouge)
   return pts; }
 function shapeDaisy(_r,cal,nc){ const nPet=rndI(8,12), pts=[];
   for(let p=0;p<nPet;p++){ const aPet=2*Math.PI*p/nPet+rnd(-0.07,0.07), ns=rndI(2,4);
@@ -404,7 +404,8 @@ const EFFECTS = {
   // === FORMES 2D (face public) — chiffres catalogue vérifiés (web/data/effets.json, B127) ===
   heart:     { apex:116, cal:100, heat:false, stars:21, starSize:2.4, dist2D:shapeHeart, colors:[RED] },   // « bombe 100 mm à effet coeur » (510455/510456, rose ou rouge, 116 m) — N'EXISTE QU'EN 100mm, 21 étoiles (user)
   butterfly: { apex:90, heat:false, stars:64, starSize:2.3, dist2D:shapeButterfly, colors:[new THREE.Color(1.0,0.55,0.12), PURP] },
-  smiley:    { apex:95, heat:false, stars:22, starSize:2.4, dist2D:shapeSmiley, colors:[YEL, new THREE.Color(1.0,0.25,0.12)] },   // « bombe 75 mm à effet sourire » (575547000, 95 m) — 15 cercle + 2 yeux + 5 bouche (user)
+  smiley:    { apex:95, heat:false, stars:22, starSize:2.4, dist2D:shapeSmiley, pureColor:true,
+               colors:[new THREE.Color(1.0,0.45,0.08), GRN, RED] },   // « bombe 75 mm à effet sourire » (575547000, 95 m) — 15 cercle ORANGE + 2 yeux VERTS + 5 bouche ROUGE (user B128) ; texture neutre pour un vert franc
   daisy:     { apex:95, heat:false, stars:64, starSize:2.3, dist2D:shapeDaisy, colors:[PINK,YEL,CYAN,GRN] },
 
   // === MOTIFS 3D multi-couleurs ===
