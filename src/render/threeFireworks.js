@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B126';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B127';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -274,7 +274,7 @@ function distSpinner(i,n,rnd){ const a0=Math.random()*Math.PI*2, rH=rnd(11,16), 
 // ============================================================================
 // DISTRIBUTIONS 2D (formes face public) : dist2D(rnd,cal,nc) -> [{x,y,comp}] dans le disque unité
 // ============================================================================
-function shapeHeart(){ const pts=[]; for(let k=0;k<26;k++){ const t=2*Math.PI*k/26;
+function shapeHeart(){ const pts=[]; for(let k=0;k<21;k++){ const t=2*Math.PI*k/21;   // 21 étoiles (user B127, catalogue : bombe 100mm à effet cœur)
   const x=16*Math.pow(Math.sin(t),3);
   const y=13*Math.cos(t)-5*Math.cos(2*t)-2*Math.cos(3*t)-Math.cos(4*t);
   pts.push({x:x/16,y:y/16,comp:0}); } return pts; }
@@ -283,18 +283,17 @@ function shapeButterfly(_r,_c,nc){ const C2=(nc>1)?1:0, pts=[]; for(let k=0;k<34
   // /4.06 (B126) : |r|max=4.06 -> respecte le CONTRAT disque unité (avec spMul∝L, /3.2 faisait
   // partir les pointes d'ailes 23% plus loin que les autres formes)
   pts.push({x:Math.sin(t)*r/4.06,y:Math.cos(t)*r/4.06,comp:(k%2===0)?0:C2}); } return pts; }
-function shapeSmiley(_r,_c,nc){ const C2=(nc>1)?1:0, pts=[];
-  for(let k=0;k<20;k++){const t=2*Math.PI*k/20; pts.push({x:Math.cos(t),y:Math.sin(t),comp:0});}
-  pts.push({x:-0.35,y:0.32,comp:C2}); pts.push({x:0.35,y:0.32,comp:C2});
-  for(let k=0;k<=6;k++){const a=(205+(335-205)*k/6)*Math.PI/180; pts.push({x:Math.cos(a)*0.55,y:Math.sin(a)*0.55,comp:C2});}
+function shapeSmiley(_r,_c,nc){ const C2=(nc>1)?1:0, pts=[];   // 15 + 2 + 5 = 22 étoiles (user B127) :
+  for(let k=0;k<15;k++){const t=2*Math.PI*k/15; pts.push({x:Math.cos(t),y:Math.sin(t),comp:0});}   // 15 = le cercle du visage
+  pts.push({x:-0.35,y:0.32,comp:C2}); pts.push({x:0.35,y:0.32,comp:C2});                           //  2 = les yeux
+  for(let k=0;k<=4;k++){const a=(205+(335-205)*k/4)*Math.PI/180; pts.push({x:Math.cos(a)*0.55,y:Math.sin(a)*0.55,comp:C2});}   //  5 = la bouche
   return pts; }
 function shapeDaisy(_r,cal,nc){ const nPet=rndI(8,12), pts=[];
   for(let p=0;p<nPet;p++){ const aPet=2*Math.PI*p/nPet+rnd(-0.07,0.07), ns=rndI(2,4);
     for(let s=0;s<ns;s++){ const R=lerp(0.45,1.0, ns>1?s/(ns-1):0)*rnd(0.94,1.06);
       pts.push({x:Math.cos(aPet)*R,y:Math.sin(aPet)*R,comp:p%nc}); } }
   return pts; }
-function shapeRing(){ const pts=[]; for(let k=0;k<26;k++){const t=2*Math.PI*k/26;
-  pts.push({x:Math.cos(t),y:Math.sin(t),comp:0});} return pts; }
+// (shapeRing supprimé en B127 : plus aucune bombe « effet cercle » seule au catalogue — production 75mm arrêtée)
 
 // ============================================================================
 // HOOKS onStar(d,A,dt) -> {intenMul?,whiteMix?} (visuel)  /  behave(d,A,dt,ctx) (physique)
@@ -376,7 +375,7 @@ const BASE = {
   gerbe:null, flashBig:false
 };
 const EFFECTS = {
-  // === 10 EXISTANTS (intacts ; ring = "cercle", aligné sur les formes 2D cœur/smiley — user B126) ===
+  // === EXISTANTS (intacts ; ring/couronne supprimé en B127, cf note plus bas) ===
   peony: {},
   chrysanthemum: { trailing:{emitUntil:0.85, period:0.015, grain:0.9, gF:0.40, lifeMul:1.6, color:GOLD} },
   willow: { apex:100, heat:false, color:DIMGOLD, gravStar:0.92, dragStar:0.25, lifeBase75:3.2,
@@ -385,7 +384,8 @@ const EFFECTS = {
            lifeBase75:3.0, starSize:5.4, speedMul:1.0, headSize:4.0, riseColor:GOLD,   // compensé (STAR_SCALE 1.2->1.0), taille inchangée (4.5×1.2)
            trailing:{emitUntil:0.97, period:0.012, grain:1.3, gF:0.35, lifeMul:1.8, color:GOLD} },
   sphere: { speedJit:0.02 },
-  ring: { apex:90, heat:false, stars:64, starSize:2.4, dist2D:shapeRing, colors:[GRN] },   // CERCLE (user B126) : MÊMES attributs que cœur/smiley, seule la FORME change ; face public
+  // (cercle/couronne SUPPRIMÉ en B127 — catalogue vérifié : plus AUCUNE bombe « effet cercle » seule
+  //  en production (le 75mm est arrêté ; seuls restent des effets composés « centre cascade cercle », etc.))
   crackling: { apex:95, heat:false, color:CKGRN, pureColor:true, stars:83,                            // crackling VERT 75mm = pivoine VERT FLASHY 83 étoiles (texture neutre = vert franc) ; décliner via override {color}
     core:{ stars:20, radiusMul:0.42, color:GOLD, eggSplode:true, crackleAt:0.9, jitter:0.6 } },       // + pistil = ~20 étoiles ŒUF DE DRAGON INVISIBLES (on ne voit QUE le crépitement) : explosent étalées 0,9→1,5s après l'éclatement
   dragonEgg: { apex:95, heat:false, color:GOLD, stars:84, lifeBase75:2.4, starSize:0.7, arrow:true, speedMul:1.25, gravStar:0.5,  // ŒUF DE DRAGON (~40m, retombe peu = pivoine, pas saule) — 3 TEMPS :
@@ -401,10 +401,10 @@ const EFFECTS = {
   palmMulti: { apex:105, stars:15, dist:distFibonacci, heat:false, pureColor:true, assorted:[GRN,RED,BLU], gravStar:1.0, dragStar:0.6, shrink:true,   // PALME MULTICOLORE 75mm (catalogue, user : 15 étoiles vertes/rouges/bleues)
           lifeBase75:3.0, starSize:2.6, trailing:{emitUntil:0.97, period:0.0022, grain:0.8, gF:0.45, lifeMul:8.15, color:EMBER, fixedColor:true, spark:true} },  // étincelles CHAUDES orangé/doré (EMBER) + DENSES (period 0.0022, B91) ; vie moy 1,9s ; étoiles réduites + shrink ; pointe verte/rouge/bleue
 
-  // === FORMES 2D (face public) ===
-  heart:     { apex:90, heat:false, stars:64, starSize:2.4, dist2D:shapeHeart, colors:[RED] },
+  // === FORMES 2D (face public) — chiffres catalogue vérifiés (web/data/effets.json, B127) ===
+  heart:     { apex:116, cal:100, heat:false, stars:21, starSize:2.4, dist2D:shapeHeart, colors:[RED] },   // « bombe 100 mm à effet coeur » (510455/510456, rose ou rouge, 116 m) — N'EXISTE QU'EN 100mm, 21 étoiles (user)
   butterfly: { apex:90, heat:false, stars:64, starSize:2.3, dist2D:shapeButterfly, colors:[new THREE.Color(1.0,0.55,0.12), PURP] },
-  smiley:    { apex:90, heat:false, stars:64, starSize:2.4, dist2D:shapeSmiley, colors:[YEL, new THREE.Color(1.0,0.25,0.12)] },
+  smiley:    { apex:95, heat:false, stars:22, starSize:2.4, dist2D:shapeSmiley, colors:[YEL, new THREE.Color(1.0,0.25,0.12)] },   // « bombe 75 mm à effet sourire » (575547000, 95 m) — 15 cercle + 2 yeux + 5 bouche (user)
   daisy:     { apex:95, heat:false, stars:64, starSize:2.3, dist2D:shapeDaisy, colors:[PINK,YEL,CYAN,GRN] },
 
   // === MOTIFS 3D multi-couleurs ===
@@ -439,7 +439,7 @@ const EFFECTS = {
 };
 
 export const LABELS = { peony:'pivoine', chrysanthemum:'chrysanthème', willow:'saule (kamuro)', comet:'comète',
-  sphere:'sphère', ring:'cercle (couronne)', crackling:'crackling', dragonEgg:'œuf de dragon', strobe:'scintillant', finalCli:'final cli. blanc rose', palmMulti:'palme multicolore',
+  sphere:'sphère', crackling:'crackling', dragonEgg:'œuf de dragon', strobe:'scintillant', finalCli:'final cli. blanc rose', palmMulti:'palme multicolore',
   fallingLeaves:'feuille morte', palm:'palme', heart:'cœur', butterfly:'papillon', smiley:'smiley',
   daisy:'marguerite', atom:'atome', halfHalf:'demi-demi', medusa:'méduse', horsetail:'queue de cheval',
   cascade:'cascade', fish:'poisson', spinner:'tourbillon', saucer:'soucoupe', mosaic:'mosaïque', mosaicMix:'mosaïque assortie',
@@ -454,7 +454,7 @@ class Shell {
     this.cfg = Object.assign({}, BASE, EFFECTS[this.arch]);
     this.cfg.apex *= APEX_SCALE;   // abaisse TOUTES les hauteurs d'un coup (cfg est une copie -> safe)
     if (opts && opts.color) this.cfg.color = opts.color;   // override couleur (ex "crackling aqua", "mosaïque rouge")
-    this.cal = cal || 75;
+    this.cal = cal || this.cfg.cal || 75;   // cfg.cal = calibre PAR DÉFAUT de l'effet (ex cœur : n'existe qu'en 100mm)
     this.ox = ox||0; this.oz = oz||0;
     this.bx = this.ox + (Math.random()-0.5)*this.cfg.riseLean;
     this.bz = this.oz + (Math.random()-0.5)*this.cfg.riseLean;
@@ -827,13 +827,13 @@ class Shell {
   }
 }
 
-// DÉMO FORMES (user B126) : cœur / smiley / cercle = MÊMES attributs, seule la forme change.
-// Focus sur l'une des trois -> on tire les 3 EN MÊME TEMPS depuis la même batterie, avec des
-// ANGLES DE TIR différents (mortiers inclinés) pour que les bombes n'éclatent pas au même endroit.
-const SHAPES_TRIO = ['heart','smiley','ring'];
-const TRIO_LEAN = 60;   // décalage horizontal du point d'éclatement (m) — ≈ 37° d'inclinaison sur apex 80 m ;
-                        // formes ≈ 26 m de rayon -> ~8 m de vide entre elles, et bords à ±86 m = encore dans
-                        // le champ de la caméra public par défaut (150 m, fov 60° -> demi-largeur 86 m)
+// DÉMO FORMES (user B127) : sourire 75mm + cœur 100mm (le cœur n'existe qu'en 100 -> il éclate
+// PLUS HAUT, 116 m catalogue vs 95 m). Focus sur l'une des deux -> on tire les 2 EN MÊME TEMPS
+// depuis la même batterie, mortiers INCLINÉS (éventail) pour qu'elles n'éclatent pas au même endroit.
+const SHAPES_DUO = ['smiley','heart'];   // sourire à GAUCHE (-lean), cœur à DROITE (+lean)
+const DUO_LEAN = 40;   // décalage horizontal du point d'éclatement (m) : formes ≈ 26 m de rayon ->
+                       // ~28 m de vide entre elles, bords à ±66 m = large dans le champ caméra
+                       // public par défaut (150 m, fov 60° -> demi-largeur 86 m)
 
 // ============================================================================
 // OVERLAY : canvas Three transparent (screen) au-dessus de Cesium + sync caméra.
@@ -890,14 +890,14 @@ export class ThreeFireworks {
     this.shells=[new Shell(this.current,0,0,undefined, color?{color}:undefined)];
     this._hud((LABELS[this.current]||this.current)+' 75'); }
   fireNext(){
-    // DÉMO FORMES (user B126) : focus sur cœur, smiley ou cercle -> on tire les TROIS EN MÊME TEMPS,
-    // même batterie mais mortiers INCLINÉS (éventail gauche/centre/droite) pour qu'elles n'éclatent
-    // pas au même endroit : cœur à -TRIO_LEAN m, smiley au centre, cercle à +TRIO_LEAN m.
-    if (SHAPES_TRIO.indexOf(this.focus)>=0){
+    // DÉMO FORMES (user B127) : focus sur sourire ou cœur -> on tire les DEUX EN MÊME TEMPS,
+    // même batterie mais mortiers INCLINÉS (éventail) : sourire 75mm à -DUO_LEAN m, cœur 100mm
+    // à +DUO_LEAN m (le cœur monte plus haut : il n'existe qu'en calibre 100).
+    if (SHAPES_DUO.indexOf(this.focus)>=0){
       this.current=this.focus;
       this._clear();
-      this.shells=SHAPES_TRIO.map((a,i)=>new Shell(a,0,0,undefined,{lean:[(i-1)*TRIO_LEAN,0]}));
-      this._hud('cœur + smiley + cercle 75 (éventail)');
+      this.shells=SHAPES_DUO.map((a,i)=>new Shell(a,0,0,undefined,{lean:[(i*2-1)*DUO_LEAN,0]}));
+      this._hud('sourire 75 + cœur 100 (éventail)');
     } else this.fire(this.focus, this.focusColor);
   }
   setFocus(arch, color){ if (EFFECTS[arch]){ this.focus=arch; if (color!==undefined) this.focusColor=color; } }

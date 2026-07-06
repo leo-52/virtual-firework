@@ -114,8 +114,8 @@ pick.value = 'smiley';
 pick.addEventListener('change', e => layer.setFocus(e.target.value, null));
 document.body.appendChild(pick);
 
-// DÉMO (réglage en cours) : FORMES 2D — smiley/cœur/cercle tirés EN MÊME TEMPS en éventail
-// (focus sur l'une des 3 formes -> le moteur tire le trio, cf SHAPES_TRIO dans threeFireworks.js).
+// DÉMO (réglage en cours) : FORMES 2D — sourire 75mm + cœur 100mm tirés EN MÊME TEMPS en éventail
+// (focus sur l'une des 2 formes -> le moteur tire le duo, cf SHAPES_DUO dans threeFireworks.js).
 layer.setFocus('smiley');
 
 // TIMELINE de lecture (barre en bas) + ESPACE = pause/play (fige les feux, caméra libre).
@@ -146,5 +146,5 @@ function frame(){
 }
 requestAnimationFrame(frame);
 
-// debug console : PrevoFX.focus('willow') change l'effet joué en boucle ; PrevoFX.fire('ring') tire une fois.
+// debug console : PrevoFX.focus('willow') change l'effet joué en boucle ; PrevoFX.fire('peony') tire une fois.
 window.PrevoFX = { viewer, layer, cam, timeline, audio, fire: (a) => layer.fire(a), focus: (a) => layer.setFocus(a) };

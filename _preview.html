@@ -55,7 +55,7 @@
     window.__show = (arch, burstFrames, label, rgb, cal) => {
       settle(280);
       const opts = rgb ? { color: new THREE.Color(rgb[0], rgb[1], rgb[2]) } : undefined;
-      shell = new __Shell(arch, 0, 0, cal||75, opts);
+      shell = new __Shell(arch, 0, 0, cal, opts);   // cal absent -> calibre par défaut de l'EFFET (cfg.cal, ex cœur=100mm) sinon 75
       window.__lastShell = shell;
       let g = 0; while (shell.phase !== 'burst' && g++ < 500) step();
       for (let i=0;i<burstFrames;i++) step();
