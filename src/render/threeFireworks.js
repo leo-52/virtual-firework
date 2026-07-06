@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B140';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B141';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -436,7 +436,7 @@ const EFFECTS = {
              dist:distMosaic, behave:behaveMosaic, trailing:{emitUntil:0.9, period:0.012, grain:1.2, gF:0.45, lifeMul:1.9, color:SILVER} },  // ASSORTIE : 2 rose, 2 citron, 2 aqua, 1 aléatoire
 
   // === SOL / SPÉCIAUX ===
-  mine:   { color:GOLD, gerbe:{ dur:2.0, rate:380, cone:0.18, speedMul:1.25, grain:1.1 } }, // pot à feu : gerbe au sol, MONTE HAUT
+  mine:   { color:RED, gerbe:{ dur:2.0, rate:380, cone:0.18, speedMul:2.0, grain:1.1 } }, // POT À FEU (B141, catalogue) : « bombe 75 mm pot à feu ROUGE » (575477000, 50 m) -> gerbe ROUGE calibrée ~44.5 m (pic mesuré ; convention hauteur ×0.89). Variante « cli. rouge » (575488000) pour plus tard
   salute: { apex:90, heat:false, stars:14, starSize:2.0, lifeBase75:0.22, color:SILVER, dist:distSalute, flashBig:true },
 };
 
