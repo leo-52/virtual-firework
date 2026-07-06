@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B131';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B132';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -261,15 +261,7 @@ function distAtom(i,n,rnd){
   return {dx:U[0]*Math.cos(az)+V[0]*Math.sin(az), dy:U[1]*Math.cos(az)+V[1]*Math.sin(az),
           dz:U[2]*Math.cos(az)+V[2]*Math.sin(az), spMul:0.55, comp:r%3};
 }
-function distHalfHalf(i,n,rnd){
-  // sphère fibonacci (= pivoine) coupée en 2 HÉMISPHÈRES de couleur. Le plan de coupe est fixe
-  // ici : c'est randomAxis (cfg) qui fait tourner TOUT le motif -> orientation aléatoire par tir.
-  // Petite BAVURE à la couture (±0.06) : quelques étoiles débordent, comme une vraie demi-demi.
-  const off=2/n, inc=2.399963229728653, yy=i*off-1+off/2, rr=Math.sqrt(Math.max(0,1-yy*yy)), a=i*inc;
-  const dx=Math.cos(a)*rr, dy=yy, dz=Math.sin(a)*rr;
-  const comp=(dx*0.7+dy*0.2+dz*0.68+(rnd()-0.5)*0.12)>=0?0:1;
-  return {dx,dy,dz,spMul:1.0,comp};
-}
+// (distHalfHalf supprimé en B132 : la demi-demi = distFibonacci pur + coupe `splitFacing` dans burst())
 function distSpinner(i,n,rnd){ const a0=Math.random()*Math.PI*2, rH=rnd(11,16), vUp=rnd(2.5,4.2);
   const dx=Math.cos(a0)*rH, dy=vUp, dz=Math.sin(a0)*rH, L=Math.hypot(dx,dy,dz)||1;
   return {dx:dx/L,dy:dy/L,dz:dz/L, spMul:(L/(13.5*1.8))}; }
@@ -413,11 +405,11 @@ const EFFECTS = {
 
   // === MOTIFS 3D multi-couleurs ===
   atom:    { apex:100, heat:false, stars:60, starSize:2.2, lifeBase75:1.7, speedJit:0.08, dist:distAtom, colors:[CYAN,PINK,YEL] },
-  // DEMI-DEMI (user B131 : « comme une pivoine normale mais avec deux couleurs différentes »).
-  // Catalogue : 7 réfs 75mm à 95 m (« bombe 75 mm moitié X moitié Y ») -> profil PIVOINE (80 étoiles,
-  // BASE inchangée), plan de coupe ALÉATOIRE par tir (randomAxis), et une PAIRE du catalogue tirée
-  // au sort à chaque volée (comme le pack « 5 bombes assorties »).
-  halfHalf:{ apex:95, heat:false, pureColor:true, stars:80, dist:distHalfHalf, randomAxis:true,
+  // DEMI-DEMI (user B131-B132 : « comme une pivoine normale mais avec deux couleurs différentes »,
+  // et la séparation DOIT SE LIRE dans le ciel : moitié gauche/droite, ou haut/bas, ou diagonale,
+  // ou inversé — au hasard). Catalogue : 7 réfs 75mm à 95 m. Profil PIVOINE intact (distFibonacci,
+  // 80 étoiles), coupe `splitFacing` calculée au tir, paire du catalogue tirée au sort par volée.
+  halfHalf:{ apex:95, heat:false, pureColor:true, stars:80, splitFacing:true,
              colorPairs:[[BLU,YEL],[RED,WHITE],[RED,BLU],[PINK,YEL],[GOLD,GRN],[YEL,PURP]] },   // bleu/citron · rouge/blanc · rouge/bleu · rose/jaune · or/vert · citron/violet
 
   // === MOUVEMENT / TRAÎNE (hooks existants) ===
@@ -587,6 +579,17 @@ class Shell {
     if (this.cfg.randomAxis){ this._rAxis=vrand(Math.random);
       let u=cross(this._rAxis,[0,1,0]); if(len2(u)<0.01)u=cross(this._rAxis,[1,0,0]);
       this._rU=norm(u); this._rV=norm(cross(this._rAxis,this._rU)); }
+    // COUPE FACE PUBLIC (B132, demi-demi) : la séparation doit SE LIRE dans le ciel — moitié
+    // gauche/droite, haut/bas, diagonale ou inversée, au hasard. La normale de coupe est donc
+    // tirée DANS LE PLAN ÉCRAN (⊥ axe public, angle uniforme) ± léger biais hors-plan (±~14°).
+    // (Une coupe 3D uniforme mettait souvent un hémisphère DEVANT l'autre -> couleurs mélangées.)
+    this._splitN=null;
+    if (this.cfg.splitFacing){
+      const F=this.faceNormal();
+      const R=norm(cross(F,[0,1,0])), U=norm(cross(R,F));
+      const phi=Math.random()*Math.PI*2, cp=Math.cos(phi), sp2=Math.sin(phi), tl=(Math.random()-0.5)*0.5;
+      this._splitN=norm([R[0]*cp+U[0]*sp2+F[0]*tl, R[1]*cp+U[1]*sp2+F[1]*tl, R[2]*cp+U[2]*sp2+F[2]*tl]);
+    }
     // VENT commun par tir (B120, feuilles mortes) : toutes les étoiles dérivent dans la MÊME direction
     // horizontale (un minimum de sens), le tangage individuel ne fait que broder autour.
     this._windX=0; this._windZ=0;
@@ -610,7 +613,9 @@ class Shell {
         dir={dx:dx/L,dy:dy/L,dz:dz/L,spMul:L*0.9*(0.94+Math.random()*0.12)}; comp=p.comp||0;
       } else { dir=this.cfg.dist(i,n,Math.random); comp=dir.comp||0;
         if (this._rAxis){ const A2=this._rAxis, U=this._rU, V=this._rV;   // AXE ALÉATOIRE (B97, cascade) : la gerbe "haut" est réorientée vers l'axe tiré au sort pour CETTE bombe
-          dir={ dx:U[0]*dir.dx+A2[0]*dir.dy+V[0]*dir.dz, dy:U[1]*dir.dx+A2[1]*dir.dy+V[1]*dir.dz, dz:U[2]*dir.dx+A2[2]*dir.dy+V[2]*dir.dz, spMul:dir.spMul, comp:dir.comp }; } }
+          dir={ dx:U[0]*dir.dx+A2[0]*dir.dy+V[0]*dir.dz, dy:U[1]*dir.dx+A2[1]*dir.dy+V[1]*dir.dz, dz:U[2]*dir.dx+A2[2]*dir.dy+V[2]*dir.dz, spMul:dir.spMul, comp:dir.comp }; }
+        // COUPE demi-demi : couleur selon le CÔTÉ de la direction finale (+ BAVURE ±0.06 à la couture)
+        if (this._splitN) comp=(dir.dx*this._splitN[0]+dir.dy*this._splitN[1]+dir.dz*this._splitN[2]+(Math.random()-0.5)*0.12)>=0?0:1; }
       const sp=speed*(dir.spMul||1)*(1-jit+Math.random()*2*jit);
       const s=this._newStar(dir.dx*sp, dir.dy*sp, dir.dz*sp, comp, this.cfg.trailing);
       s._i=i; s._split=false; if (assorted) s.coreColor=assorted[i%assorted.length];
