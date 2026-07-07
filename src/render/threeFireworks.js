@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B149';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B150';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -284,18 +284,18 @@ function shapeSmiley(_r,_c,nc){ const CE=Math.min(1,nc-1), CB=Math.min(2,nc-1), 
   pts.push({x:-0.35,y:0.32,comp:CE}); pts.push({x:0.35,y:0.32,comp:CE});                           //  2 = les yeux (couleur 1 = vert)
   for(let k=0;k<=4;k++){const a=(205+(335-205)*k/4)*Math.PI/180; pts.push({x:Math.cos(a)*0.55,y:Math.sin(a)*0.55,comp:CB});}   //  5 = la bouche (couleur 2 = rouge)
   return pts; }
-// MARGUERITE (B149, photos user comparées) : 11-12 pétales = UNE GROSSE PORTEUSE chacun (pas 4 !)
-// dont la traînée dense et COURTE fait la bande grasse — le bout intérieur meurt vite -> le
-// pétale se DÉTACHE du centre. + CŒUR (comp 1 = couleur variante) + ~20 PERLES blanches (comp 2).
+// MARGUERITE (B150, dissection user des photos) : 11-12 pétales = UNE GROSSE PORTEUSE chacun,
+// ASYMÉTRIQUES (angles/longueurs inégaux — pas un cadran de montre) ; CŒUR = ~30 billes de la
+// couleur variante, si brillantes qu'elles FUSIONNENT (HDR -> ACES les blanchit au centre =
+// les « points blancs » de la photo), et DÉCENTRÉ (la chasse a poussé le pistil d'un côté).
 function shapeDaisy(_r,cal,nc){ const nPet=rndI(11,12), pts=[];
-  for(let p=0;p<nPet;p++){ const aPet=2*Math.PI*p/nPet+rnd(-0.05,0.05);
-    const R=rnd(0.96,1.04);
-    pts.push({x:Math.cos(aPet)*R,y:Math.sin(aPet)*R,comp:0}); }                  // 1 porteuse par pétale
-  const nCoeur=rndI(9,12), nPerles=rndI(18,22);
-  for(let k=0;k<nCoeur;k++){ const a=Math.random()*Math.PI*2, R=0.08+Math.random()*0.20;
-    pts.push({x:Math.cos(a)*R,y:Math.sin(a)*R,comp:Math.min(1,nc-1)}); }         // cœur diffus (couleur variante)
-  for(let k=0;k<nPerles;k++){ const a=Math.random()*Math.PI*2, R=0.05+Math.random()*0.25;
-    pts.push({x:Math.cos(a)*R,y:Math.sin(a)*R,comp:Math.min(2,nc-1)}); }         // perles BLANCHES nettes
+  for(let p=0;p<nPet;p++){ const aPet=2*Math.PI*p/nPet+rnd(-0.12,0.12);          // intervalles IRRÉGULIERS
+    const R=rnd(0.88,1.12);                                                       // longueurs INÉGALES
+    pts.push({x:Math.cos(aPet)*R,y:Math.sin(aPet)*R,comp:0}); }
+  const nCoeur=rndI(28,32), offA=Math.random()*Math.PI*2, offR=0.10+Math.random()*0.10;
+  const offX=Math.cos(offA)*offR, offY=Math.sin(offA)*offR;                       // pistil DÉCENTRÉ (par tir)
+  for(let k=0;k<nCoeur;k++){ const a=Math.random()*Math.PI*2, R=Math.sqrt(Math.random())*0.24;
+    pts.push({x:offX+Math.cos(a)*R,y:offY+Math.sin(a)*R,comp:Math.min(1,nc-1)}); }
   return pts; }
 // (shapeRing supprimé en B127 : plus aucune bombe « effet cercle » seule au catalogue — production 75mm arrêtée)
 
@@ -410,9 +410,9 @@ const EFFECTS = {
   butterfly: { apex:90, heat:false, stars:34, starSize:2.3, dist2D:shapeButterfly, colors:[new THREE.Color(1.0,0.55,0.12), PURP] },   // « bombe 75 mm à effet papillon » (575525000, 90 m ✓, vidéo cat. gWYWk3yN4pQ) ; existe aussi en 100 mm (130 m). 34 points de forme ; couleurs à valider par l'user (B140)
   smiley:    { apex:95, heat:false, stars:22, starSize:2.4, dist2D:shapeSmiley, pureColor:true,
                colors:[new THREE.Color(1.0,0.45,0.08), GRN, RED] },   // « bombe 75 mm à effet sourire » (575547000, 95 m) — 15 cercle ORANGE + 2 yeux VERTS + 5 bouche ROUGE (user B128) ; texture neutre pour un vert franc
-  daisy:     { apex:116, cal:100, heat:false, stars:45, starSize:2.3, dist2D:shapeDaisy, pureColor:true,
-               trailing:{emitUntil:0.95, period:0.004, grain:1.6, gF:0.35, lifeMul:0.9, color:GOLD, spark:true, jit:1.5}, trailComps:[0],   // B149 : traînée COURTE (lifeMul 0.9 -> le bout intérieur meurt vite = pétale DÉTACHÉ du centre), DENSE (period 0.004) et LARGE (grain 1.6, jit 1.5) = bande grasse ; cœur/perles SANS traînée
-               colorPairs:[[GOLD,RED,new THREE.Color(1.15,1.15,1.15)],[GOLD,GRN,new THREE.Color(1.15,1.15,1.15)],[GOLD,PURP,new THREE.Color(1.15,1.15,1.15)]] },   // MARGUERITE (B149, photos user, catalogue « 100 mm CYLINDRIQUE » 116 m) : 11-12 pétales OR gras + CŒUR variante (rouge/verte/violette) + perles blanches SOBRES (1.15, plus le blanc cramé 1.7 du B148)
+  daisy:     { apex:116, cal:100, heat:false, stars:45, starSize:2.3, dist2D:shapeDaisy, pureColor:true, speedJit:0.09,
+               trailing:{emitUntil:0.95, period:0.004, grain:1.9, gF:0.35, lifeMul:2.0, color:GOLD, spark:true, jit:1.2, jitGrow:2.5, rateFloor:0.55}, trailComps:[0],   // B150 : bande LONGUE (lifeMul 2 -> ~35%→100% du rayon), fine à la BASE et LARGE AU BOUT (jitGrow quand la tête ralentit), émission qui CONTINUE au bout (rateFloor 0.55 = pointes rugueuses/effilochées), laine d'or (grain 1.9)
+               colorPairs:[[GOLD,new THREE.Color(2.2,0.31,0.40)],[GOLD,new THREE.Color(0.55,2.2,0.85)],[GOLD,new THREE.Color(1.35,0.75,2.2)]] },   // MARGUERITE (B150, dissection user) : ~30 billes de CŒUR HDR (rouge/vert/violet) qui FUSIONNENT au bloom et BLANCHISSENT au centre (ACES) — plus de « perles » séparées, c'est la SATURATION qui les fait
 
   // === MOTIFS 3D multi-couleurs ===
   atom:    { apex:100, heat:false, stars:60, starSize:2.2, lifeBase75:1.7, speedJit:0.08, dist:distAtom, colors:[CYAN,PINK,YEL] },
@@ -860,9 +860,12 @@ class Shell {
       if (tr && d.trailing && A<tr.emitUntil && !d.popOnly && d.age<(d.crackleAt||1e9)){   // d.trailing (B149) : le flag PAR ÉTOILE compte enfin — nécessaire dès qu'un effet mélange étoiles avec/sans traînée (marguerite : pétales oui, cœur/perles non)
         // ÉTINCELLES : débit ∝ VITESSE (B89) — grains/mètre constants. Sinon, quand l'étoile ralentit,
         // elle empile ses grains sur place et la traînée GROSSIT (plainte user) ; là le diamètre reste constant.
-        let emitDt=dt;
+        // rateFloor (B150, marguerite) : plancher RELEVÉ = l'émission CONTINUE quand la tête ralentit ->
+        // la matière « se détend » au bout (bande qui s'ÉLARGIT vers l'extérieur + pointes rugueuses).
+        let emitDt=dt, slow=0;
         if (tr.spark){ const v=Math.hypot(d.vx,d.vy,d.vz); if(d.v0e===undefined) d.v0e=Math.max(v,1e-3);
-          emitDt=dt*Math.max(0.10, Math.min(1, v/d.v0e)); }
+          const vr=Math.min(1, v/d.v0e); slow=1-vr;
+          emitDt=dt*Math.max(tr.rateFloor||0.10, vr); }
         d.since+=emitDt;   // traînée tant que l'étoile n'a pas commencé à claquer
         // ÉMISSION AU VRAI DÉBIT (B87) : n grains par frame si period < dt (avant : 1 max/frame ->
         // impossible d'avoir des "milliers d'étincelles"). Répartis le long du trajet de la frame.
@@ -873,7 +876,7 @@ class Shell {
             if (tr.spark){   // ÉTINCELLES (décomposition de l'étoile) : brillance TRÈS variable + dispersion -> nuée qui pétille, pas un ruban lisse
               let tw=(0.35+Math.pow(Math.random(),1.6)*1.65)*(tr.bright||1);   // bright : atténue le glow par effet
               if (tr.rampIn) tw*=0.25+0.75*Math.min(1, A/0.4);                 // rampIn (cascade) : étincelles TAMISÉES tant que les mèches sont serrées (anti boule lumineuse au break), pleine brillance une fois écartées
-              spawnTrail(mx,my,mz, tc.r*tw,tc.g*tw,tc.b*tw, tr.grain, tr.gF, tr.lifeMul, d.vx,d.vy,d.vz, tr.jit||2.4, tr.fall||0.42, !!tr.flatLife, tr.grainRampIn||0);   // jit / fall / flatLife / grainRampIn réglables par effet
+              spawnTrail(mx,my,mz, tc.r*tw,tc.g*tw,tc.b*tw, tr.grain, tr.gF, tr.lifeMul, d.vx,d.vy,d.vz, (tr.jit||2.4)*(1+(tr.jitGrow||0)*slow), tr.fall||0.42, !!tr.flatLife, tr.grainRampIn||0);   // jitGrow (B150) : dispersion qui AUGMENTE quand la tête ralentit -> bande fine à la base, LARGE au bout (photo réelle)
             } else {
               spawnTrail(mx,my,mz, tc.r,tc.g,tc.b, tr.grain, tr.gF, tr.lifeMul, d.vx,d.vy,d.vz);
             } }
