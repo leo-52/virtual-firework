@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B151';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B152';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -288,7 +288,7 @@ function shapeSmiley(_r,_c,nc){ const CE=Math.min(1,nc-1), CB=Math.min(2,nc-1), 
 // ASYMÉTRIQUES (angles/longueurs inégaux — pas un cadran de montre) ; CŒUR = ~30 billes de la
 // couleur variante, si brillantes qu'elles FUSIONNENT (HDR -> ACES les blanchit au centre =
 // les « points blancs » de la photo), et DÉCENTRÉ (la chasse a poussé le pistil d'un côté).
-function shapeDaisy(_r,cal,nc){ const nPet=rndI(11,12), pts=[];
+function shapeDaisy(_r,cal,nc){ const nPet=11, pts=[];   // 11 pétales EXACTEMENT (vidéo Prévot, B152)
   for(let p=0;p<nPet;p++){ const aPet=2*Math.PI*p/nPet+rnd(-0.12,0.12);          // intervalles IRRÉGULIERS
     const R=rnd(0.88,1.12);                                                       // longueurs INÉGALES
     pts.push({x:Math.cos(aPet)*R,y:Math.sin(aPet)*R,comp:0}); }
@@ -410,8 +410,8 @@ const EFFECTS = {
   butterfly: { apex:90, heat:false, stars:34, starSize:2.3, dist2D:shapeButterfly, colors:[new THREE.Color(1.0,0.55,0.12), PURP] },   // « bombe 75 mm à effet papillon » (575525000, 90 m ✓, vidéo cat. gWYWk3yN4pQ) ; existe aussi en 100 mm (130 m). 34 points de forme ; couleurs à valider par l'user (B140)
   smiley:    { apex:95, heat:false, stars:22, starSize:2.4, dist2D:shapeSmiley, pureColor:true,
                colors:[new THREE.Color(1.0,0.45,0.08), GRN, RED] },   // « bombe 75 mm à effet sourire » (575547000, 95 m) — 15 cercle ORANGE + 2 yeux VERTS + 5 bouche ROUGE (user B128) ; texture neutre pour un vert franc
-  daisy:     { apex:116, cal:100, heat:false, stars:45, starSize:2.3, dist2D:shapeDaisy, pureColor:true, speedJit:0.09, speedMul:1.35,
-               trailing:{emitUntil:0.95, period:0.004, grain:2.3, gF:0.35, lifeMul:3.2, color:GOLD, spark:true, jit:1.2, jitGrow:2.5, rateFloor:0.55}, trailComps:[0],   // B151 (user) : pétales MOINS LOIN (speedMul 1.8->1.35), bandes PLUS GROSSES (grain 2.3) qui DURENT (lifeMul 3.2) et descendent QUASI JUSQU'AU CENTRE (le bout intérieur survit) ; fine base/large bout (jitGrow), pointes effilochées (rateFloor)
+  daisy:     { apex:116, cal:100, heat:false, stars:45, starSize:2.3, dist2D:shapeDaisy, pureColor:true, speedJit:0.09, speedMul:0.9, dragStar:0.42, compLife:{1:0.6},
+               trailing:{emitUntil:0.95, period:0.004, grain:2.3, gF:0.12, lifeMul:3.2, color:GOLD, spark:true, jit:8, rateFloor:0.55}, trailComps:[0],   // B152 (user) : pétale né COURT/FIN qui s'élargit PAR LA BASE (dispersion ∝ ÂGE des grains, jit 6.5), BOUT POINTU car la tête reste MOBILE (dragStar 0.42, speedMul 0.9) ; gF 0.12 = la bande reste ALIGNÉE sur son axe (vidéo) ; espacement ≈ 1-2 largeurs ; compLife : le CŒUR meurt EN PREMIER (×0.6)
                colorPairs:[[GOLD,new THREE.Color(2.2,0.31,0.40)],[GOLD,new THREE.Color(0.55,2.2,0.85)],[GOLD,new THREE.Color(1.35,0.75,2.2)]] },   // MARGUERITE (B150, dissection user) : ~30 billes de CŒUR HDR (rouge/vert/violet) qui FUSIONNENT au bloom et BLANCHISSENT au centre (ACES) — plus de « perles » séparées, c'est la SATURATION qui les fait
 
   // === MOTIFS 3D multi-couleurs ===
@@ -636,6 +636,8 @@ class Shell {
       // (ex pétales OR avec bande d'étincelles, cœur/perles = points nets sans traînée)
       const trOK=!this.cfg.trailComps || this.cfg.trailComps.indexOf(comp)>=0;
       const s=this._newStar(dir.dx*sp, dir.dy*sp, dir.dz*sp, comp, trOK ? this.cfg.trailing : false);
+      // compLife (B152, marguerite) : vie multipliée PAR GROUPE (ex le CŒUR rouge meurt EN PREMIER, ×0.6)
+      if (this.cfg.compLife && this.cfg.compLife[comp]) s.life*=this.cfg.compLife[comp];
       s._i=i; s._split=false; if (assorted) s.coreColor=assorted[i%assorted.length];
       if (this.cfg.crackleStars){ s.crackle=true; s.crackleAt=this.cfg.crackleStars.delay+Math.random()*this.cfg.crackleStars.jitter; }  // crépite après délai (œuf de dragon)
       this.data[i]=s;
