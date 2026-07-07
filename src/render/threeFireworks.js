@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B147';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B148';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -284,10 +284,18 @@ function shapeSmiley(_r,_c,nc){ const CE=Math.min(1,nc-1), CB=Math.min(2,nc-1), 
   pts.push({x:-0.35,y:0.32,comp:CE}); pts.push({x:0.35,y:0.32,comp:CE});                           //  2 = les yeux (couleur 1 = vert)
   for(let k=0;k<=4;k++){const a=(205+(335-205)*k/4)*Math.PI/180; pts.push({x:Math.cos(a)*0.55,y:Math.sin(a)*0.55,comp:CB});}   //  5 = la bouche (couleur 2 = rouge)
   return pts; }
-function shapeDaisy(_r,cal,nc){ const nPet=rndI(8,12), pts=[];
-  for(let p=0;p<nPet;p++){ const aPet=2*Math.PI*p/nPet+rnd(-0.07,0.07), ns=rndI(2,4);
-    for(let s=0;s<ns;s++){ const R=lerp(0.45,1.0, ns>1?s/(ns-1):0)*rnd(0.94,1.06);
-      pts.push({x:Math.cos(aPet)*R,y:Math.sin(aPet)*R,comp:p%nc}); } }
+// MARGUERITE (B148, photo user) : 11-12 PÉTALES ÉPAIS dorés (bandes granuleuses via traînées
+// spark des porteuses, PAS des lignes de points) qui NE PARTENT PAS du centre (vide sous ~35%),
+// + un CŒUR (comp 1 = couleur de la variante rouge/verte/violette) + ~20 PERLES BLANCHES (comp 2).
+function shapeDaisy(_r,cal,nc){ const nPet=rndI(10,12), pts=[];
+  for(let p=0;p<nPet;p++){ const aPet=2*Math.PI*p/nPet+rnd(-0.06,0.06);
+    for(let s=0;s<4;s++){ const R=lerp(0.38,1.0, s/3)*rnd(0.95,1.05);
+      pts.push({x:Math.cos(aPet)*R,y:Math.sin(aPet)*R,comp:0}); } }              // pétales = 4 porteuses étagées
+  const nCoeur=rndI(9,12), nPerles=rndI(18,22);
+  for(let k=0;k<nCoeur;k++){ const a=Math.random()*Math.PI*2, R=0.08+Math.random()*0.20;
+    pts.push({x:Math.cos(a)*R,y:Math.sin(a)*R,comp:Math.min(1,nc-1)}); }         // cœur diffus (couleur variante)
+  for(let k=0;k<nPerles;k++){ const a=Math.random()*Math.PI*2, R=0.05+Math.random()*0.25;
+    pts.push({x:Math.cos(a)*R,y:Math.sin(a)*R,comp:Math.min(2,nc-1)}); }         // perles BLANCHES nettes
   return pts; }
 // (shapeRing supprimé en B127 : plus aucune bombe « effet cercle » seule au catalogue — production 75mm arrêtée)
 
@@ -402,8 +410,9 @@ const EFFECTS = {
   butterfly: { apex:90, heat:false, stars:34, starSize:2.3, dist2D:shapeButterfly, colors:[new THREE.Color(1.0,0.55,0.12), PURP] },   // « bombe 75 mm à effet papillon » (575525000, 90 m ✓, vidéo cat. gWYWk3yN4pQ) ; existe aussi en 100 mm (130 m). 34 points de forme ; couleurs à valider par l'user (B140)
   smiley:    { apex:95, heat:false, stars:22, starSize:2.4, dist2D:shapeSmiley, pureColor:true,
                colors:[new THREE.Color(1.0,0.45,0.08), GRN, RED] },   // « bombe 75 mm à effet sourire » (575547000, 95 m) — 15 cercle ORANGE + 2 yeux VERTS + 5 bouche ROUGE (user B128) ; texture neutre pour un vert franc
-  daisy:     { apex:116, cal:100, heat:false, stars:48, starSize:2.3, dist2D:shapeDaisy, pureColor:true,
-               colorPairs:[[RED],[GRN],[PURP]] },   // MARGUERITE (B147, catalogue) : 8 réfs, toutes « bombe 100 mm marguerite <couleur> CYLINDRIQUE » 116 m — UNE couleur par bombe (rouge/verte/violette, tirée au sort par volée comme le pack assorti) ; variantes « multicolore pastel »/« tourbillon »/« et mosaïque » pour plus tard
+  daisy:     { apex:116, cal:100, heat:false, stars:85, starSize:2.3, dist2D:shapeDaisy, pureColor:true,
+               trailing:{emitUntil:0.9, period:0.006, grain:1.1, gF:0.3, lifeMul:2.5, color:GOLD, spark:true, jit:0.9}, trailComps:[0],   // les PÉTALES = bandes ÉPAISSES d'étincelles or (photo) ; cœur/perles SANS traînée
+               colorPairs:[[GOLD,RED,new THREE.Color(1.7,1.7,1.7)],[GOLD,GRN,new THREE.Color(1.7,1.7,1.7)],[GOLD,PURP,new THREE.Color(1.7,1.7,1.7)]] },   // MARGUERITE (B148, photo user + catalogue 8 réfs « 100 mm CYLINDRIQUE » 116 m) : pétales OR + CŒUR de la couleur de la variante (rouge/verte/violette au sort) + perles BLANC HDR
 
   // === MOTIFS 3D multi-couleurs ===
   atom:    { apex:100, heat:false, stars:60, starSize:2.2, lifeBase75:1.7, speedJit:0.08, dist:distAtom, colors:[CYAN,PINK,YEL] },
@@ -623,7 +632,10 @@ class Shell {
         // COUPE demi-demi : couleur selon le CÔTÉ de la direction finale (+ BAVURE ±0.06 à la couture)
         if (this._splitN) comp=(dir.dx*this._splitN[0]+dir.dy*this._splitN[1]+dir.dz*this._splitN[2]+(Math.random()-0.5)*0.12)>=0?0:1; }
       const sp=speed*(dir.spMul||1)*(1-jit+Math.random()*2*jit);
-      const s=this._newStar(dir.dx*sp, dir.dy*sp, dir.dz*sp, comp, this.cfg.trailing);
+      // trailComps (B148, marguerite) : la traînée seulement pour certains GROUPES de couleur
+      // (ex pétales OR avec bande d'étincelles, cœur/perles = points nets sans traînée)
+      const trOK=!this.cfg.trailComps || this.cfg.trailComps.indexOf(comp)>=0;
+      const s=this._newStar(dir.dx*sp, dir.dy*sp, dir.dz*sp, comp, trOK ? this.cfg.trailing : false);
       s._i=i; s._split=false; if (assorted) s.coreColor=assorted[i%assorted.length];
       if (this.cfg.crackleStars){ s.crackle=true; s.crackleAt=this.cfg.crackleStars.delay+Math.random()*this.cfg.crackleStars.jitter; }  // crépite après délai (œuf de dragon)
       this.data[i]=s;
