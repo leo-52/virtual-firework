@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B143';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B144';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -436,9 +436,9 @@ const EFFECTS = {
              dist:distMosaic, behave:behaveMosaic, trailing:{emitUntil:0.9, period:0.012, grain:1.2, gF:0.45, lifeMul:1.9, color:SILVER} },  // ASSORTIE : 2 rose, 2 citron, 2 aqua, 1 aléatoire
 
   // === SOL / SPÉCIAUX ===
-  mine:   { color:RED, heat:false, pureColor:true, starSize:1.8, stars:70, gravStar:1.0, dragStar:0.21,   // POT À FEU (B143, définition user) : « bombe 75 mm pot à feu ROUGE » (575477000, 50 m -> pointe ~45 m). PAS d'éclatement : le tube PROPULSE des COMÈTES pendant ~1 s
-            trailing:{period:0.012, grain:0.9, gF:0.5, lifeMul:1.1, color:RED},                            // chaque comète brûle = traînée rouge dès la sortie du tube
-            gerbe:{ dur:1.0, cometRate:55, cone:0.11, speedMul:2.0 } },                                     // ~55 comètes en 1 s, sortie 75 mm de diamètre, cône ~6° (« grossit un peu »), pointe au top via vies bord<axe. Variante « cli. rouge » (575488000) pour plus tard
+  mine:   { color:RED, heat:false, pureColor:true, starSize:1.8, stars:55, gravStar:1.0, dragStar:0.21,   // POT À FEU (B144, définition user) : « bombe 75 mm pot à feu ROUGE » (575477000). EXPULSION INSTANTANÉE (bouchon de micro-billes), PAS d'éclatement, beaucoup moins haut que le B143
+            trailing:{period:0.012, grain:0.9, gF:0.5, lifeMul:1.1, color:RED},                            // chaque bille brûle = traînée rouge dès la sortie du tube
+            gerbe:{ dur:0.1, cometRate:420, cone:0.11, speedMul:2.0 } },                                    // ~42 billes expulsées EN 0,1 s ; vitesses très inégales (pow 1.6) -> colonne étirée + pointe ~25 m ; sortie 75 mm. Variante « cli. rouge » (575488000) pour plus tard
   salute: { apex:90, heat:false, stars:14, starSize:2.0, lifeBase75:0.22, color:SILVER, dist:distSalute, flashBig:true },
 };
 
@@ -477,10 +477,10 @@ class Shell {
     this.nMax = (this.cfg.nMax || this.cfg.stars) + (this.cfg.core ? this.cfg.core.stars : 0); this.nAlive = 0;
     this.data = []; this.flash=null; this.hasMuzzle=false;
 
-    if (this.cfg.gerbe){               // POT À FEU : pas de montée ni burst, gerbe au sol
-      // durée ALÉATOIRE par tir ±15% (UE validé : 1.7-2.3 s pour dur=2) + accumulateurs étoiles/halo
-      this.phase='gerbe'; this.gerbeLeft=this.cfg.gerbe.dur*(0.85+Math.random()*0.30);
-      this.emitAcc=0; this.starAcc=0; this.glowAcc=0; this.head=null;
+    if (this.cfg.gerbe){               // POT À FEU : pas de montée ni burst, EXPULSION au sol
+      this.phase='gerbe'; this.gerbeLeft=this.cfg.gerbe.dur;
+      this.emitAcc=0; this.glowAcc=0; this.head=null;
+      this.muzzleScale=this.cal/75; this.gerbeFlashDone=false;   // la CHASSE fait un vrai flash de gueule (B144)
     } else {
       this.phase='rise';
       // SORTIE DU TUBE (réf vidéo tir 150mm) : JET vertical -> CHAMPIGNON jaune-blanc/orange à la
@@ -660,15 +660,15 @@ class Shell {
     if (this.head){ scene.remove(this.head); this.headGeo.dispose(); this.headMat.dispose(); this.head=null; }
   }
 
-  // COMÈTE de pot à feu (B143, définition user) : part du TUBE (base = 75 mm de diamètre pile),
-  // vitesses quasi égales, léger cône. POINTE AU SOMMET : les comètes du BORD brûlent moins
-  // longtemps (elles meurent à mi-hauteur = le petit ventre de l'enveloppe), seules celles de
-  // l'AXE montent jusqu'en haut -> l'enveloppe se referme en pointe (~45 m, catalogue 50).
+  // MICRO-BILLE de pot à feu (B144, définition user) : expulsée du TUBE (base = 75 mm de
+  // diamètre pile) avec une VITESSE TIRÉE D'UNE DISTRIBUTION BIAISÉE VERS LE BAS (pow 1.6) :
+  // beaucoup de lentes (le corps de la colonne), très peu de rapides -> la POINTE au sommet.
+  // Vie 1-1,5 s (user), léger cône (« ça grossit un peu en montant »).
   _emitGerbeComet(){
     const g=this.cfg.gerbe, br=this.cfg.burstRadius;
-    const A0=Math.random()*Math.PI*2, cf=Math.random(), cone=cf*g.cone, sc=Math.sin(cone), cc=Math.cos(cone);
-    const sp=br*(1.62+Math.random()*0.16)*g.speedMul;
-    const life=(1.5+Math.random()*0.15)*(1-0.55*cf);   // bord (cf~1) -> vie ~×0.45 -> meurt bas
+    const A0=Math.random()*Math.PI*2, cone=Math.random()*g.cone, sc=Math.sin(cone), cc=Math.cos(cone);
+    const sp=br*(0.35+0.80*Math.pow(Math.random(),1.6))*g.speedMul;
+    const life=1.0+Math.random()*0.5;
     this.points.visible=true;
     this.addStar(this.ox+(Math.random()-0.5)*0.075, 1+Math.random()*0.5, this.oz+(Math.random()-0.5)*0.075,
       Math.cos(A0)*sc*sp, cc*sp, Math.sin(A0)*sc*sp, life, 0, this.cfg.trailing);
@@ -733,21 +733,25 @@ class Shell {
     if (this.dead) return;
     this.age += dt;
 
-    // === POT À FEU (B143, définition user) : PAS de charge qui éclate en l'air — le tube
-    // PROPULSE des COMÈTES qui brûlent dès la sortie, pendant ~1 s. Sortie = 75 mm de
-    // diamètre, ça s'élargit un peu en montant, et l'enveloppe REFORME UNE POINTE au sommet.
+    // === POT À FEU (B144, définition user) : l'effet est INSTANTANÉ — « comme un bouchon
+    // composé de micro-billes qui est expulsé » : UNE chasse, tout part en ~0,1 s. C'est la
+    // DISPERSION DES VITESSES qui étire la colonne (les rares rapides dessinent la POINTE).
+    // Les étoiles brûlent 1-1,5 s. Sortie = 75 mm de diamètre, léger élargissement en montant.
     if (this.phase==='gerbe'){
       this.gerbeLeft -= dt;
+      if (!this.gerbeFlashDone){ this.gerbeFlashDone=true;            // la CHASSE : flash + flammes brèves à la gueule
+        for (let k=0;k<2;k++) this._emitMuzzleFlare();
+        for (let k=0;k<10;k++) this._emitMuzzleFlame(); }
       if (this.gerbeLeft > 0){
-        this.emitAcc += this.cfg.gerbe.cometRate*dt;                  // COMÈTES (la matière de l'effet)
-        while (this.emitAcc>=1){ this.emitAcc-=1; this._emitGerbeComet(); }
-        this.glowAcc += 14*dt;                                        // le feu ÉCLAIRE LE SOL : halo doux au pied du tube
+        this.emitAcc += this.cfg.gerbe.cometRate*dt;                  // tout le « bouchon » part pendant dur=0,1 s
+        while (this.emitAcc>=1){ this.emitAcc-=1; this._emitGerbeComet(); } }
+      if (this.age < 0.35){                                           // le départ ÉCLAIRE le sol un bref instant
+        this.glowAcc += 14*dt;
         while (this.glowAcc>=1){ this.glowAcc-=1; const c=this.cfg.color;
           spawnPuff(this.ox+(Math.random()-0.5)*2, 1.2, this.oz+(Math.random()-0.5)*2,
-            0, 1.5, 0, 0.22+Math.random()*0.10, 5, 9, c.r*0.5,c.g*0.5,c.b*0.5, 0.16, 1.0, 2.0); }
-      }
-      // PAS de return : la boucle d'étoiles plus bas anime les comètes.
-      // La mort est gérée en bas : émission FINIE + plus aucune comète vivante.
+            0, 1.5, 0, 0.22+Math.random()*0.10, 5, 9, c.r*0.5,c.g*0.5,c.b*0.5, 0.16, 1.0, 2.0); } }
+      // PAS de return : la boucle d'étoiles plus bas anime les billes.
+      // La mort est gérée en bas : expulsion FINIE + plus aucune bille vivante.
     }
 
     if (this.hasMuzzle && this.muAge < this.muSmokeWin + 0.05){
