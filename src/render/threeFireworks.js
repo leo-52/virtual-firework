@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B148';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B149';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -284,13 +284,13 @@ function shapeSmiley(_r,_c,nc){ const CE=Math.min(1,nc-1), CB=Math.min(2,nc-1), 
   pts.push({x:-0.35,y:0.32,comp:CE}); pts.push({x:0.35,y:0.32,comp:CE});                           //  2 = les yeux (couleur 1 = vert)
   for(let k=0;k<=4;k++){const a=(205+(335-205)*k/4)*Math.PI/180; pts.push({x:Math.cos(a)*0.55,y:Math.sin(a)*0.55,comp:CB});}   //  5 = la bouche (couleur 2 = rouge)
   return pts; }
-// MARGUERITE (B148, photo user) : 11-12 PÉTALES ÉPAIS dorés (bandes granuleuses via traînées
-// spark des porteuses, PAS des lignes de points) qui NE PARTENT PAS du centre (vide sous ~35%),
-// + un CŒUR (comp 1 = couleur de la variante rouge/verte/violette) + ~20 PERLES BLANCHES (comp 2).
-function shapeDaisy(_r,cal,nc){ const nPet=rndI(10,12), pts=[];
-  for(let p=0;p<nPet;p++){ const aPet=2*Math.PI*p/nPet+rnd(-0.06,0.06);
-    for(let s=0;s<4;s++){ const R=lerp(0.38,1.0, s/3)*rnd(0.95,1.05);
-      pts.push({x:Math.cos(aPet)*R,y:Math.sin(aPet)*R,comp:0}); } }              // pétales = 4 porteuses étagées
+// MARGUERITE (B149, photos user comparées) : 11-12 pétales = UNE GROSSE PORTEUSE chacun (pas 4 !)
+// dont la traînée dense et COURTE fait la bande grasse — le bout intérieur meurt vite -> le
+// pétale se DÉTACHE du centre. + CŒUR (comp 1 = couleur variante) + ~20 PERLES blanches (comp 2).
+function shapeDaisy(_r,cal,nc){ const nPet=rndI(11,12), pts=[];
+  for(let p=0;p<nPet;p++){ const aPet=2*Math.PI*p/nPet+rnd(-0.05,0.05);
+    const R=rnd(0.96,1.04);
+    pts.push({x:Math.cos(aPet)*R,y:Math.sin(aPet)*R,comp:0}); }                  // 1 porteuse par pétale
   const nCoeur=rndI(9,12), nPerles=rndI(18,22);
   for(let k=0;k<nCoeur;k++){ const a=Math.random()*Math.PI*2, R=0.08+Math.random()*0.20;
     pts.push({x:Math.cos(a)*R,y:Math.sin(a)*R,comp:Math.min(1,nc-1)}); }         // cœur diffus (couleur variante)
@@ -410,9 +410,9 @@ const EFFECTS = {
   butterfly: { apex:90, heat:false, stars:34, starSize:2.3, dist2D:shapeButterfly, colors:[new THREE.Color(1.0,0.55,0.12), PURP] },   // « bombe 75 mm à effet papillon » (575525000, 90 m ✓, vidéo cat. gWYWk3yN4pQ) ; existe aussi en 100 mm (130 m). 34 points de forme ; couleurs à valider par l'user (B140)
   smiley:    { apex:95, heat:false, stars:22, starSize:2.4, dist2D:shapeSmiley, pureColor:true,
                colors:[new THREE.Color(1.0,0.45,0.08), GRN, RED] },   // « bombe 75 mm à effet sourire » (575547000, 95 m) — 15 cercle ORANGE + 2 yeux VERTS + 5 bouche ROUGE (user B128) ; texture neutre pour un vert franc
-  daisy:     { apex:116, cal:100, heat:false, stars:85, starSize:2.3, dist2D:shapeDaisy, pureColor:true,
-               trailing:{emitUntil:0.9, period:0.006, grain:1.1, gF:0.3, lifeMul:2.5, color:GOLD, spark:true, jit:0.9}, trailComps:[0],   // les PÉTALES = bandes ÉPAISSES d'étincelles or (photo) ; cœur/perles SANS traînée
-               colorPairs:[[GOLD,RED,new THREE.Color(1.7,1.7,1.7)],[GOLD,GRN,new THREE.Color(1.7,1.7,1.7)],[GOLD,PURP,new THREE.Color(1.7,1.7,1.7)]] },   // MARGUERITE (B148, photo user + catalogue 8 réfs « 100 mm CYLINDRIQUE » 116 m) : pétales OR + CŒUR de la couleur de la variante (rouge/verte/violette au sort) + perles BLANC HDR
+  daisy:     { apex:116, cal:100, heat:false, stars:45, starSize:2.3, dist2D:shapeDaisy, pureColor:true,
+               trailing:{emitUntil:0.95, period:0.004, grain:1.6, gF:0.35, lifeMul:0.9, color:GOLD, spark:true, jit:1.5}, trailComps:[0],   // B149 : traînée COURTE (lifeMul 0.9 -> le bout intérieur meurt vite = pétale DÉTACHÉ du centre), DENSE (period 0.004) et LARGE (grain 1.6, jit 1.5) = bande grasse ; cœur/perles SANS traînée
+               colorPairs:[[GOLD,RED,new THREE.Color(1.15,1.15,1.15)],[GOLD,GRN,new THREE.Color(1.15,1.15,1.15)],[GOLD,PURP,new THREE.Color(1.15,1.15,1.15)]] },   // MARGUERITE (B149, photos user, catalogue « 100 mm CYLINDRIQUE » 116 m) : 11-12 pétales OR gras + CŒUR variante (rouge/verte/violette) + perles blanches SOBRES (1.15, plus le blanc cramé 1.7 du B148)
 
   // === MOTIFS 3D multi-couleurs ===
   atom:    { apex:100, heat:false, stars:60, starSize:2.2, lifeBase75:1.7, speedJit:0.08, dist:distAtom, colors:[CYAN,PINK,YEL] },
@@ -857,7 +857,7 @@ class Shell {
       // SHRINK (B88, palme multicolore) : l'étoile RÉTRÉCIT progressivement -> disparaît de plus en plus petite
       if (this.cfg.shrink) this.size[i]=this.cfg.starSize*STAR_SCALE*(1-A*0.9);
 
-      if (tr && A<tr.emitUntil && !d.popOnly && d.age<(d.crackleAt||1e9)){
+      if (tr && d.trailing && A<tr.emitUntil && !d.popOnly && d.age<(d.crackleAt||1e9)){   // d.trailing (B149) : le flag PAR ÉTOILE compte enfin — nécessaire dès qu'un effet mélange étoiles avec/sans traînée (marguerite : pétales oui, cœur/perles non)
         // ÉTINCELLES : débit ∝ VITESSE (B89) — grains/mètre constants. Sinon, quand l'étoile ralentit,
         // elle empile ses grains sur place et la traînée GROSSIT (plainte user) ; là le diamètre reste constant.
         let emitDt=dt;
