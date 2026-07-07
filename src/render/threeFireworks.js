@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B150';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B151';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -410,8 +410,8 @@ const EFFECTS = {
   butterfly: { apex:90, heat:false, stars:34, starSize:2.3, dist2D:shapeButterfly, colors:[new THREE.Color(1.0,0.55,0.12), PURP] },   // « bombe 75 mm à effet papillon » (575525000, 90 m ✓, vidéo cat. gWYWk3yN4pQ) ; existe aussi en 100 mm (130 m). 34 points de forme ; couleurs à valider par l'user (B140)
   smiley:    { apex:95, heat:false, stars:22, starSize:2.4, dist2D:shapeSmiley, pureColor:true,
                colors:[new THREE.Color(1.0,0.45,0.08), GRN, RED] },   // « bombe 75 mm à effet sourire » (575547000, 95 m) — 15 cercle ORANGE + 2 yeux VERTS + 5 bouche ROUGE (user B128) ; texture neutre pour un vert franc
-  daisy:     { apex:116, cal:100, heat:false, stars:45, starSize:2.3, dist2D:shapeDaisy, pureColor:true, speedJit:0.09,
-               trailing:{emitUntil:0.95, period:0.004, grain:1.9, gF:0.35, lifeMul:2.0, color:GOLD, spark:true, jit:1.2, jitGrow:2.5, rateFloor:0.55}, trailComps:[0],   // B150 : bande LONGUE (lifeMul 2 -> ~35%→100% du rayon), fine à la BASE et LARGE AU BOUT (jitGrow quand la tête ralentit), émission qui CONTINUE au bout (rateFloor 0.55 = pointes rugueuses/effilochées), laine d'or (grain 1.9)
+  daisy:     { apex:116, cal:100, heat:false, stars:45, starSize:2.3, dist2D:shapeDaisy, pureColor:true, speedJit:0.09, speedMul:1.35,
+               trailing:{emitUntil:0.95, period:0.004, grain:2.3, gF:0.35, lifeMul:3.2, color:GOLD, spark:true, jit:1.2, jitGrow:2.5, rateFloor:0.55}, trailComps:[0],   // B151 (user) : pétales MOINS LOIN (speedMul 1.8->1.35), bandes PLUS GROSSES (grain 2.3) qui DURENT (lifeMul 3.2) et descendent QUASI JUSQU'AU CENTRE (le bout intérieur survit) ; fine base/large bout (jitGrow), pointes effilochées (rateFloor)
                colorPairs:[[GOLD,new THREE.Color(2.2,0.31,0.40)],[GOLD,new THREE.Color(0.55,2.2,0.85)],[GOLD,new THREE.Color(1.35,0.75,2.2)]] },   // MARGUERITE (B150, dissection user) : ~30 billes de CŒUR HDR (rouge/vert/violet) qui FUSIONNENT au bloom et BLANCHISSENT au centre (ACES) — plus de « perles » séparées, c'est la SATURATION qui les fait
 
   // === MOTIFS 3D multi-couleurs ===
