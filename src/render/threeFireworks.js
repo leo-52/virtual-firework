@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B144';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B145';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -436,9 +436,9 @@ const EFFECTS = {
              dist:distMosaic, behave:behaveMosaic, trailing:{emitUntil:0.9, period:0.012, grain:1.2, gF:0.45, lifeMul:1.9, color:SILVER} },  // ASSORTIE : 2 rose, 2 citron, 2 aqua, 1 aléatoire
 
   // === SOL / SPÉCIAUX ===
-  mine:   { color:RED, heat:false, pureColor:true, starSize:1.8, stars:55, gravStar:1.0, dragStar:0.21,   // POT À FEU (B144, définition user) : « bombe 75 mm pot à feu ROUGE » (575477000). EXPULSION INSTANTANÉE (bouchon de micro-billes), PAS d'éclatement, beaucoup moins haut que le B143
-            trailing:{period:0.012, grain:0.9, gF:0.5, lifeMul:1.1, color:RED},                            // chaque bille brûle = traînée rouge dès la sortie du tube
-            gerbe:{ dur:0.1, cometRate:420, cone:0.11, speedMul:2.0 } },                                    // ~42 billes expulsées EN 0,1 s ; vitesses très inégales (pow 1.6) -> colonne étirée + pointe ~25 m ; sortie 75 mm. Variante « cli. rouge » (575488000) pour plus tard
+  mine:   { color:RED, heat:false, pureColor:true, starSize:1.8, stars:55, gravStar:1.0, dragStar:0.21, shrink:true,   // POT À FEU (B145, définition user) : « bombe 75 mm pot à feu ROUGE » (575477000). EXPULSION INSTANTANÉE (bouchon de micro-billes) ; chaque bille = COMÈTE qui SE CONSUME (shrink) et s'éteint
+            trailing:{period:0.009, grain:0.8, gF:0.5, lifeMul:1.1, color:RED, spark:true, jit:0.5},        // la décomposition de la bille = ÉTINCELLES rouges (physique de la comète, user B145)
+            gerbe:{ dur:0.1, cometRate:420, cone:0.11, speedMul:2.0 } },                                    // ~42 billes en 0,1 s ; vitesses 0.72-1.30 (toutes conséquentes -> BAS DE COLONNE VIDE) -> pointe ~30 m. Variante « cli. rouge » (575488000) pour plus tard
   salute: { apex:90, heat:false, stars:14, starSize:2.0, lifeBase75:0.22, color:SILVER, dist:distSalute, flashBig:true },
 };
 
@@ -660,14 +660,16 @@ class Shell {
     if (this.head){ scene.remove(this.head); this.headGeo.dispose(); this.headMat.dispose(); this.head=null; }
   }
 
-  // MICRO-BILLE de pot à feu (B144, définition user) : expulsée du TUBE (base = 75 mm de
-  // diamètre pile) avec une VITESSE TIRÉE D'UNE DISTRIBUTION BIAISÉE VERS LE BAS (pow 1.6) :
-  // beaucoup de lentes (le corps de la colonne), très peu de rapides -> la POINTE au sommet.
-  // Vie 1-1,5 s (user), léger cône (« ça grossit un peu en montant »).
+  // MICRO-BILLE de pot à feu (B145, définition user) : expulsée du TUBE (base = 75 mm) à une
+  // vitesse ASSEZ CONSÉQUENTE même pour les plus lentes -> le BAS DE LA COLONNE EST VIDE
+  // (« si l'effet fait 10 m et le tube 50 cm, entre 50 cm et 3 m il n'y a quasi rien »).
+  // La dispersion (biaisée bas, pow 1.5) étire le corps sur ~30-100% de la hauteur, les rares
+  // rapides = la POINTE. Vie 1-1,5 s ; la bille est une COMÈTE : elle se CONSUME (shrink),
+  // laisse des ÉTINCELLES (spark) puis s'éteint.
   _emitGerbeComet(){
     const g=this.cfg.gerbe, br=this.cfg.burstRadius;
     const A0=Math.random()*Math.PI*2, cone=Math.random()*g.cone, sc=Math.sin(cone), cc=Math.cos(cone);
-    const sp=br*(0.35+0.80*Math.pow(Math.random(),1.6))*g.speedMul;
+    const sp=br*(0.72+0.58*Math.pow(Math.random(),1.5))*g.speedMul;
     const life=1.0+Math.random()*0.5;
     this.points.visible=true;
     this.addStar(this.ox+(Math.random()-0.5)*0.075, 1+Math.random()*0.5, this.oz+(Math.random()-0.5)*0.075,
