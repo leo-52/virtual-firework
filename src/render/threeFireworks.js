@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B152';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B153';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -292,10 +292,10 @@ function shapeDaisy(_r,cal,nc){ const nPet=11, pts=[];   // 11 pétales EXACTEME
   for(let p=0;p<nPet;p++){ const aPet=2*Math.PI*p/nPet+rnd(-0.12,0.12);          // intervalles IRRÉGULIERS
     const R=rnd(0.88,1.12);                                                       // longueurs INÉGALES
     pts.push({x:Math.cos(aPet)*R,y:Math.sin(aPet)*R,comp:0}); }
-  const nCoeur=rndI(28,32), offA=Math.random()*Math.PI*2, offR=0.10+Math.random()*0.10;
+  const nCoeur=rndI(28,32), offA=Math.random()*Math.PI*2, offR=0.07+Math.random()*0.07;
   const offX=Math.cos(offA)*offR, offY=Math.sin(offA)*offR;                       // pistil DÉCENTRÉ (par tir)
-  for(let k=0;k<nCoeur;k++){ const a=Math.random()*Math.PI*2, R=Math.sqrt(Math.random())*0.24;
-    pts.push({x:offX+Math.cos(a)*R,y:offY+Math.sin(a)*R,comp:Math.min(1,nc-1)}); }
+  for(let k=0;k<nCoeur;k++){ const a=Math.random()*Math.PI*2, R=Math.sqrt(Math.random())*0.17;
+    pts.push({x:offX+Math.cos(a)*R,y:offY+Math.sin(a)*R,comp:Math.min(1,nc-1)}); }   // cœur RESSERRÉ (B153 : ~25-30% du rayon, les pétales dominent)
   return pts; }
 // (shapeRing supprimé en B127 : plus aucune bombe « effet cercle » seule au catalogue — production 75mm arrêtée)
 
@@ -410,9 +410,9 @@ const EFFECTS = {
   butterfly: { apex:90, heat:false, stars:34, starSize:2.3, dist2D:shapeButterfly, colors:[new THREE.Color(1.0,0.55,0.12), PURP] },   // « bombe 75 mm à effet papillon » (575525000, 90 m ✓, vidéo cat. gWYWk3yN4pQ) ; existe aussi en 100 mm (130 m). 34 points de forme ; couleurs à valider par l'user (B140)
   smiley:    { apex:95, heat:false, stars:22, starSize:2.4, dist2D:shapeSmiley, pureColor:true,
                colors:[new THREE.Color(1.0,0.45,0.08), GRN, RED] },   // « bombe 75 mm à effet sourire » (575547000, 95 m) — 15 cercle ORANGE + 2 yeux VERTS + 5 bouche ROUGE (user B128) ; texture neutre pour un vert franc
-  daisy:     { apex:116, cal:100, heat:false, stars:45, starSize:2.3, dist2D:shapeDaisy, pureColor:true, speedJit:0.09, speedMul:0.9, dragStar:0.42, compLife:{1:0.6},
-               trailing:{emitUntil:0.95, period:0.004, grain:2.3, gF:0.12, lifeMul:3.2, color:GOLD, spark:true, jit:8, rateFloor:0.55}, trailComps:[0],   // B152 (user) : pétale né COURT/FIN qui s'élargit PAR LA BASE (dispersion ∝ ÂGE des grains, jit 6.5), BOUT POINTU car la tête reste MOBILE (dragStar 0.42, speedMul 0.9) ; gF 0.12 = la bande reste ALIGNÉE sur son axe (vidéo) ; espacement ≈ 1-2 largeurs ; compLife : le CŒUR meurt EN PREMIER (×0.6)
-               colorPairs:[[GOLD,new THREE.Color(2.2,0.31,0.40)],[GOLD,new THREE.Color(0.55,2.2,0.85)],[GOLD,new THREE.Color(1.35,0.75,2.2)]] },   // MARGUERITE (B150, dissection user) : ~30 billes de CŒUR HDR (rouge/vert/violet) qui FUSIONNENT au bloom et BLANCHISSENT au centre (ACES) — plus de « perles » séparées, c'est la SATURATION qui les fait
+  daisy:     { apex:116, cal:100, heat:false, stars:45, starSize:2.3, dist2D:shapeDaisy, pureColor:true, speedJit:0.09, speedMul:0.9, dragStar:0.42, gravStar:0.10, lifeBase75:1.74, compLife:{1:0.6},
+               trailing:{emitUntil:0.95, period:0.0018, grain:2.8, gF:0.12, lifeMul:3.2, color:new THREE.Color(1.15,0.66,0.24), spark:true, jit:3, rateFloor:0.55}, trailComps:[0],   // B153 (user) : QUASI PAS DE RETOMBÉE (gravStar 0.15 — 2,5 s c'est trop court pour tomber), bande = MATIÈRE DENSE (period 0.0018, grains 2.8 qui fusionnent) aux bords NETS (jit 3, fini les pertes éparses), couleur CHAUDE champagne ; base large/bout pointu conservés (âge des grains) ; cœur meurt en premier (×0.6)
+               colorPairs:[[GOLD,new THREE.Color(1.7,0.24,0.31)],[GOLD,new THREE.Color(0.42,1.7,0.66)],[GOLD,new THREE.Color(1.05,0.58,1.7)]] },   // MARGUERITE : ~30 billes de CŒUR compactes (HDR modéré 1.7 = billes NETTES, plus le halo écrasant), rouge/verte/violette au sort ; vie porteuses 2,5 s (1.74×1.44)
 
   // === MOTIFS 3D multi-couleurs ===
   atom:    { apex:100, heat:false, stars:60, starSize:2.2, lifeBase75:1.7, speedJit:0.08, dist:distAtom, colors:[CYAN,PINK,YEL] },
