@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B146';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B147';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -402,7 +402,8 @@ const EFFECTS = {
   butterfly: { apex:90, heat:false, stars:34, starSize:2.3, dist2D:shapeButterfly, colors:[new THREE.Color(1.0,0.55,0.12), PURP] },   // « bombe 75 mm à effet papillon » (575525000, 90 m ✓, vidéo cat. gWYWk3yN4pQ) ; existe aussi en 100 mm (130 m). 34 points de forme ; couleurs à valider par l'user (B140)
   smiley:    { apex:95, heat:false, stars:22, starSize:2.4, dist2D:shapeSmiley, pureColor:true,
                colors:[new THREE.Color(1.0,0.45,0.08), GRN, RED] },   // « bombe 75 mm à effet sourire » (575547000, 95 m) — 15 cercle ORANGE + 2 yeux VERTS + 5 bouche ROUGE (user B128) ; texture neutre pour un vert franc
-  daisy:     { apex:95, heat:false, stars:64, starSize:2.3, dist2D:shapeDaisy, colors:[PINK,YEL,CYAN,GRN] },
+  daisy:     { apex:116, cal:100, heat:false, stars:48, starSize:2.3, dist2D:shapeDaisy, pureColor:true,
+               colorPairs:[[RED],[GRN],[PURP]] },   // MARGUERITE (B147, catalogue) : 8 réfs, toutes « bombe 100 mm marguerite <couleur> CYLINDRIQUE » 116 m — UNE couleur par bombe (rouge/verte/violette, tirée au sort par volée comme le pack assorti) ; variantes « multicolore pastel »/« tourbillon »/« et mosaïque » pour plus tard
 
   // === MOTIFS 3D multi-couleurs ===
   atom:    { apex:100, heat:false, stars:60, starSize:2.2, lifeBase75:1.7, speedJit:0.08, dist:distAtom, colors:[CYAN,PINK,YEL] },
