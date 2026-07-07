@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B142';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B143';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -436,9 +436,9 @@ const EFFECTS = {
              dist:distMosaic, behave:behaveMosaic, trailing:{emitUntil:0.9, period:0.012, grain:1.2, gF:0.45, lifeMul:1.9, color:SILVER} },  // ASSORTIE : 2 rose, 2 citron, 2 aqua, 1 aléatoire
 
   // === SOL / SPÉCIAUX ===
-  mine:   { color:RED, heat:false, pureColor:true, starSize:1.4, stars:30, gravStar:1.0, dragStar:0.21,   // POT À FEU (B141-142, catalogue) : « bombe 75 mm pot à feu ROUGE » (575477000, 50 m -> pic ~45 m). dragStar 0.21×PUNCH=0.42 = même frein que les étincelles (les étoiles montent au sommet du V)
-            trailing:{period:0.016, grain:0.8, gF:0.5, lifeMul:0.8, color:RED},                            // traînée légère pour la moitié des petites étoiles (UE)
-            gerbe:{ dur:2.0, rate:420, cone:0.16, speedMul:2.0, grain:1.1, starRate:10 } },                // B142 = réglage UE validé : 420 étincelles/s, cône ~9°, durée ±15%, ~20 petites étoiles/tir. Variante « cli. rouge » (575488000) pour plus tard
+  mine:   { color:RED, heat:false, pureColor:true, starSize:1.8, stars:70, gravStar:1.0, dragStar:0.21,   // POT À FEU (B143, définition user) : « bombe 75 mm pot à feu ROUGE » (575477000, 50 m -> pointe ~45 m). PAS d'éclatement : le tube PROPULSE des COMÈTES pendant ~1 s
+            trailing:{period:0.012, grain:0.9, gF:0.5, lifeMul:1.1, color:RED},                            // chaque comète brûle = traînée rouge dès la sortie du tube
+            gerbe:{ dur:1.0, cometRate:55, cone:0.11, speedMul:2.0 } },                                     // ~55 comètes en 1 s, sortie 75 mm de diamètre, cône ~6° (« grossit un peu »), pointe au top via vies bord<axe. Variante « cli. rouge » (575488000) pour plus tard
   salute: { apex:90, heat:false, stars:14, starSize:2.0, lifeBase75:0.22, color:SILVER, dist:distSalute, flashBig:true },
 };
 
@@ -660,24 +660,18 @@ class Shell {
     if (this.head){ scene.remove(this.head); this.headGeo.dispose(); this.headMat.dispose(); this.head=null; }
   }
 
-  _emitGerbe(){
-    const g=this.cfg.gerbe, br=this.cfg.burstRadius, c=this.cfg.color;
-    const A0=Math.random()*Math.PI*2, cone=Math.random()*g.cone, sc=Math.sin(cone), cc=Math.cos(cone);
-    const sp=br*(0.45+Math.random()*1.40)*g.speedMul;
-    const vx=Math.cos(A0)*sc*sp, vy=cc*sp, vz=Math.sin(A0)*sc*sp;
-    spawnTrail(this.ox+(Math.random()-0.5)*2, 1+Math.random()*0.5, this.oz+(Math.random()-0.5)*2,
-      c.r,c.g,c.b, 1.1*g.grain, 1.0, 1.5+Math.random()*2.5, vx*4, vy*4, vz*4);
-  }
-  // PETITES ÉTOILES structurantes de la gerbe (UE validé, B142) : cône plus SERRÉ (×0.6), plus
-  // RAPIDES (×1.05-1.75 -> elles montent jusqu'au sommet du V), vie 0.9-1.5 s, la moitié avec traînée.
-  _emitGerbeStar(){
+  // COMÈTE de pot à feu (B143, définition user) : part du TUBE (base = 75 mm de diamètre pile),
+  // vitesses quasi égales, léger cône. POINTE AU SOMMET : les comètes du BORD brûlent moins
+  // longtemps (elles meurent à mi-hauteur = le petit ventre de l'enveloppe), seules celles de
+  // l'AXE montent jusqu'en haut -> l'enveloppe se referme en pointe (~45 m, catalogue 50).
+  _emitGerbeComet(){
     const g=this.cfg.gerbe, br=this.cfg.burstRadius;
-    const A0=Math.random()*Math.PI*2, cone=Math.random()*g.cone*0.6, sc=Math.sin(cone), cc=Math.cos(cone);
-    const sp=br*(1.05+Math.random()*0.70)*g.speedMul;
+    const A0=Math.random()*Math.PI*2, cf=Math.random(), cone=cf*g.cone, sc=Math.sin(cone), cc=Math.cos(cone);
+    const sp=br*(1.62+Math.random()*0.16)*g.speedMul;
+    const life=(1.5+Math.random()*0.15)*(1-0.55*cf);   // bord (cf~1) -> vie ~×0.45 -> meurt bas
     this.points.visible=true;
-    this.addStar(this.ox+(Math.random()-0.5)*1.5, 1+Math.random(), this.oz+(Math.random()-0.5)*1.5,
-      Math.cos(A0)*sc*sp, cc*sp, Math.sin(A0)*sc*sp,
-      0.9+Math.random()*0.6, 0, Math.random()<0.5 ? this.cfg.trailing : false);
+    this.addStar(this.ox+(Math.random()-0.5)*0.075, 1+Math.random()*0.5, this.oz+(Math.random()-0.5)*0.075,
+      Math.cos(A0)*sc*sp, cc*sp, Math.sin(A0)*sc*sp, life, 0, this.cfg.trailing);
   }
 
   // SORTIE DU TUBE — 3 composantes (échelle ∝ calibre via muzzleScale) :
@@ -739,21 +733,21 @@ class Shell {
     if (this.dead) return;
     this.age += dt;
 
-    // === POT À FEU : gerbe au sol (B142 = portage du réglage UE validé avec l'user) ===
+    // === POT À FEU (B143, définition user) : PAS de charge qui éclate en l'air — le tube
+    // PROPULSE des COMÈTES qui brûlent dès la sortie, pendant ~1 s. Sortie = 75 mm de
+    // diamètre, ça s'élargit un peu en montant, et l'enveloppe REFORME UNE POINTE au sommet.
     if (this.phase==='gerbe'){
       this.gerbeLeft -= dt;
       if (this.gerbeLeft > 0){
-        this.emitAcc += this.cfg.gerbe.rate*dt;                       // ÉTINCELLES (la matière du V)
-        while (this.emitAcc>=1){ this.emitAcc-=1; this._emitGerbe(); }
-        this.starAcc += (this.cfg.gerbe.starRate||0)*dt;              // PETITES ÉTOILES structurantes (UE : 10/s, ~20 par tir)
-        while (this.starAcc>=1){ this.starAcc-=1; this._emitGerbeStar(); }
-        this.glowAcc += 14*dt;                                        // la gerbe ÉCLAIRE LE SOL (UE) : halo doux au pied du tube
+        this.emitAcc += this.cfg.gerbe.cometRate*dt;                  // COMÈTES (la matière de l'effet)
+        while (this.emitAcc>=1){ this.emitAcc-=1; this._emitGerbeComet(); }
+        this.glowAcc += 14*dt;                                        // le feu ÉCLAIRE LE SOL : halo doux au pied du tube
         while (this.glowAcc>=1){ this.glowAcc-=1; const c=this.cfg.color;
           spawnPuff(this.ox+(Math.random()-0.5)*2, 1.2, this.oz+(Math.random()-0.5)*2,
             0, 1.5, 0, 0.22+Math.random()*0.10, 5, 9, c.r*0.5,c.g*0.5,c.b*0.5, 0.16, 1.0, 2.0); }
       }
-      // PAS de return : la boucle d'étoiles plus bas anime les petites étoiles de la gerbe.
-      // La mort est gérée en bas : gerbe FINIE + plus aucune étoile vivante.
+      // PAS de return : la boucle d'étoiles plus bas anime les comètes.
+      // La mort est gérée en bas : émission FINIE + plus aucune comète vivante.
     }
 
     if (this.hasMuzzle && this.muAge < this.muSmokeWin + 0.05){
