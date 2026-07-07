@@ -109,21 +109,28 @@ Object.assign(pick.style, { position:'fixed', top:'10px', right:'10px', zIndex:'
 for (const [k, label] of Object.entries(LABELS)){
   const o = document.createElement('option'); o.value = k; o.textContent = label; pick.appendChild(o);
 }
-pick.value = 'daisy';
+pick.value = 'saluteMulti';
 // changer d'effet dans le menu -> couleur PAR DÉFAUT de l'effet (null annule l'override de la démo)
 pick.addEventListener('change', e => layer.setFocus(e.target.value, null));
 document.body.appendChild(pick);
 
-// DÉMO (réglage en cours) : MARGUERITE 100mm cylindrique (forme 2D face public, 116 m catalogue).
-layer.setFocus('daisy');
+// DÉMO (réglage en cours) : MULTI MARRON D'AIR 75mm cylindrique espagnole (77 m catalogue) —
+// 4 marrons libérés qui détonent décalés. La version simple (50 mm) = « salut » dans le menu.
+layer.setFocus('saluteMulti');
 
 // TIMELINE de lecture (barre en bas) + ESPACE = pause/play (fige les feux, caméra libre).
 const timeline = new Timeline(layer, LABELS);
 
-// SON pyro synthétisé (1er clic/touche active l'audio). Pour l'instant : crépitement à l'éclatement
-// de l'œuf de dragon. (Web Audio, 100% synthétisé — aucun fichier/licence.)
+// SON pyro synthétisé (1er clic/touche active l'audio). Crépitement œuf de dragon + BOOMS des
+// marrons d'air (B154). (Web Audio, 100% synthétisé — aucun fichier/licence.)
 const audio = new PyroAudio();
-layer.onBurst = (arch) => { if (arch === 'dragonEgg') audio.dragonEgg(); };
+layer.onBurst = (arch) => {
+  if (arch === 'dragonEgg') audio.dragonEgg();
+  else if (arch === 'salute') audio.marron(0.03);                              // marron simple : boom quasi immédiat
+  else if (arch === 'saluteMulti'){                                            // MULTI : 4 détonations DÉCALÉES (les porteurs claquent en bout de course, 0,40-0,66 s)
+    [0.40, 0.50, 0.59, 0.68].forEach(t => audio.marron(t + Math.random()*0.05));
+  }
+};
 
 // BOUCLE DE RENDU UNIQUE — on PREND LA MAIN sur Cesium (sinon il s'endort quand la scène
 // est stable et tout se fige). On pilote nous-mêmes : sim -> décor Cesium -> overlay feux.

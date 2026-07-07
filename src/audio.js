@@ -58,4 +58,37 @@ export class PyroAudio {
     src.connect(g).connect(this.master);
     src.start();
   }
+
+  // MARRON D'AIR (B154) : DÉTONATION — l'effet EST le bruit (réf UE : plus fort qu'une bombe
+  // classique, pitch BAS, ça RÉSONNE). 3 couches : CLAQUEMENT bref large bande + COUP DE BASSE
+  // (~52 Hz + sub 38 Hz) + GRONDEMENT grave qui traîne (bruit filtré passe-bas ~1,2 s).
+  _marronBuffer(){
+    const ctx = this.ctx, sr = ctx.sampleRate, dur = 1.5, n = (sr*dur)|0;
+    const buf = ctx.createBuffer(1, n, sr), d = buf.getChannelData(0);
+    const cn = (sr*0.010)|0;                                       // 1) CLAQUEMENT : 10 ms plein pot
+    for (let i=0;i<cn;i++){ const e=Math.exp(-(i/cn)*4);
+      d[i] += (Math.random()*2-1) * e * 1.0; }
+    const tn = (sr*0.7)|0;                                         // 2) BASSE : 52 Hz + sub 38 Hz
+    for (let i=0;i<tn;i++){ const t=i/sr, e=Math.exp(-t*7);
+      d[i] += (Math.sin(2*Math.PI*52*t)*0.85 + Math.sin(2*Math.PI*38*t)*0.55) * e; }
+    let lp=0;                                                      // 3) GRONDEMENT : bruit passe-bas 1 pôle
+    for (let i=0;i<n;i++){ const t=i/sr, e=Math.exp(-t*3.0);
+      lp += ((Math.random()*2-1) - lp) * 0.06;
+      d[i] += lp * e * 1.1; }
+    let mx=0; for (let i=0;i<n;i++){ const a=d[i]<0?-d[i]:d[i]; if (a>mx) mx=a; }
+    if (mx>0.99){ const g=0.99/mx; for (let i=0;i<n;i++) d[i]*=g; }
+    return buf;
+  }
+
+  // when = délai en secondes (les 4 marrons du MULTI détonent décalés). gain fort (×1.25 vs bombe).
+  marron(when = 0){
+    if (!this.ctx || this.ctx.state !== 'running') return;
+    if (!this._marronBuf) this._marronBuf = this._marronBuffer();  // buffer réutilisé (identique à chaque boom)
+    const src = this.ctx.createBufferSource();
+    src.buffer = this._marronBuf;
+    src.playbackRate.value = 0.96 + Math.random()*0.08;            // chaque boom légèrement différent
+    const g = this.ctx.createGain(); g.gain.value = 1.25;
+    src.connect(g).connect(this.master);
+    src.start(this.ctx.currentTime + Math.max(0, when));
+  }
 }
