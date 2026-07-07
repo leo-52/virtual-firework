@@ -4,7 +4,7 @@
 // Imports DYNAMIQUES avec propagation du ?v=... (horodatage anti-cache d'index.html) : sinon
 // le navigateur garderait l'ANCIEN threeFireworks.js en cache malgré un nouveau déploiement.
 const _v = new URL(import.meta.url).search;   // ex "?v=1719..." (vide si chargé sans query)
-const { ThreeFireworks, LABELS } = await import('./render/threeFireworks.js' + _v);
+const { ThreeFireworks, LABELS, __setMarronPop } = await import('./render/threeFireworks.js' + _v);
 const { FpsCameraController } = await import('./cameraController.js' + _v);
 const { Timeline } = await import('./timeline.js' + _v);
 const { PyroAudio } = await import('./audio.js' + _v);
@@ -126,11 +126,11 @@ const timeline = new Timeline(layer, LABELS);
 const audio = new PyroAudio();
 layer.onBurst = (arch) => {
   if (arch === 'dragonEgg') audio.dragonEgg();
-  else if (arch === 'salute') audio.marron(0.03);                              // marron simple : boom quasi immédiat
-  else if (arch === 'saluteMulti'){                                            // MULTI : 4 détonations DÉCALÉES (les porteurs claquent en bout de course, 0,40-0,66 s)
-    [0.40, 0.50, 0.59, 0.68].forEach(t => audio.marron(t + Math.random()*0.05));
-  }
+  else if (arch === 'salute') audio.marron(0.03);       // marron simple : boom quasi immédiat
 };
+// MULTI marron d'air : le BOOM part PILE au moment où chaque mini marron détone (hook moteur,
+// plus fiable que des délais programmés — timing 1,0→3,0 s géré par behaveMarron).
+__setMarronPop(() => audio.marron(0));
 
 // BOUCLE DE RENDU UNIQUE — on PREND LA MAIN sur Cesium (sinon il s'endort quand la scène
 // est stable et tout se fige). On pilote nous-mêmes : sim -> décor Cesium -> overlay feux.

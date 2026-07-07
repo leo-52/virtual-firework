@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B154';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B155';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -341,16 +341,21 @@ function behaveSaucer(d,A,dt,ctx){
     const px=ctx.pos[d._i*3],py=ctx.pos[d._i*3+1],pz=ctx.pos[d._i*3+2];
     spawnTrail(px,py,pz, GOLD.r,GOLD.g,GOLD.b, 0.9,0.4,0.8, s[0]*4,s[1]*4,s[2]*4); }
 }
-// MARRON D'AIR MULTI (B154, port UE) : le porteur quasi invisible DÉTONE en bout de course
-// (A>0.88) — 9 éclats argentés très brefs + grosse bouffée lumineuse. Le BOOM est déclenché
-// côté main.js (audio synthétisé, décalé par marron).
+// MARRON D'AIR MULTI (B155, user) : la bombe ÉCLATE (flash normal) et libère 5 MINI MARRONS
+// quasi invisibles ; chacun DÉTONE à son tour, espacés de ~0,5 s (échelle par index ± hasard) —
+// 9 éclats argentés très brefs + bouffée lumineuse. Le BOOM part au MÊME instant (hook audio).
+let _onMarronPop = null;
+function __setMarronPop(f){ _onMarronPop = f; }
 function behaveMarron(d,A,dt,ctx){
-  if (d._split || d._det || A<=0.88) return;   // _split : les ÉCLATS ne re-détonent pas (garde comme behaveMosaic)
+  if (d._split || d._det) return;   // _split : les ÉCLATS ne re-détonent pas (garde comme behaveMosaic)
+  if (d._detAt===undefined) d._detAt = 1.0 + d._i*0.5 + (Math.random()-0.5)*0.16;   // B155 user : 1 s d'ATTENTE après l'éclatement, puis 1,0 / 1,5 / 2,0 / 2,5 / 3,0 s ±
+  if (d.age < d._detAt) return;
   d._det=true;
   const px=ctx.pos[d._i*3], py=ctx.pos[d._i*3+1], pz=ctx.pos[d._i*3+2];
   spawnPuff(px,py,pz, 0,0,0, 0.14, 7, 13, 1.5,1.55,1.7, 0.9, 0, 1.0);   // le flash de la détonation
   for (let c=0;c<9 && ctx.nAlive<ctx.nMax;c++){ const v=vrand(Math.random);
     ctx.addStar(px,py,pz, v[0]*9,v[1]*9,v[2]*9, 0.12+Math.random()*0.13, 0, false, SILVER); }
+  if (_onMarronPop) _onMarronPop();   // BOOM synchronisé pile sur la détonation visuelle
   d.age=d.life;   // le porteur meurt à la détonation
 }
 
@@ -463,8 +468,8 @@ const EFFECTS = {
             trailing:{emitUntil:0.95, period:0.008, grain:1.0, gF:0.05, lifeMul:7, color:new THREE.Color(0.30,0.17,0.14), jit:0.15},   // B146 (photo user) : la ligne derrière l'étoile = SA FUMÉE (mate, sous le seuil du bloom, quasi immobile, persistante) — PAS des étincelles qui brûlent. ⚠️ emitUntil OBLIGATOIRE sinon aucune émission (bug silencieux des B143-145)
             gerbe:{ dur:0.1, cometRate:420, cone:0.11, speedMul:2.0 } },                                    // ~42 billes en 0,1 s (75mm pur : nb à confirmer par l'user — règle : 40mm pur = 40 étoiles ; +comète = moins) ; vitesses 0.72-1.30 -> BAS DE COLONNE VIDE, pointe ~30 m. Variante « cli. rouge » (575488000)
   salute: { apex:62, cal:50, heat:false, stars:14, starSize:2.0, lifeBase75:0.22, color:SILVER, dist:distSalute, flashBig:true },   // « bombe 50 mm espagnole marron d'air » (62 m) : flash argenté MINIME — l'effet principal = le BRUIT (boom grave, audio.js)
-  saluteMulti: { apex:77, heat:false, stars:4, nMax:44, starSize:1.1, splitStarSize:2.6, lifeBase75:0.6, lifeJitter:0.25, speedMul:0.93, speedJit:0.15, noFlash:true,   // « bombe 75 mm CYLINDRIQUE espagnole MULTI marron d'air » (77 m, port UE B154) :
-    color:new THREE.Color(0.30,0.32,0.36), dist:distFibonacci, behave:behaveMarron },                                                                                    // la bombe LIBÈRE 4 marrons portés quasi invisibles (argent terne) qui DÉTONENT chacun en bout de course (0,40-0,66 s), booms décalés côté audio
+  saluteMulti: { apex:77, heat:false, stars:5, nMax:55, starSize:1.1, splitStarSize:2.6, lifeBase75:3.3, lifeJitter:0.05, speedMul:0.93, speedJit:0.15, gravStar:0.45,   // « bombe 75 mm CYLINDRIQUE espagnole MULTI marron d'air » (77 m, B155 user) :
+    color:new THREE.Color(0.30,0.32,0.36), dist:distFibonacci, behave:behaveMarron },                                                                                     // la bombe ÉCLATE (flash normal), 1 s d'ATTENTE, puis les 5 MINI MARRONS quasi invisibles détonent espacés de ~0,5 s (1,0→3,0 s), boom synchronisé par hook
 };
 
 export const LABELS = { peony:'pivoine', chrysanthemum:'chrysanthème', willow:'saule (kamuro)', comet:'comète',
@@ -1001,4 +1006,4 @@ export class ThreeFireworks {
 
 // Exports internes pour le BANC D'APERÇU hors-Cesium (_preview.html) — rendu réel d'un effet
 // pour capture d'écran. N'affecte pas l'app (rien ne les importe en prod).
-export { scene as __scene, Shell as __Shell, updateTrails as __updateTrails, updatePuffs as __updatePuffs };
+export { scene as __scene, Shell as __Shell, updateTrails as __updateTrails, updatePuffs as __updatePuffs, __setMarronPop };
