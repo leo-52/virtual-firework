@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B141';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B142';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -436,7 +436,9 @@ const EFFECTS = {
              dist:distMosaic, behave:behaveMosaic, trailing:{emitUntil:0.9, period:0.012, grain:1.2, gF:0.45, lifeMul:1.9, color:SILVER} },  // ASSORTIE : 2 rose, 2 citron, 2 aqua, 1 aléatoire
 
   // === SOL / SPÉCIAUX ===
-  mine:   { color:RED, gerbe:{ dur:2.0, rate:380, cone:0.18, speedMul:2.0, grain:1.1 } }, // POT À FEU (B141, catalogue) : « bombe 75 mm pot à feu ROUGE » (575477000, 50 m) -> gerbe ROUGE calibrée ~44.5 m (pic mesuré ; convention hauteur ×0.89). Variante « cli. rouge » (575488000) pour plus tard
+  mine:   { color:RED, heat:false, pureColor:true, starSize:1.4, stars:30, gravStar:1.0, dragStar:0.21,   // POT À FEU (B141-142, catalogue) : « bombe 75 mm pot à feu ROUGE » (575477000, 50 m -> pic ~45 m). dragStar 0.21×PUNCH=0.42 = même frein que les étincelles (les étoiles montent au sommet du V)
+            trailing:{period:0.016, grain:0.8, gF:0.5, lifeMul:0.8, color:RED},                            // traînée légère pour la moitié des petites étoiles (UE)
+            gerbe:{ dur:2.0, rate:420, cone:0.16, speedMul:2.0, grain:1.1, starRate:10 } },                // B142 = réglage UE validé : 420 étincelles/s, cône ~9°, durée ±15%, ~20 petites étoiles/tir. Variante « cli. rouge » (575488000) pour plus tard
   salute: { apex:90, heat:false, stars:14, starSize:2.0, lifeBase75:0.22, color:SILVER, dist:distSalute, flashBig:true },
 };
 
@@ -476,7 +478,9 @@ class Shell {
     this.data = []; this.flash=null; this.hasMuzzle=false;
 
     if (this.cfg.gerbe){               // POT À FEU : pas de montée ni burst, gerbe au sol
-      this.phase='gerbe'; this.gerbeLeft=this.cfg.gerbe.dur; this.emitAcc=0; this.head=null;
+      // durée ALÉATOIRE par tir ±15% (UE validé : 1.7-2.3 s pour dur=2) + accumulateurs étoiles/halo
+      this.phase='gerbe'; this.gerbeLeft=this.cfg.gerbe.dur*(0.85+Math.random()*0.30);
+      this.emitAcc=0; this.starAcc=0; this.glowAcc=0; this.head=null;
     } else {
       this.phase='rise';
       // SORTIE DU TUBE (réf vidéo tir 150mm) : JET vertical -> CHAMPIGNON jaune-blanc/orange à la
@@ -664,6 +668,17 @@ class Shell {
     spawnTrail(this.ox+(Math.random()-0.5)*2, 1+Math.random()*0.5, this.oz+(Math.random()-0.5)*2,
       c.r,c.g,c.b, 1.1*g.grain, 1.0, 1.5+Math.random()*2.5, vx*4, vy*4, vz*4);
   }
+  // PETITES ÉTOILES structurantes de la gerbe (UE validé, B142) : cône plus SERRÉ (×0.6), plus
+  // RAPIDES (×1.05-1.75 -> elles montent jusqu'au sommet du V), vie 0.9-1.5 s, la moitié avec traînée.
+  _emitGerbeStar(){
+    const g=this.cfg.gerbe, br=this.cfg.burstRadius;
+    const A0=Math.random()*Math.PI*2, cone=Math.random()*g.cone*0.6, sc=Math.sin(cone), cc=Math.cos(cone);
+    const sp=br*(1.05+Math.random()*0.70)*g.speedMul;
+    this.points.visible=true;
+    this.addStar(this.ox+(Math.random()-0.5)*1.5, 1+Math.random(), this.oz+(Math.random()-0.5)*1.5,
+      Math.cos(A0)*sc*sp, cc*sp, Math.sin(A0)*sc*sp,
+      0.9+Math.random()*0.6, 0, Math.random()<0.5 ? this.cfg.trailing : false);
+  }
 
   // SORTIE DU TUBE — 3 composantes (échelle ∝ calibre via muzzleScale) :
   // (B126) chaque jet suit l'AXE DU TUBE : + up×muTX/muTZ (mortier incliné -> la gueule crache en biais)
@@ -724,13 +739,21 @@ class Shell {
     if (this.dead) return;
     this.age += dt;
 
-    // === POT À FEU : gerbe au sol ===
+    // === POT À FEU : gerbe au sol (B142 = portage du réglage UE validé avec l'user) ===
     if (this.phase==='gerbe'){
       this.gerbeLeft -= dt;
-      if (this.gerbeLeft > 0){ this.emitAcc += this.cfg.gerbe.rate*dt;
-        while (this.emitAcc>=1){ this.emitAcc-=1; this._emitGerbe(); } }
-      else this.dead = true;
-      return;
+      if (this.gerbeLeft > 0){
+        this.emitAcc += this.cfg.gerbe.rate*dt;                       // ÉTINCELLES (la matière du V)
+        while (this.emitAcc>=1){ this.emitAcc-=1; this._emitGerbe(); }
+        this.starAcc += (this.cfg.gerbe.starRate||0)*dt;              // PETITES ÉTOILES structurantes (UE : 10/s, ~20 par tir)
+        while (this.starAcc>=1){ this.starAcc-=1; this._emitGerbeStar(); }
+        this.glowAcc += 14*dt;                                        // la gerbe ÉCLAIRE LE SOL (UE) : halo doux au pied du tube
+        while (this.glowAcc>=1){ this.glowAcc-=1; const c=this.cfg.color;
+          spawnPuff(this.ox+(Math.random()-0.5)*2, 1.2, this.oz+(Math.random()-0.5)*2,
+            0, 1.5, 0, 0.22+Math.random()*0.10, 5, 9, c.r*0.5,c.g*0.5,c.b*0.5, 0.16, 1.0, 2.0); }
+      }
+      // PAS de return : la boucle d'étoiles plus bas anime les petites étoiles de la gerbe.
+      // La mort est gérée en bas : gerbe FINIE + plus aucune étoile vivante.
     }
 
     if (this.hasMuzzle && this.muAge < this.muSmokeWin + 0.05){
@@ -847,7 +870,7 @@ class Shell {
     this.geo.attributes.aVel.needsUpdate=true;
     if (this.cfg.shrink) this.geo.attributes.size.needsUpdate=true;
 
-    if (this.phase==='burst' && alive===0){
+    if ((this.phase==='burst' || (this.phase==='gerbe' && this.gerbeLeft<=0)) && alive===0){
       this.dead=true; scene.remove(this.points); scene.remove(this.lines);
       this.geo.dispose(); this.mat.dispose(); this.lgeo.dispose(); this.lmat.dispose();
       if (this.flash){ scene.remove(this.flash); this.flash.geometry.dispose(); this.flash.material.dispose(); }
