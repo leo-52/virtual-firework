@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B159';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B160';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -356,7 +356,7 @@ let _onMarronPop = null;
 function __setMarronPop(f){ _onMarronPop = f; }
 function behaveMarron(d,A,dt,ctx){
   if (d._split || d._det) return;   // _split : garde (comme behaveMosaic)
-  if (d._detAt===undefined){ d._detAt = 1.5 + Math.random()*0.5; d.hideStar=true; }   // 1,5 s d'attente + instant ALÉATOIRE dans 0,5 s ; porteur INVISIBLE
+  if (d._detAt===undefined){ d._detAt = 1.5 + Math.random()*0.7; d.hideStar=true; }   // B160 user : 1,5 s d'attente + instant ALÉATOIRE dans une fourchette de 0,7 s ; porteur INVISIBLE
   if (d.age < d._detAt) return;
   d._det=true;
   const px=ctx.pos[d._i*3], py=ctx.pos[d._i*3+1], pz=ctx.pos[d._i*3+2];
@@ -480,7 +480,7 @@ const EFFECTS = {
             trailing:{emitUntil:0.95, period:0.008, grain:1.0, gF:0.05, lifeMul:7, color:new THREE.Color(0.30,0.17,0.14), jit:0.15},   // B146 (photo user) : la ligne derrière l'étoile = SA FUMÉE (mate, sous le seuil du bloom, quasi immobile, persistante) — PAS des étincelles qui brûlent. ⚠️ emitUntil OBLIGATOIRE sinon aucune émission (bug silencieux des B143-145)
             gerbe:{ dur:0.1, cometRate:420, cone:0.11, speedMul:2.0 } },                                    // ~42 billes en 0,1 s (75mm pur : nb à confirmer par l'user — règle : 40mm pur = 40 étoiles ; +comète = moins) ; vitesses 0.72-1.30 -> BAS DE COLONNE VIDE, pointe ~30 m. Variante « cli. rouge » (575488000)
   salute: { apex:62, cal:50, heat:false, stars:14, starSize:2.0, lifeBase75:0.22, color:SILVER, dist:distSalute, flashBig:true },   // « bombe 50 mm espagnole marron d'air » (62 m) : flash argenté MINIME — l'effet principal = le BRUIT (boom grave, audio.js)
-  saluteMulti: { apex:77, heat:false, stars:5, nMax:5, starSize:1.1, lifeBase75:2.2, lifeJitter:0.05, speedMul:0.35, speedJit:0.15, gravStar:0.45,   // « bombe 75 mm CYLINDRIQUE espagnole MULTI marron d'air » (77 m, B158 user) :
+  saluteMulti: { apex:77, heat:false, stars:5, nMax:5, starSize:1.1, lifeBase75:2.5, lifeJitter:0.05, speedMul:0.35, speedJit:0.15, gravStar:0.45,   // « bombe 75 mm CYLINDRIQUE espagnole MULTI marron d'air » (77 m, B160 user) : vie porteur 2.5 > détonation max 2.2 (sinon un marron mourait sans claquer)
     flashMini:true,                                                                                                                                   // break = mini flash + les 100 grains de riz universels (plus l'override orange fusionné)
     color:new THREE.Color(0.30,0.32,0.36), dist:distMarron, randomAxis:true, behave:behaveMarron },                                                   // les 5 MARRONS sont DU MÊME CÔTÉ de la bombe -> l'explosion les pousse TOUS dans la même direction (cône serré, orientation aléatoire par tir) ; invisibles ; 1,5 s puis détonations aléatoires dans 0,5 s
 };
