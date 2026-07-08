@@ -114,8 +114,8 @@ pick.value = 'atom';
 pick.addEventListener('change', e => layer.setFocus(e.target.value, null));
 document.body.appendChild(pick);
 
-// DÉMO (réglage en cours) : ATOME 150mm (515077000-515087000, 165 m) — réf MULTICOLORE :
-// pivoine couleur (au sort par tir) + 17 brins or + paquets pot-à-feu blancs scintillants.
+// DÉMO (réglage en cours) : ATOME 150mm — réf ROUGE (515084000, 165 m, demande user B192) :
+// pivoine rouge + 17 brins or + paquets pot-à-feu blancs scintillants.
 layer.setFocus('atom');
 
 // TIMELINE de lecture (barre en bas) + ESPACE = pause/play (fige les feux, caméra libre).

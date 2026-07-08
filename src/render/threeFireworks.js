@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B191';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B192';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -270,9 +270,9 @@ let _atomDirs=null;   // directions des brins mémorisées le temps d'UN burst (
 function distAtom(i,n,rnd){
   if (i===0) _atomDirs=[];
   const nPiv=Math.max(0, n-ATOM_BRINS*(1+ATOM_PK));
-  if (i<nPiv){ const v=vrand(rnd); return {dx:v[0],dy:v[1],dz:v[2],spMul:1.0,comp:0}; }
+  if (i<nPiv){ const v=vrand(rnd); return {dx:v[0],dy:v[1],dz:v[2],spMul:0.70,comp:0}; }   // B192 (user) : la pivoine ne DÉPASSE PAS les pots à feu (~62 m < ~72 m)
   const j=i-nPiv;
-  if (j<ATOM_BRINS){ const v=vrand(rnd), sp=1.62+rnd()*0.26;
+  if (j<ATOM_BRINS){ const v=vrand(rnd), sp=1.46+rnd()*0.22;   // B192 (user) : envergure brins 160 -> 140 m
     _atomDirs[j]={v,sp};
     return {dx:v[0],dy:v[1],dz:v[2],spMul:sp,comp:1}; }
   const b=_atomDirs[(j-ATOM_BRINS)%ATOM_BRINS];   // chaque paquet suit SON brin
@@ -504,11 +504,12 @@ const EFFECTS = {
   // orange central (afterGlow). Démo = réf MULTICOLORE (515081000) : couleur de pivoine au sort par tir.
   atom:    { apex:165, cal:150, heat:false, pureColor:true, stars:191, starSize:2.2, speedMul:2.45, speedJit:0.08,
              gravStar:0.45, dragStar:0.70, lifeBase75:1.5, lifeJitter:0.14, shrink:1.0, shrinkPow:2.2,
-             dist:distAtom, onStar:atomStarFn, compLife:{0:0.60, 2:0.80}, compSize:{1:3.3, 2:1.9}, trailComps:[1],
+             dist:distAtom, onStar:atomStarFn, compLife:{0:0.60, 2:0.80}, compSize:{1:0.9, 2:1.9}, trailComps:[1],   // B192 (user : « on ne distingue pas de tête ») : brins = POINTE 0.9 (règle famille dorée B94), la traînée fait l'effet
              afterGlow:{dur:1.6, sc:2.6, op:0.30},
              trailing:{emitUntil:0.95, period:0.007, grain:1.0, gF:0.05, lifeMul:9, color:COPPER, spark:true, jit:0.25, bright:0.85},
-             colorPairs:[[RED,GOLD,SCINTW],[GRN,GOLD,SCINTW],[BLU,GOLD,SCINTW],[YEL,GOLD,SCINTW],[new THREE.Color(1.0,0.45,0.08),GOLD,SCINTW],
-                         [PINK,GOLD,SCINTW],[PURP,GOLD,SCINTW],[CYAN,GOLD,SCINTW],[WHITE,GOLD,SCINTW]] },   // rouge/verte/bleue/citron/orange/rose/violette/aqua/blanche (les 9 couleurs unies du catalogue, 515077000-515086000)
+             colors:[RED,GOLD,SCINTW] },   // B192 : RÉGLAGE sur la réf ROUGE (515084000). MULTICOLORE (515081000) à réactiver ensuite :
+             // colorPairs:[[RED,GOLD,SCINTW],[GRN,GOLD,SCINTW],[BLU,GOLD,SCINTW],[YEL,GOLD,SCINTW],[new THREE.Color(1.0,0.45,0.08),GOLD,SCINTW],
+             //             [PINK,GOLD,SCINTW],[PURP,GOLD,SCINTW],[CYAN,GOLD,SCINTW],[WHITE,GOLD,SCINTW]]   // rouge/verte/bleue/citron/orange/rose/violette/aqua/blanche (les 9 unies, 515077000-515086000)
   // DEMI-DEMI (user B131-B132 : « comme une pivoine normale mais avec deux couleurs différentes »,
   // et la séparation DOIT SE LIRE dans le ciel : moitié gauche/droite, ou haut/bas, ou diagonale,
   // ou inversé — au hasard). Catalogue : 7 réfs 75mm à 95 m. Profil PIVOINE intact (distFibonacci,
@@ -578,7 +579,10 @@ class Shell {
     this.muTX=(this.bx-this.ox)/this.cfg.apex; this.muTZ=(this.bz-this.oz)/this.cfg.apex;
     this.dead = false; this.age = 0;
     // riseTime suit l'apex (×APEX_SCALE) -> la vitesse de montée reste identique (pas de comète molle)
-    this.riseTime = this.cfg.riseTime * APEX_SCALE * (0.95 + Math.random()*0.10);
+    // B192 (user : « les 75 mm et les 150 mm éclatent au même endroit ») : la hauteur se LIT au TEMPS
+    // de montée, pas qu'à l'altitude — balistique v0 ∝ √h => durée ∝ √h. Référence 80 m (pivoine 75) :
+    // les 75 mm ne bougent pas (~2,2 s), cœur/marguerite 100 mm +10 %, atome 150 mm ~3,0 s.
+    this.riseTime = this.cfg.riseTime * APEX_SCALE * Math.sqrt(this.cfg.apex/80) * (0.95 + Math.random()*0.10);
     this.headLastX=this.ox; this.headLastY=0; this.headLastZ=this.oz; this.headTimer=0;
     this.nMax = (this.cfg.nMax || this.cfg.stars) + (this.cfg.core ? this.cfg.core.stars : 0); this.nAlive = 0;
     this.data = []; this.flash=null; this.hasMuzzle=false;
