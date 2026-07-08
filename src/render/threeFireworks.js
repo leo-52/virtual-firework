@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B167';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B168';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -364,11 +364,12 @@ function behaveMarron(d,A,dt,ctx){
   // Au départ tous les grains sont SUPERPOSÉS = « une étoile de 1 cm bien argentée »
   // (l'empilement additif la rend blanche-argent), puis LE MÊME PAQUET s'ouvre en CERCLE
   // jusqu'à ~4 m d'envergure ; l'argent (bref) s'éteint en route -> il reste l'orange chaud.
-  // Vitesses SERRÉES (4,2-5,8 m/s) pour que le paquet reste circulaire et cohérent.
-  for (let c=0;c<34;c++){ const v=vrand(Math.random), sp=4.2+Math.random()*1.6;   // grains ARGENT (brefs, 0,10-0,20 s)
-    spawnTrail(px,py,pz, 1.40,1.44,1.55, 1.1, 0.35, (0.10+Math.random()*0.10)/0.26, v[0]*sp*4, v[1]*sp*4, v[2]*sp*4, 0.4, 0.42, true); }
-  for (let c=0;c<44;c++){ const v=vrand(Math.random), sp=4.2+Math.random()*1.6;   // grains ORANGE (0,28-0,50 s -> le cercle final de ~4 m)
-    spawnTrail(px,py,pz, 1.25,0.58,0.16, 0.85, 0.35, (0.28+Math.random()*0.22)/0.26, v[0]*sp*4, v[1]*sp*4, v[2]*sp*4, 0.5, 0.42, true); }
+  // B168 (user + photo) : des CENTAINES d'étincelles par détonation (~300), envergure finale
+  // 10 m. Vitesses SERRÉES (10,5-14 m/s) pour que le paquet reste circulaire et cohérent.
+  for (let c=0;c<90;c++){ const v=vrand(Math.random), sp=10.5+Math.random()*3.5;   // grains ARGENT (brefs, 0,10-0,20 s)
+    spawnTrail(px,py,pz, 1.40,1.44,1.55, 1.0, 0.35, (0.10+Math.random()*0.10)/0.26, v[0]*sp*4, v[1]*sp*4, v[2]*sp*4, 0.4, 0.42, true); }
+  for (let c=0;c<220;c++){ const v=vrand(Math.random), sp=10.5+Math.random()*3.5;  // grains ORANGE fins (0,28-0,52 s -> le cercle final de ~10 m)
+    spawnTrail(px,py,pz, 1.25,0.58,0.16, 0.7, 0.35, (0.28+Math.random()*0.24)/0.26, v[0]*sp*4, v[1]*sp*4, v[2]*sp*4, 0.5, 0.42, true); }
   if (_onMarronPop) _onMarronPop();   // BOOM synchronisé pile sur la détonation visuelle
   d.age=d.life;   // le porteur meurt à la détonation
 }
