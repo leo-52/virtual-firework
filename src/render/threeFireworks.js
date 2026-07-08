@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B157';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B158';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -263,6 +263,11 @@ function distAtom(i,n,rnd){
           dz:U[2]*Math.cos(az)+V[2]*Math.sin(az), spMul:0.55, comp:r%3};
 }
 // (distHalfHalf supprimé en B132 : la demi-demi = distFibonacci pur + coupe `splitFacing` dans burst())
+// MARRONS (B158) : les 5 mini marrons sont chargés DU MÊME CÔTÉ de la bombe -> tous éjectés dans
+// la MÊME direction (cône serré ~±10°) ; randomAxis oriente ce côté au hasard à chaque tir.
+function distMarron(i,n,rnd){ const dx=(rnd()-0.5)*0.35, dz=(rnd()-0.5)*0.35, dy=1, L=Math.hypot(dx,dy,dz)||1;
+  return {dx:dx/L, dy:dy/L, dz:dz/L, spMul:0.85+rnd()*0.3}; }
+
 function distSpinner(i,n,rnd){ const a0=Math.random()*Math.PI*2, rH=rnd(11,16), vUp=rnd(2.5,4.2);
   const dx=Math.cos(a0)*rH, dy=vUp, dz=Math.sin(a0)*rH, L=Math.hypot(dx,dy,dz)||1;
   return {dx:dx/L,dy:dy/L,dz:dz/L, spMul:(L/(13.5*1.8))}; }
@@ -396,10 +401,11 @@ const BASE = {
   colors:null, heat:true, headSize:1.0, sway:0, starSize:2.2, lifeBase75:1.55, lifeJitter:0.13,
   dist:distFibonacci, dist2D:null, orient:'face', trailing:false, onStar:null, behave:null,
   gerbe:null, flashBig:false,
-  // B157 (user) : TOUTES les bombes ont une PETITE EXPLOSION AU CENTRE (~1 m) — c'est elle qui
-  // projette les effets. Des « grains de riz » qui explosent et se consument 0,2-0,5 s (aléatoire).
-  // Dosable par effet (override) ; false = pas d'explosion (ex cascade).
-  burstSparks:{ n:22, sp:2.2 }
+  // B158 (user) : TOUTES les bombes ont une PETITE EXPLOSION AU CENTRE — « vraiment une CENTAINE
+  // de grains de riz qui S'ÉCARTENT et qui poussent les effets vers l'extérieur ». Grains FINS
+  // (0.55) et nombreux (100) qui se dispersent -> PAS de boule orange fusionnée (le défaut B157).
+  // Vies 0,2-0,5 s aléatoires. Dosable par effet (override) ; false = pas d'explosion (ex cascade).
+  burstSparks:{ n:100, sp:4.0, grain:0.55 }
 };
 const EFFECTS = {
   // === EXISTANTS (intacts ; ring/couronne supprimé en B127, cf note plus bas) ===
@@ -473,9 +479,9 @@ const EFFECTS = {
             trailing:{emitUntil:0.95, period:0.008, grain:1.0, gF:0.05, lifeMul:7, color:new THREE.Color(0.30,0.17,0.14), jit:0.15},   // B146 (photo user) : la ligne derrière l'étoile = SA FUMÉE (mate, sous le seuil du bloom, quasi immobile, persistante) — PAS des étincelles qui brûlent. ⚠️ emitUntil OBLIGATOIRE sinon aucune émission (bug silencieux des B143-145)
             gerbe:{ dur:0.1, cometRate:420, cone:0.11, speedMul:2.0 } },                                    // ~42 billes en 0,1 s (75mm pur : nb à confirmer par l'user — règle : 40mm pur = 40 étoiles ; +comète = moins) ; vitesses 0.72-1.30 -> BAS DE COLONNE VIDE, pointe ~30 m. Variante « cli. rouge » (575488000)
   salute: { apex:62, cal:50, heat:false, stars:14, starSize:2.0, lifeBase75:0.22, color:SILVER, dist:distSalute, flashBig:true },   // « bombe 50 mm espagnole marron d'air » (62 m) : flash argenté MINIME — l'effet principal = le BRUIT (boom grave, audio.js)
-  saluteMulti: { apex:77, heat:false, stars:5, nMax:5, starSize:1.1, lifeBase75:2.2, lifeJitter:0.05, speedMul:0.35, speedJit:0.15, gravStar:0.45,   // « bombe 75 mm CYLINDRIQUE espagnole MULTI marron d'air » (77 m, B157 user) :
-    flashMini:true, burstSparks:{ n:28, sp:12, color:new THREE.Color(1.25,0.90,0.50) },                                                              // break validé (« pas mal ») : MINI FLASH + gerbe d'étincelles chaudes (vies 0,2-0,5 s comme partout)
-    color:new THREE.Color(0.30,0.32,0.36), dist:distFibonacci, behave:behaveMarron },                                                                // 5 MINI MARRONS INVISIBLES et GROUPÉS (±5 m) ; 1,5 s d'attente puis détonations ALÉATOIRES dans 0,5 s ; détonation = poudre de titane granulaire, boom par hook
+  saluteMulti: { apex:77, heat:false, stars:5, nMax:5, starSize:1.1, lifeBase75:2.2, lifeJitter:0.05, speedMul:0.35, speedJit:0.15, gravStar:0.45,   // « bombe 75 mm CYLINDRIQUE espagnole MULTI marron d'air » (77 m, B158 user) :
+    flashMini:true,                                                                                                                                   // break = mini flash + les 100 grains de riz universels (plus l'override orange fusionné)
+    color:new THREE.Color(0.30,0.32,0.36), dist:distMarron, randomAxis:true, behave:behaveMarron },                                                   // les 5 MARRONS sont DU MÊME CÔTÉ de la bombe -> l'explosion les pousse TOUS dans la même direction (cône serré, orientation aléatoire par tir) ; invisibles ; 1,5 s puis détonations aléatoires dans 0,5 s
 };
 
 export const LABELS = { peony:'pivoine', chrysanthemum:'chrysanthème', willow:'saule (kamuro)', comet:'comète',
