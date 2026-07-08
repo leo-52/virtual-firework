@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B184';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B185';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -450,7 +450,7 @@ const EFFECTS = {
   palm: { apex:105, stars:15, dist:distFibonacci, heat:false, color:WHITE, onStar:glitterFn, gravStar:1.0, dragStar:0.6,   // PIVOINE (sphère, bien écartée) + traînée, 15 étoiles ; blanc scintillant + traînée OR
           lifeBase75:2.8, starSize:4.1, trailing:{emitUntil:0.97, period:0.006, grain:1.3, gF:0.45, lifeMul:9.0, color:GOLD} },  // FRONDES = TRÈS LONGUES queues dorées = la palme (compensé, taille inchangée = 3.4×1.2)
   palmStrobe: { apex:95, stars:15, dist:distFibonacci, heat:false, pureColor:true, onStar:scintFn, gravStar:0.85, dragStar:0.30, speedMul:0.62, wind:1.2, randomAxis:true,   // « bombe 75 mm PALME OR SCINTILLANT blanc/or » (575292000/575291000, 95 m). B177 (user : « on dirait figé ») : VENT commun par tir — les étincelles dérivent toutes ensemble, légèrement -> la nappe VIT
-          lifeBase75:1.7, lifeJitter:0.18, starSize:1.9, shrink:1.0, colors:[new THREE.Color(1.15,1.18,1.28)],   // B178 (user) : étoiles BLANCHES scintillantes, +10% plus grosses (1.76) qui FONDENT JUSQU'À 0 (shrink 1.0)
+          lifeBase75:1.7, lifeJitter:0.18, starSize:2.05, shrink:1.0, shrinkPow:2.2, colors:[new THREE.Color(1.15,1.18,1.28)],   // B178 (user) : étoiles BLANCHES scintillantes, +10% plus grosses (1.76) qui FONDENT JUSQU'À 0 (shrink 1.0)
           trailing:{emitUntil:0.97, period:0.006, grain:1.1, gF:0.05, lifeMul:8.5, color:new THREE.Color(1.12,0.60,0.20), longLaw:{p0:0.2, p1:0.5, min:2.8, max:7, pow:1.8}} },   // B181 (loi user) : proba d'étincelle LONGUE graduelle 2/10 (centre) -> 5/10 (bout) ; longues = 2,8-7 s biaisées bas (les ~7 s restent rares)
   palmMulti: { apex:105, stars:15, dist:distFibonacci, heat:false, pureColor:true, assorted:[GRN,RED,BLU], gravStar:1.0, dragStar:0.6, shrink:true,   // PALME MULTICOLORE 75mm (catalogue, user : 15 étoiles vertes/rouges/bleues)
           lifeBase75:3.0, starSize:2.6, trailing:{emitUntil:0.97, period:0.0022, grain:0.8, gF:0.45, lifeMul:8.15, color:EMBER, fixedColor:true, spark:true} },  // étincelles CHAUDES orangé/doré (EMBER) + DENSES (period 0.0022, B91) ; vie moy 1,9s ; étoiles réduites + shrink ; pointe verte/rouge/bleue
@@ -919,7 +919,8 @@ class Shell {
       this.vel[i*3]=d.vx; this.vel[i*3+1]=d.vy; this.vel[i*3+2]=d.vz;
       // SHRINK (B88, palme multicolore) : l'étoile RÉTRÉCIT progressivement -> disparaît de plus en plus petite
       if (this.cfg.shrink){ const sf=(this.cfg.shrink===true)?0.9:this.cfg.shrink;   // shrink:1.0 (B178) = l'étoile FOND jusqu'à 0 de diamètre (extinction jamais soudaine)
-        this.size[i]=this.cfg.starSize*STAR_SCALE*Math.max(0,1-A*sf); }
+        const Ap=this.cfg.shrinkPow?Math.pow(A,this.cfg.shrinkPow):A;                 // shrinkPow (B185) : ÉROSION LENTE au début, fonte en fin — le scintillement reste visible plus longtemps
+        this.size[i]=this.cfg.starSize*STAR_SCALE*Math.max(0,1-Ap*sf); }
 
       if (tr && d.trailing && A<tr.emitUntil && !d.popOnly && d.age<(d.crackleAt||1e9)){   // d.trailing (B149) : le flag PAR ÉTOILE compte enfin — nécessaire dès qu'un effet mélange étoiles avec/sans traînée (marguerite : pétales oui, cœur/perles non)
         // ÉTINCELLES : débit ∝ VITESSE (B89) — grains/mètre constants. Sinon, quand l'étoile ralentit,
