@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B158';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B159';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -263,10 +263,11 @@ function distAtom(i,n,rnd){
           dz:U[2]*Math.cos(az)+V[2]*Math.sin(az), spMul:0.55, comp:r%3};
 }
 // (distHalfHalf supprimé en B132 : la demi-demi = distFibonacci pur + coupe `splitFacing` dans burst())
-// MARRONS (B158) : les 5 mini marrons sont chargés DU MÊME CÔTÉ de la bombe -> tous éjectés dans
-// la MÊME direction (cône serré ~±10°) ; randomAxis oriente ce côté au hasard à chaque tir.
-function distMarron(i,n,rnd){ const dx=(rnd()-0.5)*0.35, dz=(rnd()-0.5)*0.35, dy=1, L=Math.hypot(dx,dy,dz)||1;
-  return {dx:dx/L, dy:dy/L, dz:dz/L, spMul:0.85+rnd()*0.3}; }
+// MARRONS (B159, user) : les 5 mini marrons partent dans la MÊME DIRECTION (chargés du même côté,
+// randomAxis oriente ce côté au hasard par tir) mais PAS ENSEMBLE : cône ±19° + vitesses très
+// inégales (×0.6-1.4) -> ils s'échelonnent sur ~4-9 m, chacun bien distinct.
+function distMarron(i,n,rnd){ const dx=(rnd()-0.5)*0.7, dz=(rnd()-0.5)*0.7, dy=1, L=Math.hypot(dx,dy,dz)||1;
+  return {dx:dx/L, dy:dy/L, dz:dz/L, spMul:0.55+(i/Math.max(1,n-1))*0.88+(rnd()-0.5)*0.10}; }   // vitesses ÉCHELONNÉES par index (0.55->1.43) : ~1,3-1,7 m d'écart radial mini entre voisins ; + les détonations à des INSTANTS différents = jamais deux pops confondus
 
 function distSpinner(i,n,rnd){ const a0=Math.random()*Math.PI*2, rH=rnd(11,16), vUp=rnd(2.5,4.2);
   const dx=Math.cos(a0)*rH, dy=vUp, dz=Math.sin(a0)*rH, L=Math.hypot(dx,dy,dz)||1;
