@@ -6,7 +6,8 @@
 export class PyroAudio {
   constructor(){
     this.ctx = null; this.master = null;
-    const resume = () => {
+    this.enabled = true;   // B169 : coupé/activé par le bouton son (indépendant du déblocage navigateur)
+    this._resume = () => {
       if (!this.ctx){
         try {
           this.ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -16,9 +17,10 @@ export class PyroAudio {
       }
       if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume();
     };
-    addEventListener('pointerdown', resume);
-    addEventListener('keydown', resume);
+    addEventListener('pointerdown', this._resume);
+    addEventListener('keydown', this._resume);
   }
+  unlock(){ this._resume(); }   // déblocage EXPLICITE (clic sur le bouton son)
 
   // Construit un buffer "œuf de dragon" (break + crépitement) — léger à générer (~quelques ms).
   _dragonEggBuffer(){
@@ -51,7 +53,7 @@ export class PyroAudio {
   }
 
   dragonEgg(){
-    if (!this.ctx || this.ctx.state !== 'running') return;        // pas encore activé (pas d'interaction)
+    if (!this.enabled || !this.ctx || this.ctx.state !== 'running') return;        // pas encore activé (pas d'interaction)
     const src = this.ctx.createBufferSource();
     src.buffer = this._dragonEggBuffer();
     const g = this.ctx.createGain(); g.gain.value = 0.9;
@@ -76,7 +78,7 @@ export class PyroAudio {
     return buf;
   }
   breakPop(){
-    if (!this.ctx || this.ctx.state !== 'running') return;
+    if (!this.enabled || !this.ctx || this.ctx.state !== 'running') return;
     if (!this._breakBuf) this._breakBuf = this._breakBuffer();
     const src = this.ctx.createBufferSource();
     src.buffer = this._breakBuf;
@@ -105,7 +107,7 @@ export class PyroAudio {
     return buf;
   }
   breakOpen(){
-    if (!this.ctx || this.ctx.state !== 'running') return;
+    if (!this.enabled || !this.ctx || this.ctx.state !== 'running') return;
     if (!this._breakOpenBuf) this._breakOpenBuf = this._breakOpenBuffer();
     const src = this.ctx.createBufferSource();
     src.buffer = this._breakOpenBuf;
@@ -138,7 +140,7 @@ export class PyroAudio {
 
   // when = délai en secondes (les 4 marrons du MULTI détonent décalés). gain fort (×1.25 vs bombe).
   marron(when = 0){
-    if (!this.ctx || this.ctx.state !== 'running') return;
+    if (!this.enabled || !this.ctx || this.ctx.state !== 'running') return;
     if (!this._marronBuf) this._marronBuf = this._marronBuffer();  // buffer réutilisé (identique à chaque boom)
     const src = this.ctx.createBufferSource();
     src.buffer = this._marronBuf;

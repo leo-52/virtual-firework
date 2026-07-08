@@ -124,6 +124,25 @@ const timeline = new Timeline(layer, LABELS);
 // SON pyro synthétisé (1er clic/touche active l'audio). Crépitement œuf de dragon + BOOMS des
 // marrons d'air (B154). (Web Audio, 100% synthétisé — aucun fichier/licence.)
 const audio = new PyroAudio();
+// BOUTON SON (B169, user) : active/désactive — et DÉBLOQUE l'audio au clic (geste explicite,
+// plus fiable que d'attendre un clic quelconque, surtout sur téléphone).
+const sndBtn = document.createElement('button');
+Object.assign(sndBtn.style, { position:'fixed', top:'52px', right:'10px', zIndex:'10',
+  background:'rgba(0,0,0,.55)', color:'#fff', border:'1px solid #555', borderRadius:'6px',
+  padding:'6px 10px', fontFamily:'system-ui, sans-serif', fontSize:'13px', cursor:'pointer' });
+function updateSndBtn(){
+  const on = audio.enabled && audio.ctx && audio.ctx.state === 'running';
+  sndBtn.textContent = on ? '🔊 Son ON' : '🔇 Son OFF';
+}
+sndBtn.addEventListener('click', () => {
+  if (!audio.ctx || audio.ctx.state !== 'running'){ audio.unlock(); audio.enabled = true; }
+  else audio.enabled = !audio.enabled;
+  setTimeout(updateSndBtn, 80);   // laisse le resume() aboutir avant de rafraîchir le label
+});
+document.body.appendChild(sndBtn);
+setTimeout(updateSndBtn, 300);
+addEventListener('pointerdown', () => setTimeout(updateSndBtn, 150));   // le 1er clic n'importe où débloque aussi -> maj du label
+
 layer.onLaunch = () => audio.breakPop();                // B167 : le pop ÉTOUFFÉ = la CHASSE, à la sortie du tube
 layer.onBurst = (arch) => {
   if (arch === 'dragonEgg') audio.dragonEgg();
