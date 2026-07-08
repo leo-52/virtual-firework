@@ -124,10 +124,11 @@ const timeline = new Timeline(layer, LABELS);
 // SON pyro synthétisé (1er clic/touche active l'audio). Crépitement œuf de dragon + BOOMS des
 // marrons d'air (B154). (Web Audio, 100% synthétisé — aucun fichier/licence.)
 const audio = new PyroAudio();
+layer.onLaunch = () => audio.breakPop();                // B167 : le pop ÉTOUFFÉ = la CHASSE, à la sortie du tube
 layer.onBurst = (arch) => {
   if (arch === 'dragonEgg') audio.dragonEgg();
   else if (arch === 'salute') audio.marron(0.03);       // marron simple : boom quasi immédiat
-  else audio.breakPop();                                // B165 : l'EXPLOSION CENTRALE a un son (pop de break, toutes les bombes)
+  else audio.breakOpen();                               // B167 : l'EXPLOSION en l'air = son OUVERT (claquement net)
 };
 // MULTI marron d'air : le BOOM part PILE au moment où chaque mini marron détone (hook moteur,
 // plus fiable que des délais programmés — timing 1,0→3,0 s géré par behaveMarron).

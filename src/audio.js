@@ -86,6 +86,35 @@ export class PyroAudio {
     src.start();
   }
 
+  // BREAK OUVERT (B167, user : le son étouffé « fait sortie de tube » -> il part au TIR ;
+  // l'EXPLOSION en l'air a ce son OUVERT : claquement NET et clair, corps médium, souffle
+  // d'air NON filtré — pas de grondement sourd).
+  _breakOpenBuffer(){
+    const ctx = this.ctx, sr = ctx.sampleRate, dur = 0.55, n = (sr*dur)|0;
+    const buf = ctx.createBuffer(1, n, sr), d = buf.getChannelData(0);
+    const cn = (sr*0.022)|0;                                       // CLAQUEMENT net, large bande
+    for (let i=0;i<cn;i++){ const t=i/sr, e=Math.exp(-t*150);
+      d[i] += (Math.random()*2-1) * e * 1.0; }
+    const tn = (sr*0.22)|0;                                        // corps MÉDIUM bref (155 Hz)
+    for (let i=0;i<tn;i++){ const t=i/sr, e=Math.exp(-t*17);
+      d[i] += Math.sin(2*Math.PI*155*t) * e * 0.45; }
+    for (let i=0;i<n;i++){ const t=i/sr, e=Math.exp(-t*8);         // AIR : souffle ouvert, non filtré
+      d[i] += (Math.random()*2-1) * e * 0.16; }
+    let mx=0; for (let i=0;i<n;i++){ const a=d[i]<0?-d[i]:d[i]; if (a>mx) mx=a; }
+    if (mx>0.99){ const g=0.99/mx; for (let i=0;i<n;i++) d[i]*=g; }
+    return buf;
+  }
+  breakOpen(){
+    if (!this.ctx || this.ctx.state !== 'running') return;
+    if (!this._breakOpenBuf) this._breakOpenBuf = this._breakOpenBuffer();
+    const src = this.ctx.createBufferSource();
+    src.buffer = this._breakOpenBuf;
+    src.playbackRate.value = 0.94 + Math.random()*0.12;
+    const g = this.ctx.createGain(); g.gain.value = 0.8;
+    src.connect(g).connect(this.master);
+    src.start();
+  }
+
   // MARRON D'AIR (B154) : DÉTONATION — l'effet EST le bruit (réf UE : plus fort qu'une bombe
   // classique, pitch BAS, ça RÉSONNE). 3 couches : CLAQUEMENT bref large bande + COUP DE BASSE
   // (~52 Hz + sub 38 Hz) + GRONDEMENT grave qui traîne (bruit filtré passe-bas ~1,2 s).

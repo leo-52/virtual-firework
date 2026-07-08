@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B166';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B167';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -360,22 +360,15 @@ function behaveMarron(d,A,dt,ctx){
   if (d.age < d._detAt) return;
   d._det=true;
   const px=ctx.pos[d._i*3], py=ctx.pos[d._i*3+1], pz=ctx.pos[d._i*3+2];
-  // B166 (vidéo user, 4 ÉTAPES d'une détonation) : 1) amas ARGENTÉ condensé ultra-bref ->
-  // 2) « virus » argent un peu plus chaud -> 3-4) cercle d'étincelles ORANGE CHAUD distinctes
-  // qui s'écartent. Implémenté en 2 populations : l'ARGENT (bref, condensé) meurt vite,
-  // l'ORANGE (plus long) survit et s'écarte en cercle de plus en plus lâche.
-  for (let c=0;c<38;c++){ const v=vrand(Math.random), sp=2.5+Math.random()*6;    // étapes 1-2 : ARGENT, vies 0,08-0,20 s
-    spawnTrail(px,py,pz, 1.35,1.40,1.52, 1.5, 0.4, (0.08+Math.random()*0.12)/0.26, v[0]*sp*4, v[1]*sp*4, v[2]*sp*4, 1.2, 0.42, true); }
-  for (let c=0;c<40;c++){ const v=vrand(Math.random), sp=3.5+Math.random()*9;    // étapes 3-4 : ORANGE CHAUD, vies 0,22-0,45 s, s'écartent
-    spawnTrail(px,py,pz, 1.25,0.58,0.16, 1.05, 0.4, (0.22+Math.random()*0.23)/0.26, v[0]*sp*4, v[1]*sp*4, v[2]*sp*4, 1.2, 0.42, true); }
-  // L'ÉCLAIR (B165, croquis user) : UNE SEULE TACHE au contour IRRÉGULIER (bosselé, imparfait)
-  // — pas un cercle + des boules séparées. Les bosses sont PROCHES et GROSSES -> elles se
-  // FONDENT dans la silhouette (union = blob bosselé), teinte blanc froid (pas d'« or »).
-  spawnPuff(px,py,pz, 0,0,0, 0.11+Math.random()*0.03, 3.0, 5.0, 1.45,1.50,1.65, 0.40, 0, 1.0);
-  const nT=9+((Math.random()*5)|0);
-  for (let c=0;c<nT;c++){ const v=vrand(Math.random), R=0.7+Math.random()*1.5;
-    spawnPuff(px+v[0]*R, py+v[1]*R, pz+v[2]*R, v[0]*2,v[1]*2,v[2]*2, 0.08+Math.random()*0.05,
-      1.6+Math.random()*1.6, 2.6+Math.random()*2.0, 1.45,1.49,1.63, 0.28+Math.random()*0.18, 0, 1.0); }
+  // B167 (user) : UNE SEULE MATIÈRE QUI S'ÉCARTE — pas un halo remplacé par des étincelles.
+  // Au départ tous les grains sont SUPERPOSÉS = « une étoile de 1 cm bien argentée »
+  // (l'empilement additif la rend blanche-argent), puis LE MÊME PAQUET s'ouvre en CERCLE
+  // jusqu'à ~4 m d'envergure ; l'argent (bref) s'éteint en route -> il reste l'orange chaud.
+  // Vitesses SERRÉES (4,2-5,8 m/s) pour que le paquet reste circulaire et cohérent.
+  for (let c=0;c<34;c++){ const v=vrand(Math.random), sp=4.2+Math.random()*1.6;   // grains ARGENT (brefs, 0,10-0,20 s)
+    spawnTrail(px,py,pz, 1.40,1.44,1.55, 1.1, 0.35, (0.10+Math.random()*0.10)/0.26, v[0]*sp*4, v[1]*sp*4, v[2]*sp*4, 0.4, 0.42, true); }
+  for (let c=0;c<44;c++){ const v=vrand(Math.random), sp=4.2+Math.random()*1.6;   // grains ORANGE (0,28-0,50 s -> le cercle final de ~4 m)
+    spawnTrail(px,py,pz, 1.25,0.58,0.16, 0.85, 0.35, (0.28+Math.random()*0.22)/0.26, v[0]*sp*4, v[1]*sp*4, v[2]*sp*4, 0.5, 0.42, true); }
   if (_onMarronPop) _onMarronPop();   // BOOM synchronisé pile sur la détonation visuelle
   d.age=d.life;   // le porteur meurt à la détonation
 }
@@ -982,7 +975,7 @@ export class ThreeFireworks {
     this.composer.addPass(new OutputPass());
     this._pe=new Cesium.Cartesian3(); this._de=new Cesium.Cartesian3(); this._ue=new Cesium.Cartesian3();
     this.setOrigin(origin);
-    this.shells=[]; this.restDelay=0; this.focus='peony'; this.current='peony'; this.focusColor=null; this.onBurst=null;
+    this.shells=[]; this.restDelay=0; this.focus='peony'; this.current='peony'; this.focusColor=null; this.onBurst=null; this.onLaunch=null;
     this.hud = document.getElementById('hud');
     addEventListener('resize', () => this._resize());
   }
@@ -1011,6 +1004,7 @@ export class ThreeFireworks {
   fire(arch, color){ this.current=EFFECTS[arch]?arch:'peony';
     this._clear();
     this.shells=[new Shell(this.current,0,0,undefined, color?{color}:undefined)];
+    if (this.onLaunch) this.onLaunch(this.current);   // B167 : SON du départ (la chasse à la sortie du tube)
     this._hud((LABELS[this.current]||this.current)+' '+this.shells[0].cal); }   // calibre RÉEL (cfg.cal, ex cœur=100), plus le « 75 » codé en dur
   fireNext(){
     // DÉMO FORMES (user B127) : focus sur sourire ou cœur -> on tire les DEUX EN MÊME TEMPS,
@@ -1020,6 +1014,7 @@ export class ThreeFireworks {
       this.current=this.focus;
       this._clear();
       this.shells=SHAPES_DUO.map((a,i)=>new Shell(a,0,0,undefined,{lean:[(i*2-1)*DUO_LEAN,0]}));
+      if (this.onLaunch) this.onLaunch(this.current);
       this._hud('sourire 75 + cœur 100 (éventail)');
     } else this.fire(this.focus, this.focusColor);
   }
