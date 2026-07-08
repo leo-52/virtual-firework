@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B179';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B180';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -450,7 +450,7 @@ const EFFECTS = {
   palm: { apex:105, stars:15, dist:distFibonacci, heat:false, color:WHITE, onStar:glitterFn, gravStar:1.0, dragStar:0.6,   // PIVOINE (sphère, bien écartée) + traînée, 15 étoiles ; blanc scintillant + traînée OR
           lifeBase75:2.8, starSize:4.1, trailing:{emitUntil:0.97, period:0.006, grain:1.3, gF:0.45, lifeMul:9.0, color:GOLD} },  // FRONDES = TRÈS LONGUES queues dorées = la palme (compensé, taille inchangée = 3.4×1.2)
   palmStrobe: { apex:95, stars:15, dist:distFibonacci, heat:false, pureColor:true, onStar:scintFn, gravStar:0.85, dragStar:0.30, speedMul:0.62, wind:1.2,   // « bombe 75 mm PALME OR SCINTILLANT blanc/or » (575292000/575291000, 95 m). B177 (user : « on dirait figé ») : VENT commun par tir — les étincelles dérivent toutes ensemble, légèrement -> la nappe VIT
-          lifeBase75:1.6, starSize:1.76, shrink:1.0, colors:[new THREE.Color(1.15,1.18,1.28)],   // B178 (user) : étoiles BLANCHES scintillantes, +10% plus grosses (1.76) qui FONDENT JUSQU'À 0 (shrink 1.0)
+          lifeBase75:1.7, lifeJitter:0.18, starSize:1.76, shrink:1.0, colors:[new THREE.Color(1.15,1.18,1.28)],   // B178 (user) : étoiles BLANCHES scintillantes, +10% plus grosses (1.76) qui FONDENT JUSQU'À 0 (shrink 1.0)
           trailing:{emitUntil:0.97, period:0.006, grain:1.3, gF:0.05, lifeMul:8.5, color:new THREE.Color(1.12,0.60,0.20)} },   // B178 : traînée plus ORANGE/DORÉE, étincelles un poil plus longues (lifeMul 8.5), extinction intérieur->extérieur (les grains du centre sont les plus vieux) et aléatoire (vies inégales)
   palmMulti: { apex:105, stars:15, dist:distFibonacci, heat:false, pureColor:true, assorted:[GRN,RED,BLU], gravStar:1.0, dragStar:0.6, shrink:true,   // PALME MULTICOLORE 75mm (catalogue, user : 15 étoiles vertes/rouges/bleues)
           lifeBase75:3.0, starSize:2.6, trailing:{emitUntil:0.97, period:0.0022, grain:0.8, gF:0.45, lifeMul:8.15, color:EMBER, fixedColor:true, spark:true} },  // étincelles CHAUDES orangé/doré (EMBER) + DENSES (period 0.0022, B91) ; vie moy 1,9s ; étoiles réduites + shrink ; pointe verte/rouge/bleue
