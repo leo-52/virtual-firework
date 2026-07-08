@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B163';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B164';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -364,7 +364,13 @@ function behaveMarron(d,A,dt,ctx){
   // 72 grains de titane (au lieu de 34), plus gros, projetés plus fort (~3-4 m d'envergure)
   for (let c=0;c<72;c++){ const v=vrand(Math.random), sp=3.5+Math.random()*9;
     spawnTrail(px,py,pz, 1.30,1.34,1.42, 1.35, 0.4, (0.18+Math.random()*0.22)/0.26, v[0]*sp*4, v[1]*sp*4, v[2]*sp*4, 1.2, 0.42, true); }
-  // (B163 user : PAS d'éclair-lueur à la détonation — « gros cercle blanc pas naturel » ; les grains suffisent)
+  // L'ÉCLAIR (B164, user) : PAS un cercle uniforme synthétique — « comme un VIRUS » : un cœur
+  // lumineux + des petites TÊTES qui dépassent sur le pourtour, tailles/opacités irrégulières.
+  spawnPuff(px,py,pz, 0,0,0, 0.11+Math.random()*0.03, 3.2, 5.5, 1.5,1.53,1.62, 0.42, 0, 1.0);
+  const nT=8+((Math.random()*5)|0);
+  for (let c=0;c<nT;c++){ const v=vrand(Math.random), R=2.0+Math.random()*1.8;
+    spawnPuff(px+v[0]*R, py+v[1]*R, pz+v[2]*R, v[0]*3,v[1]*3,v[2]*3, 0.08+Math.random()*0.06,
+      0.7+Math.random()*1.1, 1.4+Math.random()*1.6, 1.5,1.52,1.60, 0.30+Math.random()*0.20, 0, 1.0); }
   if (_onMarronPop) _onMarronPop();   // BOOM synchronisé pile sur la détonation visuelle
   d.age=d.life;   // le porteur meurt à la détonation
 }
