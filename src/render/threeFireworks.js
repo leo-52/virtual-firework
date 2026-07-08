@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B160';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B161';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -698,12 +698,13 @@ class Shell {
     }
     this.points.visible=true;   // la queue-cône est dessinée par le shader (B82) ; lignes 1px éteintes
     if (!this.cfg.noFlash){   // cascade : PAS de flash d'ouverture (« quasiment pas d'explosion » -> pas de boule lumineuse au break)
-      const big=this.cfg.flashBig, mini=this.cfg.flashMini;   // flashMini (B156, multi marron) : petit éclat bref
-      const fg=new THREE.SphereGeometry(0.6,16,16);
-      const fm=new THREE.MeshBasicMaterial({ color:0xffd9a0, transparent:true, blending:THREE.AdditiveBlending, depthWrite:false });
-      this.flash=new THREE.Mesh(fg,fm); this.flash.position.set(bx,apex,bz); this.flashAge=0;
-      this.flashScale=big?12:(mini?3:5); this.flashOp=big?0.9:(mini?0.45:0.4); this.flashDur=big?0.30:(mini?0.10:0.12);
-      scene.add(this.flash);
+      // B161 (photo user) : l'ancienne SPHÈRE de flash (mesh orange opaque) rendait comme un
+      // « gros cercle orange dégueulasse ». Remplacée par une LUEUR DOUCE (sprite à dégradé
+      // radial, additive) : la lumière du break, brève, sans bord dur.
+      const big=this.cfg.flashBig, mini=this.cfg.flashMini;
+      const sc=big?12:(mini?3:5), op=big?0.85:(mini?0.5:0.45), dur=big?0.30:(mini?0.10:0.12);
+      const fr=big?1.6:1.5, fg2=big?1.62:1.15, fb=big?1.72:0.70;   // salut = blanc argenté ; bombes = blanc chaud
+      spawnPuff(bx,apex,bz, 0,0,0, dur, sc*0.8, sc*1.35, fr,fg2,fb, op, 0, 1.0);
     }
     // burstSparks (B157, user — UNIVERSEL) : la VRAIE petite explosion au centre (~1 m) qui
     // projette les effets — des « grains de riz » qui explosent et se consument 0,2-0,5 s
