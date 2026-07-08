@@ -109,14 +109,14 @@ Object.assign(pick.style, { position:'fixed', top:'10px', right:'10px', zIndex:'
 for (const [k, label] of Object.entries(LABELS)){
   const o = document.createElement('option'); o.value = k; o.textContent = label; pick.appendChild(o);
 }
-pick.value = 'saluteMulti';
+pick.value = 'palmStrobe';
 // changer d'effet dans le menu -> couleur PAR DÉFAUT de l'effet (null annule l'override de la démo)
 pick.addEventListener('change', e => layer.setFocus(e.target.value, null));
 document.body.appendChild(pick);
 
-// DÉMO (réglage en cours) : MULTI MARRON D'AIR 75mm cylindrique espagnole (77 m catalogue) —
-// 4 marrons libérés qui détonent décalés. La version simple (50 mm) = « salut » dans le menu.
-layer.setFocus('saluteMulti');
+// DÉMO (réglage en cours) : PALME OR SCINTILLANT 75mm (575292000/575291000, 95 m) —
+// palme validée + têtes qui scintillent doux, blanc ou or au sort par volée.
+layer.setFocus('palmStrobe');
 
 // TIMELINE de lecture (barre en bas) + ESPACE = pause/play (fige les feux, caméra libre).
 const timeline = new Timeline(layer, LABELS);
