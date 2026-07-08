@@ -59,6 +59,33 @@ export class PyroAudio {
     src.start();
   }
 
+  // BREAK (B165, user : « l'explosion centrale n'a pas de son ? ») : le POP de l'éclatement de
+  // TOUTE bombe — claquement bref + petit coup sourd (~95 Hz), bien plus discret qu'un marron.
+  _breakBuffer(){
+    const ctx = this.ctx, sr = ctx.sampleRate, dur = 0.65, n = (sr*dur)|0;
+    const buf = ctx.createBuffer(1, n, sr), d = buf.getChannelData(0);
+    const cn = (sr*0.006)|0;
+    for (let i=0;i<cn;i++){ const e=Math.exp(-(i/cn)*3.5); d[i] += (Math.random()*2-1) * e * 0.8; }
+    const tn = (sr*0.40)|0;
+    for (let i=0;i<tn;i++){ const t=i/sr, e=Math.exp(-t*11); d[i] += Math.sin(2*Math.PI*95*t) * e * 0.7; }
+    let lp=0;
+    for (let i=0;i<n;i++){ const t=i/sr, e=Math.exp(-t*6);
+      lp += ((Math.random()*2-1) - lp) * 0.09; d[i] += lp * e * 0.5; }
+    let mx=0; for (let i=0;i<n;i++){ const a=d[i]<0?-d[i]:d[i]; if (a>mx) mx=a; }
+    if (mx>0.99){ const g=0.99/mx; for (let i=0;i<n;i++) d[i]*=g; }
+    return buf;
+  }
+  breakPop(){
+    if (!this.ctx || this.ctx.state !== 'running') return;
+    if (!this._breakBuf) this._breakBuf = this._breakBuffer();
+    const src = this.ctx.createBufferSource();
+    src.buffer = this._breakBuf;
+    src.playbackRate.value = 0.92 + Math.random()*0.16;
+    const g = this.ctx.createGain(); g.gain.value = 0.65;
+    src.connect(g).connect(this.master);
+    src.start();
+  }
+
   // MARRON D'AIR (B154) : DÉTONATION — l'effet EST le bruit (réf UE : plus fort qu'une bombe
   // classique, pitch BAS, ça RÉSONNE). 3 couches : CLAQUEMENT bref large bande + COUP DE BASSE
   // (~52 Hz + sub 38 Hz) + GRONDEMENT grave qui traîne (bruit filtré passe-bas ~1,2 s).

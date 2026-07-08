@@ -127,6 +127,7 @@ const audio = new PyroAudio();
 layer.onBurst = (arch) => {
   if (arch === 'dragonEgg') audio.dragonEgg();
   else if (arch === 'salute') audio.marron(0.03);       // marron simple : boom quasi immédiat
+  else audio.breakPop();                                // B165 : l'EXPLOSION CENTRALE a un son (pop de break, toutes les bombes)
 };
 // MULTI marron d'air : le BOOM part PILE au moment où chaque mini marron détone (hook moteur,
 // plus fiable que des délais programmés — timing 1,0→3,0 s géré par behaveMarron).
