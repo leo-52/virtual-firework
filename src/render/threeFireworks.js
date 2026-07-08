@@ -451,7 +451,7 @@ const EFFECTS = {
           lifeBase75:2.8, starSize:4.1, trailing:{emitUntil:0.97, period:0.006, grain:1.3, gF:0.45, lifeMul:9.0, color:GOLD} },  // FRONDES = TRÈS LONGUES queues dorées = la palme (compensé, taille inchangée = 3.4×1.2)
   palmStrobe: { apex:95, stars:15, dist:distFibonacci, heat:false, pureColor:true, onStar:scintFn, gravStar:0.85, dragStar:0.30, speedMul:0.62, wind:1.2,   // « bombe 75 mm PALME OR SCINTILLANT blanc/or » (575292000/575291000, 95 m). B177 (user : « on dirait figé ») : VENT commun par tir — les étincelles dérivent toutes ensemble, légèrement -> la nappe VIT
           lifeBase75:1.7, lifeJitter:0.18, starSize:1.76, shrink:1.0, colors:[new THREE.Color(1.15,1.18,1.28)],   // B178 (user) : étoiles BLANCHES scintillantes, +10% plus grosses (1.76) qui FONDENT JUSQU'À 0 (shrink 1.0)
-          trailing:{emitUntil:0.97, period:0.006, grain:1.3, gF:0.05, lifeMul:8.5, color:new THREE.Color(1.12,0.60,0.20), lifeGrow:0.45, rareLong:{p:0.03, min:4.5, max:7, minA:0.35}} },   // B181 (user) : vies ∝ position (centre court -> fondu intérieur->extérieur garanti) + RARES étincelles 4,5-7 s (3%, jamais près du centre)
+          trailing:{emitUntil:0.97, period:0.006, grain:1.3, gF:0.05, lifeMul:8.5, color:new THREE.Color(1.12,0.60,0.20), longLaw:{p0:0.2, p1:0.5, min:2.8, max:7, pow:1.8}} },   // B181 (loi user) : proba d'étincelle LONGUE graduelle 2/10 (centre) -> 5/10 (bout) ; longues = 2,8-7 s biaisées bas (les ~7 s restent rares)
   palmMulti: { apex:105, stars:15, dist:distFibonacci, heat:false, pureColor:true, assorted:[GRN,RED,BLU], gravStar:1.0, dragStar:0.6, shrink:true,   // PALME MULTICOLORE 75mm (catalogue, user : 15 étoiles vertes/rouges/bleues)
           lifeBase75:3.0, starSize:2.6, trailing:{emitUntil:0.97, period:0.0022, grain:0.8, gF:0.45, lifeMul:8.15, color:EMBER, fixedColor:true, spark:true} },  // étincelles CHAUDES orangé/doré (EMBER) + DENSES (period 0.0022, B91) ; vie moy 1,9s ; étoiles réduites + shrink ; pointe verte/rouge/bleue
 
@@ -937,14 +937,12 @@ class Shell {
           const tc=tr.fixedColor ? (tr.color||GOLD) : (d.coreColor||tr.color||GOLD);   // fixedColor : la traînée garde SA couleur (ex palme multicolore = queue OR, pointe colorée) ; sinon héritée de l'étoile (mosaïque assortie)
           for (let e=0;e<nEmit;e++){ const fq=Math.random();                            // position aléatoire entre l'ancienne et la nouvelle -> pas de paquets
             const mx=d.lastX+(px-d.lastX)*fq, my=d.lastY+(py-d.lastY)*fq, mz=d.lastZ+(pz-d.lastZ)*fq;
-            // lifeGrow (B181, user) : vie du grain CORRÉLÉE à la position d'émission — les grains
-            // du CENTRE (émis tôt) vivent COURT (ils s'éteignent en premier -> le fondu intérieur->
-            // extérieur est préservé), ceux du bout peuvent vivre long. rareLong : quelques RARES
-            // étincelles très longues (ex 4,5-7 s), JAMAIS près du centre (minA).
+            // longLaw (B181, loi user) : proba qu'une étincelle soit LONGUE, GRADUELLE selon la
+            // position d'émission — « 2/10 au début (centre), ~3,5/10 au milieu, 5/10 à la fin ».
+            // Parmi les longues, les très longues (max, ex 7 s) restent RARES (tirage biaisé bas).
             let lm=tr.lifeMul, fl=!!tr.flatLife;
-            if (tr.lifeGrow) lm*=(1-tr.lifeGrow)+2*tr.lifeGrow*A;
-            if (tr.rareLong && A>=(tr.rareLong.minA||0) && Math.random()<tr.rareLong.p){
-              lm=(tr.rareLong.min+Math.random()*(tr.rareLong.max-tr.rareLong.min))/0.26; fl=true; }
+            if (tr.longLaw){ const L=tr.longLaw, p=L.p0+(L.p1-L.p0)*A;
+              if (Math.random()<p){ lm=(L.min+(L.max-L.min)*Math.pow(Math.random(),L.pow||1))/0.26; fl=true; } }
             if (tr.spark){   // ÉTINCELLES (décomposition de l'étoile) : brillance TRÈS variable + dispersion -> nuée qui pétille, pas un ruban lisse
               let tw=(0.35+Math.pow(Math.random(),1.6)*1.65)*(tr.bright||1);   // bright : atténue le glow par effet
               if (tr.rampIn) tw*=0.25+0.75*Math.min(1, A/0.4);                 // rampIn (cascade) : étincelles TAMISÉES tant que les mèches sont serrées (anti boule lumineuse au break), pleine brillance une fois écartées
