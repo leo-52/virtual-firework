@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B176';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B177';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -127,6 +127,10 @@ function spawnTrail(x,y,z, r,g,b, size, gF=0.4, lifeMul=1, vx0=0, vy0=0, vz0=0, 
                                               : (0.35 + 1.45*Math.pow(Math.random(),1.6)));    // sinon : vies très inégales (fondu organique) — MAIS les profondes meurent d'abord => enveloppe qui "bute sur un sol"
   t.size = size*(0.7+Math.random()*0.6); t.r=r; t.g=g; t.b=b; t.gF=gF; t.drag=drag; t.rin=rin; t.alive=true;   // rin : FONDU d'apparition (s) -> les grains frais empilés près de la tête ne crament plus en blanc
 }
+// VENT DES ÉTINCELLES (B177, user : « les étincelles bougent légèrement avec le vent, emportées
+// toutes en même temps ») : brise COMMUNE (posée par le burst des effets à cfg.wind) qui dérive
+// tout le pool ensemble — c'est ce qui rend la nappe VIVANTE au lieu de figée.
+let trailWindX = 0, trailWindZ = 0;
 function updateTrails(dt){
   for (let i = 0; i < TRAIL_MAX; i++){
     const t = trail[i];
@@ -137,6 +141,7 @@ function updateTrails(dt){
     if (!t.alive){ trailCol[i*3]=trailCol[i*3+1]=trailCol[i*3+2]=0; trailSize[i]=0; continue; }
     t.age += dt; if (t.age >= t.life){ t.alive=false;
       trailCol[i*3]=trailCol[i*3+1]=trailCol[i*3+2]=0; trailSize[i]=0; continue; }
+    t.x += trailWindX * dt; t.z += trailWindZ * dt;   // la brise emporte TOUS les grains ensemble (B177)
     t.vy -= 9.8 * t.gF * dt;
     const kd = Math.max(0, 1 - (t.drag||0.42)*dt); t.vx*=kd; t.vy*=kd; t.vz*=kd;
     t.x+=t.vx*dt; t.y+=t.vy*dt; t.z+=t.vz*dt;
@@ -444,9 +449,9 @@ const EFFECTS = {
                    gravStar:0.75, gravJit:0.2, dragStar:0.5, lifeBase75:5.3, speedMul:0.5, sway:1.5, wind:1.8, noRise:true, starSize:2.1 },   // B125 (user) : durée -0,7s (5,3s) ; éclat compact, 75 étoiles, chute ~7 m/s ±20%, vent commun, jamais vers le haut
   palm: { apex:105, stars:15, dist:distFibonacci, heat:false, color:WHITE, onStar:glitterFn, gravStar:1.0, dragStar:0.6,   // PIVOINE (sphère, bien écartée) + traînée, 15 étoiles ; blanc scintillant + traînée OR
           lifeBase75:2.8, starSize:4.1, trailing:{emitUntil:0.97, period:0.006, grain:1.3, gF:0.45, lifeMul:9.0, color:GOLD} },  // FRONDES = TRÈS LONGUES queues dorées = la palme (compensé, taille inchangée = 3.4×1.2)
-  palmStrobe: { apex:95, stars:15, dist:distFibonacci, heat:false, pureColor:true, onStar:scintFn, gravStar:0.85, dragStar:0.30, speedMul:0.84,   // « bombe 75 mm PALME OR SCINTILLANT blanc/or » (575292000/575291000, 95 m). B174 (user : « sol virtuel, ça s'arrête net ») : freinage DOUX (0.38->0.30) + gravité 0.85 -> l'étoile GLISSE au lieu de buter (transition impulsion->chute continue), speedMul recalé (même envergure)
-          lifeBase75:1.9, starSize:1.6, shrink:true, colorPairs:[[new THREE.Color(1.15,1.18,1.28)],[GOLD]],   // B176 (user) : durée réduite (1.9) ; shrink = l'étoile est une BOULE DE POUDRE qui se consume -> extinction PROGRESSIVE
-          trailing:{emitUntil:0.97, period:0.006, grain:1.3, gF:0.05, lifeMul:13, color:GOLD} },   // B176 (user, RÈGLE) : les ÉTINCELLES NE TOMBENT PAS — elles s'éteignent SUR PLACE au fur et à mesure (gF 0.58->0.05)
+  palmStrobe: { apex:95, stars:15, dist:distFibonacci, heat:false, pureColor:true, onStar:scintFn, gravStar:0.85, dragStar:0.30, speedMul:0.84, wind:1.2,   // « bombe 75 mm PALME OR SCINTILLANT blanc/or » (575292000/575291000, 95 m). B177 (user : « on dirait figé ») : VENT commun par tir — les étincelles dérivent toutes ensemble, légèrement -> la nappe VIT
+          lifeBase75:1.6, starSize:1.6, shrink:true, colorPairs:[[new THREE.Color(1.15,1.18,1.28)],[GOLD]],   // B177 : durée encore réduite (1.6) ; shrink = boule de poudre qui se consume
+          trailing:{emitUntil:0.97, period:0.006, grain:1.3, gF:0.05, lifeMul:7, color:GOLD} },   // B177 : persistance des brins réduite (lifeMul 13->7, plus de nappe gravée) ; étincelles qui s'éteignent SUR PLACE (gF 0.05)
   palmMulti: { apex:105, stars:15, dist:distFibonacci, heat:false, pureColor:true, assorted:[GRN,RED,BLU], gravStar:1.0, dragStar:0.6, shrink:true,   // PALME MULTICOLORE 75mm (catalogue, user : 15 étoiles vertes/rouges/bleues)
           lifeBase75:3.0, starSize:2.6, trailing:{emitUntil:0.97, period:0.0022, grain:0.8, gF:0.45, lifeMul:8.15, color:EMBER, fixedColor:true, spark:true} },  // étincelles CHAUDES orangé/doré (EMBER) + DENSES (period 0.0022, B91) ; vie moy 1,9s ; étoiles réduites + shrink ; pointe verte/rouge/bleue
 
@@ -657,7 +662,8 @@ class Shell {
     // horizontale (un minimum de sens), le tangage individuel ne fait que broder autour.
     this._windX=0; this._windZ=0;
     if (this.cfg.wind){ const wa=Math.random()*Math.PI*2;
-      this._windX=Math.cos(wa)*this.cfg.wind; this._windZ=Math.sin(wa)*this.cfg.wind; }
+      this._windX=Math.cos(wa)*this.cfg.wind; this._windZ=Math.sin(wa)*this.cfg.wind;
+      trailWindX=this._windX*0.55; trailWindZ=this._windZ*0.55; }   // B177 : la MÊME brise dérive les étincelles du pool (toutes ensemble, légèrement)
     this.nAlive=n;
     for (let i=0;i<n;i++){
       this.pos[i*3]=bx; this.pos[i*3+1]=apex; this.pos[i*3+2]=bz;
