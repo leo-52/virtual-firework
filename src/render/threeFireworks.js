@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B175';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B176';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -445,8 +445,8 @@ const EFFECTS = {
   palm: { apex:105, stars:15, dist:distFibonacci, heat:false, color:WHITE, onStar:glitterFn, gravStar:1.0, dragStar:0.6,   // PIVOINE (sphère, bien écartée) + traînée, 15 étoiles ; blanc scintillant + traînée OR
           lifeBase75:2.8, starSize:4.1, trailing:{emitUntil:0.97, period:0.006, grain:1.3, gF:0.45, lifeMul:9.0, color:GOLD} },  // FRONDES = TRÈS LONGUES queues dorées = la palme (compensé, taille inchangée = 3.4×1.2)
   palmStrobe: { apex:95, stars:15, dist:distFibonacci, heat:false, pureColor:true, onStar:scintFn, gravStar:0.85, dragStar:0.30, speedMul:0.84,   // « bombe 75 mm PALME OR SCINTILLANT blanc/or » (575292000/575291000, 95 m). B174 (user : « sol virtuel, ça s'arrête net ») : freinage DOUX (0.38->0.30) + gravité 0.85 -> l'étoile GLISSE au lieu de buter (transition impulsion->chute continue), speedMul recalé (même envergure)
-          lifeBase75:2.3, starSize:1.6, colorPairs:[[new THREE.Color(1.15,1.18,1.28)],[GOLD]],   // B174 : durée -0,5 s (2.3)
-          trailing:{emitUntil:0.97, period:0.006, grain:1.3, gF:0.58, lifeMul:13, color:GOLD} },   // B174 : les grains SUIVENT la chute (gF 0.45->0.58, plus de stagnation) ; longueur conservée (lifeMul 13, quasi au centre aux 3/4)
+          lifeBase75:1.9, starSize:1.6, shrink:true, colorPairs:[[new THREE.Color(1.15,1.18,1.28)],[GOLD]],   // B176 (user) : durée réduite (1.9) ; shrink = l'étoile est une BOULE DE POUDRE qui se consume -> extinction PROGRESSIVE
+          trailing:{emitUntil:0.97, period:0.006, grain:1.3, gF:0.05, lifeMul:13, color:GOLD} },   // B176 (user, RÈGLE) : les ÉTINCELLES NE TOMBENT PAS — elles s'éteignent SUR PLACE au fur et à mesure (gF 0.58->0.05)
   palmMulti: { apex:105, stars:15, dist:distFibonacci, heat:false, pureColor:true, assorted:[GRN,RED,BLU], gravStar:1.0, dragStar:0.6, shrink:true,   // PALME MULTICOLORE 75mm (catalogue, user : 15 étoiles vertes/rouges/bleues)
           lifeBase75:3.0, starSize:2.6, trailing:{emitUntil:0.97, period:0.0022, grain:0.8, gF:0.45, lifeMul:8.15, color:EMBER, fixedColor:true, spark:true} },  // étincelles CHAUDES orangé/doré (EMBER) + DENSES (period 0.0022, B91) ; vie moy 1,9s ; étoiles réduites + shrink ; pointe verte/rouge/bleue
 
