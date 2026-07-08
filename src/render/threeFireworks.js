@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B185';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B186';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -431,6 +431,9 @@ const EFFECTS = {
   chrysanthemum: { trailing:{emitUntil:0.85, period:0.015, grain:0.9, gF:0.40, lifeMul:1.6, color:GOLD} },
   willow: { apex:95, heat:false, color:DIMGOLD, gravStar:0.5, dragStar:0.25, lifeBase75:2.7, lifeJitter:0.28, restExtra:4,   // B139 (user : « le haut ne monte pas, le bas baisse trop vite ») : gravStar 0.92->0.5 — le haut MONTE encore à t=1.5s, chute terminale 18->10 m/s, envergure INTACTE (la gravité ne joue pas sur l'horizontal)   // « bombe 75 mm à effet saule kamuro » (catalogue 95 m). B136 (photos user) : vies d'étoiles PLUS VARIABLES (±28% -> branches inégales, extinction échelonnée) ; restExtra 4 = laisser s'éteindre les longs brins (~1.9k grains résiduels au tir suivant, mesuré)
             starSize:0.9, speedMul:0.8, trailing:{emitUntil:0.95, period:0.008, grain:1.4, gF:0.13, lifeMul:18, color:COPPER, spark:true, jit:0.22} },  // ⚠️ B138 : RETOUR EXACT au B136 (user : « beaucoup trop gros ») — le "B137" déployé était un ÉDIT RATÉ (speedMul 1.5 passé SANS le dragStar 0.55 compensateur -> envergure ~118 m). B136 (photos) : brin = COLLIER DE PERLES fines/serrées (grain 1.4, period 0.008), très long (lifeMul 18), couleur CUIVRE, jit 0.22 = zéro poussière. SAULE = forme qui PEND ; KAMURO = or pailleté (spark) ; tête = POINTE (user B94)
+  willowStrobe: { apex:95, heat:false, pureColor:true, gravStar:0.5, dragStar:0.25, lifeBase75:2.7, lifeJitter:0.28, restExtra:4,   // « bombe 75 mm SAULE OR POINTES SCINTILLANT rouge/vert » (575452000/575453000, 95 m, B186) : le saule kamuro VALIDÉ + POINTES colorées qui SCINTILLENT (scintFn), rouge ou vert au sort par volée
+            starSize:1.5, speedMul:0.8, onStar:scintFn, colorPairs:[[RED],[GRN]],
+            trailing:{emitUntil:0.95, period:0.008, grain:1.4, gF:0.13, lifeMul:18, color:COPPER, spark:true, jit:0.22} },   // traînées CUIVRE du saule inchangées (le « saule or ») ; tête plus visible (1.5) pour que la couleur de pointe se lise
   comet: { apex:96, stars:1, dist:distComet, heat:false, color:GOLD, gravStar:0.90, dragStar:0.30,
            lifeBase75:3.0, starSize:5.4, speedMul:1.0, headSize:4.0, riseColor:GOLD,   // compensé (STAR_SCALE 1.2->1.0), taille inchangée (4.5×1.2)
            trailing:{emitUntil:0.97, period:0.012, grain:1.3, gF:0.35, lifeMul:1.8, color:GOLD} },
@@ -505,7 +508,7 @@ const EFFECTS = {
     color:new THREE.Color(0.30,0.32,0.36), dist:distMarron, randomAxis:true, behave:behaveMarron },                                                   // les 5 MARRONS sont DU MÊME CÔTÉ de la bombe -> l'explosion les pousse TOUS dans la même direction (cône serré, orientation aléatoire par tir) ; invisibles ; 1,5 s puis détonations aléatoires dans 0,5 s
 };
 
-export const LABELS = { peony:'pivoine', chrysanthemum:'chrysanthème', willow:'saule (kamuro)', comet:'comète',
+export const LABELS = { peony:'pivoine', chrysanthemum:'chrysanthème', willow:'saule (kamuro)', willowStrobe:'saule or pointes scintillant', comet:'comète',
   sphere:'sphère', crackling:'crackling', dragonEgg:'œuf de dragon', strobe:'scintillant', finalCli:'final cli. blanc rose', palmMulti:'palme multicolore', palmStrobe:'palme or scintillant',
   fallingLeaves:'feuille morte', palm:'palme', heart:'cœur', butterfly:'papillon', smiley:'smiley',
   daisy:'marguerite', atom:'atome', halfHalf:'demi-demi', medusa:'méduse', horsetail:'queue de cheval',
