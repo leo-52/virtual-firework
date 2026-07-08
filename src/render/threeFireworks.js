@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B188';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B189';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -317,7 +317,7 @@ function strobeFn(d){ const ph=(d.age*d.strobeF+d.phase)%1; return {intenMul: ph
 // SCINTILLANT (B170, définition user en mémoire) : « entre-deux — ni noir ni éclairé, pulse
 // DOUX (sombre↔clair), lent/irrégulier » — sinus adouci, fréquence et phase propres par étoile.
 function scintFn(d){ const ph=Math.sin(6.283*(d.age*d.strobeF*0.9)+d.phase2)*0.5+0.5;
-  return {intenMul: 0.12+1.85*Math.pow(ph,2.4)}; }   // B182 : pulse encore plus CREUSÉ (0.18-1.90) — « on doit VRAIMENT voir le scintillant »
+  const v=1.9*Math.pow(ph,2.4); return {intenMul: v<0.15?0:v}; }   // B189 (user) : dans le creux, l'étoile DISPARAÎT COMPLÈTEMENT (fenêtre noire ~30% du cycle), pic 1.9
 // GOUTTES SCINTILLANTES (B187, point essentiel user) : l'étoile qui scintille PERD des
 // étincelles qui SCINTILLENT elles aussi — 1 à 5 max par traînée, semées en route (elles
 // restent quasi sur place -> se retrouvent à 1-10 m derrière la tête). Ce sont de vraies
@@ -445,7 +445,7 @@ const EFFECTS = {
   willow: { apex:95, heat:false, color:DIMGOLD, gravStar:0.5, dragStar:0.25, lifeBase75:2.7, lifeJitter:0.28, restExtra:4,   // B139 (user : « le haut ne monte pas, le bas baisse trop vite ») : gravStar 0.92->0.5 — le haut MONTE encore à t=1.5s, chute terminale 18->10 m/s, envergure INTACTE (la gravité ne joue pas sur l'horizontal)   // « bombe 75 mm à effet saule kamuro » (catalogue 95 m). B136 (photos user) : vies d'étoiles PLUS VARIABLES (±28% -> branches inégales, extinction échelonnée) ; restExtra 4 = laisser s'éteindre les longs brins (~1.9k grains résiduels au tir suivant, mesuré)
             starSize:0.9, speedMul:0.8, trailing:{emitUntil:0.95, period:0.008, grain:1.4, gF:0.13, lifeMul:18, color:COPPER, spark:true, jit:0.22} },  // ⚠️ B138 : RETOUR EXACT au B136 (user : « beaucoup trop gros ») — le "B137" déployé était un ÉDIT RATÉ (speedMul 1.5 passé SANS le dragStar 0.55 compensateur -> envergure ~118 m). B136 (photos) : brin = COLLIER DE PERLES fines/serrées (grain 1.4, period 0.008), très long (lifeMul 18), couleur CUIVRE, jit 0.22 = zéro poussière. SAULE = forme qui PEND ; KAMURO = or pailleté (spark) ; tête = POINTE (user B94)
   willowStrobe: { apex:95, heat:false, pureColor:true, gravStar:0.5, dragStar:0.25, lifeBase75:1.7, lifeJitter:0.28, restExtra:4, stars:40, nMax:240,   // « bombe 75 mm SAULE OR POINTES SCINTILLANT rouge/vert » (575452000/575453000, 95 m). B187 (user) : 40 ÉTOILES, envergure -22% (speedMul 0.62), durée -1 s (1.7)
-            starSize:2.2, splitStarSize:1.1, speedMul:0.62, onStar:scintFn, behave:behaveScintDrops, colorPairs:[[RED],[GRN]],   // étoiles 2.2 + GOUTTES SCINTILLANTES : chaque pointe sème 1-5 mini-étoiles qui pulsent aussi, à 1-10 m derrière
+            starSize:2.1, splitStarSize:1.05, speedMul:0.62, onStar:scintFn, behave:behaveScintDrops, colorPairs:[[RED],[GRN]],   // étoiles 2.2 + GOUTTES SCINTILLANTES : chaque pointe sème 1-5 mini-étoiles qui pulsent aussi, à 1-10 m derrière
             trailing:{emitUntil:0.95, period:0.006, grain:0.9, gF:0.13, lifeMul:11, color:COPPER, spark:true, jit:0.22, bright:0.7} },   // traînée FINE (« des myriades de points », grain 0.9 dense) et MOINS LUMINEUSE (bright 0.7), cuivre
   comet: { apex:96, stars:1, dist:distComet, heat:false, color:GOLD, gravStar:0.90, dragStar:0.30,
            lifeBase75:3.0, starSize:5.4, speedMul:1.0, headSize:4.0, riseColor:GOLD,   // compensé (STAR_SCALE 1.2->1.0), taille inchangée (4.5×1.2)
@@ -466,7 +466,7 @@ const EFFECTS = {
   palm: { apex:105, stars:15, dist:distFibonacci, heat:false, color:WHITE, onStar:glitterFn, gravStar:1.0, dragStar:0.6,   // PIVOINE (sphère, bien écartée) + traînée, 15 étoiles ; blanc scintillant + traînée OR
           lifeBase75:2.8, starSize:4.1, trailing:{emitUntil:0.97, period:0.006, grain:1.3, gF:0.45, lifeMul:9.0, color:GOLD} },  // FRONDES = TRÈS LONGUES queues dorées = la palme (compensé, taille inchangée = 3.4×1.2)
   palmStrobe: { apex:95, stars:15, dist:distFibonacci, heat:false, pureColor:true, onStar:scintFn, gravStar:0.85, dragStar:0.30, speedMul:0.62, wind:1.2, randomAxis:true,   // « bombe 75 mm PALME OR SCINTILLANT blanc/or » (575292000/575291000, 95 m). B177 (user : « on dirait figé ») : VENT commun par tir — les étincelles dérivent toutes ensemble, légèrement -> la nappe VIT
-          lifeBase75:1.7, lifeJitter:0.18, starSize:2.2, shrink:1.0, shrinkPow:2.2, colors:[new THREE.Color(1.15,1.18,1.28)],   // B187 (user) : étoiles scintillantes à 2.2 (harmonisé avec le saule scintillant) ; blanches, FONDENT jusqu'à 0
+          lifeBase75:1.7, lifeJitter:0.18, starSize:2.1, shrink:1.0, shrinkPow:2.2, colors:[new THREE.Color(1.15,1.18,1.28)],   // B187 (user) : étoiles scintillantes à 2.2 (harmonisé avec le saule scintillant) ; blanches, FONDENT jusqu'à 0
           trailing:{emitUntil:0.97, period:0.006, grain:1.1, gF:0.05, lifeMul:8.5, color:new THREE.Color(1.12,0.60,0.20), longLaw:{p0:0.2, p1:0.5, min:2.8, max:7, pow:1.8}} },   // B181 (loi user) : proba d'étincelle LONGUE graduelle 2/10 (centre) -> 5/10 (bout) ; longues = 2,8-7 s biaisées bas (les ~7 s restent rares)
   palmMulti: { apex:105, stars:15, dist:distFibonacci, heat:false, pureColor:true, assorted:[GRN,RED,BLU], gravStar:1.0, dragStar:0.6, shrink:true,   // PALME MULTICOLORE 75mm (catalogue, user : 15 étoiles vertes/rouges/bleues)
           lifeBase75:3.0, starSize:2.6, trailing:{emitUntil:0.97, period:0.0022, grain:0.8, gF:0.45, lifeMul:8.15, color:EMBER, fixedColor:true, spark:true} },  // étincelles CHAUDES orangé/doré (EMBER) + DENSES (period 0.0022, B91) ; vie moy 1,9s ; étoiles réduites + shrink ; pointe verte/rouge/bleue
