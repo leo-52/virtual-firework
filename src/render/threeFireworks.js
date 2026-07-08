@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B190';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B191';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -223,7 +223,8 @@ const GOLD=new THREE.Color(1.0,0.72,0.32), DIMGOLD=new THREE.Color(0.55,0.40,0.1
   EGGWHITE=new THREE.Color(1.0,0.95,0.92),    // BLANC (ancien œuf de dragon, trop froid)
   EGGGOLD=new THREE.Color(1.4,1.18,0.88),     // BLANC CHAUD / champagne, HDR (œuf de dragon, retour B61 ; réf photo = amas blancs à reflets chauds). MÊME couleur traînée + points + cœur
   CKGRN=new THREE.Color(0.24,1.22,0.38),      // VERT FLASHY (crackling vert : un poil + saturé/punchy que GRN, sans toucher couronne/marguerite)
-  EMBER=new THREE.Color(1.25,0.60,0.15);      // ORANGÉ/DORÉ CHAUD (braise HDR) — étincelles de la palme multicolore (plus chaud que GOLD, bleu bas -> reste orange en additif)
+  EMBER=new THREE.Color(1.25,0.60,0.15),      // ORANGÉ/DORÉ CHAUD (braise HDR) — étincelles de la palme multicolore (plus chaud que GOLD, bleu bas -> reste orange en additif)
+  SCINTW=new THREE.Color(1.15,1.18,1.28);     // BLANC SCINTILLANT légèrement HDR (même blanc que la palme or scintillant) — paquets pot-à-feu de l'atome
 
 // ============================================================================
 // DISTRIBUTIONS 3D : dist(i,n,rnd) -> {dx,dy,dz, spMul, comp?}
@@ -257,15 +258,27 @@ function distSalute(i,n,rnd){ const v=vrand(rnd); return {dx:v[0],dy:v[1],dz:v[2
 function distMosaic(i,n,rnd){ const v=vrand(rnd); return {dx:v[0],dy:v[1],dz:v[2],spMul:1.0}; }
 function distSaucer(i,n,rnd){ const dx=rnd(-0.07,0.07),dz=rnd(-0.07,0.07);
   const L=Math.hypot(dx,1,dz); return {dx:dx/L,dy:1/L,dz:dz/L,spMul:0.6}; }
+// ATOME 150mm (B191, réécrit — l'ancien modèle « anneaux d'électrons » était FAUX ; étapes de la
+// vidéo catalogue GTIeDTIQl-0 disséquées par l'user) : n = pivoine + 17 brins + 17×7 paquets.
+// comp 0 = PIVOINE (sphère centrale, vie courte — elle meurt pendant que les brins vivent encore) ;
+// comp 1 = 17 BRINS comètes or, ~×1,75 plus loin que la pivoine, longueurs légèrement inégales ;
+// comp 2 = PAQUETS POT-À-FEU : points blancs SCINTILLANTS expulsés AU BREAK dans la direction de
+// LEUR brin (cône serré) mais ~2× plus lents -> ils se retrouvent au MILIEU/BAS de la traînée
+// pendant que la comète file vers la pointe (correction user : rien n'est semé en route).
+const ATOM_BRINS=17, ATOM_PK=7;
+let _atomDirs=null;   // directions des brins mémorisées le temps d'UN burst (la boucle est synchrone)
 function distAtom(i,n,rnd){
-  const nRings=(n>=54)?3:2, perRing=Math.max(12,Math.floor(n/nRings));
-  const NORMS=[[0,1,0],[0.9,0.44,0],[-0.45,0.44,0.78]];
-  const r=Math.min(nRings-1,Math.floor(i/perRing)), idx=i-r*perRing;
-  const N=norm([NORMS[r][0]+(rnd()-0.5)*0.3, NORMS[r][1]+(rnd()-0.5)*0.3, NORMS[r][2]+(rnd()-0.5)*0.3]);
-  const A=Math.abs(N[1])<0.999?[0,1,0]:[1,0,0];
-  const U=norm(cross(N,A)), V=cross(N,U), az=2*Math.PI*(idx+(rnd()-0.2))/perRing;
-  return {dx:U[0]*Math.cos(az)+V[0]*Math.sin(az), dy:U[1]*Math.cos(az)+V[1]*Math.sin(az),
-          dz:U[2]*Math.cos(az)+V[2]*Math.sin(az), spMul:0.55, comp:r%3};
+  if (i===0) _atomDirs=[];
+  const nPiv=Math.max(0, n-ATOM_BRINS*(1+ATOM_PK));
+  if (i<nPiv){ const v=vrand(rnd); return {dx:v[0],dy:v[1],dz:v[2],spMul:1.0,comp:0}; }
+  const j=i-nPiv;
+  if (j<ATOM_BRINS){ const v=vrand(rnd), sp=1.62+rnd()*0.26;
+    _atomDirs[j]={v,sp};
+    return {dx:v[0],dy:v[1],dz:v[2],spMul:sp,comp:1}; }
+  const b=_atomDirs[(j-ATOM_BRINS)%ATOM_BRINS];   // chaque paquet suit SON brin
+  const dx=b.v[0]+(rnd()-0.5)*0.14, dy=b.v[1]+(rnd()-0.5)*0.14, dz=b.v[2]+(rnd()-0.5)*0.14;
+  const L=Math.hypot(dx,dy,dz)||1;
+  return {dx:dx/L, dy:dy/L, dz:dz/L, spMul:b.sp*(0.42+rnd()*0.20), comp:2};
 }
 // (distHalfHalf supprimé en B132 : la demi-demi = distFibonacci pur + coupe `splitFacing` dans burst())
 // MARRONS (B159, user) : les 5 mini marrons partent dans la MÊME DIRECTION (chargés du même côté,
@@ -318,6 +331,8 @@ function strobeFn(d){ const ph=(d.age*d.strobeF+d.phase)%1; return {intenMul: ph
 // DOUX (sombre↔clair), lent/irrégulier » — sinus adouci, fréquence et phase propres par étoile.
 function scintFn(d){ const ph=Math.sin(6.283*(d.age*d.strobeF*0.9)+d.phase2)*0.5+0.5;
   const v=1.9*Math.pow(ph,2.4); return {intenMul: v<0.15?0:v}; }   // B189 (user) : dans le creux, l'étoile DISPARAÎT COMPLÈTEMENT (fenêtre noire ~30% du cycle), pic 1.9
+// ATOME (B191) : seuls les PAQUETS pot-à-feu (comp 2) scintillent ; pivoine (0) et brins (1) = combustion normale.
+function atomStarFn(d,A,dt){ return d.comp===2 ? scintFn(d) : null; }
 // GOUTTES SCINTILLANTES (B187, point essentiel user) : l'étoile qui scintille PERD des
 // étincelles qui SCINTILLENT elles aussi — 1 à 5 max par traînée, semées en route (elles
 // restent quasi sur place -> se retrouvent à 1-10 m derrière la tête). Ce sont de vraies
@@ -481,7 +496,19 @@ const EFFECTS = {
                colorPairs:[[GOLD,new THREE.Color(1.7,0.24,0.31)],[GOLD,new THREE.Color(0.42,1.7,0.66)],[GOLD,new THREE.Color(1.05,0.58,1.7)]] },   // MARGUERITE : ~30 billes de CŒUR compactes (HDR modéré 1.7 = billes NETTES, plus le halo écrasant), rouge/verte/violette au sort ; vie porteuses 2,5 s (1.74×1.44)
 
   // === MOTIFS 3D multi-couleurs ===
-  atom:    { apex:100, heat:false, stars:60, starSize:2.2, lifeBase75:1.7, speedJit:0.08, dist:distAtom, colors:[CYAN,PINK,YEL] },
+  // ATOME (B191, « bombe 150 mm atome <couleur> », 12 réfs, 165 m — N'EXISTE QU'EN 150mm ; étapes
+  // vidéo GTIeDTIQl-0 disséquées par l'user) : PIVOINE couleur (vie courte, ×0.6 — elle meurt à
+  // l'étape 3 pendant que les brins vivent) + 17 BRINS comètes or ~×1,75 plus loin (traînée cuivre
+  // fine qui s'émiette en points, tête pointue qui file jusqu'au bout) + PAQUETS pot-à-feu blancs
+  // SCINTILLANTS (7/brin, expulsés AU BREAK, ~2× plus lents -> milieu/bas de traînée) + résidu
+  // orange central (afterGlow). Démo = réf MULTICOLORE (515081000) : couleur de pivoine au sort par tir.
+  atom:    { apex:165, cal:150, heat:false, pureColor:true, stars:191, starSize:2.2, speedMul:2.45, speedJit:0.08,
+             gravStar:0.45, dragStar:0.70, lifeBase75:1.5, lifeJitter:0.14, shrink:1.0, shrinkPow:2.2,
+             dist:distAtom, onStar:atomStarFn, compLife:{0:0.60, 2:0.80}, compSize:{1:3.3, 2:1.9}, trailComps:[1],
+             afterGlow:{dur:1.6, sc:2.6, op:0.30},
+             trailing:{emitUntil:0.95, period:0.007, grain:1.0, gF:0.05, lifeMul:9, color:COPPER, spark:true, jit:0.25, bright:0.85},
+             colorPairs:[[RED,GOLD,SCINTW],[GRN,GOLD,SCINTW],[BLU,GOLD,SCINTW],[YEL,GOLD,SCINTW],[new THREE.Color(1.0,0.45,0.08),GOLD,SCINTW],
+                         [PINK,GOLD,SCINTW],[PURP,GOLD,SCINTW],[CYAN,GOLD,SCINTW],[WHITE,GOLD,SCINTW]] },   // rouge/verte/bleue/citron/orange/rose/violette/aqua/blanche (les 9 couleurs unies du catalogue, 515077000-515086000)
   // DEMI-DEMI (user B131-B132 : « comme une pivoine normale mais avec deux couleurs différentes »,
   // et la séparation DOIT SE LIRE dans le ciel : moitié gauche/droite, ou haut/bas, ou diagonale,
   // ou inversé — au hasard). Catalogue : 7 réfs 75mm à 95 m. Profil PIVOINE intact (distFibonacci,
@@ -708,6 +735,10 @@ class Shell {
       const s=this._newStar(dir.dx*sp, dir.dy*sp, dir.dz*sp, comp, trOK ? this.cfg.trailing : false);
       // compLife (B152, marguerite) : vie multipliée PAR GROUPE (ex le CŒUR rouge meurt EN PREMIER, ×0.6)
       if (this.cfg.compLife && this.cfg.compLife[comp]) s.life*=this.cfg.compLife[comp];
+      // compSize (B191, atome) : taille PAR GROUPE (ex têtes de brins 3.3, paquets scintillants 1.9)
+      if (this.cfg.compSize && this.cfg.compSize[comp]!=null){
+        this.size[i]=this.cfg.compSize[comp]*STAR_SCALE; s.size0=this.cfg.compSize[comp];
+        this.geo.attributes.size.needsUpdate=true; }
       s._i=i; s._split=false; if (assorted) s.coreColor=assorted[i%assorted.length];
       if (this.cfg.crackleStars){ s.crackle=true; s.crackleAt=this.cfg.crackleStars.delay+Math.random()*this.cfg.crackleStars.jitter; }  // crépite après délai (œuf de dragon)
       this.data[i]=s;
@@ -743,6 +774,11 @@ class Shell {
       const fr=big?1.6:1.5, fg2=big?1.62:1.15, fb=big?1.72:0.70;   // salut = blanc argenté ; bombes = blanc chaud
       spawnPuff(bx,apex,bz, 0,0,0, dur, sc*0.8, sc*1.35, fr,fg2,fb, op, 0, 1.0);
     }
+    // afterGlow (B191, atome) : RÉSIDU chaud qui TRAÎNE au centre après le break (le point orange
+    // des étapes 2-3 de la vidéo — le cœur qui finit de se consumer). Échelle ∝ calibre.
+    if (this.cfg.afterGlow){ const ag=this.cfg.afterGlow, cm=this.cal/75;
+      spawnPuff(bx,apex,bz, 0,0,0, ag.dur||1.5, (ag.sc||3)*cm, (ag.sc||3)*1.8*cm,
+        1.0,0.45,0.12, ag.op||0.30, 0.5, 1.0); }
     // burstSparks (B157, user — UNIVERSEL) : la VRAIE petite explosion au centre (~1 m) qui
     // projette les effets — des « grains de riz » qui explosent et se consument 0,2-0,5 s
     // (aléatoire, flatLife). Taille ∝ calibre. Dosable/désactivable par effet.
@@ -936,7 +972,7 @@ class Shell {
       // SHRINK (B88, palme multicolore) : l'étoile RÉTRÉCIT progressivement -> disparaît de plus en plus petite
       if (this.cfg.shrink){ const sf=(this.cfg.shrink===true)?0.9:this.cfg.shrink;   // shrink:1.0 (B178) = l'étoile FOND jusqu'à 0 de diamètre (extinction jamais soudaine)
         const Ap=this.cfg.shrinkPow?Math.pow(A,this.cfg.shrinkPow):A;                 // shrinkPow (B185) : ÉROSION LENTE au début, fonte en fin — le scintillement reste visible plus longtemps
-        this.size[i]=this.cfg.starSize*STAR_SCALE*Math.max(0,1-Ap*sf); }
+        this.size[i]=(d.size0||this.cfg.starSize)*STAR_SCALE*Math.max(0,1-Ap*sf); }   // size0 (B191) : respecte la taille compSize du groupe (atome)
 
       if (tr && d.trailing && A<tr.emitUntil && !d.popOnly && d.age<(d.crackleAt||1e9)){   // d.trailing (B149) : le flag PAR ÉTOILE compte enfin — nécessaire dès qu'un effet mélange étoiles avec/sans traînée (marguerite : pétales oui, cœur/perles non)
         // ÉTINCELLES : débit ∝ VITESSE (B89) — grains/mètre constants. Sinon, quand l'étoile ralentit,

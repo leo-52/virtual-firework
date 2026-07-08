@@ -109,14 +109,14 @@ Object.assign(pick.style, { position:'fixed', top:'10px', right:'10px', zIndex:'
 for (const [k, label] of Object.entries(LABELS)){
   const o = document.createElement('option'); o.value = k; o.textContent = label; pick.appendChild(o);
 }
-pick.value = 'willowStrobe';
+pick.value = 'atom';
 // changer d'effet dans le menu -> couleur PAR DÉFAUT de l'effet (null annule l'override de la démo)
 pick.addEventListener('change', e => layer.setFocus(e.target.value, null));
 document.body.appendChild(pick);
 
-// DÉMO (réglage en cours) : SAULE OR POINTES SCINTILLANT 75mm (575452000/575453000, 95 m) —
-// saule kamuro validé + pointes rouges ou vertes qui scintillent, au sort par volée.
-layer.setFocus('willowStrobe');
+// DÉMO (réglage en cours) : ATOME 150mm (515077000-515087000, 165 m) — réf MULTICOLORE :
+// pivoine couleur (au sort par tir) + 17 brins or + paquets pot-à-feu blancs scintillants.
+layer.setFocus('atom');
 
 // TIMELINE de lecture (barre en bas) + ESPACE = pause/play (fige les feux, caméra libre).
 const timeline = new Timeline(layer, LABELS);
