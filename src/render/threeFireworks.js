@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B172';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B173';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -444,9 +444,9 @@ const EFFECTS = {
                    gravStar:0.75, gravJit:0.2, dragStar:0.5, lifeBase75:5.3, speedMul:0.5, sway:1.5, wind:1.8, noRise:true, starSize:2.1 },   // B125 (user) : durée -0,7s (5,3s) ; éclat compact, 75 étoiles, chute ~7 m/s ±20%, vent commun, jamais vers le haut
   palm: { apex:105, stars:15, dist:distFibonacci, heat:false, color:WHITE, onStar:glitterFn, gravStar:1.0, dragStar:0.6,   // PIVOINE (sphère, bien écartée) + traînée, 15 étoiles ; blanc scintillant + traînée OR
           lifeBase75:2.8, starSize:4.1, trailing:{emitUntil:0.97, period:0.006, grain:1.3, gF:0.45, lifeMul:9.0, color:GOLD} },  // FRONDES = TRÈS LONGUES queues dorées = la palme (compensé, taille inchangée = 3.4×1.2)
-  palmStrobe: { apex:95, stars:15, dist:distFibonacci, heat:false, pureColor:true, onStar:scintFn, gravStar:0.6, dragStar:0.38, speedMul:1.15,   // « bombe 75 mm PALME OR SCINTILLANT blanc/or » (575292000/575291000, 95 m). B172 (user : « le bug du kamuro, les étoiles ne finissent pas leur course ») : MOINS de frein (0.6->0.38) + gravité 0.6, speedMul recalé -> les étoiles BOUGENT jusqu'à l'extinction, même envergure. B171 : étoiles petites (1.6), couleurs sobres
-          lifeBase75:2.8, starSize:1.6, colorPairs:[[new THREE.Color(0.9,0.9,0.9)],[GOLD]],
-          trailing:{emitUntil:0.97, period:0.006, grain:1.3, gF:0.45, lifeMul:9.0, color:GOLD} },
+  palmStrobe: { apex:95, stars:15, dist:distFibonacci, heat:false, pureColor:true, onStar:scintFn, gravStar:0.6, dragStar:0.38, speedMul:0.85,   // « bombe 75 mm PALME OR SCINTILLANT blanc/or » (575292000/575291000, 95 m). B173 (user) : charge MOINS FORTE (speedMul 1.15->0.85, étoiles moins loin) ; BLANC vraiment blanc-froid (tranche avec les traînées or) ; B172 : les étoiles finissent leur course
+          lifeBase75:2.8, starSize:1.6, colorPairs:[[new THREE.Color(1.15,1.18,1.28)],[GOLD]],
+          trailing:{emitUntil:0.97, period:0.006, grain:1.3, gF:0.45, lifeMul:13, color:GOLD} },   // B173 : traînées PLUS LONGUES (lifeMul 9->13) — quasi jusqu'au centre quand l'étoile est aux 3/4 de sa course
   palmMulti: { apex:105, stars:15, dist:distFibonacci, heat:false, pureColor:true, assorted:[GRN,RED,BLU], gravStar:1.0, dragStar:0.6, shrink:true,   // PALME MULTICOLORE 75mm (catalogue, user : 15 étoiles vertes/rouges/bleues)
           lifeBase75:3.0, starSize:2.6, trailing:{emitUntil:0.97, period:0.0022, grain:0.8, gF:0.45, lifeMul:8.15, color:EMBER, fixedColor:true, spark:true} },  // étincelles CHAUDES orangé/doré (EMBER) + DENSES (period 0.0022, B91) ; vie moy 1,9s ; étoiles réduites + shrink ; pointe verte/rouge/bleue
 
