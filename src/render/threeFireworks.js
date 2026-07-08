@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B161';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B162';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -360,8 +360,11 @@ function behaveMarron(d,A,dt,ctx){
   if (d.age < d._detAt) return;
   d._det=true;
   const px=ctx.pos[d._i*3], py=ctx.pos[d._i*3+1], pz=ctx.pos[d._i*3+2];
-  for (let c=0;c<34;c++){ const v=vrand(Math.random), sp=2.5+Math.random()*6;   // POUDRE DE TITANE : grains blanc-argent, vies 0,15-0,35 s
-    spawnTrail(px,py,pz, 1.30,1.34,1.42, 1.1, 0.4, (0.15+Math.random()*0.20)/0.26, v[0]*sp*4, v[1]*sp*4, v[2]*sp*4, 1.2, 0.42, true); }
+  // B162 (user) : détonation plus CONSÉQUENTE pour un 75 — plus de MATIÈRE ACTIVE :
+  // 72 grains de titane (au lieu de 34), plus gros, projetés plus fort (~3-4 m d'envergure)
+  for (let c=0;c<72;c++){ const v=vrand(Math.random), sp=3.5+Math.random()*9;
+    spawnTrail(px,py,pz, 1.30,1.34,1.42, 1.35, 0.4, (0.18+Math.random()*0.22)/0.26, v[0]*sp*4, v[1]*sp*4, v[2]*sp*4, 1.2, 0.42, true); }
+  spawnPuff(px,py,pz, 0,0,0, 0.12, 4.5, 8, 1.55,1.58,1.68, 0.5, 0, 1.0);   // l'ÉCLAIR de la détonation (lueur douce, style B161)
   if (_onMarronPop) _onMarronPop();   // BOOM synchronisé pile sur la détonation visuelle
   d.age=d.life;   // le porteur meurt à la détonation
 }
