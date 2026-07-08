@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B156';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B157';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -341,20 +341,21 @@ function behaveSaucer(d,A,dt,ctx){
     const px=ctx.pos[d._i*3],py=ctx.pos[d._i*3+1],pz=ctx.pos[d._i*3+2];
     spawnTrail(px,py,pz, GOLD.r,GOLD.g,GOLD.b, 0.9,0.4,0.8, s[0]*4,s[1]*4,s[2]*4); }
 }
-// MARRON D'AIR MULTI (B155, user) : la bombe ÉCLATE (flash normal) et libère 5 MINI MARRONS
-// quasi invisibles ; chacun DÉTONE à son tour, espacés de ~0,5 s (échelle par index ± hasard) —
-// 9 éclats argentés très brefs + bouffée lumineuse. Le BOOM part au MÊME instant (hook audio).
+// MARRON D'AIR MULTI (B157, user) : la bombe éclate et libère 5 MINI MARRONS **INVISIBLES**
+// (un marron = juste du BRUIT — de la poudre de titane qui explose). Après 1,5 s d'attente,
+// les 5 détonent à des instants ALÉATOIRES dans une fourchette de 0,5 s. La détonation =
+// bouffée GRANULAIRE d'étincelles blanc-argent très brèves (PAS de halo lisse « simulé »).
+// Le BOOM part au MÊME instant (hook audio).
 let _onMarronPop = null;
 function __setMarronPop(f){ _onMarronPop = f; }
 function behaveMarron(d,A,dt,ctx){
-  if (d._split || d._det) return;   // _split : les ÉCLATS ne re-détonent pas (garde comme behaveMosaic)
-  if (d._detAt===undefined) d._detAt = 1.0 + d._i*0.125 + (Math.random()-0.5)*0.06;   // B156 user : 1 s d'attente, puis les 5 détonent dans une FENÊTRE DE 0,5 s (1,0 → 1,5 s)
+  if (d._split || d._det) return;   // _split : garde (comme behaveMosaic)
+  if (d._detAt===undefined){ d._detAt = 1.5 + Math.random()*0.5; d.hideStar=true; }   // 1,5 s d'attente + instant ALÉATOIRE dans 0,5 s ; porteur INVISIBLE
   if (d.age < d._detAt) return;
   d._det=true;
   const px=ctx.pos[d._i*3], py=ctx.pos[d._i*3+1], pz=ctx.pos[d._i*3+2];
-  spawnPuff(px,py,pz, 0,0,0, 0.14, 7, 13, 1.5,1.55,1.7, 0.9, 0, 1.0);   // le flash de la détonation
-  for (let c=0;c<9 && ctx.nAlive<ctx.nMax;c++){ const v=vrand(Math.random);
-    ctx.addStar(px,py,pz, v[0]*9,v[1]*9,v[2]*9, 0.12+Math.random()*0.13, 0, false, SILVER); }
+  for (let c=0;c<34;c++){ const v=vrand(Math.random), sp=2.5+Math.random()*6;   // POUDRE DE TITANE : grains blanc-argent, vies 0,15-0,35 s
+    spawnTrail(px,py,pz, 1.30,1.34,1.42, 1.1, 0.4, (0.15+Math.random()*0.20)/0.26, v[0]*sp*4, v[1]*sp*4, v[2]*sp*4, 1.2, 0.42, true); }
   if (_onMarronPop) _onMarronPop();   // BOOM synchronisé pile sur la détonation visuelle
   d.age=d.life;   // le porteur meurt à la détonation
 }
@@ -394,7 +395,11 @@ const BASE = {
   color:new THREE.Color(1.0,0.22,0.015), riseColor:new THREE.Color(1.0,0.72,0.35),
   colors:null, heat:true, headSize:1.0, sway:0, starSize:2.2, lifeBase75:1.55, lifeJitter:0.13,
   dist:distFibonacci, dist2D:null, orient:'face', trailing:false, onStar:null, behave:null,
-  gerbe:null, flashBig:false
+  gerbe:null, flashBig:false,
+  // B157 (user) : TOUTES les bombes ont une PETITE EXPLOSION AU CENTRE (~1 m) — c'est elle qui
+  // projette les effets. Des « grains de riz » qui explosent et se consument 0,2-0,5 s (aléatoire).
+  // Dosable par effet (override) ; false = pas d'explosion (ex cascade).
+  burstSparks:{ n:22, sp:2.2 }
 };
 const EFFECTS = {
   // === EXISTANTS (intacts ; ring/couronne supprimé en B127, cf note plus bas) ===
@@ -447,7 +452,7 @@ const EFFECTS = {
   horsetail: { apex:80, heat:false, stars:11, starSize:0.9, lifeBase75:3.2, gravStar:0.78, dragStar:0.55,   // tête = POINTE, pas une boule (user B94, effets dorés)
                color:GOLD, dist:distHorsetail, onStar:glitterFn,
                trailing:{emitUntil:0.95, period:0.014, grain:1.0, gF:0.55, lifeMul:3.0, color:GOLD} },
-  cascade:   { apex:110, heat:false, stars:30, starSize:0.9, lifeBase75:5.5, lifeJitter:0.30, speedJit:0.45, gravStar:1.0, dragStar:0.55, randomAxis:true, restExtra:3.5, noFlash:true, hideStars:true,   // CASCADE (B118) : encore + d'ESPACE entre boules (vitesses ±45%) ; gouttes invisibles ; morts aléatoires
+  cascade:   { apex:110, heat:false, stars:30, starSize:0.9, lifeBase75:5.5, lifeJitter:0.30, speedJit:0.45, gravStar:1.0, dragStar:0.55, randomAxis:true, restExtra:3.5, noFlash:true, hideStars:true, burstSparks:false,   // CASCADE (B118) : « quasiment pas d'explosion » (user) -> ni flash ni explosion centrale ; encore + d'ESPACE entre boules (vitesses ±45%) ; gouttes invisibles ; morts aléatoires
                color:GOLD, dist:distCascade, trailing:{emitUntil:0.96, period:0.004, grain:1.05, gF:0.37, lifeMul:12, color:EMBER, spark:true, jit:0.5, bright:0.5, fall:0.9, flatLife:true, rampIn:true, grainRampIn:0.18} },   // traînées ENCORE + LONGUES (vie ~3,1s -> sillage ~26m) + fondu d'apparition (anti blanc-cramé)
 
   // === BEHAVE (mouvement/forks) ===
@@ -468,9 +473,9 @@ const EFFECTS = {
             trailing:{emitUntil:0.95, period:0.008, grain:1.0, gF:0.05, lifeMul:7, color:new THREE.Color(0.30,0.17,0.14), jit:0.15},   // B146 (photo user) : la ligne derrière l'étoile = SA FUMÉE (mate, sous le seuil du bloom, quasi immobile, persistante) — PAS des étincelles qui brûlent. ⚠️ emitUntil OBLIGATOIRE sinon aucune émission (bug silencieux des B143-145)
             gerbe:{ dur:0.1, cometRate:420, cone:0.11, speedMul:2.0 } },                                    // ~42 billes en 0,1 s (75mm pur : nb à confirmer par l'user — règle : 40mm pur = 40 étoiles ; +comète = moins) ; vitesses 0.72-1.30 -> BAS DE COLONNE VIDE, pointe ~30 m. Variante « cli. rouge » (575488000)
   salute: { apex:62, cal:50, heat:false, stars:14, starSize:2.0, lifeBase75:0.22, color:SILVER, dist:distSalute, flashBig:true },   // « bombe 50 mm espagnole marron d'air » (62 m) : flash argenté MINIME — l'effet principal = le BRUIT (boom grave, audio.js)
-  saluteMulti: { apex:77, heat:false, stars:5, nMax:55, starSize:1.1, splitStarSize:2.6, lifeBase75:1.8, lifeJitter:0.05, speedMul:0.35, speedJit:0.15, gravStar:0.45,   // « bombe 75 mm CYLINDRIQUE espagnole MULTI marron d'air » (77 m, B156 user) :
-    flashMini:true, burstSparks:{ n:28, sp:12, color:new THREE.Color(1.25,0.90,0.50) },                                                                                   // le break = une VRAIE petite explosion : MINI FLASH + légère gerbe d'étincelles chaudes
-    color:new THREE.Color(0.30,0.32,0.36), dist:distFibonacci, behave:behaveMarron },                                                                                     // les 5 MINI MARRONS restent GROUPÉS (à peine projetés, speedMul 0.35 ≈ ±5 m) ; 1 s d'attente puis détonations dans une FENÊTRE de 0,5 s (1,0→1,5 s), booms synchronisés par hook
+  saluteMulti: { apex:77, heat:false, stars:5, nMax:5, starSize:1.1, lifeBase75:2.2, lifeJitter:0.05, speedMul:0.35, speedJit:0.15, gravStar:0.45,   // « bombe 75 mm CYLINDRIQUE espagnole MULTI marron d'air » (77 m, B157 user) :
+    flashMini:true, burstSparks:{ n:28, sp:12, color:new THREE.Color(1.25,0.90,0.50) },                                                              // break validé (« pas mal ») : MINI FLASH + gerbe d'étincelles chaudes (vies 0,2-0,5 s comme partout)
+    color:new THREE.Color(0.30,0.32,0.36), dist:distFibonacci, behave:behaveMarron },                                                                // 5 MINI MARRONS INVISIBLES et GROUPÉS (±5 m) ; 1,5 s d'attente puis détonations ALÉATOIRES dans 0,5 s ; détonation = poudre de titane granulaire, boom par hook
 };
 
 export const LABELS = { peony:'pivoine', chrysanthemum:'chrysanthème', willow:'saule (kamuro)', comet:'comète',
@@ -693,11 +698,12 @@ class Shell {
       this.flashScale=big?12:(mini?3:5); this.flashOp=big?0.9:(mini?0.45:0.4); this.flashDur=big?0.30:(mini?0.10:0.12);
       scene.add(this.flash);
     }
-    // burstSparks (B156, multi marron) : une VRAIE petite explosion au break — légère gerbe
-    // d'étincelles chaudes projetées puis éteintes vite (en plus du flash).
-    if (this.cfg.burstSparks){ const bs=this.cfg.burstSparks, c=bs.color||GOLD;
-      for (let k=0;k<bs.n;k++){ const v=vrand(Math.random), sp2=(0.4+Math.random()*0.6)*bs.sp;
-        spawnTrail(bx,apex,bz, c.r,c.g,c.b, bs.grain||1.0, 0.4, 0.6+Math.random()*0.8, v[0]*sp2*4, v[1]*sp2*4, v[2]*sp2*4); } }
+    // burstSparks (B157, user — UNIVERSEL) : la VRAIE petite explosion au centre (~1 m) qui
+    // projette les effets — des « grains de riz » qui explosent et se consument 0,2-0,5 s
+    // (aléatoire, flatLife). Taille ∝ calibre. Dosable/désactivable par effet.
+    if (this.cfg.burstSparks){ const bs=this.cfg.burstSparks, c=bs.color||GOLD, calM=this.cal/75;
+      for (let k=0;k<bs.n;k++){ const v=vrand(Math.random), sp2=(0.4+Math.random()*0.6)*bs.sp*calM;
+        spawnTrail(bx,apex,bz, c.r,c.g,c.b, bs.grain||1.0, 0.4, (0.2+Math.random()*0.3)/0.26, v[0]*sp2*4, v[1]*sp2*4, v[2]*sp2*4, 0.8, 0.42, true); } }
     if (this.head){ scene.remove(this.head); this.headGeo.dispose(); this.headMat.dispose(); this.head=null; }
   }
 
@@ -874,7 +880,7 @@ class Shell {
         else { d.popOn=(d.popOn||0)-dt;                            // pistil simple (crackling-aqua)
           if (d.popOn<=0 && Math.random()<(8+10*A)*dt) d.popOn=0.045;
           if (d.popOn>0){ inten*=2.8; const w=0.95; r=r+(1-r)*w; g=g+(1-g)*w; b=b+(1-b)*w; } }
-      } else if (d.popOnly || d.eggSplode){ inten = 0; }           // cœur/pistil œuf de dragon : INVISIBLE avant de claquer (on ne voit que le crépitement)
+      } else if (d.popOnly || d.eggSplode || d.hideStar){ inten = 0; }   // cœur/pistil œuf de dragon + PORTEURS DE MARRON (B157) : INVISIBLES (un marron = juste du bruit)
         else if (this.cfg.hideStars){ inten = 0; }                 // cascade : l'étoile-goutte est INVISIBLE — on ne voit que la POINTE du sillage (étincelles fraîches)
         else if (this.cfg.arrow){ inten *= 0.45; }                 // œuf de dragon : étoile TRÈS DISCRÈTE avant de claquer (à peine une boule, la traînée domine)
       this.col[i*3]=r*inten; this.col[i*3+1]=g*inten; this.col[i*3+2]=b*inten;
