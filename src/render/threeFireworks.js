@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B187';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B188';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -446,7 +446,7 @@ const EFFECTS = {
             starSize:0.9, speedMul:0.8, trailing:{emitUntil:0.95, period:0.008, grain:1.4, gF:0.13, lifeMul:18, color:COPPER, spark:true, jit:0.22} },  // ⚠️ B138 : RETOUR EXACT au B136 (user : « beaucoup trop gros ») — le "B137" déployé était un ÉDIT RATÉ (speedMul 1.5 passé SANS le dragStar 0.55 compensateur -> envergure ~118 m). B136 (photos) : brin = COLLIER DE PERLES fines/serrées (grain 1.4, period 0.008), très long (lifeMul 18), couleur CUIVRE, jit 0.22 = zéro poussière. SAULE = forme qui PEND ; KAMURO = or pailleté (spark) ; tête = POINTE (user B94)
   willowStrobe: { apex:95, heat:false, pureColor:true, gravStar:0.5, dragStar:0.25, lifeBase75:1.7, lifeJitter:0.28, restExtra:4, stars:40, nMax:240,   // « bombe 75 mm SAULE OR POINTES SCINTILLANT rouge/vert » (575452000/575453000, 95 m). B187 (user) : 40 ÉTOILES, envergure -22% (speedMul 0.62), durée -1 s (1.7)
             starSize:2.2, splitStarSize:1.1, speedMul:0.62, onStar:scintFn, behave:behaveScintDrops, colorPairs:[[RED],[GRN]],   // étoiles 2.2 + GOUTTES SCINTILLANTES : chaque pointe sème 1-5 mini-étoiles qui pulsent aussi, à 1-10 m derrière
-            trailing:{emitUntil:0.95, period:0.006, grain:0.9, gF:0.13, lifeMul:18, color:COPPER, spark:true, jit:0.22, bright:0.7} },   // traînée FINE (« des myriades de points », grain 0.9 dense) et MOINS LUMINEUSE (bright 0.7), cuivre
+            trailing:{emitUntil:0.95, period:0.006, grain:0.9, gF:0.13, lifeMul:11, color:COPPER, spark:true, jit:0.22, bright:0.7} },   // traînée FINE (« des myriades de points », grain 0.9 dense) et MOINS LUMINEUSE (bright 0.7), cuivre
   comet: { apex:96, stars:1, dist:distComet, heat:false, color:GOLD, gravStar:0.90, dragStar:0.30,
            lifeBase75:3.0, starSize:5.4, speedMul:1.0, headSize:4.0, riseColor:GOLD,   // compensé (STAR_SCALE 1.2->1.0), taille inchangée (4.5×1.2)
            trailing:{emitUntil:0.97, period:0.012, grain:1.3, gF:0.35, lifeMul:1.8, color:GOLD} },
