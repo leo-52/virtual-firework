@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B201';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B202';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -341,7 +341,7 @@ function behaveTipsLate(d,A,dt,ctx){
   if (d.tipAt===undefined) d.tipAt=Math.max(0.3, d.life-(1.0+Math.random()*0.5));
   if (!d._lit && d.age>=d.tipAt){ d._lit=true; d.coreColor=ctx.cfg.colors[1]||ctx.cfg.colors[0]; }
 }
-function tipsLateFn(d,A,dt){ return d._lit ? {intenMul:1.4} : {intenMul:0.75}; }   // l'illumination doit SE LIRE : or discret avant, pointe vive après
+function tipsLateFn(d,A,dt){ return d._lit ? {intenMul:1.4} : {intenMul:0}; }   // B202 (user) : étoile INVISIBLE avant l'allumage — on ne voit que la POINTE de la traînée ; puis l'étoile APPARAÎT dans sa couleur
 // GOUTTES SCINTILLANTES (B187, point essentiel user) : l'étoile qui scintille PERD des
 // étincelles qui SCINTILLENT elles aussi — 1 à 5 max par traînée, semées en route (elles
 // restent quasi sur place -> se retrouvent à 1-10 m derrière la tête). Ce sont de vraies
@@ -494,7 +494,7 @@ const EFFECTS = {
             gravStar:0.6, dragStar:0.70, lifeBase75:2.26, lifeJitter:0.08, shrink:1.0, shrinkPow:2.2, restExtra:3,   // B201 (user) : vie 3,0-3,5 s = ~2 s d'or + 1-1,5 s de couleur
             behave:behaveTipsLate, onStar:tipsLateFn,
             colorPairs:[[GOLD,GOLD],[GOLD,SILVER],[GOLD,PURP],[GOLD,BLU],[GOLD,RED],[GOLD,GRN]],   // [or de base, couleur de POINTE] au sort par tir
-            trailing:{emitUntil:0.95, period:0.006, grain:1.1, gF:0.13, lifeMul:0.8, color:COPPER, spark:true, jit:0.22, bright:0.85, fadeToStar:true} },   // B201 (user) : traînées COURTES — ~8-10 m à l'ouverture, ~5,5 m en vol (grains ~0,21 s), adaptées au timing ; se consument avec l'étoile (fadeToStar)
+            trailing:{emitUntil:0.95, period:0.006, grain:1.1, gF:0.13, lifeMul:2.4, color:COPPER, spark:true, jit:0.22, bright:0.85, fadeToStar:true} },   // B202 (user) : traînées ×3 vs B201 (~16 m en vol), se consument avec l'étoile (fadeToStar)
   comet: { apex:96, stars:1, dist:distComet, heat:false, color:GOLD, gravStar:0.90, dragStar:0.30,
            lifeBase75:3.0, starSize:5.4, speedMul:1.0, headSize:4.0, riseColor:GOLD,   // compensé (STAR_SCALE 1.2->1.0), taille inchangée (4.5×1.2)
            trailing:{emitUntil:0.97, period:0.012, grain:1.3, gF:0.35, lifeMul:1.8, color:GOLD} },
