@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B205';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B206';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -490,7 +490,7 @@ const EFFECTS = {
   // d'ascension, 2 s après l'explosion la POINTE des étoiles S'ILLUMINE (couleur de la réf),
   // dure 1-1,5 s (B201) et s'éteint. » Réfs 510047/049/050/051/052/053 (or/argent/violet/bleu/
   // rouge/vert, 116 m). Pivoine 100mm = 130 étoiles ; vie 3-3,5 s = ~2 s or + 1-1,5 s couleur.
-  willowTips100: { apex:116, cal:100, heat:false, pureColor:true, stars:65, starSize:2.2, riseTime:3.96,   // 3.96×0.89×√(103.2/80) ≈ 4,0 s de montée. B203 (user) : 2× moins d'étoiles (130 -> 65)
+  willowTips100: { apex:116, cal:100, heat:false, pureColor:true, stars:65, starSize:2.5, riseTime:3.96,   // 3.96×0.89×√(103.2/80) ≈ 4,0 s de montée. B203 : 2× moins d'étoiles (65). B206 (user) : étoiles allumées légèrement + grosses (2.2 -> 2.5 ; invisibles avant l'allumage donc n'affecte QUE les étoiles colorées)
             gravStar:0.6, dragStar:0.70, lifeBase75:2.26, lifeJitter:0.08, shrink:1.0, shrinkPow:2.2, restExtra:3,   // B201 (user) : vie 3,0-3,5 s = ~2 s d'or + 1-1,5 s de couleur
             behave:behaveTipsLate, onStar:tipsLateFn,
             colorPairs:[[GOLD,GOLD],[GOLD,SILVER],[GOLD,PURP],[GOLD,BLU],[GOLD,RED],[GOLD,GRN]],   // [or de base, couleur de POINTE] au sort par tir
