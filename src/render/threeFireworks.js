@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B195';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B196';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -457,7 +457,13 @@ const BASE = {
 const EFFECTS = {
   // === EXISTANTS (intacts ; ring/couronne supprimé en B127, cf note plus bas) ===
   peony: {},
-  chrysanthemum: { trailing:{emitUntil:0.85, period:0.015, grain:0.9, gF:0.40, lifeMul:1.6, color:GOLD} },
+  // CHRYSANTHÈME (B196, définition user : « une pivoine plus petite (40 étoiles) avec des étoiles
+  // + petites ») : « bombe 50 mm chrysanthème <couleur> », 10 réfs TOUTES en 50 mm, 74 m — bleu/
+  // citron/multicolore/rose/verte/violette/rouge/blanche/orange. Couleur au sort par tir.
+  // ⚠️ SANS traînée (la définition user n'en parle pas — l'ancienne recette or est retirée ; à
+  // remettre s'il corrige, vidéos catalogue dispo, ex rouge kGuGolLIipY).
+  chrysanthemum: { apex:74, cal:50, heat:false, pureColor:true, stars:40, starSize:1.6, speedMul:1.15, speedJit:0.05,
+                   colorPairs:[[BLU],[YEL],[PINK],[GRN],[PURP],[RED],[WHITE],[new THREE.Color(1.0,0.45,0.08)]] },
   willow: { apex:95, heat:false, color:DIMGOLD, gravStar:0.5, dragStar:0.25, lifeBase75:2.7, lifeJitter:0.28, restExtra:4,   // B139 (user : « le haut ne monte pas, le bas baisse trop vite ») : gravStar 0.92->0.5 — le haut MONTE encore à t=1.5s, chute terminale 18->10 m/s, envergure INTACTE (la gravité ne joue pas sur l'horizontal)   // « bombe 75 mm à effet saule kamuro » (catalogue 95 m). B136 (photos user) : vies d'étoiles PLUS VARIABLES (±28% -> branches inégales, extinction échelonnée) ; restExtra 4 = laisser s'éteindre les longs brins (~1.9k grains résiduels au tir suivant, mesuré)
             starSize:0.9, speedMul:0.8, trailing:{emitUntil:0.95, period:0.008, grain:1.4, gF:0.13, lifeMul:18, color:COPPER, spark:true, jit:0.22} },  // ⚠️ B138 : RETOUR EXACT au B136 (user : « beaucoup trop gros ») — le "B137" déployé était un ÉDIT RATÉ (speedMul 1.5 passé SANS le dragStar 0.55 compensateur -> envergure ~118 m). B136 (photos) : brin = COLLIER DE PERLES fines/serrées (grain 1.4, period 0.008), très long (lifeMul 18), couleur CUIVRE, jit 0.22 = zéro poussière. SAULE = forme qui PEND ; KAMURO = or pailleté (spark) ; tête = POINTE (user B94)
   willowStrobe: { apex:95, heat:false, pureColor:true, gravStar:0.5, dragStar:0.25, lifeBase75:1.7, lifeJitter:0.28, restExtra:4, stars:40, nMax:240,   // « bombe 75 mm SAULE OR POINTES SCINTILLANT rouge/vert » (575452000/575453000, 95 m). B187 (user) : 40 ÉTOILES, envergure -22% (speedMul 0.62), durée -1 s (1.7)
@@ -510,9 +516,8 @@ const EFFECTS = {
              afterGlow:{dur:1.6, sc:2.6, op:0.30},
              trailing:{emitUntil:0.95, period:0.006, grain:1.6, gF:0.05, lifeMul:9, color:COPPER, spark:true, jit:1.0, bright:0.85,   // B194 (user) : brins plus LARGES (grain 1.6, dispersion jit 1.0)
                longLaw:{p0:0.04, p1:0.12, min:4.5, max:8.5, pow:1.8}},   // B194 (chrono user) : « seulement quelques étincelles, comme la palme, entre 7 et 10 s » — rares longues (4,5-8,5 s), extinction ~6,5-10,5 s après le break
-             colors:[RED,GOLD,SCINTW] },   // B192 : RÉGLAGE sur la réf ROUGE (515084000). MULTICOLORE (515081000) à réactiver ensuite :
-             // colorPairs:[[RED,GOLD,SCINTW],[GRN,GOLD,SCINTW],[BLU,GOLD,SCINTW],[YEL,GOLD,SCINTW],[new THREE.Color(1.0,0.45,0.08),GOLD,SCINTW],
-             //             [PINK,GOLD,SCINTW],[PURP,GOLD,SCINTW],[CYAN,GOLD,SCINTW],[WHITE,GOLD,SCINTW]]   // rouge/verte/bleue/citron/orange/rose/violette/aqua/blanche (les 9 unies, 515077000-515086000)
+             colorPairs:[[RED,GOLD,SCINTW],[GRN,GOLD,SCINTW],[BLU,GOLD,SCINTW],[YEL,GOLD,SCINTW],[new THREE.Color(1.0,0.45,0.08),GOLD,SCINTW],
+                         [PINK,GOLD,SCINTW],[PURP,GOLD,SCINTW],[CYAN,GOLD,SCINTW],[WHITE,GOLD,SCINTW]] },   // rouge/verte/bleue/citron/orange/rose/violette/aqua/blanche (les 9 unies, 515077000-515086000) — VALIDÉ B195 sur la rouge, multicolore réactivé B196
   // DEMI-DEMI (user B131-B132 : « comme une pivoine normale mais avec deux couleurs différentes »,
   // et la séparation DOIT SE LIRE dans le ciel : moitié gauche/droite, ou haut/bas, ou diagonale,
   // ou inversé — au hasard). Catalogue : 7 réfs 75mm à 95 m. Profil PIVOINE intact (distFibonacci,
