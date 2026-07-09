@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B198';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B199';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -334,6 +334,14 @@ function scintFn(d){ const ph=Math.sin(6.283*(d.age*d.strobeF*0.9)+d.phase2)*0.5
   const v=1.9*Math.pow(ph,2.4); return {intenMul: v<0.15?0:v}; }   // B189 (user) : dans le creux, l'étoile DISPARAÎT COMPLÈTEMENT (fenêtre noire ~30% du cycle), pic 1.9
 // ATOME (B191) : seuls les PAQUETS pot-à-feu (comp 2) scintillent ; pivoine (0) et brins (1) = combustion normale.
 function atomStarFn(d,A,dt){ return d.comp===2 ? scintFn(d) : null; }
+// SAULE OR POINTES 100mm (B199, user) : ALLUMAGE DIFFÉRÉ de la pointe — l'étoile brûle OR pendant
+// ~2 s (les traînées dominent), puis la pointe S'ILLUMINE dans la couleur de la réf (colors[1]),
+// brûle 2 s et s'éteint. tipAt = vie−2 s -> la phase couleur dure toujours 2 s pile.
+function behaveTipsLate(d,A,dt,ctx){
+  if (d.tipAt===undefined) d.tipAt=Math.max(0.3, d.life-2.0);
+  if (!d._lit && d.age>=d.tipAt){ d._lit=true; d.coreColor=ctx.cfg.colors[1]||ctx.cfg.colors[0]; }
+}
+function tipsLateFn(d,A,dt){ return d._lit ? {intenMul:1.4} : {intenMul:0.75}; }   // l'illumination doit SE LIRE : or discret avant, pointe vive après
 // GOUTTES SCINTILLANTES (B187, point essentiel user) : l'étoile qui scintille PERD des
 // étincelles qui SCINTILLENT elles aussi — 1 à 5 max par traînée, semées en route (elles
 // restent quasi sur place -> se retrouvent à 1-10 m derrière la tête). Ce sont de vraies
@@ -477,6 +485,16 @@ const EFFECTS = {
   willowTips: { apex:95, heat:false, pureColor:true, gravStar:0.5, dragStar:0.25, lifeBase75:1.7, lifeJitter:0.28, restExtra:4, stars:40,
             starSize:2.0, speedMul:0.62, colorPairs:[[GOLD],[SILVER],[RED],[GRN],[BLU],[PINK],[PURP]],
             trailing:{emitUntil:0.95, period:0.006, grain:0.9, gF:0.13, lifeMul:11, color:COPPER, spark:true, jit:0.22, bright:0.7} },
+  // SAULE OR POINTES 100mm (B199, définition user — PAS une mise à l'échelle du 75 !) :
+  // « comme une PIVOINE normale avec des traînées un peu plus marquées et longues. 4 s de temps
+  // d'ascension, 2 s après l'explosion la POINTE des étoiles S'ILLUMINE (couleur de la réf),
+  // dure 2 s et s'éteint. » Réfs 510047/049/050/051/052/053 (or/argent/violet/bleu/rouge/vert,
+  // 116 m). Pivoine 100mm = 130 étoiles ; vie 4 s = 2 s or + 2 s couleur (tipAt = vie−2).
+  willowTips100: { apex:116, cal:100, heat:false, pureColor:true, stars:130, starSize:2.2, riseTime:3.96,   // 3.96×0.89×√(103.2/80) ≈ 4,0 s de montée
+            gravStar:0.6, dragStar:0.70, lifeBase75:2.78, lifeJitter:0.08, shrink:1.0, shrinkPow:2.2, restExtra:3,
+            behave:behaveTipsLate, onStar:tipsLateFn,
+            colorPairs:[[GOLD,GOLD],[GOLD,SILVER],[GOLD,PURP],[GOLD,BLU],[GOLD,RED],[GOLD,GRN]],   // [or de base, couleur de POINTE] au sort par tir
+            trailing:{emitUntil:0.95, period:0.006, grain:1.1, gF:0.13, lifeMul:14, color:COPPER, spark:true, jit:0.22, bright:0.85} },   // traînées « un peu plus marquées et longues » que le 75 (grain 1.1, lifeMul 14, bright 0.85)
   comet: { apex:96, stars:1, dist:distComet, heat:false, color:GOLD, gravStar:0.90, dragStar:0.30,
            lifeBase75:3.0, starSize:5.4, speedMul:1.0, headSize:4.0, riseColor:GOLD,   // compensé (STAR_SCALE 1.2->1.0), taille inchangée (4.5×1.2)
            trailing:{emitUntil:0.97, period:0.012, grain:1.3, gF:0.35, lifeMul:1.8, color:GOLD} },
@@ -565,7 +583,7 @@ const EFFECTS = {
     color:new THREE.Color(0.30,0.32,0.36), dist:distMarron, randomAxis:true, behave:behaveMarron },                                                   // les 5 MARRONS sont DU MÊME CÔTÉ de la bombe -> l'explosion les pousse TOUS dans la même direction (cône serré, orientation aléatoire par tir) ; invisibles ; 1,5 s puis détonations aléatoires dans 0,5 s
 };
 
-export const LABELS = { peony:'pivoine', chrysanthemum:'chrysanthème', willow:'saule (kamuro)', willowStrobe:'saule or pointes scintillant', willowTips:'saule or pointes', comet:'comète',
+export const LABELS = { peony:'pivoine', chrysanthemum:'chrysanthème', willow:'saule (kamuro)', willowStrobe:'saule or pointes scintillant', willowTips:'saule or pointes', willowTips100:'saule or pointes 100 mm', comet:'comète',
   sphere:'sphère', crackling:'crackling', dragonEgg:'œuf de dragon', strobe:'scintillant', finalCli:'final cli. blanc rose', palmMulti:'palme multicolore', palmStrobe:'palme or scintillant',
   fallingLeaves:'feuille morte', palm:'palme', heart:'cœur', butterfly:'papillon', smiley:'smiley',
   daisy:'marguerite', atom:'atome', halfHalf:'demi-demi', medusa:'méduse', horsetail:'queue de cheval',
