@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B200';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B201';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -336,9 +336,9 @@ function scintFn(d){ const ph=Math.sin(6.283*(d.age*d.strobeF*0.9)+d.phase2)*0.5
 function atomStarFn(d,A,dt){ return d.comp===2 ? scintFn(d) : null; }
 // SAULE OR POINTES 100mm (B199, user) : ALLUMAGE DIFFÉRÉ de la pointe — l'étoile brûle OR pendant
 // ~2 s (les traînées dominent), puis la pointe S'ILLUMINE dans la couleur de la réf (colors[1]),
-// brûle 2 s et s'éteint. tipAt = vie−2 s -> la phase couleur dure toujours 2 s pile.
+// brûle 1-1,5 s (B201, aléatoire par étoile) et s'éteint. tipAt = vie−durée couleur.
 function behaveTipsLate(d,A,dt,ctx){
-  if (d.tipAt===undefined) d.tipAt=Math.max(0.3, d.life-2.0);
+  if (d.tipAt===undefined) d.tipAt=Math.max(0.3, d.life-(1.0+Math.random()*0.5));
   if (!d._lit && d.age>=d.tipAt){ d._lit=true; d.coreColor=ctx.cfg.colors[1]||ctx.cfg.colors[0]; }
 }
 function tipsLateFn(d,A,dt){ return d._lit ? {intenMul:1.4} : {intenMul:0.75}; }   // l'illumination doit SE LIRE : or discret avant, pointe vive après
@@ -488,13 +488,13 @@ const EFFECTS = {
   // SAULE OR POINTES 100mm (B199, définition user — PAS une mise à l'échelle du 75 !) :
   // « comme une PIVOINE normale avec des traînées un peu plus marquées et longues. 4 s de temps
   // d'ascension, 2 s après l'explosion la POINTE des étoiles S'ILLUMINE (couleur de la réf),
-  // dure 2 s et s'éteint. » Réfs 510047/049/050/051/052/053 (or/argent/violet/bleu/rouge/vert,
-  // 116 m). Pivoine 100mm = 130 étoiles ; vie 4 s = 2 s or + 2 s couleur (tipAt = vie−2).
+  // dure 1-1,5 s (B201) et s'éteint. » Réfs 510047/049/050/051/052/053 (or/argent/violet/bleu/
+  // rouge/vert, 116 m). Pivoine 100mm = 130 étoiles ; vie 3-3,5 s = ~2 s or + 1-1,5 s couleur.
   willowTips100: { apex:116, cal:100, heat:false, pureColor:true, stars:130, starSize:2.2, riseTime:3.96,   // 3.96×0.89×√(103.2/80) ≈ 4,0 s de montée
-            gravStar:0.6, dragStar:0.70, lifeBase75:2.78, lifeJitter:0.08, shrink:1.0, shrinkPow:2.2, restExtra:3,
+            gravStar:0.6, dragStar:0.70, lifeBase75:2.26, lifeJitter:0.08, shrink:1.0, shrinkPow:2.2, restExtra:3,   // B201 (user) : vie 3,0-3,5 s = ~2 s d'or + 1-1,5 s de couleur
             behave:behaveTipsLate, onStar:tipsLateFn,
             colorPairs:[[GOLD,GOLD],[GOLD,SILVER],[GOLD,PURP],[GOLD,BLU],[GOLD,RED],[GOLD,GRN]],   // [or de base, couleur de POINTE] au sort par tir
-            trailing:{emitUntil:0.95, period:0.006, grain:1.1, gF:0.13, lifeMul:12, color:COPPER, spark:true, jit:0.22, bright:0.85, fadeToStar:true} },   // traînées « un peu plus marquées et longues » que le 75 (grain 1.1, bright 0.85) qui se CONSUMENT avec l'étoile (fadeToStar B200)
+            trailing:{emitUntil:0.95, period:0.006, grain:1.1, gF:0.13, lifeMul:0.8, color:COPPER, spark:true, jit:0.22, bright:0.85, fadeToStar:true} },   // B201 (user) : traînées COURTES — ~8-10 m à l'ouverture, ~5,5 m en vol (grains ~0,21 s), adaptées au timing ; se consument avec l'étoile (fadeToStar)
   comet: { apex:96, stars:1, dist:distComet, heat:false, color:GOLD, gravStar:0.90, dragStar:0.30,
            lifeBase75:3.0, starSize:5.4, speedMul:1.0, headSize:4.0, riseColor:GOLD,   // compensé (STAR_SCALE 1.2->1.0), taille inchangée (4.5×1.2)
            trailing:{emitUntil:0.97, period:0.012, grain:1.3, gF:0.35, lifeMul:1.8, color:GOLD} },
