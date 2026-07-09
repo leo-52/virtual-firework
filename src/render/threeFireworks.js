@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B206';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B207';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -550,6 +550,15 @@ const EFFECTS = {
   // 80 étoiles), coupe `splitFacing` calculée au tir, paire du catalogue tirée au sort par volée.
   halfHalf:{ apex:95, heat:false, pureColor:true, stars:80, splitFacing:true,
              colorPairs:[[BLU,YEL],[RED,WHITE],[RED,BLU],[PINK,YEL],[GOLD,GRN],[YEL,PURP]] },   // bleu/citron · rouge/blanc · rouge/bleu · rose/jaune · or/vert · citron/violet
+  // TRAÇANTE <couleur> (B207, premier jet — UE la mappait sur Comet « peu d'étoiles + grosse
+  // traînée », raccourci non retenu : le catalogue la liste comme une BOMBE à éclatement, 10
+  // couleurs). Modèle : PIVOINE dont chaque étoile est une ÉTOILE TRAÇANTE = forte traînée
+  // COLORÉE de SA couleur (rouge -> traînée rouge, ≠ kamuro toujours cuivré) via trailColorFromStar.
+  // « bombe 75 mm traçante <c> » 100 m (10 réfs) ; existe en 100 mm (130 m) et 125 mm tronc blanc (140 m).
+  tracer: { apex:100, heat:false, pureColor:true, stars:70, starSize:1.8, speedMul:0.9, gravStar:0.7, dragStar:0.45,
+            lifeBase75:1.9, lifeJitter:0.12, shrink:1.0, shrinkPow:2.0, trailColorFromStar:true,
+            colorPairs:[[RED],[GRN],[BLU],[YEL],[new THREE.Color(1.0,0.45,0.08)],[PINK],[PURP],[CYAN],[WHITE]],   // rouge/vert/bleu/citron/orange/rose/violet/aqua/blanc
+            trailing:{emitUntil:0.95, period:0.008, grain:1.3, gF:0.20, lifeMul:5, color:GOLD, spark:true, jit:0.30, bright:0.9, fadeToStar:true, litBoost:1.0} },   // traînée COLORÉE (color écrasé par la volée), dense et bien marquée = le "traçant"
 
   // === MOUVEMENT / TRAÎNE (hooks existants) ===
   medusa:    { apex:95, heat:false, stars:70, starSize:2.2, lifeBase75:2.3, gravStar:0.72, dragStar:0.55,
@@ -586,7 +595,7 @@ const EFFECTS = {
 export const LABELS = { peony:'pivoine', chrysanthemum:'chrysanthème', willow:'saule (kamuro)', willowStrobe:'saule or pointes scintillant', willowTips:'saule or pointes', willowTips100:'saule or pointes 100 mm', comet:'comète',
   sphere:'sphère', crackling:'crackling', dragonEgg:'œuf de dragon', strobe:'scintillant', finalCli:'final cli. blanc rose', palmMulti:'palme multicolore', palmStrobe:'palme or scintillant',
   fallingLeaves:'feuille morte', palm:'palme', heart:'cœur', butterfly:'papillon', smiley:'smiley',
-  daisy:'marguerite', atom:'atome', halfHalf:'demi-demi', medusa:'méduse', horsetail:'queue de cheval',
+  daisy:'marguerite', atom:'atome', halfHalf:'demi-demi', tracer:'traçante', medusa:'méduse', horsetail:'queue de cheval',
   cascade:'cascade', fish:'poisson', spinner:'tourbillon', saucer:'soucoupe', mosaic:'mosaïque', mosaicMix:'mosaïque assortie',
   mine:'pot à feu', salute:"salut (marron d'air)", saluteMulti:"multi marron d'air" };
 
@@ -601,6 +610,10 @@ class Shell {
     if (opts && opts.color) this.cfg.color = opts.color;   // override couleur (ex "crackling aqua", "mosaïque rouge")
     // PAIRES du catalogue (demi-demi) : chaque TIR pioche sa paire de couleurs (cfg = copie -> safe)
     if (this.cfg.colorPairs) this.cfg.colors = this.cfg.colorPairs[Math.floor(Math.random()*this.cfg.colorPairs.length)];
+    // TRAÇANTE (B207) : la TRAÎNÉE prend la COULEUR de la volée (traçante rouge -> traînée rouge).
+    // cfg.trailing est partagé avec le littéral EFFECTS -> CLONER avant d'écraser sa couleur.
+    if (this.cfg.trailColorFromStar && this.cfg.trailing && this.cfg.colors)
+      this.cfg.trailing = Object.assign({}, this.cfg.trailing, { color: this.cfg.colors[0], fixedColor:true });
     this.cal = cal || this.cfg.cal || 75;   // cfg.cal = calibre PAR DÉFAUT de l'effet (ex cœur : n'existe qu'en 100mm)
     this.ox = ox||0; this.oz = oz||0;
     this.bx = this.ox + (Math.random()-0.5)*this.cfg.riseLean;
