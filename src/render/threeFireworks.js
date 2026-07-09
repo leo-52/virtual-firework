@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B194';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B195';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -271,7 +271,7 @@ function distAtom(i,n,rnd){
   if (i===0) _atomDirs=[];
   const nPiv=Math.max(0, n-ATOM_BRINS*(1+ATOM_PK));
   if (i<nPiv){ const d=distFibonacci(i,nPiv,rnd);   // B193 (user : « comme une pivoine ») : sphère RÉGULIÈRE Fibonacci, pas un tirage épars
-    return {dx:d.dx,dy:d.dy,dz:d.dz,spMul:0.70,comp:0}; }   // B192 (user) : la pivoine ne DÉPASSE PAS les pots à feu (~60 m < ~79 m)
+    return {dx:d.dx,dy:d.dy,dz:d.dz,spMul:0.57,comp:0}; }   // B195 (user) : pivoine ENCORE plus petite (~50 m), bien sous les pots à feu
   const j=i-nPiv;
   if (j<ATOM_BRINS){ const v=vrand(rnd), sp=1.37+rnd()*0.21;   // B192 (user) : envergure brins 160 -> 140 m (recalé B194 : 140 mesuré sur 12 tirs)
     _atomDirs[j]={v,sp};
@@ -279,7 +279,7 @@ function distAtom(i,n,rnd){
   const b=_atomDirs[(j-ATOM_BRINS)%ATOM_BRINS];   // chaque paquet suit SON brin
   const dx=b.v[0]+(rnd()-0.5)*0.14, dy=b.v[1]+(rnd()-0.5)*0.14, dz=b.v[2]+(rnd()-0.5)*0.14;
   const L=Math.hypot(dx,dy,dz)||1;
-  return {dx:dx/L, dy:dy/L, dz:dz/L, spMul:b.sp*(0.50+rnd()*0.20), comp:2};   // B194 (user) : pots à feu un peu plus loin par rapport à la pivoine (~84 m vs 61 m)
+  return {dx:dx/L, dy:dy/L, dz:dz/L, spMul:b.sp*(0.58+rnd()*0.20), comp:2};   // B195 (user) : pots à feu encore un peu plus loin (~105 m)
 }
 // (distHalfHalf supprimé en B132 : la demi-demi = distFibonacci pur + coupe `splitFacing` dans burst())
 // MARRONS (B159, user) : les 5 mini marrons partent dans la MÊME DIRECTION (chargés du même côté,
@@ -503,7 +503,7 @@ const EFFECTS = {
   // fine qui s'émiette en points, tête pointue qui file jusqu'au bout) + PAQUETS pot-à-feu blancs
   // SCINTILLANTS (7/brin, expulsés AU BREAK, ~2× plus lents -> milieu/bas de traînée) + résidu
   // orange central (afterGlow). Démo = réf MULTICOLORE (515081000) : couleur de pivoine au sort par tir.
-  atom:    { apex:165, cal:150, heat:false, pureColor:true, stars:219, starSize:2.2, speedMul:2.45, speedJit:0.04,   // B193 (user) : pivoine +50% (83 étoiles) et MOINS ÉPARSE (vitesses ±4%)
+  atom:    { apex:165, cal:150, heat:false, pureColor:true, stars:246, starSize:2.2, speedMul:2.45, speedJit:0.04,   // B195 (user) : pivoine 110 étoiles (83 en B193, 55 avant) et MOINS ÉPARSE (vitesses ±4%)
              riseTime:3.32,   // B194 (chrono user) : la bombe éclate à ~4 s de montée (3.32×0.89×√(146.8/80) ≈ 4,0 s)
              gravStar:0.45, dragStar:0.70, lifeBase75:1.5, lifeJitter:0.14, shrink:1.0, shrinkPow:2.2, restExtra:6,   // restExtra : les étincelles longues vivent jusqu'à ~10 s après le break
              dist:distAtom, onStar:atomStarFn, compLife:{0:0.46, 2:1.16}, compSize:{1:0.9, 2:1.9}, trailComps:[1],   // B194 (chrono user) : pivoine 1,6 s ; pots à feu 4,0 s ; brins ~3,4 s. B192 : brins = POINTE 0.9 (règle famille dorée B94)
