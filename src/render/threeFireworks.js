@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B209';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B210';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -554,9 +554,9 @@ const EFFECTS = {
   // à l'heure ») = PIVOINE (étoiles colorées, profil BASE) + la TRAÎNÉE CUIVRE du saule or pointes
   // (fadeToStar : elle se consume avec l'étoile). « bombe 75 mm traçante <c> » 100 m (10 réfs) ;
   // existe en 100 mm (130 m) et 125 mm tronc blanc (140 m). Couleur au sort par tir.
-  tracer: { apex:100, heat:false, pureColor:true, lifeBase75:2.0, lifeJitter:0.10,   // B209 (user) : l'effet dure 2 s
+  tracer: { apex:100, heat:false, pureColor:true, stars:70, starSize:1.9, lifeBase75:2.0, lifeJitter:0.10, dragStar:0.55,   // B209 : effet 2 s. B210 (photo user) : 70 rayons DISTINCTS, étoiles un peu moins grosses (2.2 -> 1.9)
             colorPairs:[[RED],[GRN],[BLU],[YEL],[new THREE.Color(1.0,0.45,0.08)],[PINK],[PURP],[CYAN],[WHITE]],   // rouge/vert/bleu/citron/orange/rose/violet/aqua/blanc
-            trailing:{emitUntil:0.95, period:0.005, grain:1.0, gF:0.13, lifeMul:3.0, color:COPPER, fixedColor:true, spark:true, jit:0.18, bright:0.85, fadeToStar:true} },   // BRONZE DORÉ des saules (COPPER) ; grains COLLÉS = serrés/denses (period 0.005, jit 0.18) ; fadeToStar (se consume avec l'étoile, ≤ 2 s)
+            trailing:{emitUntil:0.97, period:0.010, grain:0.9, gF:0.13, lifeMul:3.4, color:COPPER, fixedColor:true, spark:true, jit:0.16, bright:0.85} },   // B210 (photo user) : PAS collées — RAYONS RADIAUX fins/DISTINCTS, espacés (period 0.010), qui S'ESTOMPENT vers le centre (grains plus vieux) ; bronze doré des saules (COPPER) ; PAS de fadeToStar (le rayon reste entier)
 
   // === MOUVEMENT / TRAÎNE (hooks existants) ===
   medusa:    { apex:95, heat:false, stars:70, starSize:2.2, lifeBase75:2.3, gravStar:0.72, dragStar:0.55,
