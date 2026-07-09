@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B199';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B200';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -494,7 +494,7 @@ const EFFECTS = {
             gravStar:0.6, dragStar:0.70, lifeBase75:2.78, lifeJitter:0.08, shrink:1.0, shrinkPow:2.2, restExtra:3,
             behave:behaveTipsLate, onStar:tipsLateFn,
             colorPairs:[[GOLD,GOLD],[GOLD,SILVER],[GOLD,PURP],[GOLD,BLU],[GOLD,RED],[GOLD,GRN]],   // [or de base, couleur de POINTE] au sort par tir
-            trailing:{emitUntil:0.95, period:0.006, grain:1.1, gF:0.13, lifeMul:14, color:COPPER, spark:true, jit:0.22, bright:0.85} },   // traînées « un peu plus marquées et longues » que le 75 (grain 1.1, lifeMul 14, bright 0.85)
+            trailing:{emitUntil:0.95, period:0.006, grain:1.1, gF:0.13, lifeMul:12, color:COPPER, spark:true, jit:0.22, bright:0.85, fadeToStar:true} },   // traînées « un peu plus marquées et longues » que le 75 (grain 1.1, bright 0.85) qui se CONSUMENT avec l'étoile (fadeToStar B200)
   comet: { apex:96, stars:1, dist:distComet, heat:false, color:GOLD, gravStar:0.90, dragStar:0.30,
            lifeBase75:3.0, starSize:5.4, speedMul:1.0, headSize:4.0, riseColor:GOLD,   // compensé (STAR_SCALE 1.2->1.0), taille inchangée (4.5×1.2)
            trailing:{emitUntil:0.97, period:0.012, grain:1.3, gF:0.35, lifeMul:1.8, color:GOLD} },
@@ -1034,6 +1034,12 @@ class Shell {
             let lm=tr.lifeMul, fl=!!tr.flatLife;
             if (tr.longLaw){ const L=tr.longLaw, p=L.p0+(L.p1-L.p0)*A;
               if (Math.random()<p){ lm=(L.min+(L.max-L.min)*Math.pow(Math.random(),L.pow||1))/0.26; fl=true; } }
+            // fadeToStar (B200, user) : la traînée SE CONSUME AVEC l'étoile — les grains émis tard
+            // vivent d'autant plus court que l'étoile approche de sa fin (×(1−A)) et JAMAIS au-delà
+            // de sa mort (cap ×0.92) -> le front d'extinction remonte la traînée de la base vers la
+            // tête, la REJOINT juste avant la fin, et l'étoile s'éteint À SON TOUR. Aucune traînée orpheline.
+            if (tr.fadeToStar){ const rem=(d.life-d.age)/0.26;
+              lm=Math.max(0.3, Math.min(lm*(1-A), rem*0.92)); fl=true; }
             if (tr.spark){   // ÉTINCELLES (décomposition de l'étoile) : brillance TRÈS variable + dispersion -> nuée qui pétille, pas un ruban lisse
               let tw=(0.35+Math.pow(Math.random(),1.6)*1.65)*(tr.bright||1);   // bright : atténue le glow par effet
               if (tr.rampIn) tw*=0.25+0.75*Math.min(1, A/0.4);                 // rampIn (cascade) : étincelles TAMISÉES tant que les mèches sont serrées (anti boule lumineuse au break), pleine brillance une fois écartées
@@ -1147,4 +1153,4 @@ export class ThreeFireworks {
 
 // Exports internes pour le BANC D'APERÇU hors-Cesium (_preview.html) — rendu réel d'un effet
 // pour capture d'écran. N'affecte pas l'app (rien ne les importe en prod).
-export { scene as __scene, Shell as __Shell, updateTrails as __updateTrails, updatePuffs as __updatePuffs, __setMarronPop };
+export { scene as __scene, Shell as __Shell, updateTrails as __updateTrails, updatePuffs as __updatePuffs, __setMarronPop, trail as __trailPool };
