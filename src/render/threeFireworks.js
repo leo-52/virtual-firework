@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B202';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B203';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -490,11 +490,11 @@ const EFFECTS = {
   // d'ascension, 2 s après l'explosion la POINTE des étoiles S'ILLUMINE (couleur de la réf),
   // dure 1-1,5 s (B201) et s'éteint. » Réfs 510047/049/050/051/052/053 (or/argent/violet/bleu/
   // rouge/vert, 116 m). Pivoine 100mm = 130 étoiles ; vie 3-3,5 s = ~2 s or + 1-1,5 s couleur.
-  willowTips100: { apex:116, cal:100, heat:false, pureColor:true, stars:130, starSize:2.2, riseTime:3.96,   // 3.96×0.89×√(103.2/80) ≈ 4,0 s de montée
+  willowTips100: { apex:116, cal:100, heat:false, pureColor:true, stars:65, starSize:2.2, riseTime:3.96,   // 3.96×0.89×√(103.2/80) ≈ 4,0 s de montée. B203 (user) : 2× moins d'étoiles (130 -> 65)
             gravStar:0.6, dragStar:0.70, lifeBase75:2.26, lifeJitter:0.08, shrink:1.0, shrinkPow:2.2, restExtra:3,   // B201 (user) : vie 3,0-3,5 s = ~2 s d'or + 1-1,5 s de couleur
             behave:behaveTipsLate, onStar:tipsLateFn,
             colorPairs:[[GOLD,GOLD],[GOLD,SILVER],[GOLD,PURP],[GOLD,BLU],[GOLD,RED],[GOLD,GRN]],   // [or de base, couleur de POINTE] au sort par tir
-            trailing:{emitUntil:0.95, period:0.006, grain:1.1, gF:0.13, lifeMul:2.4, color:COPPER, spark:true, jit:0.22, bright:0.85, fadeToStar:true} },   // B202 (user) : traînées ×3 vs B201 (~16 m en vol), se consument avec l'étoile (fadeToStar)
+            trailing:{emitUntil:0.95, period:0.006, grain:0.9, gF:0.13, lifeMul:2.0, color:COPPER, spark:true, jit:0.22, bright:0.85, fadeToStar:true} },   // B203 (user) : grains un peu plus petits (0.9), longueur RÉGULIÈRE via la loi croissante de fadeToStar (~12 m ouverture, ~3-5 m ensuite)
   comet: { apex:96, stars:1, dist:distComet, heat:false, color:GOLD, gravStar:0.90, dragStar:0.30,
            lifeBase75:3.0, starSize:5.4, speedMul:1.0, headSize:4.0, riseColor:GOLD,   // compensé (STAR_SCALE 1.2->1.0), taille inchangée (4.5×1.2)
            trailing:{emitUntil:0.97, period:0.012, grain:1.3, gF:0.35, lifeMul:1.8, color:GOLD} },
@@ -1034,12 +1034,14 @@ class Shell {
             let lm=tr.lifeMul, fl=!!tr.flatLife;
             if (tr.longLaw){ const L=tr.longLaw, p=L.p0+(L.p1-L.p0)*A;
               if (Math.random()<p){ lm=(L.min+(L.max-L.min)*Math.pow(Math.random(),L.pow||1))/0.26; fl=true; } }
-            // fadeToStar (B200, user) : la traînée SE CONSUME AVEC l'étoile — les grains émis tard
-            // vivent d'autant plus court que l'étoile approche de sa fin (×(1−A)) et JAMAIS au-delà
-            // de sa mort (cap ×0.92) -> le front d'extinction remonte la traînée de la base vers la
-            // tête, la REJOINT juste avant la fin, et l'étoile s'éteint À SON TOUR. Aucune traînée orpheline.
+            // fadeToStar (B200, user) : la traînée SE CONSUME AVEC l'étoile — les grains ne vivent
+            // JAMAIS au-delà de sa mort (cap ×0.92) -> le front d'extinction remonte la traînée,
+            // la REJOINT juste avant la fin, et l'étoile s'éteint À SON TOUR. Aucune traînée orpheline.
+            // B203 (user : « au début elles sont trop, à la fin trop courtes ») : vie des grains
+            // CROISSANTE avec l'âge de l'étoile (×0.45 à l'ouverture où tout file, ×1.55 à la fin
+            // où l'étoile rampe) -> longueur de traînée bien plus RÉGULIÈRE sur toute la course.
             if (tr.fadeToStar){ const rem=(d.life-d.age)/0.26;
-              lm=Math.max(0.3, Math.min(lm*(1-A), rem*0.92)); fl=true; }
+              lm=Math.max(0.3, Math.min(lm*(0.45+1.1*A), rem*0.92)); fl=true; }
             if (tr.spark){   // ÉTINCELLES (décomposition de l'étoile) : brillance TRÈS variable + dispersion -> nuée qui pétille, pas un ruban lisse
               let tw=(0.35+Math.pow(Math.random(),1.6)*1.65)*(tr.bright||1);   // bright : atténue le glow par effet
               if (tr.rampIn) tw*=0.25+0.75*Math.min(1, A/0.4);                 // rampIn (cascade) : étincelles TAMISÉES tant que les mèches sont serrées (anti boule lumineuse au break), pleine brillance une fois écartées
