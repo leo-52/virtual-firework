@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B197';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B198';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -469,6 +469,14 @@ const EFFECTS = {
   willowStrobe: { apex:95, heat:false, pureColor:true, gravStar:0.5, dragStar:0.25, lifeBase75:1.7, lifeJitter:0.28, restExtra:4, stars:40, nMax:240,   // « bombe 75 mm SAULE OR POINTES SCINTILLANT rouge/vert » (575452000/575453000, 95 m). B187 (user) : 40 ÉTOILES, envergure -22% (speedMul 0.62), durée -1 s (1.7)
             starSize:2.0, splitStarSize:1.0, speedMul:0.62, onStar:scintFn, behave:behaveScintDrops, colorPairs:[[RED],[GRN]],   // étoiles 2.2 + GOUTTES SCINTILLANTES : chaque pointe sème 1-5 mini-étoiles qui pulsent aussi, à 1-10 m derrière
             trailing:{emitUntil:0.95, period:0.006, grain:0.9, gF:0.13, lifeMul:11, color:COPPER, spark:true, jit:0.22, bright:0.7} },   // traînée FINE (« des myriades de points », grain 0.9 dense) et MOINS LUMINEUSE (bright 0.7), cuivre
+  // SAULE OR POINTES <couleur> (B198, user : « c'est pareil que le scintillant, sans le
+  // scintillement ») : « bombe 75 mm saule or pointes <c> », 8 réfs 95 m (argent/roses/violettes/
+  // rouge/bleues/or/vertes/multicolore, 575116000-575290000 ; existe aussi en 100 mm 116 m).
+  // = willowStrobe SANS scintFn ni gouttes : pointes de couleur FIXE au sort par tir sur saule or.
+  // (variante MULTICOLORE 575290000 = pointes mélangées, à décliner via assorted plus tard)
+  willowTips: { apex:95, heat:false, pureColor:true, gravStar:0.5, dragStar:0.25, lifeBase75:1.7, lifeJitter:0.28, restExtra:4, stars:40,
+            starSize:2.0, speedMul:0.62, colorPairs:[[GOLD],[SILVER],[RED],[GRN],[BLU],[PINK],[PURP]],
+            trailing:{emitUntil:0.95, period:0.006, grain:0.9, gF:0.13, lifeMul:11, color:COPPER, spark:true, jit:0.22, bright:0.7} },
   comet: { apex:96, stars:1, dist:distComet, heat:false, color:GOLD, gravStar:0.90, dragStar:0.30,
            lifeBase75:3.0, starSize:5.4, speedMul:1.0, headSize:4.0, riseColor:GOLD,   // compensé (STAR_SCALE 1.2->1.0), taille inchangée (4.5×1.2)
            trailing:{emitUntil:0.97, period:0.012, grain:1.3, gF:0.35, lifeMul:1.8, color:GOLD} },
@@ -557,7 +565,7 @@ const EFFECTS = {
     color:new THREE.Color(0.30,0.32,0.36), dist:distMarron, randomAxis:true, behave:behaveMarron },                                                   // les 5 MARRONS sont DU MÊME CÔTÉ de la bombe -> l'explosion les pousse TOUS dans la même direction (cône serré, orientation aléatoire par tir) ; invisibles ; 1,5 s puis détonations aléatoires dans 0,5 s
 };
 
-export const LABELS = { peony:'pivoine', chrysanthemum:'chrysanthème', willow:'saule (kamuro)', willowStrobe:'saule or pointes scintillant', comet:'comète',
+export const LABELS = { peony:'pivoine', chrysanthemum:'chrysanthème', willow:'saule (kamuro)', willowStrobe:'saule or pointes scintillant', willowTips:'saule or pointes', comet:'comète',
   sphere:'sphère', crackling:'crackling', dragonEgg:'œuf de dragon', strobe:'scintillant', finalCli:'final cli. blanc rose', palmMulti:'palme multicolore', palmStrobe:'palme or scintillant',
   fallingLeaves:'feuille morte', palm:'palme', heart:'cœur', butterfly:'papillon', smiley:'smiley',
   daisy:'marguerite', atom:'atome', halfHalf:'demi-demi', medusa:'méduse', horsetail:'queue de cheval',

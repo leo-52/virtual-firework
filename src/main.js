@@ -109,14 +109,14 @@ Object.assign(pick.style, { position:'fixed', top:'10px', right:'10px', zIndex:'
 for (const [k, label] of Object.entries(LABELS)){
   const o = document.createElement('option'); o.value = k; o.textContent = label; pick.appendChild(o);
 }
-pick.value = 'chrysanthemum';
+pick.value = 'willowTips';
 // changer d'effet dans le menu -> couleur PAR DÉFAUT de l'effet (null annule l'override de la démo)
 pick.addEventListener('change', e => layer.setFocus(e.target.value, null));
 document.body.appendChild(pick);
 
-// DÉMO (réglage en cours) : CHRYSANTHÈME 50mm (550002000-550013000, 74 m, B196) —
-// « pivoine plus petite (40 étoiles) avec des étoiles + petites », couleur au sort par tir.
-layer.setFocus('chrysanthemum');
+// DÉMO (réglage en cours) : SAULE OR POINTES 75mm (575116000-575290000, 95 m, B198) —
+// willowStrobe validé SANS scintillement : pointes de couleur fixe au sort par tir.
+layer.setFocus('willowTips');
 
 // TIMELINE de lecture (barre en bas) + ESPACE = pause/play (fige les feux, caméra libre).
 const timeline = new Timeline(layer, LABELS);
