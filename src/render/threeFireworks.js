@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B207';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B208';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -550,15 +550,13 @@ const EFFECTS = {
   // 80 étoiles), coupe `splitFacing` calculée au tir, paire du catalogue tirée au sort par volée.
   halfHalf:{ apex:95, heat:false, pureColor:true, stars:80, splitFacing:true,
              colorPairs:[[BLU,YEL],[RED,WHITE],[RED,BLU],[PINK,YEL],[GOLD,GRN],[YEL,PURP]] },   // bleu/citron · rouge/blanc · rouge/bleu · rose/jaune · or/vert · citron/violet
-  // TRAÇANTE <couleur> (B207, premier jet — UE la mappait sur Comet « peu d'étoiles + grosse
-  // traînée », raccourci non retenu : le catalogue la liste comme une BOMBE à éclatement, 10
-  // couleurs). Modèle : PIVOINE dont chaque étoile est une ÉTOILE TRAÇANTE = forte traînée
-  // COLORÉE de SA couleur (rouge -> traînée rouge, ≠ kamuro toujours cuivré) via trailColorFromStar.
-  // « bombe 75 mm traçante <c> » 100 m (10 réfs) ; existe en 100 mm (130 m) et 125 mm tronc blanc (140 m).
-  tracer: { apex:100, heat:false, pureColor:true, stars:70, starSize:1.8, speedMul:0.9, gravStar:0.7, dragStar:0.45,
-            lifeBase75:1.9, lifeJitter:0.12, shrink:1.0, shrinkPow:2.0, trailColorFromStar:true,
+  // TRAÇANTE <couleur> (B208, définition user : « comme une pivoine mais avec les traînées de tout
+  // à l'heure ») = PIVOINE (étoiles colorées, profil BASE) + la TRAÎNÉE CUIVRE du saule or pointes
+  // (fadeToStar : elle se consume avec l'étoile). « bombe 75 mm traçante <c> » 100 m (10 réfs) ;
+  // existe en 100 mm (130 m) et 125 mm tronc blanc (140 m). Couleur au sort par tir.
+  tracer: { apex:100, heat:false, pureColor:true,
             colorPairs:[[RED],[GRN],[BLU],[YEL],[new THREE.Color(1.0,0.45,0.08)],[PINK],[PURP],[CYAN],[WHITE]],   // rouge/vert/bleu/citron/orange/rose/violet/aqua/blanc
-            trailing:{emitUntil:0.95, period:0.008, grain:1.3, gF:0.20, lifeMul:5, color:GOLD, spark:true, jit:0.30, bright:0.9, fadeToStar:true, litBoost:1.0} },   // traînée COLORÉE (color écrasé par la volée), dense et bien marquée = le "traçant"
+            trailing:{emitUntil:0.95, period:0.006, grain:0.9, gF:0.13, lifeMul:1.4, color:COPPER, fixedColor:true, spark:true, jit:0.22, bright:0.85, fadeToStar:true} },   // = « les traînées de tout à l'heure » (saule or pointes, cuivre, fadeToStar) ; lifeMul ajusté à la vitesse pivoine (speedMul BASE 1.8)
 
   // === MOUVEMENT / TRAÎNE (hooks existants) ===
   medusa:    { apex:95, heat:false, stars:70, starSize:2.2, lifeBase75:2.3, gravStar:0.72, dragStar:0.55,
