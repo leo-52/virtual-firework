@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B234';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B235';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -246,13 +246,12 @@ function distPalm(i,n,rnd){
   const ce=Math.cos(elev), se=Math.sin(elev);
   return {dx:Math.cos(az)*ce, dy:se, dz:Math.sin(az)*ce, spMul:0.85+rnd()*0.5}; }   // frondes longues, longueurs variées
 function distLeaves(i,n,rnd){ const v=vrand(rnd); return {dx:v[0],dy:v[1],dz:v[2],spMul:0.45+rnd()*0.45}; }
-// MÉDUSE (B234, correction user : « 1 méduse = 1 ÉTOILE qui dandine comme un spermatozoïde —
-// en tout il y a 4 MÉDUSES par tir »). N'existe QU'EN COMPACT (« compact 40 tirs 30 mm z
-// méduse <c> », 10 réfs). La bombette lâche 4 étoiles en cône serré vers le haut ; leurs 4
-// traînées ensemble = la « sorte de queue de cheval » ; puis chacune DANDINE jusqu'au bout.
+// MÉDUSE (B235, correction user) : la QUEUE DE CHEVAL = ~17 étoiles PETITES en cône serré,
+// SENS ALÉATOIRE par tir (à l'endroit, à l'envers, sur le côté — randomAxis) ; 4 d'entre elles
+// (comp 1) survivent et deviennent les SPERMATOZOÏDES qui dandinent.
 function distMedusa(i,n,rnd){
   const dx=(rnd()-0.5)*0.32, dz=(rnd()-0.5)*0.32, dy=1, L=Math.hypot(dx,dy,dz)||1;
-  return {dx:dx/L,dy:dy/L,dz:dz/L, spMul:0.32+rnd()*0.22, comp:0};
+  return {dx:dx/L,dy:dy/L,dz:dz/L, spMul:0.32+rnd()*0.22, comp:(i<n-4)?0:1};
 }
 function distHorsetail(i,n,rnd){ const dx=(rnd()-0.5)*0.18, dz=(rnd()-0.5)*0.18, dy=1.0;
   const L=Math.hypot(dx,dy,dz)||1; return {dx:dx/L,dy:dy/L,dz:dz/L,spMul:0.33}; }
@@ -452,15 +451,24 @@ function crackleFn(d,A,dt){ d.popOn=(d.popOn||0)-dt;
   if (d.popOn>0) return {intenMul:2.3,whiteMix:0.9}; return null; }
 function glitterFn(d){ return {intenMul: Math.random()<0.45?0.4:1.6}; }
 
-// MÉDUSE (B234) : chaque étoile-méduse monte en traînant, puis « DANDINE » comme un
-// spermatozoïde : oscillation latérale marquée (axe et rythme propres) en descente douce,
-// la traînée dessine la queue qui frétille.
+// MÉDUSE (B235) : les 4 spermatozoïdes (comp 1) — montent avec la queue de cheval, puis
+// DANDINENT (oscillation latérale, axe et rythme propres). Pendant le dandinement, la traînée
+// normale S'ARRÊTE et l'étoile lâche des étincelles MINUSCULES (grain 0.35) et ÉPHÉMÈRES
+// (~0,23 s) = la queue de spermatozoïde qui frétille.
 function behaveMeduse(d,A,dt,ctx){
+  if (d.comp!==1) return;
   if (d._wg===undefined){ d._wg=1.1+Math.random()*0.4; d._wf=4.5+Math.random()*3;
     d._wa=26+Math.random()*12; d._wp=Math.random()*6.28; d._wax=Math.random()*6.28; }
   if (d.age<d._wg) return;
+  d.trailing=false;                                          // fin de la traînée queue-de-cheval
   const s=Math.sin(d.age*d._wf+d._wp);                       // le frétillement
   d.vx += Math.cos(d._wax)*s*d._wa*dt; d.vz += Math.sin(d._wax)*s*d._wa*dt;
+  d._sp=(d._sp||0)+dt*110;                                   // ~110 micro-étincelles/s
+  const c=(ctx.cfg.trailing&&ctx.cfg.trailing.color)||GOLD;
+  const px=ctx.pos[d._i*3], py=ctx.pos[d._i*3+1], pz=ctx.pos[d._i*3+2];
+  while (d._sp>=1){ d._sp-=1;
+    spawnTrail(px+(Math.random()-0.5)*0.2, py+(Math.random()-0.5)*0.2, pz+(Math.random()-0.5)*0.2,
+      c.r,c.g,c.b, 0.35, 0.13, 0.9, d.vx,d.vy,d.vz, 0.25, 0.42, true); }
 }
 function behaveFish(d,A,dt,ctx){
   const sp=Math.hypot(d.vx,d.vy,d.vz)||1, cx=d.vx/sp,cy=d.vy/sp,cz=d.vz/sp;
@@ -697,8 +705,9 @@ const EFFECTS = {
   // 4 étoiles en cône serré, chacune traîne (les 4 traînées = la « queue de cheval ») puis
   // DANDINE comme un spermatozoïde jusqu'à l'extinction. Couleur au sort (10 réfs) ; traînée =
   // couleur de la volée (trailColorFromStar).
-  medusa:    { apex:42, cal:30, heat:false, pureColor:true, stars:4, starSize:1.7, speedMul:0.55,
-               gravStar:0.55, dragStar:0.42, lifeBase75:6.0, lifeJitter:0.12, restExtra:3,
+  medusa:    { apex:42, cal:30, heat:false, pureColor:true, stars:17, starSize:1.1, speedMul:0.55,   // B235 (user) : ~17 étoiles PETITES dont 4 deviennent les spermatozoïdes
+               gravStar:0.55, dragStar:0.42, lifeBase75:6.0, lifeJitter:0.12, compLife:{0:0.55}, compSize:{1:1.4}, restExtra:3,
+               randomAxis:true,   // B235 (user) : le sens de la queue de cheval est ALÉATOIRE (endroit/envers/côté)
                dist:distMedusa, behave:behaveMeduse, trailColorFromStar:true,
                colorPairs:[[PINK],[GRN],[RED],[PURP],[YEL],[new THREE.Color(1.0,0.45,0.08)],[BLU],[SILVER],[CYAN]],
                trailing:{emitUntil:0.95, period:0.008, grain:0.7, gF:0.13, lifeMul:4, spark:true, jit:0.3, bright:0.85} },
