@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B237';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B238';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -467,7 +467,7 @@ function behaveMeduse(d,A,dt,ctx){
   const px=ctx.pos[d._i*3], py=ctx.pos[d._i*3+1], pz=ctx.pos[d._i*3+2];
   while (d._sp>=1){ d._sp-=1;
     spawnTrail(px+(Math.random()-0.5)*0.2, py+(Math.random()-0.5)*0.2, pz+(Math.random()-0.5)*0.2,
-      c.r,c.g,c.b, 0.35, 0.13, 0.9, d.vx,d.vy,d.vz, 0.25, 0.42, true); }
+      c.r,c.g,c.b, 0.28, 0.13, 0.6, d.vx,d.vy,d.vz, 0.25, 0.42, true); }   // B238 (user) : queue plus PETITE (grains 0.28, vie ~0,16 s)
 }
 function behaveFish(d,A,dt,ctx){
   const sp=Math.hypot(d.vx,d.vy,d.vz)||1, cx=d.vx/sp,cy=d.vy/sp,cz=d.vz/sp;
