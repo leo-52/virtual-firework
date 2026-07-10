@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B238';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B239';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -458,10 +458,15 @@ function glitterFn(d){ return {intenMul: Math.random()<0.45?0.4:1.6}; }
 function behaveMeduse(d,A,dt,ctx){
   if (d.comp!==1) return;
   if (d._wg===undefined){ d._wg=1.1+Math.random()*0.4; d._wf=4.5+Math.random()*3;
-    d._wa=26+Math.random()*12; d._wp=Math.random()*6.28; d._wax=Math.random()*6.28; }
+    d._wa=5.5+Math.random()*3; d._wp=Math.random()*6.28; }   // B239 (user) : TRÈS LÉGER (« c'est pas un poisson ») — ±0,5-1 m, pas 3-5 m
   if (d.age<d._wg) return;
+  // B239 (user) : le spermatozoïde SUIT la direction de la queue de cheval (il garde son élan) ;
+  // le dandinement = petite oscillation PERPENDICULAIRE à sa direction de vol, axe fixé à l'activation.
+  if (d._wax2===undefined){ const L=Math.hypot(d.vx,d.vy,d.vz)||1;
+    const u=[d.vx/L,d.vy/L,d.vz/L], w=cross(u,vrand(Math.random)), Lw=Math.hypot(w[0],w[1],w[2])||1;
+    d._wax2=[w[0]/Lw,w[1]/Lw,w[2]/Lw]; }
   const s=Math.sin(d.age*d._wf+d._wp);                       // le frétillement
-  d.vx += Math.cos(d._wax)*s*d._wa*dt; d.vz += Math.sin(d._wax)*s*d._wa*dt;
+  d.vx += d._wax2[0]*s*d._wa*dt; d.vy += d._wax2[1]*s*d._wa*dt; d.vz += d._wax2[2]*s*d._wa*dt;
   d._sp=(d._sp||0)+dt*110;                                   // ~110 micro-étincelles/s
   const c=ctx.cfg.colors[1]||SILVER;                         // B236 (user) : queue de spermatozoïde BLANC ARGENTÉ, quelle que soit la couleur de la volée
   const px=ctx.pos[d._i*3], py=ctx.pos[d._i*3+1], pz=ctx.pos[d._i*3+2];
