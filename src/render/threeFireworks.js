@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B227';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B228';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -406,9 +406,17 @@ function cli2Fn(d,A,dt){ return d.comp===2 ? cliFn(d,A) : null; }
 // pas bien ») : la bascule doit être quasi SYNCHRONE (couche de poudre d'épaisseur régulière) —
 // mon étalement ±14 % donnait ~0,8 s de mélange vert/violet illisible dans chaque moitié.
 function behaveColorSwap(d,A,dt,ctx){
-  if (d.comp===2) return;
+  if (d.comp===2 || d._swapped) return;
   if (d._sw===undefined) d._sw=0.45+Math.random()*0.125;   // B226-B227 (user) : fenêtre de bascule 0,5 s (mesurée)
-  if (!d._swapped && A>=d._sw){ d._swapped=true; d.coreColor=ctx.cfg.colors[(d.comp+1)%2]; }
+  if (A<d._sw) return;
+  // B228 (user : « le changement est trop propre ») : FONDU de 0,2 s à travers la couleur
+  // intermédiaire (jaune -> ORANGE -> rouge), pas un interrupteur.
+  const c0=ctx.cfg.colors[d.comp], c1=ctx.cfg.colors[(d.comp+1)%2];
+  const f=Math.min(1, (d.age-d._sw*d.life)/0.2);
+  if (f>=1){ d._swapped=true; d.coreColor=c1; return; }
+  if (!d._mix) d._mix=new THREE.Color();
+  d._mix.setRGB(c0.r+(c1.r-c0.r)*f, c0.g+(c1.g-c0.g)*f, c0.b+(c1.b-c0.b)*f);
+  d.coreColor=d._mix;
 }
 function crackleFn(d,A,dt){ d.popOn=(d.popOn||0)-dt;
   if (d.popOn<=0 && Math.random()<7*dt) d.popOn=0.045;
