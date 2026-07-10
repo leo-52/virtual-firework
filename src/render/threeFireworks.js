@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B231';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B232';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -423,10 +423,23 @@ function behaveColorSwap(d,A,dt,ctx){
 // puis BIFURQUE à son instant (2,0-2,5 s) vers une direction au hasard (relance ~8-13 m/s —
 // la composition secondaire pousse l'étoile). Une seule bifurcation.
 function behaveZigzag(d,A,dt,ctx){
-  if (d._zz===undefined) d._zz=2.0+Math.random()*0.5;
+  if (d._zz===undefined){ d._zz=2.0+Math.random()*0.5;
+    // B232 (user) : après la bifurcation, la trajectoire n'est PAS linéaire — au hasard par
+    // étoile : DROIT (~30 %), petite COURBE, ou jusqu'au DEMI-CERCLE (rotation continue de la
+    // vitesse autour d'un axe propre, 0,6-3,0 rad/s).
+    d._turn=(Math.random()<0.30)?0:(0.6+Math.random()*2.4)*(Math.random()<0.5?-1:1);
+    d._ax=vrand(Math.random); }
   if (!d._zzd && d.age>=d._zz){ d._zzd=true;
     const v=vrand(Math.random), sp=8+Math.random()*5;
     d.vx=v[0]*sp; d.vy=v[1]*sp; d.vz=v[2]*sp; }
+  if (d._zzd && d._turn){   // rotation de Rodrigues autour de l'axe de l'étoile
+    const ang=d._turn*dt, c=Math.cos(ang), s=Math.sin(ang), ax=d._ax;
+    const dot=ax[0]*d.vx+ax[1]*d.vy+ax[2]*d.vz;
+    const rx=ax[1]*d.vz-ax[2]*d.vy, ry=ax[2]*d.vx-ax[0]*d.vz, rz=ax[0]*d.vy-ax[1]*d.vx;
+    d.vx=d.vx*c+rx*s+ax[0]*dot*(1-c);
+    d.vy=d.vy*c+ry*s+ax[1]*dot*(1-c);
+    d.vz=d.vz*c+rz*s+ax[2]*dot*(1-c);
+  }
 }
 function crackleFn(d,A,dt){ d.popOn=(d.popOn||0)-dt;
   if (d.popOn<=0 && Math.random()<7*dt) d.popOn=0.045;
@@ -1065,13 +1078,21 @@ class Shell {
         const mx=(this.headLastX+hx)*0.5, my=(this.headLastY+y)*0.5, mz=(this.headLastZ+hz)*0.5;
         const rc=this.cfg.riseColor, big=this.cfg.headSize>1.5;
         spawnTrail(mx,my,mz, rc.r,rc.g,rc.b, big?1.4:1.1, 0.4, big?1.6:1.0);
-        // TRONC (B229, zigzag « à tronc » — aussi les futurs saule kamuro à tronc) : la MONTÉE
-        // laisse une TRACE KAMURO qui s'éteint de bas en haut derrière la bombe. B231 (user) :
-        // la queue est VRAIMENT DENSE — « des millions d'étincelles (0,1 mm) » -> grains FINS
-        // (0.65) et NOMBREUX (10 par pas, ~12 k pendant la montée) qui fusionnent en colonne pleine.
-        if (this.cfg.trunk){ for (let k=0;k<10;k++)
-          spawnTrail(mx+(Math.random()-0.5)*0.6, my+(Math.random()-0.5)*0.6, mz+(Math.random()-0.5)*0.6,
-            COPPER.r,COPPER.g,COPPER.b, 0.65, 0.13, 7, 0,0,0, 0.4, 0.42, true); }
+        // TRONC (B229/B231/B232, zigzag « à tronc ») : QUEUE DE FUSÉE — étincelles FINES (0.65)
+        // réparties LE LONG du trajet (plus d'amas « œuf de dragon »), aux vies ÉTAGÉES (B232,
+        // user) : GROSSE BANDE DENSE sous le projectile (72 % de grains brefs), milieu
+        // moitié-moitié (22 % moyens), et tout en bas SEULEMENT QUELQUES étincelles qui durent
+        // plus longtemps que les autres (6 % longues, 1,8-2,9 s).
+        if (this.cfg.trunk){ for (let k=0;k<12;k++){
+          const fq=Math.random();
+          const gx=this.headLastX+(hx-this.headLastX)*fq, gy=this.headLastY+(y-this.headLastY)*fq, gz=this.headLastZ+(hz-this.headLastZ)*fq;
+          const u=Math.random();
+          const lm = u<0.72 ? (1.0+Math.random()*0.5)    // brefs 0,26-0,39 s -> bande dense ~10-16 m
+                   : u<0.94 ? (2.5+Math.random()*2.0)    // moyens 0,65-1,17 s -> milieu clairsemé
+                            : (7+Math.random()*4);       // longs 1,8-2,9 s -> les rares du bas
+          spawnTrail(gx+(Math.random()-0.5)*0.4, gy+(Math.random()-0.5)*0.4, gz+(Math.random()-0.5)*0.4,
+            COPPER.r,COPPER.g,COPPER.b, 0.65, 0.13, lm, 0,0,0, 0.4, 0.42, true);
+        } }
         this.headLastX=hx; this.headLastY=y; this.headLastZ=hz; this.headTimer=big?0.010:0.015;
       }
       if (T>=1){ this.burst(); this.phase='burst'; }
