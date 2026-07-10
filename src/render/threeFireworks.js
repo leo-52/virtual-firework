@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B228';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B229';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -407,7 +407,7 @@ function cli2Fn(d,A,dt){ return d.comp===2 ? cliFn(d,A) : null; }
 // mon étalement ±14 % donnait ~0,8 s de mélange vert/violet illisible dans chaque moitié.
 function behaveColorSwap(d,A,dt,ctx){
   if (d.comp===2 || d._swapped) return;
-  if (d._sw===undefined) d._sw=0.45+Math.random()*0.125;   // B226-B227 (user) : fenêtre de bascule 0,5 s (mesurée)
+  if (d._sw===undefined) d._sw=0.44+Math.random()*0.16;   // B226-B227 (user) : fenêtre de bascule 0,5 s (recalée B229 pour la vie réduite à 2,4 s)
   if (A<d._sw) return;
   // B228 (user : « le changement est trop propre ») : FONDU de 0,2 s à travers la couleur
   // intermédiaire (jaune -> ORANGE -> rouge), pas un interrupteur.
@@ -417,6 +417,16 @@ function behaveColorSwap(d,A,dt,ctx){
   if (!d._mix) d._mix=new THREE.Color();
   d._mix.setRGB(c0.r+(c1.r-c0.r)*f, c0.g+(c1.g-c0.g)*f, c0.b+(c1.b-c0.b)*f);
   d.coreColor=d._mix;
+}
+// ZIGZAG (B229, définition user : « 53 étoiles, genre pivoine, qui vont DROIT, et entre 2 s et
+// 2,5 s après, partent dans une AUTRE direction aléatoire ») : chaque étoile file tout droit
+// puis BIFURQUE à son instant (2,0-2,5 s) vers une direction au hasard (relance ~8-13 m/s —
+// la composition secondaire pousse l'étoile). Une seule bifurcation.
+function behaveZigzag(d,A,dt,ctx){
+  if (d._zz===undefined) d._zz=2.0+Math.random()*0.5;
+  if (!d._zzd && d.age>=d._zz){ d._zzd=true;
+    const v=vrand(Math.random), sp=8+Math.random()*5;
+    d.vx=v[0]*sp; d.vy=v[1]*sp; d.vz=v[2]*sp; }
 }
 function crackleFn(d,A,dt){ d.popOn=(d.popOn||0)-dt;
   if (d.popOn<=0 && Math.random()<7*dt) d.popOn=0.045;
@@ -588,9 +598,16 @@ const EFFECTS = {
   // bleu, rouge/bleu, citron/rose, orange/vert à décliner). Demi-demi splitFacing (la coupe se
   // lit dans le ciel) dont chaque moitié BASCULE vers la couleur de l'autre à ~mi-vie (croisé),
   // + pistil cli. blanc 40 petites étoiles en 2 demi-coquilles (comp 2, hors coupe).
-  halfSwapCli: { apex:157, cal:125, heat:false, pureColor:true, stars:120, splitFacing:true, gravStar:0.6, lifeJitter:0.06,   // B225 : vies resserrées (±6 %) pour une bascule de couleur SYNCHRONE et lisible
-             dist:distHalfSwapCli, onStar:cli2Fn, behave:behaveColorSwap, compLife:{2:1.21}, compSize:{2:1.6},   // B224 (user) : le cli. blanc dure PLUS LONGTEMPS que le reste (~3-4 s, il survit aux moitiés)
+  halfSwapCli: { apex:157, cal:125, heat:false, pureColor:true, stars:120, splitFacing:true, gravStar:0.6, lifeBase75:1.28, lifeJitter:0.06,   // B229 (user) : étoiles des moitiés −0,5 s (2,9 -> 2,4 s) ; B225 : vies resserrées (±6 %) pour une bascule lisible
+             dist:distHalfSwapCli, onStar:cli2Fn, behave:behaveColorSwap, compLife:{2:1.46}, compSize:{2:1.6},   // B224 (user) : le cli. blanc dure ~3-4 s (compLife recalé 1.46 pour compenser la vie réduite des moitiés)
              colors:[GRN, PURP, WHITE] },   // [moitié A, moitié B, pistil] — vert/violet (512064000)
+  // ZIGZAG (B229, définition user) : « bombe 100 mm zigzag rouge/argent » (510460000/510462000,
+  // 130 m ; 125 mm rouge 512043000, 158 m). 53 étoiles genre pivoine qui vont DROIT puis
+  // bifurquent chacune à 2,0-2,5 s vers une direction aléatoire ; BOMBE À TRONC : la montée
+  // laisse une trace kamuro (flag trunk). Rouge ou argent au sort.
+  zigzag: { apex:130, cal:100, heat:false, pureColor:true, stars:53, starSize:2.1, speedMul:0.95,
+            gravStar:0.45, dragStar:0.30, lifeBase75:2.43, lifeJitter:0.10, trunk:true, behave:behaveZigzag,
+            colorPairs:[[RED],[SILVER]] },
   kamuroCli: { apex:122, cal:100, heat:false, pureColor:true, stars:104, starSize:0.9, speedMul:0.8,   // B219 (user) : centre = 40 PETITES étoiles (2 lobes de 20)
              gravStar:0.25, dragStar:0.25, lifeBase75:2.7, lifeJitter:0.28, restExtra:4,   // B220 (user) : « la vitesse est bonne mais la physique est trop puissante » -> gravité 0.5 -> 0.15, recalée 0.25 (B221, user)
              dist:distKamuroCli, onStar:dahliaCliFn, compLife:{1:0.39}, compSize:{1:1.6}, trailComps:[0],   // B220 (user) : le centre dure 1,5 s
@@ -681,7 +698,7 @@ const EFFECTS = {
 export const LABELS = { peony:'pivoine', chrysanthemum:'chrysanthème', willow:'saule (kamuro)', willowStrobe:'saule or pointes scintillant', willowTips:'saule or pointes', willowTips100:'saule or pointes 100 mm', comet:'comète',
   sphere:'sphère', crackling:'crackling', dragonEgg:'œuf de dragon', strobe:'scintillant', cli:'cli. blanc/rouge', dahliaCli:'dahlia centre cli. blanc', kamuroCli:'ext. kamuro centre cli. blanc', halfSwapCli:'moitié changeante centre cli.', finalCli:'final cli. blanc rose', palmMulti:'palme multicolore', palmStrobe:'palme or scintillant',
   fallingLeaves:'feuille morte', palm:'palme', heart:'cœur', butterfly:'papillon', smiley:'smiley',
-  daisy:'marguerite', atom:'atome', halfHalf:'demi-demi', tracer:'traçante', medusa:'méduse', horsetail:'queue de cheval',
+  daisy:'marguerite', atom:'atome', halfHalf:'demi-demi', tracer:'traçante', zigzag:'zigzag', medusa:'méduse', horsetail:'queue de cheval',
   cascade:'cascade', fish:'poisson', spinner:'tourbillon', saucer:'soucoupe', mosaic:'mosaïque', mosaicMix:'mosaïque assortie',
   mine:'pot à feu', salute:"salut (marron d'air)", saluteMulti:"multi marron d'air" };
 
@@ -1045,6 +1062,12 @@ class Shell {
         const mx=(this.headLastX+hx)*0.5, my=(this.headLastY+y)*0.5, mz=(this.headLastZ+hz)*0.5;
         const rc=this.cfg.riseColor, big=this.cfg.headSize>1.5;
         spawnTrail(mx,my,mz, rc.r,rc.g,rc.b, big?1.4:1.1, 0.4, big?1.6:1.0);
+        // TRONC (B229, zigzag « à tronc » — aussi les futurs saule kamuro à tronc) : la MONTÉE
+        // laisse une TRACE KAMURO — paillettes cuivre persistantes (~1,8 s) semées sur le trajet,
+        // qui s'éteignent de bas en haut derrière la bombe.
+        if (this.cfg.trunk){ for (let k=0;k<2;k++)
+          spawnTrail(mx+(Math.random()-0.5)*0.5, my+(Math.random()-0.5)*0.5, mz+(Math.random()-0.5)*0.5,
+            COPPER.r,COPPER.g,COPPER.b, 1.2, 0.13, 7, 0,0,0, 0.4, 0.42, true); }
         this.headLastX=hx; this.headLastY=y; this.headLastZ=hz; this.headTimer=big?0.010:0.015;
       }
       if (T>=1){ this.burst(); this.phase='burst'; }
