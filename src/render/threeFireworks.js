@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B239';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B240';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -712,6 +712,7 @@ const EFFECTS = {
   medusa:    { apex:42, cal:30, heat:false, pureColor:true, stars:17, starSize:0.8, speedMul:0.55,   // B236 (user) : étoiles ENCORE plus petites — tout tient dans 30 mm de diamètre
                gravStar:0.55, dragStar:0.42, lifeBase75:6.0, lifeJitter:0.12, compLife:{0:0.55}, restExtra:3,   // B237 (user) : spermatozoïdes = MÊME taille que les autres (0.8, plus de compSize)
                randomAxis:true,   // B235 (user) : le sens de la queue de cheval est ALÉATOIRE (endroit/envers/côté)
+               noFlash:true, burstSparks:false,   // B240 (user) : PAS de grosse explosion en l'air — ouverture discrète, « comme une queue de cheval » (idem cascade)
                dist:distMedusa, behave:behaveMeduse,
                // B236 (user) : PAS de traînée arrière sur la queue de cheval ; spermatozoïdes (comp 1)
                // BLANC ARGENTÉ quelle que soit la couleur de la volée.
