@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B225';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B226';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -407,7 +407,7 @@ function cli2Fn(d,A,dt){ return d.comp===2 ? cliFn(d,A) : null; }
 // mon étalement ±14 % donnait ~0,8 s de mélange vert/violet illisible dans chaque moitié.
 function behaveColorSwap(d,A,dt,ctx){
   if (d.comp===2) return;
-  if (d._sw===undefined) d._sw=0.48+Math.random()*0.05;
+  if (d._sw===undefined) d._sw=0.46+Math.random()*0.10;   // B226 (user) : fenêtre de bascule 0,3 -> 0,5 s
   if (!d._swapped && A>=d._sw){ d._swapped=true; d.coreColor=ctx.cfg.colors[(d.comp+1)%2]; }
 }
 function crackleFn(d,A,dt){ d.popOn=(d.popOn||0)-dt;
