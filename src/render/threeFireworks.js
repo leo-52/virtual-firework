@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B223';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B224';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -579,7 +579,7 @@ const EFFECTS = {
   // lit dans le ciel) dont chaque moitié BASCULE vers la couleur de l'autre à ~mi-vie (croisé),
   // + pistil cli. blanc 40 petites étoiles en 2 demi-coquilles (comp 2, hors coupe).
   halfSwapCli: { apex:157, cal:125, heat:false, pureColor:true, stars:120, splitFacing:true, gravStar:0.6,
-             dist:distHalfSwapCli, onStar:cli2Fn, behave:behaveColorSwap, compLife:{2:0.52}, compSize:{2:1.6},
+             dist:distHalfSwapCli, onStar:cli2Fn, behave:behaveColorSwap, compLife:{2:1.21}, compSize:{2:1.6},   // B224 (user) : le cli. blanc dure PLUS LONGTEMPS que le reste (~3-4 s, il survit aux moitiés)
              colors:[GRN, PURP, WHITE] },   // [moitié A, moitié B, pistil] — vert/violet (512064000)
   kamuroCli: { apex:122, cal:100, heat:false, pureColor:true, stars:104, starSize:0.9, speedMul:0.8,   // B219 (user) : centre = 40 PETITES étoiles (2 lobes de 20)
              gravStar:0.25, dragStar:0.25, lifeBase75:2.7, lifeJitter:0.28, restExtra:4,   // B220 (user) : « la vitesse est bonne mais la physique est trop puissante » -> gravité 0.5 -> 0.15, recalée 0.25 (B221, user)
