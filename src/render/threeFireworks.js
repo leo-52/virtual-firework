@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B230';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B231';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -1066,11 +1066,12 @@ class Shell {
         const rc=this.cfg.riseColor, big=this.cfg.headSize>1.5;
         spawnTrail(mx,my,mz, rc.r,rc.g,rc.b, big?1.4:1.1, 0.4, big?1.6:1.0);
         // TRONC (B229, zigzag « à tronc » — aussi les futurs saule kamuro à tronc) : la MONTÉE
-        // laisse une TRACE KAMURO — paillettes cuivre persistantes (~1,8 s) semées sur le trajet,
-        // qui s'éteignent de bas en haut derrière la bombe.
-        if (this.cfg.trunk){ for (let k=0;k<2;k++)
-          spawnTrail(mx+(Math.random()-0.5)*0.5, my+(Math.random()-0.5)*0.5, mz+(Math.random()-0.5)*0.5,
-            COPPER.r,COPPER.g,COPPER.b, 1.2, 0.13, 7, 0,0,0, 0.4, 0.42, true); }
+        // laisse une TRACE KAMURO qui s'éteint de bas en haut derrière la bombe. B231 (user) :
+        // la queue est VRAIMENT DENSE — « des millions d'étincelles (0,1 mm) » -> grains FINS
+        // (0.65) et NOMBREUX (10 par pas, ~12 k pendant la montée) qui fusionnent en colonne pleine.
+        if (this.cfg.trunk){ for (let k=0;k<10;k++)
+          spawnTrail(mx+(Math.random()-0.5)*0.6, my+(Math.random()-0.5)*0.6, mz+(Math.random()-0.5)*0.6,
+            COPPER.r,COPPER.g,COPPER.b, 0.65, 0.13, 7, 0,0,0, 0.4, 0.42, true); }
         this.headLastX=hx; this.headLastY=y; this.headLastZ=hz; this.headTimer=big?0.010:0.015;
       }
       if (T>=1){ this.burst(); this.phase='burst'; }
