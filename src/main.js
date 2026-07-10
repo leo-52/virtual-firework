@@ -109,14 +109,14 @@ Object.assign(pick.style, { position:'fixed', top:'10px', right:'10px', zIndex:'
 for (const [k, label] of Object.entries(LABELS)){
   const o = document.createElement('option'); o.value = k; o.textContent = label; pick.appendChild(o);
 }
-pick.value = 'kamuroCli';
+pick.value = 'halfSwapCli';
 // changer d'effet dans le menu -> couleur PAR DÉFAUT de l'effet (null annule l'override de la démo)
 pick.addEventListener('change', e => layer.setFocus(e.target.value, null));
 document.body.appendChild(pick);
 
-// DÉMO (réglage en cours) : EXT. KAMURO CENTRE CLI. BLANC 100mm (510510000, 122 m, B218) —
-// saule kamuro validé + pistil blanc clignotant en 2 demi-coquilles.
-layer.setFocus('kamuroCli');
+// DÉMO (réglage en cours) : MOITIÉ CHANGEANTE CENTRE CLI. BLANC 125mm (512064000, 157 m, B223) —
+// moitié vert->violet / moitié violet->vert (bascule croisée à mi-vie) + pistil cli. blanc.
+layer.setFocus('halfSwapCli');
 
 // TIMELINE de lecture (barre en bas) + ESPACE = pause/play (fige les feux, caméra libre).
 const timeline = new Timeline(layer, LABELS);

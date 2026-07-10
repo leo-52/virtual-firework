@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B222';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B223';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -292,8 +292,8 @@ function distMarron(i,n,rnd){ const dx=(rnd()-0.5)*0.7, dz=(rnd()-0.5)*0.7, dy=1
 // **2 DEMI-COQUILLES opposées** (photo + croquis user : deux « D » face à face) -> deux LOBES
 // le long d'un axe aléatoire par tir, BANDE VIDE à l'équateur (« sur certains côtés il n'y a
 // pas d'étoiles clignotantes »).
-function makeDistEnvCli(nEnv){
-  let W=null;
+function makeDistEnvCli(nEnv, pistilComp){
+  let W=null; const pc=pistilComp||1;
   return function(i,n,rnd){
     if (i===0) W=vrand(rnd);
     if (i<nEnv){ const d=distFibonacci(i,nEnv,rnd);
@@ -306,11 +306,12 @@ function makeDistEnvCli(nEnv){
     return {dx:W[0]*c+(u[0]*Math.cos(a)+v2[0]*Math.sin(a))*s,
             dy:W[1]*c+(u[1]*Math.cos(a)+v2[1]*Math.sin(a))*s,
             dz:W[2]*c+(u[2]*Math.cos(a)+v2[2]*Math.sin(a))*s,
-            spMul:0.28+rnd()*0.12, comp:1};
+            spMul:0.28+rnd()*0.12, comp:pc};
   };
 }
-const distDahliaCli=makeDistEnvCli(28);   // B215 (user) : 28 brins de dahlia
-const distKamuroCli=makeDistEnvCli(64);   // B218 : extérieur kamuro (saule) + centre cli.
+const distDahliaCli=makeDistEnvCli(28);        // B215 (user) : 28 brins de dahlia
+const distKamuroCli=makeDistEnvCli(64);        // B218 : extérieur kamuro (saule) + centre cli.
+const distHalfSwapCli=makeDistEnvCli(80, 2);   // B223 : moitié-moitié changeante (coupe splitFacing sur comps 0/1) + pistil comp 2
 
 function distSpinner(i,n,rnd){ const a0=Math.random()*Math.PI*2, rH=rnd(11,16), vUp=rnd(2.5,4.2);
   const dx=Math.cos(a0)*rH, dy=vUp, dz=Math.sin(a0)*rH, L=Math.hypot(dx,dy,dz)||1;
@@ -397,6 +398,16 @@ function cliFn(d,A){ const ph=(d.age*d.strobeF*3+d.phase)%1;
   return { intenMul: ph<0.25?1.7:0.12 }; }
 // DAHLIA CENTRE CLI. BLANC (B214) : seul le PISTIL (comp 1) clignote ; l'enveloppe brûle normalement.
 function dahliaCliFn(d,A,dt){ return d.comp===1 ? cliFn(d,A) : null; }
+// MOITIÉ CHANGEANTE CENTRE CLI. (B223, réf 512064000 « moitié vert à violet moitié violet à
+// vert centre cli. blanc ») : pistil = comp 2 (comps 0/1 = les moitiés de la coupe).
+function cli2Fn(d,A,dt){ return d.comp===2 ? cliFn(d,A) : null; }
+// CHANGEMENT DE COULEUR CROISÉ : à ~mi-vie (étalé ±14 %), chaque moitié BASCULE vers la couleur
+// de l'autre (vert -> violet, violet -> vert). Le pistil (comp 2) ne change pas.
+function behaveColorSwap(d,A,dt,ctx){
+  if (d.comp===2) return;
+  if (d._sw===undefined) d._sw=0.45+Math.random()*0.14;
+  if (!d._swapped && A>=d._sw){ d._swapped=true; d.coreColor=ctx.cfg.colors[(d.comp+1)%2]; }
+}
 function crackleFn(d,A,dt){ d.popOn=(d.popOn||0)-dt;
   if (d.popOn<=0 && Math.random()<7*dt) d.popOn=0.045;
   if (d.popOn>0) return {intenMul:2.3,whiteMix:0.9}; return null; }
@@ -562,6 +573,14 @@ const EFFECTS = {
   // (510510000, 122 m ; existe en 125 mm 512062000, 157 m). ENVELOPPE = le saule kamuro VALIDÉ
   // (têtes-pointes 0.9, traînées cuivre collier de perles qui PENDENT) + PISTIL cli. blanc en
   // 2 demi-coquilles (le mécanisme du dahlia B215). Traînées sur l'enveloppe SEULE (trailComps).
+  // MOITIÉ CHANGEANTE CENTRE CLI. BLANC (B223) : « bombe 125 mm moitié vert à violet moitié
+  // violet à vert centre cli. blanc » (512064000, 157 m — famille 512063000-512068000 : citron/
+  // bleu, rouge/bleu, citron/rose, orange/vert à décliner). Demi-demi splitFacing (la coupe se
+  // lit dans le ciel) dont chaque moitié BASCULE vers la couleur de l'autre à ~mi-vie (croisé),
+  // + pistil cli. blanc 40 petites étoiles en 2 demi-coquilles (comp 2, hors coupe).
+  halfSwapCli: { apex:157, cal:125, heat:false, pureColor:true, stars:120, splitFacing:true, gravStar:0.6,
+             dist:distHalfSwapCli, onStar:cli2Fn, behave:behaveColorSwap, compLife:{2:0.52}, compSize:{2:1.6},
+             colors:[GRN, PURP, WHITE] },   // [moitié A, moitié B, pistil] — vert/violet (512064000)
   kamuroCli: { apex:122, cal:100, heat:false, pureColor:true, stars:104, starSize:0.9, speedMul:0.8,   // B219 (user) : centre = 40 PETITES étoiles (2 lobes de 20)
              gravStar:0.25, dragStar:0.25, lifeBase75:2.7, lifeJitter:0.28, restExtra:4,   // B220 (user) : « la vitesse est bonne mais la physique est trop puissante » -> gravité 0.5 -> 0.15, recalée 0.25 (B221, user)
              dist:distKamuroCli, onStar:dahliaCliFn, compLife:{1:0.39}, compSize:{1:1.6}, trailComps:[0],   // B220 (user) : le centre dure 1,5 s
@@ -650,7 +669,7 @@ const EFFECTS = {
 };
 
 export const LABELS = { peony:'pivoine', chrysanthemum:'chrysanthème', willow:'saule (kamuro)', willowStrobe:'saule or pointes scintillant', willowTips:'saule or pointes', willowTips100:'saule or pointes 100 mm', comet:'comète',
-  sphere:'sphère', crackling:'crackling', dragonEgg:'œuf de dragon', strobe:'scintillant', cli:'cli. blanc/rouge', dahliaCli:'dahlia centre cli. blanc', kamuroCli:'ext. kamuro centre cli. blanc', finalCli:'final cli. blanc rose', palmMulti:'palme multicolore', palmStrobe:'palme or scintillant',
+  sphere:'sphère', crackling:'crackling', dragonEgg:'œuf de dragon', strobe:'scintillant', cli:'cli. blanc/rouge', dahliaCli:'dahlia centre cli. blanc', kamuroCli:'ext. kamuro centre cli. blanc', halfSwapCli:'moitié changeante centre cli.', finalCli:'final cli. blanc rose', palmMulti:'palme multicolore', palmStrobe:'palme or scintillant',
   fallingLeaves:'feuille morte', palm:'palme', heart:'cœur', butterfly:'papillon', smiley:'smiley',
   daisy:'marguerite', atom:'atome', halfHalf:'demi-demi', tracer:'traçante', medusa:'méduse', horsetail:'queue de cheval',
   cascade:'cascade', fish:'poisson', spinner:'tourbillon', saucer:'soucoupe', mosaic:'mosaïque', mosaicMix:'mosaïque assortie',
@@ -835,7 +854,9 @@ class Shell {
         if (this._rAxis){ const A2=this._rAxis, U=this._rU, V=this._rV;   // AXE ALÉATOIRE (B97, cascade) : la gerbe "haut" est réorientée vers l'axe tiré au sort pour CETTE bombe
           dir={ dx:U[0]*dir.dx+A2[0]*dir.dy+V[0]*dir.dz, dy:U[1]*dir.dx+A2[1]*dir.dy+V[1]*dir.dz, dz:U[2]*dir.dx+A2[2]*dir.dy+V[2]*dir.dz, spMul:dir.spMul, comp:dir.comp }; }
         // COUPE demi-demi : couleur selon le CÔTÉ de la direction finale (+ BAVURE ±0.06 à la couture)
-        if (this._splitN) comp=(dir.dx*this._splitN[0]+dir.dy*this._splitN[1]+dir.dz*this._splitN[2]+(Math.random()-0.5)*0.12)>=0?0:1; }
+        // B223 : la coupe ne s'applique QU'À l'enveloppe (comps 0/1) — un PISTIL comp 2 (ex moitié
+        // changeante centre cli.) garde son groupe.
+        if (this._splitN && (dir.comp||0)<2) comp=(dir.dx*this._splitN[0]+dir.dy*this._splitN[1]+dir.dz*this._splitN[2]+(Math.random()-0.5)*0.12)>=0?0:1; }
       const sp=speed*(dir.spMul||1)*(1-jit+Math.random()*2*jit);
       // trailComps (B148, marguerite) : la traînée seulement pour certains GROUPES de couleur
       // (ex pétales OR avec bande d'étincelles, cœur/perles = points nets sans traînée)
