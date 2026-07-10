@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B240';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B241';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -709,7 +709,7 @@ const EFFECTS = {
   // 4 étoiles en cône serré, chacune traîne (les 4 traînées = la « queue de cheval ») puis
   // DANDINE comme un spermatozoïde jusqu'à l'extinction. Couleur au sort (10 réfs) ; traînée =
   // couleur de la volée (trailColorFromStar).
-  medusa:    { apex:42, cal:30, heat:false, pureColor:true, stars:17, starSize:0.8, speedMul:0.55,   // B236 (user) : étoiles ENCORE plus petites — tout tient dans 30 mm de diamètre
+  medusa:    { apex:42, cal:30, heat:false, pureColor:true, stars:17, starSize:0.8, speedMul:0.55, riseLean:2.5,   // B236 (user) : étoiles ENCORE plus petites — tout tient dans 30 mm. riseLean court (B241) : les tubes d'un compact sont précis, le motif de mèche doit se lire
                gravStar:0.55, dragStar:0.42, lifeBase75:6.0, lifeJitter:0.12, compLife:{0:0.55}, restExtra:3,   // B237 (user) : spermatozoïdes = MÊME taille que les autres (0.8, plus de compSize)
                randomAxis:true,   // B235 (user) : le sens de la queue de cheval est ALÉATOIRE (endroit/envers/côté)
                noFlash:true, burstSparks:false,   // B240 (user) : PAS de grosse explosion en l'air — ouverture discrète, « comme une queue de cheval » (idem cascade)
@@ -752,7 +752,8 @@ export const LABELS = { peony:'pivoine', chrysanthemum:'chrysanthème', willow:'
   fallingLeaves:'feuille morte', palm:'palme', heart:'cœur', butterfly:'papillon', smiley:'smiley',
   daisy:'marguerite', atom:'atome', halfHalf:'demi-demi', tracer:'traçante', zigzag:'zigzag', medusa:'méduse', horsetail:'queue de cheval',
   cascade:'cascade', fish:'poisson', spinner:'tourbillon', saucer:'soucoupe', mosaic:'mosaïque', mosaicMix:'mosaïque assortie',
-  mine:'pot à feu', salute:"salut (marron d'air)", saluteMulti:"multi marron d'air" };
+  mine:'pot à feu', salute:"salut (marron d'air)", saluteMulti:"multi marron d'air",
+  zMeduse:'compact 40 tirs z méduse' };
 
 // ============================================================================
 // SHELL
@@ -765,6 +766,9 @@ class Shell {
     if (opts && opts.color) this.cfg.color = opts.color;   // override couleur (ex "crackling aqua", "mosaïque rouge")
     // PAIRES du catalogue (demi-demi) : chaque TIR pioche sa paire de couleurs (cfg = copie -> safe)
     if (this.cfg.colorPairs) this.cfg.colors = this.cfg.colorPairs[Math.floor(Math.random()*this.cfg.colorPairs.length)];
+    // COMPACT (B241) : toutes les bombettes d'une séquence ont LA MÊME couleur (« z méduse citron »
+    // = 40 bombettes citron) -> la paire est imposée par la séquence, pas tirée par bombette.
+    if (opts && opts.pair) this.cfg.colors = opts.pair;
     // TRAÇANTE (B207) : la TRAÎNÉE prend la COULEUR de la volée (traçante rouge -> traînée rouge).
     // cfg.trailing est partagé avec le littéral EFFECTS -> CLONER avant d'écraser sa couleur.
     if (this.cfg.trailColorFromStar && this.cfg.trailing && this.cfg.colors)
@@ -1254,6 +1258,42 @@ class Shell {
   }
 }
 
+// ============================================================================
+// COMPACTS (B241) : batteries multi-tirs de bombettes 30 mm. Batterie physique = RANGÉES de
+// tubes en éventail ; c'est la MÈCHE qui fait le motif (règles user 2026-07-10) :
+// « éventaillé » = la mèche allume TOUTE une rangée ENSEMBLE (une salve = une rangée) ;
+// « z » = la mèche parcourt la rangée TUBE PAR TUBE (essuie-glace) — tirs rapprochés dans la
+// rangée, pause PLUS LONGUE entre les rangées, la rangée suivante repart dans l'AUTRE sens ;
+// « bande » = le compact entier est UNE seule rangée. Durée totale = duree_s du catalogue.
+export const COMPACTS = {
+  zMeduse: { arch:'medusa', tirs:40, dur:30, pattern:'z', rowSize:5, fanDeg:25,
+             label:'compact 40 tirs 30 mm z méduse (30 s)' },   // 500345000-500355000, couleur au sort par bombette
+};
+function buildCompactQueue(def){
+  const rows=Math.max(1, Math.round(def.tirs/def.rowSize)), q=[];
+  const half=(def.fanDeg||25)*Math.PI/180;
+  const ang=k=>-half+(2*half)*(def.rowSize>1?k/(def.rowSize-1):0.5);   // les angles d'une rangée, de gauche à droite
+  if (def.pattern==='fan'){
+    const step=def.dur/rows;                        // ex 8 salves sur 30 s -> une rangée toutes les 3,75 s
+    for (let r=0;r<rows;r++) for (let k=0;k<def.rowSize;k++)
+      q.push({ t:r*step+Math.random()*0.08, a:ang(k) });   // toute la rangée quasi ensemble
+  } else {                                          // 'z' : essuie-glace
+    const a=0.35;                                    // intervalle DANS la rangée (tirs rapprochés)
+    const b=rows>1 ? Math.max(0.5, (def.dur - rows*(def.rowSize-1)*a) / (rows-1)) : 0;   // pause entre rangées
+    let t=0;
+    for (let r=0;r<rows;r++){
+      for (let k=0;k<def.rowSize;k++){
+        const kk=(r%2===0)?k:(def.rowSize-1-k);      // rangée suivante dans l'AUTRE sens = le Z du trajet de mèche
+        q.push({ t, a:ang(kk) });
+        if (k<def.rowSize-1) t+=a;
+      }
+      t+=b;
+    }
+  }
+  q.sort((x,y)=>x.t-y.t);
+  return q;
+}
+
 // DÉMO FORMES (user B127) : sourire 75mm + cœur 100mm (le cœur n'existe qu'en 100 -> il éclate
 // PLUS HAUT, 116 m catalogue vs 95 m). Focus sur l'une des deux -> on tire les 2 EN MÊME TEMPS
 // depuis la même batterie, mortiers INCLINÉS (éventail) pour qu'elles n'éclatent pas au même endroit.
@@ -1287,6 +1327,7 @@ export class ThreeFireworks {
     this._pe=new Cesium.Cartesian3(); this._de=new Cesium.Cartesian3(); this._ue=new Cesium.Cartesian3();
     this.setOrigin(origin);
     this.shells=[]; this.restDelay=0; this.focus='peony'; this.current='peony'; this.focusColor=null; this.onBurst=null; this.onLaunch=null;
+    this.compact=null;   // séquence compact en cours : {def, queue, i, t, apexS} (B241)
     this.hud = document.getElementById('hud');
     addEventListener('resize', () => this._resize());
   }
@@ -1327,11 +1368,34 @@ export class ThreeFireworks {
       this.shells=SHAPES_DUO.map((a,i)=>new Shell(a,0,0,undefined,{lean:[(i*2-1)*DUO_LEAN,0]}));
       if (this.onLaunch) this.onLaunch(this.current);
       this._hud('sourire 75 + cœur 100 (éventail)');
+    } else if (COMPACTS[this.focus]){
+      // COMPACT (B241) : on démarre la SÉQUENCE — les tirs partent au fil de la mèche dans update().
+      const def=COMPACTS[this.focus];
+      this.current=def.arch;
+      this._clear(); this.shells=[];
+      const pairs=EFFECTS[def.arch]&&EFFECTS[def.arch].colorPairs;
+      this.compact={ def, queue:buildCompactQueue(def), i:0, t:0,
+        pair: pairs ? pairs[Math.floor(Math.random()*pairs.length)] : null,   // UNE couleur pour toute la séquence (elle change à chaque boucle)
+        apexS:((EFFECTS[def.arch]&&EFFECTS[def.arch].apex)||90)*APEX_SCALE };
+      this._hud(def.label);
     } else this.fire(this.focus, this.focusColor);
   }
-  setFocus(arch, color){ if (EFFECTS[arch]){ this.focus=arch; if (color!==undefined) this.focusColor=color; } }
+  setFocus(arch, color){ if (EFFECTS[arch] || COMPACTS[arch]){
+    if (this.compact && arch!==this.focus){ this.compact=null; this._clear(); this.shells=[]; this.restDelay=0; }   // B241 : changer d'effet COUPE la mèche en cours (sinon la séquence continuait jusqu'à 30 s)
+    this.focus=arch; if (color!==undefined) this.focusColor=color; } }
   update(dt){
-    if (!this.shells.length || this.shells.every(s=>s.dead)){ this.restDelay-=dt;
+    // SÉQUENCE COMPACT (B241) : la mèche avance, on tire chaque tube à son instant, incliné à
+    // son angle d'éventail (lean = tan(angle) × hauteur d'éclatement -> l'inclinaison se lit).
+    if (this.compact){
+      const c=this.compact; c.t+=dt;
+      while (c.i<c.queue.length && c.queue[c.i].t<=c.t){
+        const q=c.queue[c.i++];
+        this.shells.push(new Shell(c.def.arch,0,0,undefined,{lean:[Math.tan(q.a)*c.apexS,0], pair:c.pair||undefined}));
+        if (this.onLaunch) this.onLaunch(c.def.arch);
+      }
+      if (c.i>=c.queue.length) this.compact=null;   // mèche finie — le repos/refire reprend quand tout est mort
+    }
+    if (!this.compact && (!this.shells.length || this.shells.every(s=>s.dead))){ this.restDelay-=dt;
       if (this.restDelay<=0){ this.fireNext();
         // repos APRÈS la mort des étoiles : 0.8s par défaut + restExtra de l'effet tiré (ex cascade 4.5s :
         // ses PAILLETTES vivent ~7s après l'éclatement -> sans ça, le tir suivant noyait la fin de la traîne)
@@ -1346,4 +1410,4 @@ export class ThreeFireworks {
 
 // Exports internes pour le BANC D'APERÇU hors-Cesium (_preview.html) — rendu réel d'un effet
 // pour capture d'écran. N'affecte pas l'app (rien ne les importe en prod).
-export { scene as __scene, Shell as __Shell, updateTrails as __updateTrails, updatePuffs as __updatePuffs, __setMarronPop, trail as __trailPool };
+export { scene as __scene, Shell as __Shell, updateTrails as __updateTrails, updatePuffs as __updatePuffs, __setMarronPop, trail as __trailPool, buildCompactQueue as __buildCompactQueue };
