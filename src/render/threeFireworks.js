@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B244';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B245';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -352,7 +352,13 @@ function shapeDaisy(_r,cal,nc){ const nPet=11, pts=[];   // 11 pétales EXACTEME
   for(let k=0;k<nCoeur;k++){ const a=Math.random()*Math.PI*2, R=Math.sqrt(Math.random())*0.17;
     pts.push({x:offX+Math.cos(a)*R,y:offY+Math.sin(a)*R,comp:Math.min(1,nc-1)}); }   // cœur RESSERRÉ (B153 : ~25-30% du rayon, les pétales dominent)
   return pts; }
-// (shapeRing supprimé en B127 : plus aucune bombe « effet cercle » seule au catalogue — production 75mm arrêtée)
+// CERCLE (B245 — brique RESSUSCITÉE pour les COMPOSÉS : « centre cascade cercle », 150 mm
+// D8-D10 « cercle traçant/kamuro »… ; la bombe cercle SEULE reste arrêtée, cf B127. Décision
+// user 2026-07-10 : « oui il faut quand même l'effet cercle ».) Anneau de 24 étoiles, mêmes
+// règles que les formes 2D (défauts ±0.05, orientation aléatoire ~55 % bon sens, vitesse ∝ rayon).
+function shapeRing(){ const pts=[], n=24;
+  for (let k=0;k<n;k++){ const t=2*Math.PI*k/n; pts.push({x:Math.cos(t),y:Math.sin(t),comp:0}); }
+  return pts; }
 
 // ============================================================================
 // HOOKS onStar(d,A,dt) -> {intenMul?,whiteMix?} (visuel)  /  behave(d,A,dt,ctx) (physique)
@@ -674,6 +680,11 @@ const EFFECTS = {
                trailing:{emitUntil:0.95, period:0.0018, grain:2.8, gF:0.12, lifeMul:3.2, color:new THREE.Color(1.15,0.66,0.24), spark:true, jit:3, rateFloor:0.55, bright:0.6}, trailComps:[0],   // B153 (user) : bande = MATIÈRE DENSE aux bords NETS. B244 (photo user : « halos dégueu ») : bright 0.6 — la bande redevient de la MATIÈRE, la lumière ne bave plus en halo autour des pétales
                colorPairs:[[GOLD,new THREE.Color(1.45,0.20,0.26)],[GOLD,new THREE.Color(0.36,1.45,0.56)],[GOLD,new THREE.Color(0.90,0.49,1.45)]] },   // B244 : HDR du cœur 1.7 -> 1.45 (la boule blanche saturée au centre = le halo « dégueu » du centre) ; rouge/verte/violette au sort
 
+  // CERCLE (B245, brique) : au menu pour le RÉGLAGE — dans les produits réels il n'apparaît
+  // qu'en COMPOSÉ. Couleur au sort par tir.
+  ring:      { apex:95, heat:false, pureColor:true, stars:24, starSize:2.2, dist2D:shapeRing,
+               colorPairs:[[RED],[GRN],[BLU],[YEL],[PINK],[PURP]] },
+
   // === MOTIFS 3D multi-couleurs ===
   // ATOME (B191, « bombe 150 mm atome <couleur> », 12 réfs, 165 m — N'EXISTE QU'EN 150mm ; étapes
   // vidéo GTIeDTIQl-0 disséquées par l'user) : PIVOINE couleur (vie courte, ×0.6 — elle meurt à
@@ -751,7 +762,7 @@ const EFFECTS = {
 export const LABELS = { peony:'pivoine', chrysanthemum:'chrysanthème', willow:'saule (kamuro)', willowStrobe:'saule or pointes scintillant', willowTips:'saule or pointes', willowTips100:'saule or pointes 100 mm', comet:'comète',
   sphere:'sphère', crackling:'crackling', dragonEgg:'œuf de dragon', strobe:'scintillant', cli:'cli. blanc/rouge', dahliaCli:'dahlia centre cli. blanc', kamuroCli:'ext. kamuro centre cli. blanc', halfSwapCli:'moitié changeante centre cli.', finalCli:'final cli. blanc rose', palmMulti:'palme multicolore', palmStrobe:'palme or scintillant',
   fallingLeaves:'feuille morte', palm:'palme', heart:'cœur', butterfly:'papillon', smiley:'smiley',
-  daisy:'marguerite', atom:'atome', halfHalf:'demi-demi', tracer:'traçante', zigzag:'zigzag', medusa:'méduse', horsetail:'queue de cheval',
+  daisy:'marguerite', atom:'atome', halfHalf:'demi-demi', tracer:'traçante', zigzag:'zigzag', ring:'cercle (brique)', medusa:'méduse', horsetail:'queue de cheval',
   cascade:'cascade', fish:'poisson', spinner:'tourbillon', saucer:'soucoupe', mosaic:'mosaïque', mosaicMix:'mosaïque assortie',
   mine:'pot à feu', salute:"salut (marron d'air)", saluteMulti:"multi marron d'air",
   zMeduse:'compact 40 tirs z méduse' };

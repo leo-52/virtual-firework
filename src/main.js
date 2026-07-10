@@ -109,14 +109,14 @@ Object.assign(pick.style, { position:'fixed', top:'10px', right:'10px', zIndex:'
 for (const [k, label] of Object.entries(LABELS)){
   const o = document.createElement('option'); o.value = k; o.textContent = label; pick.appendChild(o);
 }
-pick.value = 'zMeduse';
+pick.value = 'ring';
 // changer d'effet dans le menu -> couleur PAR DÉFAUT de l'effet (null annule l'override de la démo)
 pick.addEventListener('change', e => layer.setFocus(e.target.value, null));
 document.body.appendChild(pick);
 
-// DÉMO (réglage en cours) : COMPACT 40 TIRS 30mm Z MÉDUSE (500345000-500355000, 30 s, B241) —
-// premier compact : mèche en Z (essuie-glace, 8 rangées de 5), bombettes méduse validées.
-layer.setFocus('zMeduse');
+// DÉMO (réglage en cours) : CERCLE (brique, B245) — anneau de 24 étoiles, orientation aléatoire,
+// couleur au sort ; servira aux composés (« centre cascade cercle », 150mm D8-D10).
+layer.setFocus('ring');
 
 // TIMELINE de lecture (barre en bas) + ESPACE = pause/play (fige les feux, caméra libre).
 const timeline = new Timeline(layer, LABELS);
