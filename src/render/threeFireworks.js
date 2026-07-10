@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B212';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B213';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -518,7 +518,7 @@ const EFFECTS = {
   // 75 mm (95 m), 100 mm (116 m), 125 mm (158 m), 150 mm « pivoine cli. » (200 m). Blanc OU
   // rouge au sort par tir. ⚠️ les « centre cli. blanc » (dahlia/moitié-moitié/kamuro) = effets
   // COMPOSÉS distincts, pas cet effet-ci.
-  cli: { apex:95, heat:false, pureColor:true, onStar:cliFn, lifeBase75:2.2, lifeJitter:0.12, gravStar:0.6,
+  cli: { apex:95, heat:false, pureColor:true, onStar:cliFn, lifeBase75:2.2, lifeJitter:0.12, gravStar:0.6, starSize:2.1,   // B213 (user) : étoiles un poil moins grosses (2.2 -> 2.1)
          colorPairs:[[WHITE],[RED]] },
   finalCli: { apex:95, heat:false, color:PINK, pureColor:true, onStar:finalCliFn, lifeBase75:2.3, gravStar:0.7 },  // FINAL CLI. BLANC ROSE 75mm (catalogue, 95m) : pivoine rose -> les étoiles finissent en CLIGNOTANT BLANC ; décliner via {color} (citron/rouge/verte/bleue/violette)
   fallingLeaves: { apex:95, stars:75, dist:distLeaves, heat:false, color:new THREE.Color(1.0,0.45,0.55),
