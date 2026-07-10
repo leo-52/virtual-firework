@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B220';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B221';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -563,10 +563,10 @@ const EFFECTS = {
   // (têtes-pointes 0.9, traînées cuivre collier de perles qui PENDENT) + PISTIL cli. blanc en
   // 2 demi-coquilles (le mécanisme du dahlia B215). Traînées sur l'enveloppe SEULE (trailComps).
   kamuroCli: { apex:122, cal:100, heat:false, pureColor:true, stars:104, starSize:0.9, speedMul:0.8,   // B219 (user) : centre = 40 PETITES étoiles (2 lobes de 20)
-             gravStar:0.15, dragStar:0.25, lifeBase75:2.7, lifeJitter:0.28, restExtra:4,   // B220 (user) : « le saule ne doit PAS retomber, ni le centre — la vitesse est bonne mais la physique est trop puissante » -> gravité 0.5 -> 0.15 (chute terminale ~3 m/s au lieu de ~10)
+             gravStar:0.25, dragStar:0.25, lifeBase75:2.7, lifeJitter:0.28, restExtra:4,   // B220 (user) : « la vitesse est bonne mais la physique est trop puissante » -> gravité 0.5 -> 0.15, recalée 0.25 (B221, user)
              dist:distKamuroCli, onStar:dahliaCliFn, compLife:{1:0.39}, compSize:{1:1.6}, trailComps:[0],   // B220 (user) : le centre dure 1,5 s
              colors:[DIMGOLD, WHITE],
-             trailing:{emitUntil:0.95, period:0.008, grain:1.4, gF:0.13, lifeMul:18, color:COPPER, spark:true, jit:0.22} },
+             trailing:{emitUntil:0.95, period:0.008, grain:1.4, gF:0.13, lifeMul:10, color:COPPER, spark:true, jit:0.22} },   // B221 (user : « les étincelles durent trop longtemps ») : 18 -> 10 (méd ~3,9 s -> ~2,2 s, nappe ~9 s -> ~5,5 s)
   finalCli: { apex:95, heat:false, color:PINK, pureColor:true, onStar:finalCliFn, lifeBase75:2.3, gravStar:0.7 },  // FINAL CLI. BLANC ROSE 75mm (catalogue, 95m) : pivoine rose -> les étoiles finissent en CLIGNOTANT BLANC ; décliner via {color} (citron/rouge/verte/bleue/violette)
   fallingLeaves: { apex:95, stars:75, dist:distLeaves, heat:false, color:new THREE.Color(1.0,0.45,0.55),
                    gravStar:0.75, gravJit:0.2, dragStar:0.5, lifeBase75:5.3, speedMul:0.5, sway:1.5, wind:1.8, noRise:true, starSize:2.1 },   // B125 (user) : durée -0,7s (5,3s) ; éclat compact, 75 étoiles, chute ~7 m/s ±20%, vent commun, jamais vers le haut
