@@ -109,14 +109,14 @@ Object.assign(pick.style, { position:'fixed', top:'10px', right:'10px', zIndex:'
 for (const [k, label] of Object.entries(LABELS)){
   const o = document.createElement('option'); o.value = k; o.textContent = label; pick.appendChild(o);
 }
-pick.value = 'cli';
+pick.value = 'dahliaCli';
 // changer d'effet dans le menu -> couleur PAR DÉFAUT de l'effet (null annule l'override de la démo)
 pick.addEventListener('change', e => layer.setFocus(e.target.value, null));
 document.body.appendChild(pick);
 
-// DÉMO (réglage en cours) : CLI. BLANC/ROUGE 75mm (575025000/575545000, 95 m, B212) —
-// pivoine dont chaque étoile CLIGNOTE dans sa couleur (blanc ou rouge au sort par tir).
-layer.setFocus('cli');
+// DÉMO (réglage en cours) : DAHLIA CENTRE CLI. BLANC 100mm (510488000-510497000, 122 m, B214) —
+// enveloppe dahlia (grosses étoiles, couleur au sort) + pistil blanc clignotant.
+layer.setFocus('dahliaCli');
 
 // TIMELINE de lecture (barre en bas) + ESPACE = pause/play (fige les feux, caméra libre).
 const timeline = new Timeline(layer, LABELS);
