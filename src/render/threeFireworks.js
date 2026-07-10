@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B214';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B215';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -287,14 +287,26 @@ function distAtom(i,n,rnd){
 // inégales (×0.6-1.4) -> ils s'échelonnent sur ~4-9 m, chacun bien distinct.
 function distMarron(i,n,rnd){ const dx=(rnd()-0.5)*0.7, dz=(rnd()-0.5)*0.7, dy=1, L=Math.hypot(dx,dy,dz)||1;
   return {dx:dx/L, dy:dy/L, dz:dz/L, spMul:0.55+(i/Math.max(1,n-1))*0.88+(rnd()-0.5)*0.10}; }   // vitesses ÉCHELONNÉES par index (0.55->1.43) : ~1,3-1,7 m d'écart radial mini entre voisins ; + les détonations à des INSTANTS différents = jamais deux pops confondus
-// DAHLIA CENTRE CLI. BLANC (B214) : comp 0 = ENVELOPPE dahlia (sphère Fibonacci régulière,
-// PEU d'étoiles GROSSES qui vont loin — déf UE « grosses étoiles, plus long ») ;
-// comp 1 = PISTIL compact (~35 % des étoiles, rayon ~30 %) qui CLIGNOTE blanc (cliFn).
-const DAHLIA_ENV=30;
+// DAHLIA CENTRE CLI. BLANC (B215, photo + croquis user) : comp 0 = 28 BRINS dahlia (sphère
+// Fibonacci, grosses têtes + traînée fine de la couleur) ; comp 1 = PISTIL cli. blanc chargé
+// en **2 DEMI-COQUILLES opposées** (croquis : deux « D » face à face) -> deux LOBES le long
+// d'un axe aléatoire par tir, BANDE VIDE à l'équateur (« sur certains côtés il n'y a pas
+// d'étoiles clignotantes »).
+const DAHLIA_ENV=28;   // B215 (user) : 28 brins
+let _dahliaW=null;
 function distDahliaCli(i,n,rnd){
+  if (i===0) _dahliaW=vrand(rnd);
   if (i<DAHLIA_ENV){ const d=distFibonacci(i,DAHLIA_ENV,rnd);
     return {dx:d.dx,dy:d.dy,dz:d.dz,spMul:1.0,comp:0}; }
-  const v=vrand(rnd); return {dx:v[0],dy:v[1],dz:v[2],spMul:0.28+rnd()*0.12,comp:1};
+  const W=_dahliaW, side=(i%2)?1:-1;
+  const c=(0.32+rnd()*0.68)*side;                 // gap |cos|<0.32 (~±19°) à l'équateur
+  const a=rnd()*Math.PI*2, s=Math.sqrt(Math.max(0,1-c*c));
+  let u=cross(W,[0,1,0]); if(len2(u)<0.01)u=cross(W,[1,0,0]); u=norm(u);
+  const v2=norm(cross(W,u));
+  return {dx:W[0]*c+(u[0]*Math.cos(a)+v2[0]*Math.sin(a))*s,
+          dy:W[1]*c+(u[1]*Math.cos(a)+v2[1]*Math.sin(a))*s,
+          dz:W[2]*c+(u[2]*Math.cos(a)+v2[2]*Math.sin(a))*s,
+          spMul:0.28+rnd()*0.12, comp:1};
 }
 
 function distSpinner(i,n,rnd){ const a0=Math.random()*Math.PI*2, rH=rnd(11,16), vUp=rnd(2.5,4.2);
@@ -536,9 +548,11 @@ const EFFECTS = {
   // ENVELOPPE dahlia = PEU d'étoiles GROSSES qui vont LOIN et brûlent longtemps (déf UE « grosses
   // étoiles, plus long » + vidéos) ; PISTIL = cœur compact BLANC CLIGNOTANT (le cli. validé B212).
   // Le dahlia PUR 75 mm existe aussi (575578000+, vidéos K7jCppP90hY…) — variante à décliner.
-  dahliaCli: { apex:122, cal:100, heat:false, pureColor:true, stars:48, starSize:3.2, speedMul:1.7, speedJit:0.06,
+  dahliaCli: { apex:122, cal:100, heat:false, pureColor:true, stars:64, starSize:3.2, speedMul:1.7, speedJit:0.06,   // B215 : 28 brins + 36 étoiles de pistil (2 lobes de 18)
              gravStar:0.55, dragStar:0.5, lifeBase75:2.4, lifeJitter:0.12, shrink:1.0, shrinkPow:2.2,
              dist:distDahliaCli, onStar:dahliaCliFn, compLife:{1:0.8}, compSize:{1:1.9},
+             trailComps:[0], trailColorFromStar:true,   // B215 (photo user) : les brins ont une TRAÎNÉE FINE de la COULEUR de l'enveloppe (lignes du centre aux têtes)
+             trailing:{emitUntil:0.95, period:0.010, grain:0.9, gF:0.13, lifeMul:2.8, spark:true, jit:0.16, bright:0.85},
              colorPairs:[[WHITE,WHITE],[YEL,WHITE],[RED,WHITE],[PURP,WHITE],[BLU,WHITE],[PINK,WHITE],[GRN,WHITE],
                          [new THREE.Color(1.0,0.45,0.08),WHITE],[CYAN,WHITE]] },   // [couleur enveloppe, pistil BLANC] au sort — blanc/citron/rouge/violette/bleu/rose/vert/orange/aqua
   finalCli: { apex:95, heat:false, color:PINK, pureColor:true, onStar:finalCliFn, lifeBase75:2.3, gravStar:0.7 },  // FINAL CLI. BLANC ROSE 75mm (catalogue, 95m) : pivoine rose -> les étoiles finissent en CLIGNOTANT BLANC ; décliner via {color} (citron/rouge/verte/bleue/violette)
