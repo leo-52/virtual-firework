@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B219';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B220';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -563,8 +563,8 @@ const EFFECTS = {
   // (têtes-pointes 0.9, traînées cuivre collier de perles qui PENDENT) + PISTIL cli. blanc en
   // 2 demi-coquilles (le mécanisme du dahlia B215). Traînées sur l'enveloppe SEULE (trailComps).
   kamuroCli: { apex:122, cal:100, heat:false, pureColor:true, stars:104, starSize:0.9, speedMul:0.8,   // B219 (user) : centre = 40 PETITES étoiles (2 lobes de 20)
-             gravStar:0.5, dragStar:0.25, lifeBase75:2.7, lifeJitter:0.28, restExtra:4,
-             dist:distKamuroCli, onStar:dahliaCliFn, compLife:{1:0.7}, compSize:{1:1.6}, trailComps:[0],
+             gravStar:0.15, dragStar:0.25, lifeBase75:2.7, lifeJitter:0.28, restExtra:4,   // B220 (user) : « le saule ne doit PAS retomber, ni le centre — la vitesse est bonne mais la physique est trop puissante » -> gravité 0.5 -> 0.15 (chute terminale ~3 m/s au lieu de ~10)
+             dist:distKamuroCli, onStar:dahliaCliFn, compLife:{1:0.39}, compSize:{1:1.6}, trailComps:[0],   // B220 (user) : le centre dure 1,5 s
              colors:[DIMGOLD, WHITE],
              trailing:{emitUntil:0.95, period:0.008, grain:1.4, gF:0.13, lifeMul:18, color:COPPER, spark:true, jit:0.22} },
   finalCli: { apex:95, heat:false, color:PINK, pureColor:true, onStar:finalCliFn, lifeBase75:2.3, gravStar:0.7 },  // FINAL CLI. BLANC ROSE 75mm (catalogue, 95m) : pivoine rose -> les étoiles finissent en CLIGNOTANT BLANC ; décliner via {color} (citron/rouge/verte/bleue/violette)
