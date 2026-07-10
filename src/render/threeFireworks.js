@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B217';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B218';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -287,27 +287,30 @@ function distAtom(i,n,rnd){
 // inégales (×0.6-1.4) -> ils s'échelonnent sur ~4-9 m, chacun bien distinct.
 function distMarron(i,n,rnd){ const dx=(rnd()-0.5)*0.7, dz=(rnd()-0.5)*0.7, dy=1, L=Math.hypot(dx,dy,dz)||1;
   return {dx:dx/L, dy:dy/L, dz:dz/L, spMul:0.55+(i/Math.max(1,n-1))*0.88+(rnd()-0.5)*0.10}; }   // vitesses ÉCHELONNÉES par index (0.55->1.43) : ~1,3-1,7 m d'écart radial mini entre voisins ; + les détonations à des INSTANTS différents = jamais deux pops confondus
-// DAHLIA CENTRE CLI. BLANC (B215, photo + croquis user) : comp 0 = 28 BRINS dahlia (sphère
-// Fibonacci, grosses têtes + traînée fine de la couleur) ; comp 1 = PISTIL cli. blanc chargé
-// en **2 DEMI-COQUILLES opposées** (croquis : deux « D » face à face) -> deux LOBES le long
-// d'un axe aléatoire par tir, BANDE VIDE à l'équateur (« sur certains côtés il n'y a pas
-// d'étoiles clignotantes »).
-const DAHLIA_ENV=28;   // B215 (user) : 28 brins
-let _dahliaW=null;
-function distDahliaCli(i,n,rnd){
-  if (i===0) _dahliaW=vrand(rnd);
-  if (i<DAHLIA_ENV){ const d=distFibonacci(i,DAHLIA_ENV,rnd);
-    return {dx:d.dx,dy:d.dy,dz:d.dz,spMul:1.0,comp:0}; }
-  const W=_dahliaW, side=(i%2)?1:-1;
-  const c=(0.32+rnd()*0.68)*side;                 // gap |cos|<0.32 (~±19°) à l'équateur
-  const a=rnd()*Math.PI*2, s=Math.sqrt(Math.max(0,1-c*c));
-  let u=cross(W,[0,1,0]); if(len2(u)<0.01)u=cross(W,[1,0,0]); u=norm(u);
-  const v2=norm(cross(W,u));
-  return {dx:W[0]*c+(u[0]*Math.cos(a)+v2[0]*Math.sin(a))*s,
-          dy:W[1]*c+(u[1]*Math.cos(a)+v2[1]*Math.sin(a))*s,
-          dz:W[2]*c+(u[2]*Math.cos(a)+v2[2]*Math.sin(a))*s,
-          spMul:0.28+rnd()*0.12, comp:1};
+// ENVELOPPE + CENTRE CLI. (B215 dahlia, généralisé B218 pour le kamuro centre) :
+// comp 0 = ENVELOPPE (sphère Fibonacci, nEnv étoiles) ; comp 1 = PISTIL cli. blanc chargé en
+// **2 DEMI-COQUILLES opposées** (photo + croquis user : deux « D » face à face) -> deux LOBES
+// le long d'un axe aléatoire par tir, BANDE VIDE à l'équateur (« sur certains côtés il n'y a
+// pas d'étoiles clignotantes »).
+function makeDistEnvCli(nEnv){
+  let W=null;
+  return function(i,n,rnd){
+    if (i===0) W=vrand(rnd);
+    if (i<nEnv){ const d=distFibonacci(i,nEnv,rnd);
+      return {dx:d.dx,dy:d.dy,dz:d.dz,spMul:1.0,comp:0}; }
+    const side=(i%2)?1:-1;
+    const c=(0.32+rnd()*0.68)*side;                 // gap |cos|<0.32 (~±19°) à l'équateur
+    const a=rnd()*Math.PI*2, s=Math.sqrt(Math.max(0,1-c*c));
+    let u=cross(W,[0,1,0]); if(len2(u)<0.01)u=cross(W,[1,0,0]); u=norm(u);
+    const v2=norm(cross(W,u));
+    return {dx:W[0]*c+(u[0]*Math.cos(a)+v2[0]*Math.sin(a))*s,
+            dy:W[1]*c+(u[1]*Math.cos(a)+v2[1]*Math.sin(a))*s,
+            dz:W[2]*c+(u[2]*Math.cos(a)+v2[2]*Math.sin(a))*s,
+            spMul:0.28+rnd()*0.12, comp:1};
+  };
 }
+const distDahliaCli=makeDistEnvCli(28);   // B215 (user) : 28 brins de dahlia
+const distKamuroCli=makeDistEnvCli(64);   // B218 : extérieur kamuro (saule) + centre cli.
 
 function distSpinner(i,n,rnd){ const a0=Math.random()*Math.PI*2, rH=rnd(11,16), vUp=rnd(2.5,4.2);
   const dx=Math.cos(a0)*rH, dy=vUp, dz=Math.sin(a0)*rH, L=Math.hypot(dx,dy,dz)||1;
@@ -555,6 +558,15 @@ const EFFECTS = {
              // « mais t'en occupe pas » — on ne la simule pas.
              colorPairs:[[WHITE,WHITE],[YEL,WHITE],[RED,WHITE],[PURP,WHITE],[BLU,WHITE],[PINK,WHITE],[GRN,WHITE],
                          [new THREE.Color(1.0,0.45,0.08),WHITE],[CYAN,WHITE]] },   // [couleur enveloppe, pistil BLANC] au sort — blanc/citron/rouge/violette/bleu/rose/vert/orange/aqua
+  // EXT. KAMURO CENTRE CLI. BLANC (B218) : « bombe 100 mm extérieur kamuro centre cli. blanc »
+  // (510510000, 122 m ; existe en 125 mm 512062000, 157 m). ENVELOPPE = le saule kamuro VALIDÉ
+  // (têtes-pointes 0.9, traînées cuivre collier de perles qui PENDENT) + PISTIL cli. blanc en
+  // 2 demi-coquilles (le mécanisme du dahlia B215). Traînées sur l'enveloppe SEULE (trailComps).
+  kamuroCli: { apex:122, cal:100, heat:false, pureColor:true, stars:100, starSize:0.9, speedMul:0.8,
+             gravStar:0.5, dragStar:0.25, lifeBase75:2.7, lifeJitter:0.28, restExtra:4,
+             dist:distKamuroCli, onStar:dahliaCliFn, compLife:{1:0.7}, compSize:{1:1.9}, trailComps:[0],
+             colors:[DIMGOLD, WHITE],
+             trailing:{emitUntil:0.95, period:0.008, grain:1.4, gF:0.13, lifeMul:18, color:COPPER, spark:true, jit:0.22} },
   finalCli: { apex:95, heat:false, color:PINK, pureColor:true, onStar:finalCliFn, lifeBase75:2.3, gravStar:0.7 },  // FINAL CLI. BLANC ROSE 75mm (catalogue, 95m) : pivoine rose -> les étoiles finissent en CLIGNOTANT BLANC ; décliner via {color} (citron/rouge/verte/bleue/violette)
   fallingLeaves: { apex:95, stars:75, dist:distLeaves, heat:false, color:new THREE.Color(1.0,0.45,0.55),
                    gravStar:0.75, gravJit:0.2, dragStar:0.5, lifeBase75:5.3, speedMul:0.5, sway:1.5, wind:1.8, noRise:true, starSize:2.1 },   // B125 (user) : durée -0,7s (5,3s) ; éclat compact, 75 étoiles, chute ~7 m/s ±20%, vent commun, jamais vers le haut
@@ -638,7 +650,7 @@ const EFFECTS = {
 };
 
 export const LABELS = { peony:'pivoine', chrysanthemum:'chrysanthème', willow:'saule (kamuro)', willowStrobe:'saule or pointes scintillant', willowTips:'saule or pointes', willowTips100:'saule or pointes 100 mm', comet:'comète',
-  sphere:'sphère', crackling:'crackling', dragonEgg:'œuf de dragon', strobe:'scintillant', cli:'cli. blanc/rouge', dahliaCli:'dahlia centre cli. blanc', finalCli:'final cli. blanc rose', palmMulti:'palme multicolore', palmStrobe:'palme or scintillant',
+  sphere:'sphère', crackling:'crackling', dragonEgg:'œuf de dragon', strobe:'scintillant', cli:'cli. blanc/rouge', dahliaCli:'dahlia centre cli. blanc', kamuroCli:'ext. kamuro centre cli. blanc', finalCli:'final cli. blanc rose', palmMulti:'palme multicolore', palmStrobe:'palme or scintillant',
   fallingLeaves:'feuille morte', palm:'palme', heart:'cœur', butterfly:'papillon', smiley:'smiley',
   daisy:'marguerite', atom:'atome', halfHalf:'demi-demi', tracer:'traçante', medusa:'méduse', horsetail:'queue de cheval',
   cascade:'cascade', fish:'poisson', spinner:'tourbillon', saucer:'soucoupe', mosaic:'mosaïque', mosaicMix:'mosaïque assortie',
