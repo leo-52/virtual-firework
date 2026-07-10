@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B224';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B225';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -401,11 +401,13 @@ function dahliaCliFn(d,A,dt){ return d.comp===1 ? cliFn(d,A) : null; }
 // MOITIÉ CHANGEANTE CENTRE CLI. (B223, réf 512064000 « moitié vert à violet moitié violet à
 // vert centre cli. blanc ») : pistil = comp 2 (comps 0/1 = les moitiés de la coupe).
 function cli2Fn(d,A,dt){ return d.comp===2 ? cliFn(d,A) : null; }
-// CHANGEMENT DE COULEUR CROISÉ : à ~mi-vie (étalé ±14 %), chaque moitié BASCULE vers la couleur
-// de l'autre (vert -> violet, violet -> vert). Le pistil (comp 2) ne change pas.
+// CHANGEMENT DE COULEUR CROISÉ : à ~mi-vie, chaque moitié BASCULE vers la couleur de l'autre
+// (vert -> violet, violet -> vert). Le pistil (comp 2) ne change pas. ⚠️ B225 (user : « ça rend
+// pas bien ») : la bascule doit être quasi SYNCHRONE (couche de poudre d'épaisseur régulière) —
+// mon étalement ±14 % donnait ~0,8 s de mélange vert/violet illisible dans chaque moitié.
 function behaveColorSwap(d,A,dt,ctx){
   if (d.comp===2) return;
-  if (d._sw===undefined) d._sw=0.45+Math.random()*0.14;
+  if (d._sw===undefined) d._sw=0.48+Math.random()*0.05;
   if (!d._swapped && A>=d._sw){ d._swapped=true; d.coreColor=ctx.cfg.colors[(d.comp+1)%2]; }
 }
 function crackleFn(d,A,dt){ d.popOn=(d.popOn||0)-dt;
@@ -578,7 +580,7 @@ const EFFECTS = {
   // bleu, rouge/bleu, citron/rose, orange/vert à décliner). Demi-demi splitFacing (la coupe se
   // lit dans le ciel) dont chaque moitié BASCULE vers la couleur de l'autre à ~mi-vie (croisé),
   // + pistil cli. blanc 40 petites étoiles en 2 demi-coquilles (comp 2, hors coupe).
-  halfSwapCli: { apex:157, cal:125, heat:false, pureColor:true, stars:120, splitFacing:true, gravStar:0.6,
+  halfSwapCli: { apex:157, cal:125, heat:false, pureColor:true, stars:120, splitFacing:true, gravStar:0.6, lifeJitter:0.06,   // B225 : vies resserrées (±6 %) pour une bascule de couleur SYNCHRONE et lisible
              dist:distHalfSwapCli, onStar:cli2Fn, behave:behaveColorSwap, compLife:{2:1.21}, compSize:{2:1.6},   // B224 (user) : le cli. blanc dure PLUS LONGTEMPS que le reste (~3-4 s, il survit aux moitiés)
              colors:[GRN, PURP, WHITE] },   // [moitié A, moitié B, pistil] — vert/violet (512064000)
   kamuroCli: { apex:122, cal:100, heat:false, pureColor:true, stars:104, starSize:0.9, speedMul:0.8,   // B219 (user) : centre = 40 PETITES étoiles (2 lobes de 20)
