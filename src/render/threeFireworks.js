@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B215';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B216';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -551,8 +551,8 @@ const EFFECTS = {
   dahliaCli: { apex:122, cal:100, heat:false, pureColor:true, stars:64, starSize:3.2, speedMul:1.7, speedJit:0.06,   // B215 : 28 brins + 36 étoiles de pistil (2 lobes de 18)
              gravStar:0.55, dragStar:0.5, lifeBase75:2.4, lifeJitter:0.12, shrink:1.0, shrinkPow:2.2,
              dist:distDahliaCli, onStar:dahliaCliFn, compLife:{1:0.8}, compSize:{1:1.9},
-             trailComps:[0], trailColorFromStar:true,   // B215 (photo user) : les brins ont une TRAÎNÉE FINE de la COULEUR de l'enveloppe (lignes du centre aux têtes)
-             trailing:{emitUntil:0.95, period:0.010, grain:0.9, gF:0.13, lifeMul:2.8, spark:true, jit:0.16, bright:0.85},
+             // B216 (user) : PAS de traînée émise — les « lignes » de la photo = la GOUTTE du flou
+             // de mouvement (rond + queue en cône du shader), que toute étoile a déjà en vol.
              colorPairs:[[WHITE,WHITE],[YEL,WHITE],[RED,WHITE],[PURP,WHITE],[BLU,WHITE],[PINK,WHITE],[GRN,WHITE],
                          [new THREE.Color(1.0,0.45,0.08),WHITE],[CYAN,WHITE]] },   // [couleur enveloppe, pistil BLANC] au sort — blanc/citron/rouge/violette/bleu/rose/vert/orange/aqua
   finalCli: { apex:95, heat:false, color:PINK, pureColor:true, onStar:finalCliFn, lifeBase75:2.3, gravStar:0.7 },  // FINAL CLI. BLANC ROSE 75mm (catalogue, 95m) : pivoine rose -> les étoiles finissent en CLIGNOTANT BLANC ; décliner via {color} (citron/rouge/verte/bleue/violette)
