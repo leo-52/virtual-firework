@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B241';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B242';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -1269,28 +1269,35 @@ export const COMPACTS = {
   zMeduse: { arch:'medusa', tirs:40, dur:30, pattern:'z', rowSize:5, fanDeg:25,
              label:'compact 40 tirs 30 mm z méduse (30 s)' },   // 500345000-500355000, couleur au sort par bombette
 };
+// B242 (user : « il faut quelques défauts — ça reste de la POUDRE ») : chaque intervalle de
+// mèche brûle un peu inégalement (±6 % entre tubes, ±10 % entre rangées), les tubes ont ±1°
+// d'imperfection, et la durée TOTALE varie de 29 à 31 s (normalisation ±1 s sur 30).
 function buildCompactQueue(def){
   const rows=Math.max(1, Math.round(def.tirs/def.rowSize)), q=[];
-  const half=(def.fanDeg||25)*Math.PI/180;
-  const ang=k=>-half+(2*half)*(def.rowSize>1?k/(def.rowSize-1):0.5);   // les angles d'une rangée, de gauche à droite
+  const half=(def.fanDeg||25)*Math.PI/180, jA=0.0175;   // ±1° par tube
+  const ang=k=>-half+(2*half)*(def.rowSize>1?k/(def.rowSize-1):0.5)+(Math.random()-0.5)*2*jA;
   if (def.pattern==='fan'){
     const step=def.dur/rows;                        // ex 8 salves sur 30 s -> une rangée toutes les 3,75 s
-    for (let r=0;r<rows;r++) for (let k=0;k<def.rowSize;k++)
-      q.push({ t:r*step+Math.random()*0.08, a:ang(k) });   // toute la rangée quasi ensemble
+    for (let r=0;r<rows;r++){ const tr=r*step*(1+(Math.random()-0.5)*0.05);
+      for (let k=0;k<def.rowSize;k++)
+        q.push({ t:tr+Math.random()*0.10, a:ang(k) }); }   // toute la rangée quasi ensemble (poudre : pas exactement)
   } else {                                          // 'z' : essuie-glace
-    const a=0.35;                                    // intervalle DANS la rangée (tirs rapprochés)
-    const b=rows>1 ? Math.max(0.5, (def.dur - rows*(def.rowSize-1)*a) / (rows-1)) : 0;   // pause entre rangées
+    const a0=0.35;                                   // intervalle nominal DANS la rangée (tirs rapprochés)
+    const b0=rows>1 ? Math.max(0.5, (def.dur - rows*(def.rowSize-1)*a0) / (rows-1)) : 0;   // pause nominale entre rangées
     let t=0;
     for (let r=0;r<rows;r++){
       for (let k=0;k<def.rowSize;k++){
         const kk=(r%2===0)?k:(def.rowSize-1-k);      // rangée suivante dans l'AUTRE sens = le Z du trajet de mèche
         q.push({ t, a:ang(kk) });
-        if (k<def.rowSize-1) t+=a;
+        if (k<def.rowSize-1) t+=a0*(0.94+Math.random()*0.12);   // très très légèrement inégal entre tubes
       }
-      t+=b;
+      t+=b0*(0.90+Math.random()*0.20);               // pauses de rangées un peu variables
     }
   }
   q.sort((x,y)=>x.t-y.t);
+  // durée TOTALE 29-31 (pour dur=30) : on renormalise le tout sur une cible tirée à ±dur/30
+  const last=q[q.length-1].t||1, target=def.dur+(Math.random()*2-1)*(def.dur/30);
+  const sc=target/last; for (const e of q) e.t*=sc;
   return q;
 }
 
