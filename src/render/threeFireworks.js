@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B229';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B230';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -605,7 +605,7 @@ const EFFECTS = {
   // 130 m ; 125 mm rouge 512043000, 158 m). 53 étoiles genre pivoine qui vont DROIT puis
   // bifurquent chacune à 2,0-2,5 s vers une direction aléatoire ; BOMBE À TRONC : la montée
   // laisse une trace kamuro (flag trunk). Rouge ou argent au sort.
-  zigzag: { apex:130, cal:100, heat:false, pureColor:true, stars:53, starSize:2.1, speedMul:0.95,
+  zigzag: { apex:130, cal:100, heat:false, pureColor:true, stars:45, starsByCal:{100:45, 125:53}, starSize:2.1, speedMul:0.95,   // B230 (user) : 53 étoiles = le 125 mm ; le 100 mm en a un peu moins (45)
             gravStar:0.45, dragStar:0.30, lifeBase75:2.43, lifeJitter:0.10, trunk:true, behave:behaveZigzag,
             colorPairs:[[RED],[SILVER]] },
   kamuroCli: { apex:122, cal:100, heat:false, pureColor:true, stars:104, starSize:0.9, speedMul:0.8,   // B219 (user) : centre = 40 PETITES étoiles (2 lobes de 20)
@@ -718,6 +718,9 @@ class Shell {
     if (this.cfg.trailColorFromStar && this.cfg.trailing && this.cfg.colors)
       this.cfg.trailing = Object.assign({}, this.cfg.trailing, { color: this.cfg.colors[0], fixedColor:true });
     this.cal = cal || this.cfg.cal || 75;   // cfg.cal = calibre PAR DÉFAUT de l'effet (ex cœur : n'existe qu'en 100mm)
+    // starsByCal (B230, zigzag — user : « 53 étoiles c'est le 125, le 100 en a un peu moins ») :
+    // nombre d'étoiles PAR CALIBRE quand le catalogue le précise.
+    if (this.cfg.starsByCal && this.cfg.starsByCal[this.cal]) this.cfg.stars = this.cfg.starsByCal[this.cal];
     this.ox = ox||0; this.oz = oz||0;
     this.bx = this.ox + (Math.random()-0.5)*this.cfg.riseLean;
     this.bz = this.oz + (Math.random()-0.5)*this.cfg.riseLean;
