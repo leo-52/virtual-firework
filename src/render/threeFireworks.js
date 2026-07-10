@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B211';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B212';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -366,6 +366,11 @@ function finalCliFn(d,A){
   const ph=(d.age*d.strobeF*3+d.phase)%1;                      // 2) DÈS l'extinction de la couleur : l'INTÉRIEUR clignote BLANC ~6-13 Hz (pas de pause — le "trou noir" = les creux du clignotement)
   return { intenMul: ph<0.25?1.7:0.12, whiteMix:1 };           // flash blanc vif / quasi éteint entre les flashs
 }
+// CLI. <blanc|rouge> (B212, user) : clignotant FRANC dès le break et jusqu'à l'extinction —
+// flash vif / quasi éteint ~6-13 Hz, rythme propre par étoile (le MÊME clignotant que la fin
+// du final cli., mais dans la COULEUR de l'étoile et pendant TOUTE la vie).
+function cliFn(d,A){ const ph=(d.age*d.strobeF*3+d.phase)%1;
+  return { intenMul: ph<0.25?1.7:0.12 }; }
 function crackleFn(d,A,dt){ d.popOn=(d.popOn||0)-dt;
   if (d.popOn<=0 && Math.random()<7*dt) d.popOn=0.045;
   if (d.popOn>0) return {intenMul:2.3,whiteMix:0.9}; return null; }
@@ -508,6 +513,13 @@ const EFFECTS = {
     core:{ stars:30, radiusMul:0.30, color:GOLD, minCal:75, crackleAt:0.5, jitter:0.15 },             //  2) T≈0,5s : le CŒUR crépite (explose en boules) PENDANT que les étoiles se dispersent. 84+30 amas -> REMPLIT la sphère. PAS en 50mm
     crackleStars:{ delay:1.3, jitter:0.6, snaps:5 } },                                                //  3) chaque ÉTOILE explose entre 1,3 s et 1,9 s (jitter 0,6 = très étalé/aléatoire) en BOULE qui S'ÉTEINT sur place
   strobe: { apex:112, heat:false, color:SILVER, onStar:strobeFn, lifeBase75:2.4, gravStar:0.55 },
+  // CLI. <blanc|rouge> (B212, user : « pivoine dont chaque étoile clignote dans sa couleur, de
+  // l'éclatement à l'extinction ») : « bombe à effet cli. blanc/rouge » — 50 mm (74-85 m),
+  // 75 mm (95 m), 100 mm (116 m), 125 mm (158 m), 150 mm « pivoine cli. » (200 m). Blanc OU
+  // rouge au sort par tir. ⚠️ les « centre cli. blanc » (dahlia/moitié-moitié/kamuro) = effets
+  // COMPOSÉS distincts, pas cet effet-ci.
+  cli: { apex:95, heat:false, pureColor:true, onStar:cliFn, lifeBase75:2.2, lifeJitter:0.12, gravStar:0.6,
+         colorPairs:[[WHITE],[RED]] },
   finalCli: { apex:95, heat:false, color:PINK, pureColor:true, onStar:finalCliFn, lifeBase75:2.3, gravStar:0.7 },  // FINAL CLI. BLANC ROSE 75mm (catalogue, 95m) : pivoine rose -> les étoiles finissent en CLIGNOTANT BLANC ; décliner via {color} (citron/rouge/verte/bleue/violette)
   fallingLeaves: { apex:95, stars:75, dist:distLeaves, heat:false, color:new THREE.Color(1.0,0.45,0.55),
                    gravStar:0.75, gravJit:0.2, dragStar:0.5, lifeBase75:5.3, speedMul:0.5, sway:1.5, wind:1.8, noRise:true, starSize:2.1 },   // B125 (user) : durée -0,7s (5,3s) ; éclat compact, 75 étoiles, chute ~7 m/s ±20%, vent commun, jamais vers le haut
@@ -591,7 +603,7 @@ const EFFECTS = {
 };
 
 export const LABELS = { peony:'pivoine', chrysanthemum:'chrysanthème', willow:'saule (kamuro)', willowStrobe:'saule or pointes scintillant', willowTips:'saule or pointes', willowTips100:'saule or pointes 100 mm', comet:'comète',
-  sphere:'sphère', crackling:'crackling', dragonEgg:'œuf de dragon', strobe:'scintillant', finalCli:'final cli. blanc rose', palmMulti:'palme multicolore', palmStrobe:'palme or scintillant',
+  sphere:'sphère', crackling:'crackling', dragonEgg:'œuf de dragon', strobe:'scintillant', cli:'cli. blanc/rouge', finalCli:'final cli. blanc rose', palmMulti:'palme multicolore', palmStrobe:'palme or scintillant',
   fallingLeaves:'feuille morte', palm:'palme', heart:'cœur', butterfly:'papillon', smiley:'smiley',
   daisy:'marguerite', atom:'atome', halfHalf:'demi-demi', tracer:'traçante', medusa:'méduse', horsetail:'queue de cheval',
   cascade:'cascade', fish:'poisson', spinner:'tourbillon', saucer:'soucoupe', mosaic:'mosaïque', mosaicMix:'mosaïque assortie',

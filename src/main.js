@@ -109,14 +109,14 @@ Object.assign(pick.style, { position:'fixed', top:'10px', right:'10px', zIndex:'
 for (const [k, label] of Object.entries(LABELS)){
   const o = document.createElement('option'); o.value = k; o.textContent = label; pick.appendChild(o);
 }
-pick.value = 'tracer';
+pick.value = 'cli';
 // changer d'effet dans le menu -> couleur PAR DÉFAUT de l'effet (null annule l'override de la démo)
 pick.addEventListener('change', e => layer.setFocus(e.target.value, null));
 document.body.appendChild(pick);
 
-// DÉMO (réglage en cours) : TRAÇANTE 75mm (575128000-575138000, 100 m, B207) —
-// pivoine dont chaque étoile est une étoile TRAÇANTE (forte traînée de sa couleur), couleur au sort.
-layer.setFocus('tracer');
+// DÉMO (réglage en cours) : CLI. BLANC/ROUGE 75mm (575025000/575545000, 95 m, B212) —
+// pivoine dont chaque étoile CLIGNOTE dans sa couleur (blanc ou rouge au sort par tir).
+layer.setFocus('cli');
 
 // TIMELINE de lecture (barre en bas) + ESPACE = pause/play (fige les feux, caméra libre).
 const timeline = new Timeline(layer, LABELS);
