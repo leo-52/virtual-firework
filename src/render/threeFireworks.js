@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B233';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B234';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -246,15 +246,13 @@ function distPalm(i,n,rnd){
   const ce=Math.cos(elev), se=Math.sin(elev);
   return {dx:Math.cos(az)*ce, dy:se, dz:Math.sin(az)*ce, spMul:0.85+rnd()*0.5}; }   // frondes longues, longueurs variées
 function distLeaves(i,n,rnd){ const v=vrand(rnd); return {dx:v[0],dy:v[1],dz:v[2],spMul:0.45+rnd()*0.45}; }
-// MÉDUSE (B233, réécrite — l'ancienne « boule poussée vers le haut » venait du port UE, jamais
-// validée. Définition user : « une sorte de QUEUE DE CHEVAL, et à la fin, 4 SPERMATOZOÏDES qui
-// dandinent »). N'existe QU'EN COMPACT (« compact 40 tirs 30 mm z méduse <c> », 10 réfs).
-// comp 0 = colonne serrée vers le haut (la cloche, retombe) ; comp 1 = les 4 tentacules.
+// MÉDUSE (B234, correction user : « 1 méduse = 1 ÉTOILE qui dandine comme un spermatozoïde —
+// en tout il y a 4 MÉDUSES par tir »). N'existe QU'EN COMPACT (« compact 40 tirs 30 mm z
+// méduse <c> », 10 réfs). La bombette lâche 4 étoiles en cône serré vers le haut ; leurs 4
+// traînées ensemble = la « sorte de queue de cheval » ; puis chacune DANDINE jusqu'au bout.
 function distMedusa(i,n,rnd){
-  if (i<n-4){ const dx=(rnd()-0.5)*0.26, dz=(rnd()-0.5)*0.26, dy=1, L=Math.hypot(dx,dy,dz)||1;
-    return {dx:dx/L,dy:dy/L,dz:dz/L, spMul:0.30+rnd()*0.25, comp:0}; }
-  const dx=(rnd()-0.5)*0.34, dz=(rnd()-0.5)*0.34, dy=1, L=Math.hypot(dx,dy,dz)||1;
-  return {dx:dx/L,dy:dy/L,dz:dz/L, spMul:0.38, comp:1};
+  const dx=(rnd()-0.5)*0.32, dz=(rnd()-0.5)*0.32, dy=1, L=Math.hypot(dx,dy,dz)||1;
+  return {dx:dx/L,dy:dy/L,dz:dz/L, spMul:0.32+rnd()*0.22, comp:0};
 }
 function distHorsetail(i,n,rnd){ const dx=(rnd()-0.5)*0.18, dz=(rnd()-0.5)*0.18, dy=1.0;
   const L=Math.hypot(dx,dy,dz)||1; return {dx:dx/L,dy:dy/L,dz:dz/L,spMul:0.33}; }
@@ -454,12 +452,11 @@ function crackleFn(d,A,dt){ d.popOn=(d.popOn||0)-dt;
   if (d.popOn>0) return {intenMul:2.3,whiteMix:0.9}; return null; }
 function glitterFn(d){ return {intenMul: Math.random()<0.45?0.4:1.6}; }
 
-// MÉDUSE (B233) : les 4 TENTACULES (comp 1) — montent avec la colonne, puis « DANDINENT » comme
-// des spermatozoïdes : oscillation latérale marquée (axe et rythme propres par tentacule) en
-// descente douce, la traînée dessine la queue qui frétille. Actifs quand la colonne s'éteint.
+// MÉDUSE (B234) : chaque étoile-méduse monte en traînant, puis « DANDINE » comme un
+// spermatozoïde : oscillation latérale marquée (axe et rythme propres) en descente douce,
+// la traînée dessine la queue qui frétille.
 function behaveMeduse(d,A,dt,ctx){
-  if (d.comp!==1) return;
-  if (d._wg===undefined){ d._wg=1.2+Math.random()*0.4; d._wf=4.5+Math.random()*3;
+  if (d._wg===undefined){ d._wg=1.1+Math.random()*0.4; d._wf=4.5+Math.random()*3;
     d._wa=26+Math.random()*12; d._wp=Math.random()*6.28; d._wax=Math.random()*6.28; }
   if (d.age<d._wg) return;
   const s=Math.sin(d.age*d._wf+d._wp);                       // le frétillement
@@ -696,12 +693,12 @@ const EFFECTS = {
             trailing:{emitUntil:0.97, period:0.010, grain:0.9, gF:0.13, lifeMul:2.8, color:COPPER, fixedColor:true, spark:true, jit:0.16, bright:0.85} },   // B210 (photo user) : PAS collées — RAYONS RADIAUX fins/DISTINCTS, espacés (period 0.010), qui S'ESTOMPENT vers le centre ; bronze doré des saules (COPPER) ; PAS de fadeToStar. B211 : lifeMul 3.4->2.8 (tail réduit)
 
   // === MOUVEMENT / TRAÎNE (hooks existants) ===
-  // MÉDUSE (B233, définition user — compact 30 mm uniquement) : queue de cheval COLORÉE (colonne
-  // serrée ~9 pointes à traînées qui retombe en cloche) + à la fin 4 TENTACULES qui dandinent
-  // (behaveMeduse). Couleur au sort (10 réfs : rose/verte/rouge/violet/citron/orange/bleue/
-  // argent/aqua) ; traînée = couleur de la volée (trailColorFromStar). Queue façon réf zigzag.
-  medusa:    { apex:42, cal:30, heat:false, pureColor:true, stars:13, starSize:1.3, speedMul:0.55,
-               gravStar:0.55, dragStar:0.42, lifeBase75:3.2, lifeJitter:0.14, compLife:{1:1.9}, compSize:{1:1.7}, restExtra:3,
+  // MÉDUSE (B234, définition user — compact 30 mm uniquement) : la bombette lâche 4 MÉDUSES =
+  // 4 étoiles en cône serré, chacune traîne (les 4 traînées = la « queue de cheval ») puis
+  // DANDINE comme un spermatozoïde jusqu'à l'extinction. Couleur au sort (10 réfs) ; traînée =
+  // couleur de la volée (trailColorFromStar).
+  medusa:    { apex:42, cal:30, heat:false, pureColor:true, stars:4, starSize:1.7, speedMul:0.55,
+               gravStar:0.55, dragStar:0.42, lifeBase75:6.0, lifeJitter:0.12, restExtra:3,
                dist:distMedusa, behave:behaveMeduse, trailColorFromStar:true,
                colorPairs:[[PINK],[GRN],[RED],[PURP],[YEL],[new THREE.Color(1.0,0.45,0.08)],[BLU],[SILVER],[CYAN]],
                trailing:{emitUntil:0.95, period:0.008, grain:0.7, gF:0.13, lifeMul:4, spark:true, jit:0.3, bright:0.85} },
