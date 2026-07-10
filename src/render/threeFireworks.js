@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B242';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B243';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -710,6 +710,7 @@ const EFFECTS = {
   // DANDINE comme un spermatozoïde jusqu'à l'extinction. Couleur au sort (10 réfs) ; traînée =
   // couleur de la volée (trailColorFromStar).
   medusa:    { apex:42, cal:30, heat:false, pureColor:true, stars:17, starSize:0.8, speedMul:0.55, riseLean:2.5,   // B236 (user) : étoiles ENCORE plus petites — tout tient dans 30 mm. riseLean court (B241) : les tubes d'un compact sont précis, le motif de mèche doit se lire
+               riseTrail:false, headSize:0.7, riseColor:new THREE.Color(0.55,0.40,0.20),   // B243 (user, compacts) : pas de traînée de montée — juste l'étoile qui monte, TRÈS discrète
                gravStar:0.55, dragStar:0.42, lifeBase75:6.0, lifeJitter:0.12, compLife:{0:0.55}, restExtra:3,   // B237 (user) : spermatozoïdes = MÊME taille que les autres (0.8, plus de compSize)
                randomAxis:true,   // B235 (user) : le sens de la queue de cheval est ALÉATOIRE (endroit/envers/côté)
                noFlash:true, burstSparks:false,   // B240 (user) : PAS de grosse explosion en l'air — ouverture discrète, « comme une queue de cheval » (idem cascade)
@@ -1120,7 +1121,9 @@ class Shell {
       if (this.headTimer<=0 && dmoved>0.4){
         const mx=(this.headLastX+hx)*0.5, my=(this.headLastY+y)*0.5, mz=(this.headLastZ+hz)*0.5;
         const rc=this.cfg.riseColor, big=this.cfg.headSize>1.5;
-        spawnTrail(mx,my,mz, rc.r,rc.g,rc.b, big?1.4:1.1, 0.4, big?1.6:1.0);
+        // riseTrail:false (B243, user — bombettes de compact) : PAS de traînée de montée,
+        // on voit juste l'étoile monter, très légèrement.
+        if (this.cfg.riseTrail!==false) spawnTrail(mx,my,mz, rc.r,rc.g,rc.b, big?1.4:1.1, 0.4, big?1.6:1.0);
         // TRONC (B229/B231/B232, zigzag « à tronc ») : QUEUE DE FUSÉE — étincelles FINES (0.65)
         // réparties LE LONG du trajet (plus d'amas « œuf de dragon »), aux vies ÉTAGÉES (B232,
         // user) : GROSSE BANDE DENSE sous le projectile (72 % de grains brefs), milieu
