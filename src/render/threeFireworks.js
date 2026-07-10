@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B232';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B233';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -246,8 +246,16 @@ function distPalm(i,n,rnd){
   const ce=Math.cos(elev), se=Math.sin(elev);
   return {dx:Math.cos(az)*ce, dy:se, dz:Math.sin(az)*ce, spMul:0.85+rnd()*0.5}; }   // frondes longues, longueurs variées
 function distLeaves(i,n,rnd){ const v=vrand(rnd); return {dx:v[0],dy:v[1],dz:v[2],spMul:0.45+rnd()*0.45}; }
-function distMedusa(i,n,rnd){ const v=vrand(rnd); let dy=Math.abs(v[2])*0.9+0.25, dx=v[0], dz=v[1];
-  const L=Math.hypot(dx,dy,dz)||1; return {dx:dx/L,dy:dy/L,dz:dz/L,spMul:0.83}; }
+// MÉDUSE (B233, réécrite — l'ancienne « boule poussée vers le haut » venait du port UE, jamais
+// validée. Définition user : « une sorte de QUEUE DE CHEVAL, et à la fin, 4 SPERMATOZOÏDES qui
+// dandinent »). N'existe QU'EN COMPACT (« compact 40 tirs 30 mm z méduse <c> », 10 réfs).
+// comp 0 = colonne serrée vers le haut (la cloche, retombe) ; comp 1 = les 4 tentacules.
+function distMedusa(i,n,rnd){
+  if (i<n-4){ const dx=(rnd()-0.5)*0.26, dz=(rnd()-0.5)*0.26, dy=1, L=Math.hypot(dx,dy,dz)||1;
+    return {dx:dx/L,dy:dy/L,dz:dz/L, spMul:0.30+rnd()*0.25, comp:0}; }
+  const dx=(rnd()-0.5)*0.34, dz=(rnd()-0.5)*0.34, dy=1, L=Math.hypot(dx,dy,dz)||1;
+  return {dx:dx/L,dy:dy/L,dz:dz/L, spMul:0.38, comp:1};
+}
 function distHorsetail(i,n,rnd){ const dx=(rnd()-0.5)*0.18, dz=(rnd()-0.5)*0.18, dy=1.0;
   const L=Math.hypot(dx,dy,dz)||1; return {dx:dx/L,dy:dy/L,dz:dz/L,spMul:0.33}; }
 function distCascade(i,n,rnd){ const dx=(rnd()-0.5)*0.9, dz=(rnd()-0.5)*0.9, dy=1.0;    // CASCADE (B112/B113, user) : ÉCLAT PETIT — les boules s'écartent de ~7 m MAX du centre (B113 « un peu
@@ -446,6 +454,17 @@ function crackleFn(d,A,dt){ d.popOn=(d.popOn||0)-dt;
   if (d.popOn>0) return {intenMul:2.3,whiteMix:0.9}; return null; }
 function glitterFn(d){ return {intenMul: Math.random()<0.45?0.4:1.6}; }
 
+// MÉDUSE (B233) : les 4 TENTACULES (comp 1) — montent avec la colonne, puis « DANDINENT » comme
+// des spermatozoïdes : oscillation latérale marquée (axe et rythme propres par tentacule) en
+// descente douce, la traînée dessine la queue qui frétille. Actifs quand la colonne s'éteint.
+function behaveMeduse(d,A,dt,ctx){
+  if (d.comp!==1) return;
+  if (d._wg===undefined){ d._wg=1.2+Math.random()*0.4; d._wf=4.5+Math.random()*3;
+    d._wa=26+Math.random()*12; d._wp=Math.random()*6.28; d._wax=Math.random()*6.28; }
+  if (d.age<d._wg) return;
+  const s=Math.sin(d.age*d._wf+d._wp);                       // le frétillement
+  d.vx += Math.cos(d._wax)*s*d._wa*dt; d.vz += Math.sin(d._wax)*s*d._wa*dt;
+}
 function behaveFish(d,A,dt,ctx){
   const sp=Math.hypot(d.vx,d.vy,d.vz)||1, cx=d.vx/sp,cy=d.vy/sp,cz=d.vz/sp;
   const w=vrand(Math.random), dot=w[0]*cx+w[1]*cy+w[2]*cz;
@@ -517,7 +536,7 @@ function behaveMosaic(d,A,dt,ctx){
 // ============================================================================
 // TABLE DES EFFETS (clé absente -> BASE = profil pivoine)
 // ============================================================================
-const CAL_SCALE = { 50:0.67, 75:1.0, 100:1.44, 125:1.87, 150:2.30, 200:2.58 };
+const CAL_SCALE = { 30:0.50, 50:0.67, 75:1.0, 100:1.44, 125:1.87, 150:2.30, 200:2.58 };   // 30 mm ajouté B233 (bombettes de compact)
 const STAR_SCALE = 1.0;   // taille globale des étoiles (user 2026-07-02 : 1.2 -> 1.1 ("un tout petit peu") puis -> 1.0 ("baisse encore").
                           //  Les effets à GROSSES étoiles — comète, palme, toupie, soucoupe, mosaïques — sont COMPENSÉS à chaque baisse pour ne pas changer.)
 const BURST_PUNCH = 2.0;  // PUNCH d'explosion (user, vidéos réelles) : vitesse initiale ×2 ET freinage ×2 -> même envergure
@@ -677,8 +696,15 @@ const EFFECTS = {
             trailing:{emitUntil:0.97, period:0.010, grain:0.9, gF:0.13, lifeMul:2.8, color:COPPER, fixedColor:true, spark:true, jit:0.16, bright:0.85} },   // B210 (photo user) : PAS collées — RAYONS RADIAUX fins/DISTINCTS, espacés (period 0.010), qui S'ESTOMPENT vers le centre ; bronze doré des saules (COPPER) ; PAS de fadeToStar. B211 : lifeMul 3.4->2.8 (tail réduit)
 
   // === MOUVEMENT / TRAÎNE (hooks existants) ===
-  medusa:    { apex:95, heat:false, stars:70, starSize:2.2, lifeBase75:2.3, gravStar:0.72, dragStar:0.55,
-               color:CYAN, dist:distMedusa, trailing:{emitUntil:0.80, period:0.018, grain:1.0, gF:0.42, lifeMul:1.0, color:CYAN} },
+  // MÉDUSE (B233, définition user — compact 30 mm uniquement) : queue de cheval COLORÉE (colonne
+  // serrée ~9 pointes à traînées qui retombe en cloche) + à la fin 4 TENTACULES qui dandinent
+  // (behaveMeduse). Couleur au sort (10 réfs : rose/verte/rouge/violet/citron/orange/bleue/
+  // argent/aqua) ; traînée = couleur de la volée (trailColorFromStar). Queue façon réf zigzag.
+  medusa:    { apex:42, cal:30, heat:false, pureColor:true, stars:13, starSize:1.3, speedMul:0.55,
+               gravStar:0.55, dragStar:0.42, lifeBase75:3.2, lifeJitter:0.14, compLife:{1:1.9}, compSize:{1:1.7}, restExtra:3,
+               dist:distMedusa, behave:behaveMeduse, trailColorFromStar:true,
+               colorPairs:[[PINK],[GRN],[RED],[PURP],[YEL],[new THREE.Color(1.0,0.45,0.08)],[BLU],[SILVER],[CYAN]],
+               trailing:{emitUntil:0.95, period:0.008, grain:0.7, gF:0.13, lifeMul:4, spark:true, jit:0.3, bright:0.85} },
   horsetail: { apex:80, heat:false, stars:11, starSize:0.9, lifeBase75:3.2, gravStar:0.78, dragStar:0.55,   // tête = POINTE, pas une boule (user B94, effets dorés)
                color:GOLD, dist:distHorsetail, onStar:glitterFn,
                trailing:{emitUntil:0.95, period:0.014, grain:1.0, gF:0.55, lifeMul:3.0, color:GOLD} },

@@ -109,14 +109,14 @@ Object.assign(pick.style, { position:'fixed', top:'10px', right:'10px', zIndex:'
 for (const [k, label] of Object.entries(LABELS)){
   const o = document.createElement('option'); o.value = k; o.textContent = label; pick.appendChild(o);
 }
-pick.value = 'zigzag';
+pick.value = 'medusa';
 // changer d'effet dans le menu -> couleur PAR DÉFAUT de l'effet (null annule l'override de la démo)
 pick.addEventListener('change', e => layer.setFocus(e.target.value, null));
 document.body.appendChild(pick);
 
-// DÉMO (réglage en cours) : ZIGZAG 100mm (510460000/510462000, 130 m, B229) —
-// 53 étoiles qui vont droit puis bifurquent (2-2,5 s) ; bombe à tronc (trace kamuro à la montée).
-layer.setFocus('zigzag');
+// DÉMO (réglage en cours) : MÉDUSE 30mm compact (500345000-500355000, B233) —
+// queue de cheval colorée + 4 tentacules qui dandinent à la fin, couleur au sort.
+layer.setFocus('medusa');
 
 // TIMELINE de lecture (barre en bas) + ESPACE = pause/play (fige les feux, caméra libre).
 const timeline = new Timeline(layer, LABELS);
