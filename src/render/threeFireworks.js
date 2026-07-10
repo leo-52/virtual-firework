@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B243';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B244';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -671,8 +671,8 @@ const EFFECTS = {
   smiley:    { apex:95, heat:false, stars:22, starSize:2.4, dist2D:shapeSmiley, pureColor:true,
                colors:[new THREE.Color(1.0,0.45,0.08), GRN, RED] },   // « bombe 75 mm à effet sourire » (575547000, 95 m) — 15 cercle ORANGE + 2 yeux VERTS + 5 bouche ROUGE (user B128) ; texture neutre pour un vert franc
   daisy:     { apex:116, cal:100, heat:false, stars:45, starSize:2.3, dist2D:shapeDaisy, pureColor:true, speedJit:0.09, speedMul:0.9, dragStar:0.42, gravStar:0.10, lifeBase75:1.74, compLife:{1:0.6},
-               trailing:{emitUntil:0.95, period:0.0018, grain:2.8, gF:0.12, lifeMul:3.2, color:new THREE.Color(1.15,0.66,0.24), spark:true, jit:3, rateFloor:0.55}, trailComps:[0],   // B153 (user) : QUASI PAS DE RETOMBÉE (gravStar 0.15 — 2,5 s c'est trop court pour tomber), bande = MATIÈRE DENSE (period 0.0018, grains 2.8 qui fusionnent) aux bords NETS (jit 3, fini les pertes éparses), couleur CHAUDE champagne ; base large/bout pointu conservés (âge des grains) ; cœur meurt en premier (×0.6)
-               colorPairs:[[GOLD,new THREE.Color(1.7,0.24,0.31)],[GOLD,new THREE.Color(0.42,1.7,0.66)],[GOLD,new THREE.Color(1.05,0.58,1.7)]] },   // MARGUERITE : ~30 billes de CŒUR compactes (HDR modéré 1.7 = billes NETTES, plus le halo écrasant), rouge/verte/violette au sort ; vie porteuses 2,5 s (1.74×1.44)
+               trailing:{emitUntil:0.95, period:0.0018, grain:2.8, gF:0.12, lifeMul:3.2, color:new THREE.Color(1.15,0.66,0.24), spark:true, jit:3, rateFloor:0.55, bright:0.6}, trailComps:[0],   // B153 (user) : bande = MATIÈRE DENSE aux bords NETS. B244 (photo user : « halos dégueu ») : bright 0.6 — la bande redevient de la MATIÈRE, la lumière ne bave plus en halo autour des pétales
+               colorPairs:[[GOLD,new THREE.Color(1.45,0.20,0.26)],[GOLD,new THREE.Color(0.36,1.45,0.56)],[GOLD,new THREE.Color(0.90,0.49,1.45)]] },   // B244 : HDR du cœur 1.7 -> 1.45 (la boule blanche saturée au centre = le halo « dégueu » du centre) ; rouge/verte/violette au sort
 
   // === MOTIFS 3D multi-couleurs ===
   // ATOME (B191, « bombe 150 mm atome <couleur> », 12 réfs, 165 m — N'EXISTE QU'EN 150mm ; étapes
