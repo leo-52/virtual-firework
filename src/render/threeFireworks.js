@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B235';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B236';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -460,11 +460,10 @@ function behaveMeduse(d,A,dt,ctx){
   if (d._wg===undefined){ d._wg=1.1+Math.random()*0.4; d._wf=4.5+Math.random()*3;
     d._wa=26+Math.random()*12; d._wp=Math.random()*6.28; d._wax=Math.random()*6.28; }
   if (d.age<d._wg) return;
-  d.trailing=false;                                          // fin de la traînée queue-de-cheval
   const s=Math.sin(d.age*d._wf+d._wp);                       // le frétillement
   d.vx += Math.cos(d._wax)*s*d._wa*dt; d.vz += Math.sin(d._wax)*s*d._wa*dt;
   d._sp=(d._sp||0)+dt*110;                                   // ~110 micro-étincelles/s
-  const c=(ctx.cfg.trailing&&ctx.cfg.trailing.color)||GOLD;
+  const c=ctx.cfg.colors[1]||SILVER;                         // B236 (user) : queue de spermatozoïde BLANC ARGENTÉ, quelle que soit la couleur de la volée
   const px=ctx.pos[d._i*3], py=ctx.pos[d._i*3+1], pz=ctx.pos[d._i*3+2];
   while (d._sp>=1){ d._sp-=1;
     spawnTrail(px+(Math.random()-0.5)*0.2, py+(Math.random()-0.5)*0.2, pz+(Math.random()-0.5)*0.2,
@@ -705,12 +704,14 @@ const EFFECTS = {
   // 4 étoiles en cône serré, chacune traîne (les 4 traînées = la « queue de cheval ») puis
   // DANDINE comme un spermatozoïde jusqu'à l'extinction. Couleur au sort (10 réfs) ; traînée =
   // couleur de la volée (trailColorFromStar).
-  medusa:    { apex:42, cal:30, heat:false, pureColor:true, stars:17, starSize:1.1, speedMul:0.55,   // B235 (user) : ~17 étoiles PETITES dont 4 deviennent les spermatozoïdes
-               gravStar:0.55, dragStar:0.42, lifeBase75:6.0, lifeJitter:0.12, compLife:{0:0.55}, compSize:{1:1.4}, restExtra:3,
+  medusa:    { apex:42, cal:30, heat:false, pureColor:true, stars:17, starSize:0.8, speedMul:0.55,   // B236 (user) : étoiles ENCORE plus petites — tout tient dans 30 mm de diamètre
+               gravStar:0.55, dragStar:0.42, lifeBase75:6.0, lifeJitter:0.12, compLife:{0:0.55}, compSize:{1:1.1}, restExtra:3,
                randomAxis:true,   // B235 (user) : le sens de la queue de cheval est ALÉATOIRE (endroit/envers/côté)
-               dist:distMedusa, behave:behaveMeduse, trailColorFromStar:true,
-               colorPairs:[[PINK],[GRN],[RED],[PURP],[YEL],[new THREE.Color(1.0,0.45,0.08)],[BLU],[SILVER],[CYAN]],
-               trailing:{emitUntil:0.95, period:0.008, grain:0.7, gF:0.13, lifeMul:4, spark:true, jit:0.3, bright:0.85} },
+               dist:distMedusa, behave:behaveMeduse,
+               // B236 (user) : PAS de traînée arrière sur la queue de cheval ; spermatozoïdes (comp 1)
+               // BLANC ARGENTÉ quelle que soit la couleur de la volée.
+               colorPairs:[[PINK,SILVER],[GRN,SILVER],[RED,SILVER],[PURP,SILVER],[YEL,SILVER],
+                           [new THREE.Color(1.0,0.45,0.08),SILVER],[BLU,SILVER],[SILVER,SILVER],[CYAN,SILVER]] },
   horsetail: { apex:80, heat:false, stars:11, starSize:0.9, lifeBase75:3.2, gravStar:0.78, dragStar:0.55,   // tête = POINTE, pas une boule (user B94, effets dorés)
                color:GOLD, dist:distHorsetail, onStar:glitterFn,
                trailing:{emitUntil:0.95, period:0.014, grain:1.0, gF:0.55, lifeMul:3.0, color:GOLD} },
