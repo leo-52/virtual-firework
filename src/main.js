@@ -109,14 +109,14 @@ Object.assign(pick.style, { position:'fixed', top:'10px', right:'10px', zIndex:'
 for (const [k, label] of Object.entries(LABELS)){
   const o = document.createElement('option'); o.value = k; o.textContent = label; pick.appendChild(o);
 }
-pick.value = 'ring';
+pick.value = 'butterfly';
 // changer d'effet dans le menu -> couleur PAR DÉFAUT de l'effet (null annule l'override de la démo)
 pick.addEventListener('change', e => layer.setFocus(e.target.value, null));
 document.body.appendChild(pick);
 
-// DÉMO (réglage en cours) : CERCLE (brique, B245) — anneau de 24 étoiles, orientation aléatoire,
-// couleur au sort ; servira aux composés (« centre cascade cercle », 150mm D8-D10).
-layer.setFocus('ring');
+// DÉMO (réglage en cours) : PAPILLON 75mm (575525000, 90 m, B246 — réécrit depuis la vidéo) —
+// 2 ailes roses qui s'écartent + 2 comètes or arquées.
+layer.setFocus('butterfly');
 
 // TIMELINE de lecture (barre en bas) + ESPACE = pause/play (fige les feux, caméra libre).
 const timeline = new Timeline(layer, LABELS);

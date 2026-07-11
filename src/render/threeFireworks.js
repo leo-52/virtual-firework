@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B245';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B246';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -329,11 +329,30 @@ function shapeHeart(){ const pts=[]; for(let k=0;k<21;k++){ const t=2*Math.PI*k/
   const x=16*Math.pow(Math.sin(t),3);
   const y=13*Math.cos(t)-5*Math.cos(2*t)-2*Math.cos(3*t)-Math.cos(4*t);
   pts.push({x:x/16,y:y/16,comp:0}); } return pts; }
-function shapeButterfly(_r,_c,nc){ const C2=(nc>1)?1:0, pts=[]; for(let k=0;k<34;k++){
-  const t=2*Math.PI*k/34, r=Math.exp(Math.sin(t))-2*Math.cos(4*t);
-  // /4.06 (B126) : |r|max=4.06 -> respecte le CONTRAT disque unité (avec spMul∝L, /3.2 faisait
-  // partir les pointes d'ailes 23% plus loin que les autres formes)
-  pts.push({x:Math.sin(t)*r/4.06,y:Math.cos(t)*r/4.06,comp:(k%2===0)?0:C2}); } return pts; }
+// PAPILLON (B246, RÉÉCRIT depuis la VIDÉO catalogue gWYWk3yN4pQ décomposée image par image —
+// l'ancien contour 2D « courbe papillon » B126-B140 était FAUX, marqué « pas fait » par l'user) :
+// DEUX AILES = deux éventails opposés de ~16 points ROSES le long d'un axe DIAGONAL tiré dans
+// le plan écran (la séparation se lit toujours), qui S'ÉCARTENT en vol (le battement) ;
+// + 2 COMÈTES OR perpendiculaires qui s'ARQUENT et survivent aux ailes (corps/antennes).
+let _bflyW=null, _bflyP=null;
+function distButterfly3D(i,n,rnd){
+  if (i===0){
+    const F=norm([0,0.12,-1]), R=norm(cross(F,[0,1,0])), U=norm(cross(R,F));
+    const phi=rnd()*Math.PI*2, cp=Math.cos(phi), sp=Math.sin(phi), tl=(rnd()-0.5)*0.4;
+    _bflyW=norm([R[0]*cp+U[0]*sp+F[0]*tl, R[1]*cp+U[1]*sp+F[1]*tl, R[2]*cp+U[2]*sp+F[2]*tl]);
+    _bflyP=norm(cross(_bflyW,F));
+  }
+  if (i<n-2){
+    const side=(i%2===0)?1:-1, W=_bflyW, v=vrand(rnd);   // ailes en alternance -> nMax/2 par côté
+    const dx=W[0]*side+v[0]*0.42, dy=W[1]*side+v[1]*0.42, dz=W[2]*side+v[2]*0.42;
+    const L=Math.hypot(dx,dy,dz)||1;
+    return {dx:dx/L,dy:dy/L,dz:dz/L, spMul:0.85+rnd()*0.30, comp:0};
+  }
+  const side=(i===n-2)?1:-1, P=_bflyP, v=vrand(rnd);     // les 2 comètes or, perpendiculaires aux ailes
+  const dx=P[0]*side+v[0]*0.18, dy=P[1]*side+v[1]*0.18, dz=P[2]*side+v[2]*0.18;
+  const L=Math.hypot(dx,dy,dz)||1;
+  return {dx:dx/L,dy:dy/L,dz:dz/L, spMul:1.25, comp:1};
+}
 function shapeSmiley(_r,_c,nc){ const CE=Math.min(1,nc-1), CB=Math.min(2,nc-1), pts=[];   // 15 + 2 + 5 = 22 étoiles (user B127), 3 GROUPES de couleur (user B128)
   for(let k=0;k<15;k++){const t=2*Math.PI*k/15; pts.push({x:Math.cos(t),y:Math.sin(t),comp:0});}   // 15 = le cercle du visage (couleur 0 = orange)
   pts.push({x:-0.35,y:0.32,comp:CE}); pts.push({x:0.35,y:0.32,comp:CE});                           //  2 = les yeux (couleur 1 = vert)
@@ -457,6 +476,16 @@ function crackleFn(d,A,dt){ d.popOn=(d.popOn||0)-dt;
   if (d.popOn>0) return {intenMul:2.3,whiteMix:0.9}; return null; }
 function glitterFn(d){ return {intenMul: Math.random()<0.45?0.4:1.6}; }
 
+// PAPILLON (B246) : les 2 COMÈTES OR (comp 1) s'ARQUENT — virage continu doux autour d'un axe
+// propre (rotation de Rodrigues, comme le zigzag), sens et rythme aléatoires par comète.
+function behaveButterflyComet(d,A,dt,ctx){
+  if (d.comp!==1) return;
+  if (d._bt===undefined){ d._bt=(0.8+Math.random()*0.8)*(Math.random()<0.5?-1:1); d._bax=vrand(Math.random); }
+  const ang=d._bt*dt, c=Math.cos(ang), s=Math.sin(ang), ax=d._bax;
+  const dot=ax[0]*d.vx+ax[1]*d.vy+ax[2]*d.vz;
+  const rx=ax[1]*d.vz-ax[2]*d.vy, ry=ax[2]*d.vx-ax[0]*d.vz, rz=ax[0]*d.vy-ax[1]*d.vx;
+  d.vx=d.vx*c+rx*s+ax[0]*dot*(1-c); d.vy=d.vy*c+ry*s+ax[1]*dot*(1-c); d.vz=d.vz*c+rz*s+ax[2]*dot*(1-c);
+}
 // MÉDUSE (B235) : les 4 spermatozoïdes (comp 1) — montent avec la queue de cheval, puis
 // DANDINENT (oscillation latérale, axe et rythme propres). Pendant le dandinement, la traînée
 // normale S'ARRÊTE et l'étoile lâche des étincelles MINUSCULES (grain 0.35) et ÉPHÉMÈRES
@@ -673,7 +702,13 @@ const EFFECTS = {
 
   // === FORMES 2D (face public) — chiffres catalogue vérifiés (web/data/effets.json, B127) ===
   heart:     { apex:116, cal:100, heat:false, stars:21, starSize:2.4, dist2D:shapeHeart, colors:[RED] },   // « bombe 100 mm à effet coeur » (510455/510456, rose ou rouge, 116 m) — N'EXISTE QU'EN 100mm, 21 étoiles (user)
-  butterfly: { apex:90, heat:false, stars:34, starSize:2.3, dist2D:shapeButterfly, colors:[new THREE.Color(1.0,0.55,0.12), PURP] },   // « bombe 75 mm à effet papillon » (575525000, 90 m ✓, vidéo cat. gWYWk3yN4pQ) ; existe aussi en 100 mm (130 m). 34 points de forme ; couleurs à valider par l'user (B140)
+  // PAPILLON (B246, vidéo décomposée) : « bombe 75 mm à effet papillon » (575525000, 90 m ;
+  // existe en 100 mm 510461000, 130 m). 2 ailes de 16 points ROSES qui s'écartent + 2 comètes
+  // or arquées à traînée qui survivent aux ailes (~×1,5 de vie).
+  butterfly: { apex:90, heat:false, pureColor:true, stars:34, starSize:1.9, speedMul:1.1, speedJit:0.08,
+               gravStar:0.45, dragStar:0.5, lifeBase75:1.5, lifeJitter:0.12, compLife:{1:1.5}, compSize:{1:2.6},
+               dist:distButterfly3D, behave:behaveButterflyComet, trailComps:[1], colors:[PINK, GOLD],
+               trailing:{emitUntil:0.95, period:0.008, grain:0.9, gF:0.13, lifeMul:4, color:COPPER, fixedColor:true, spark:true, jit:0.25, bright:0.85} },
   smiley:    { apex:95, heat:false, stars:22, starSize:2.4, dist2D:shapeSmiley, pureColor:true,
                colors:[new THREE.Color(1.0,0.45,0.08), GRN, RED] },   // « bombe 75 mm à effet sourire » (575547000, 95 m) — 15 cercle ORANGE + 2 yeux VERTS + 5 bouche ROUGE (user B128) ; texture neutre pour un vert franc
   daisy:     { apex:116, cal:100, heat:false, stars:45, starSize:2.3, dist2D:shapeDaisy, pureColor:true, speedJit:0.09, speedMul:0.9, dragStar:0.42, gravStar:0.10, lifeBase75:1.74, compLife:{1:0.6},
