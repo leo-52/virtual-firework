@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B247';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B248';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -720,7 +720,7 @@ const EFFECTS = {
   // PAPILLON (B246, vidéo décomposée) : « bombe 75 mm à effet papillon » (575525000, 90 m ;
   // existe en 100 mm 510461000, 130 m). 2 ailes de 16 points ROSES qui s'écartent + 2 comètes
   // or arquées à traînée qui survivent aux ailes (~×1,5 de vie).
-  butterfly: { apex:90, heat:false, pureColor:true, stars:34, starSize:1.9, speedMul:1.1, speedJit:0.08,
+  butterfly: { apex:90, heat:false, pureColor:true, stars:62, starSize:1.9, speedMul:1.1, speedJit:0.08,   // B248 (user) : ~30 étoiles PAR demi-cercle (+2 comètes)
                gravStar:0.45, dragStar:0.5, lifeBase75:1.5, lifeJitter:0.12, compLife:{1:1.5}, compSize:{1:2.6},
                dist:distButterfly3D, behave:behaveButterflyComet, trailComps:[1], colors:[PINK, GOLD],
                trailing:{emitUntil:0.95, period:0.008, grain:0.9, gF:0.13, lifeMul:4, color:COPPER, fixedColor:true, spark:true, jit:0.25, bright:0.85} },
