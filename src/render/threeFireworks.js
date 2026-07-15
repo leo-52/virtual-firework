@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B249';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B250';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -495,6 +495,9 @@ function crackleFn(d,A,dt){ d.popOn=(d.popOn||0)-dt;
 function glitterFn(d){ return {intenMul: Math.random()<0.45?0.4:1.6}; }
 
 // (behaveButterflyComet supprimé en B249 : les antennes vont DROIT — « pas de mouvement bizarre », user)
+// PAPILLON (B250, user) : les ANTENNES n'ont PAS d'étoile visible — on ne voit que la POINTE
+// de la traînée (les grains frais), comme la cascade et la règle famille dorée.
+function butterflyFn(d,A,dt){ return d.comp===1 ? {intenMul:0} : null; }
 // MÉDUSE (B235) : les 4 spermatozoïdes (comp 1) — montent avec la queue de cheval, puis
 // DANDINENT (oscillation latérale, axe et rythme propres). Pendant le dandinement, la traînée
 // normale S'ARRÊTE et l'étoile lâche des étincelles MINUSCULES (grain 0.35) et ÉPHÉMÈRES
@@ -715,9 +718,13 @@ const EFFECTS = {
   // existe en 100 mm 510461000, 130 m). 2 ailes de 16 points ROSES qui s'écartent + 2 comètes
   // or arquées à traînée qui survivent aux ailes (~×1,5 de vie).
   butterfly: { apex:90, heat:false, pureColor:true, stars:62, starSize:1.9, speedMul:1.1, speedJit:0.08,   // B248 (user) : ~30 étoiles PAR demi-cercle (+2 comètes)
-               gravStar:0.45, dragStar:0.5, lifeBase75:1.5, lifeJitter:0.12, compLife:{1:1.5}, compSize:{1:2.2},   // B249 (user) : antennes DROITES (plus de virage) et un peu plus petites (2.6 -> 2.2)
-               dist:distButterfly3D, trailComps:[1], colors:[PINK, GOLD],
-               trailing:{emitUntil:0.95, period:0.008, grain:0.9, gF:0.13, lifeMul:4, color:COPPER, fixedColor:true, spark:true, jit:0.25, bright:0.85} },
+               gravStar:0.45, dragStar:0.5, lifeBase75:1.5, lifeJitter:0.12, compLife:{1:1.5},   // B249 (user) : antennes DROITES (plus de virage)
+               dist:distButterfly3D, onStar:butterflyFn, trailComps:[1], colors:[PINK, GOLD],
+               // B250 (user) : traînée d'antenne = LA RÉFÉRENCE queue du zigzag (B232) — grains FINS
+               // cuivre 0.65 le long du trajet, vies ÉTAGÉES ~72 % brèves / 22 % moyennes / 6 % longues
+               // (longLaw p constant 0.28, tirage biaisé bas) ; étoile invisible, la POINTE = les grains frais.
+               trailing:{emitUntil:0.97, period:0.002, grain:0.65, gF:0.13, lifeMul:1.3, color:COPPER, fixedColor:true, spark:true, jit:0.4, bright:0.9,
+                 longLaw:{p0:0.28, p1:0.28, min:0.65, max:2.9, pow:2}} },
   smiley:    { apex:95, heat:false, stars:22, starSize:2.4, dist2D:shapeSmiley, pureColor:true,
                colors:[new THREE.Color(1.0,0.45,0.08), GRN, RED] },   // « bombe 75 mm à effet sourire » (575547000, 95 m) — 15 cercle ORANGE + 2 yeux VERTS + 5 bouche ROUGE (user B128) ; texture neutre pour un vert franc
   daisy:     { apex:116, cal:100, heat:false, stars:45, starSize:2.3, dist2D:shapeDaisy, pureColor:true, speedJit:0.09, speedMul:0.9, dragStar:0.42, gravStar:0.10, lifeBase75:1.74, compLife:{1:0.6},
