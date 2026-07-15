@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B250';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B251';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -347,12 +347,14 @@ function distButterfly3D(i,n,rnd){
     const V=norm(cross(N,U));
     const psi=rnd()*Math.PI*2, cp=Math.cos(psi), sp=Math.sin(psi);
     const P=[-U[0]*sp+V[0]*cp, -U[1]*sp+V[1]*cp, -U[2]*sp+V[2]*cp];   // poussée : dans le plan, ⊥ à la coupe
-    let D=vrand(rnd); D=norm([D[0], D[1]+0.6, D[2]]);                 // duo de comètes : direction aléatoire, biais vers le haut
-    const ax=norm(cross(D, vrand(rnd))), a10=0.14+rnd()*0.06;         // 2e comète à 8-11.5°
-    const c1=Math.cos(a10), s1=Math.sin(a10), dot=ax[0]*D[0]+ax[1]*D[1]+ax[2]*D[2];
-    const D2=norm([D[0]*c1+(ax[1]*D[2]-ax[2]*D[1])*s1+ax[0]*dot*(1-c1),
-                   D[1]*c1+(ax[2]*D[0]-ax[0]*D[2])*s1+ax[1]*dot*(1-c1),
-                   D[2]*c1+(ax[0]*D[1]-ax[1]*D[0])*s1+ax[2]*dot*(1-c1)]);
+    // ANTENNES (B251, user : « il faut que ça fasse un V dans le bon sens ») : elles suivent
+    // l'AXE DU CORPS (la ligne de coupe, ⊥ à la poussée des ailes), vers la TÊTE (le haut),
+    // et divergent symétriquement dans le plan du papillon -> le V.
+    const C=[U[0]*cp+V[0]*sp, U[1]*cp+V[1]*sp, U[2]*cp+V[2]*sp];
+    if (C[1]<0){ C[0]=-C[0]; C[1]=-C[1]; C[2]=-C[2]; }                // la tête = le côté haut
+    const a=0.07+rnd()*0.03, ca=Math.cos(a), sa=Math.sin(a);          // demi-angle du V (total 8-11,5°)
+    const D =norm([C[0]*ca+P[0]*sa, C[1]*ca+P[1]*sa, C[2]*ca+P[2]*sa]);
+    const D2=norm([C[0]*ca-P[0]*sa, C[1]*ca-P[1]*sa, C[2]*ca-P[2]*sa]);
     _bB={U,V,P,D,D2};
   }
   const B=_bB;
