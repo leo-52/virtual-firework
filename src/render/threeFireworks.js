@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B246';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B247';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -329,29 +329,44 @@ function shapeHeart(){ const pts=[]; for(let k=0;k<21;k++){ const t=2*Math.PI*k/
   const x=16*Math.pow(Math.sin(t),3);
   const y=13*Math.cos(t)-5*Math.cos(2*t)-2*Math.cos(3*t)-Math.cos(4*t);
   pts.push({x:x/16,y:y/16,comp:0}); } return pts; }
-// PAPILLON (B246, RÉÉCRIT depuis la VIDÉO catalogue gWYWk3yN4pQ décomposée image par image —
-// l'ancien contour 2D « courbe papillon » B126-B140 était FAUX, marqué « pas fait » par l'user) :
-// DEUX AILES = deux éventails opposés de ~16 points ROSES le long d'un axe DIAGONAL tiré dans
-// le plan écran (la séparation se lit toujours), qui S'ÉCARTENT en vol (le battement) ;
-// + 2 COMÈTES OR perpendiculaires qui s'ARQUENT et survivent aux ailes (corps/antennes).
-let _bflyW=null, _bflyP=null;
+// PAPILLON (B247, définition user après la vidéo gWYWk3yN4pQ) : « deux DEMI-CERCLES envoyés de
+// chaque côté + 2 étoiles COMÈTES qui partent dans la MÊME direction à ~10° d'écart ». Un
+// CERCLE d'étoiles coupé en deux : chaque demi-cercle est POUSSÉ vers son côté (vitesse =
+// radiale du cercle + poussée latérale commune) -> les deux ARCS s'écartent dos à dos en
+// gardant leur forme = les ailes. Orientation du plan/coupe : règle habituelle (~55 % lisible
+// face public, sinon aléatoire). Comètes : direction aléatoire (biais haut) par tir, la 2e à
+// 8-11°, arcs doux (behaveButterflyComet), elles survivent aux ailes.
+let _bB=null;
 function distButterfly3D(i,n,rnd){
   if (i===0){
-    const F=norm([0,0.12,-1]), R=norm(cross(F,[0,1,0])), U=norm(cross(R,F));
-    const phi=rnd()*Math.PI*2, cp=Math.cos(phi), sp=Math.sin(phi), tl=(rnd()-0.5)*0.4;
-    _bflyW=norm([R[0]*cp+U[0]*sp+F[0]*tl, R[1]*cp+U[1]*sp+F[1]*tl, R[2]*cp+U[2]*sp+F[2]*tl]);
-    _bflyP=norm(cross(_bflyW,F));
+    let N;
+    if (Math.random()>=0.55) N=vrand(rnd);
+    else { const F=norm([0,0.12,-1]), tp=0.35;
+      N=norm([F[0]+(rnd()*2-1)*tp, F[1]+(rnd()*2-1)*tp, F[2]+(rnd()*2-1)*tp]); }
+    let U=cross(N,[0,1,0]); if(len2(U)<0.01)U=cross(N,[1,0,0]); U=norm(U);
+    const V=norm(cross(N,U));
+    const psi=rnd()*Math.PI*2, cp=Math.cos(psi), sp=Math.sin(psi);
+    const P=[-U[0]*sp+V[0]*cp, -U[1]*sp+V[1]*cp, -U[2]*sp+V[2]*cp];   // poussée : dans le plan, ⊥ à la coupe
+    let D=vrand(rnd); D=norm([D[0], D[1]+0.6, D[2]]);                 // duo de comètes : direction aléatoire, biais vers le haut
+    const ax=norm(cross(D, vrand(rnd))), a10=0.14+rnd()*0.06;         // 2e comète à 8-11.5°
+    const c1=Math.cos(a10), s1=Math.sin(a10), dot=ax[0]*D[0]+ax[1]*D[1]+ax[2]*D[2];
+    const D2=norm([D[0]*c1+(ax[1]*D[2]-ax[2]*D[1])*s1+ax[0]*dot*(1-c1),
+                   D[1]*c1+(ax[2]*D[0]-ax[0]*D[2])*s1+ax[1]*dot*(1-c1),
+                   D[2]*c1+(ax[0]*D[1]-ax[1]*D[0])*s1+ax[2]*dot*(1-c1)]);
+    _bB={U,V,P,D,D2};
   }
+  const B=_bB;
   if (i<n-2){
-    const side=(i%2===0)?1:-1, W=_bflyW, v=vrand(rnd);   // ailes en alternance -> nMax/2 par côté
-    const dx=W[0]*side+v[0]*0.42, dy=W[1]*side+v[1]*0.42, dz=W[2]*side+v[2]*0.42;
+    const th=2*Math.PI*i/(n-2)+(rnd()-0.5)*0.10, ct=Math.cos(th), st=Math.sin(th);   // position sur le cercle + défaut
+    const q=[B.U[0]*ct+B.V[0]*st, B.U[1]*ct+B.V[1]*st, B.U[2]*ct+B.V[2]*st];
+    const side=(q[0]*B.P[0]+q[1]*B.P[1]+q[2]*B.P[2])>=0?1:-1, k=0.9;   // poussée ≈ rayon -> écart net
+    const v=vrand(rnd);
+    const dx=q[0]+B.P[0]*side*k+v[0]*0.05, dy=q[1]+B.P[1]*side*k+v[1]*0.05, dz=q[2]+B.P[2]*side*k+v[2]*0.05;
     const L=Math.hypot(dx,dy,dz)||1;
-    return {dx:dx/L,dy:dy/L,dz:dz/L, spMul:0.85+rnd()*0.30, comp:0};
+    return {dx:dx/L,dy:dy/L,dz:dz/L, spMul:L*0.62*(0.96+rnd()*0.08), comp:0};   // vitesse ∝ |radial+poussée| : l'arc reste un arc
   }
-  const side=(i===n-2)?1:-1, P=_bflyP, v=vrand(rnd);     // les 2 comètes or, perpendiculaires aux ailes
-  const dx=P[0]*side+v[0]*0.18, dy=P[1]*side+v[1]*0.18, dz=P[2]*side+v[2]*0.18;
-  const L=Math.hypot(dx,dy,dz)||1;
-  return {dx:dx/L,dy:dy/L,dz:dz/L, spMul:1.25, comp:1};
+  const D=(i===n-2)?B.D:B.D2;
+  return {dx:D[0],dy:D[1],dz:D[2], spMul:1.3, comp:1};
 }
 function shapeSmiley(_r,_c,nc){ const CE=Math.min(1,nc-1), CB=Math.min(2,nc-1), pts=[];   // 15 + 2 + 5 = 22 étoiles (user B127), 3 GROUPES de couleur (user B128)
   for(let k=0;k<15;k++){const t=2*Math.PI*k/15; pts.push({x:Math.cos(t),y:Math.sin(t),comp:0});}   // 15 = le cercle du visage (couleur 0 = orange)
