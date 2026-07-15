@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B248';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B249';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -357,13 +357,16 @@ function distButterfly3D(i,n,rnd){
   }
   const B=_bB;
   if (i<n-2){
-    const th=2*Math.PI*i/(n-2)+(rnd()-0.5)*0.10, ct=Math.cos(th), st=Math.sin(th);   // position sur le cercle + défaut
-    const q=[B.U[0]*ct+B.V[0]*st, B.U[1]*ct+B.V[1]*st, B.U[2]*ct+B.V[2]*st];
+    // B249 (user) : demi-cercles PLEINS — les étoiles remplissent toute la SURFACE du
+    // demi-disque (rayon en √rnd = uniforme en aire), pas seulement le contour.
+    const th=2*Math.PI*i/(n-2)+(rnd()-0.5)*0.10, ct=Math.cos(th), st=Math.sin(th);
+    const r=Math.sqrt(rnd());
+    const q=[(B.U[0]*ct+B.V[0]*st)*r, (B.U[1]*ct+B.V[1]*st)*r, (B.U[2]*ct+B.V[2]*st)*r];
     const side=(q[0]*B.P[0]+q[1]*B.P[1]+q[2]*B.P[2])>=0?1:-1, k=0.9;   // poussée ≈ rayon -> écart net
     const v=vrand(rnd);
     const dx=q[0]+B.P[0]*side*k+v[0]*0.05, dy=q[1]+B.P[1]*side*k+v[1]*0.05, dz=q[2]+B.P[2]*side*k+v[2]*0.05;
     const L=Math.hypot(dx,dy,dz)||1;
-    return {dx:dx/L,dy:dy/L,dz:dz/L, spMul:L*0.62*(0.96+rnd()*0.08), comp:0};   // vitesse ∝ |radial+poussée| : l'arc reste un arc
+    return {dx:dx/L,dy:dy/L,dz:dz/L, spMul:L*0.62*(0.96+rnd()*0.08), comp:0};   // vitesse ∝ |position+poussée| : le demi-disque reste un demi-disque
   }
   const D=(i===n-2)?B.D:B.D2;
   return {dx:D[0],dy:D[1],dz:D[2], spMul:1.3, comp:1};
@@ -491,16 +494,7 @@ function crackleFn(d,A,dt){ d.popOn=(d.popOn||0)-dt;
   if (d.popOn>0) return {intenMul:2.3,whiteMix:0.9}; return null; }
 function glitterFn(d){ return {intenMul: Math.random()<0.45?0.4:1.6}; }
 
-// PAPILLON (B246) : les 2 COMÈTES OR (comp 1) s'ARQUENT — virage continu doux autour d'un axe
-// propre (rotation de Rodrigues, comme le zigzag), sens et rythme aléatoires par comète.
-function behaveButterflyComet(d,A,dt,ctx){
-  if (d.comp!==1) return;
-  if (d._bt===undefined){ d._bt=(0.8+Math.random()*0.8)*(Math.random()<0.5?-1:1); d._bax=vrand(Math.random); }
-  const ang=d._bt*dt, c=Math.cos(ang), s=Math.sin(ang), ax=d._bax;
-  const dot=ax[0]*d.vx+ax[1]*d.vy+ax[2]*d.vz;
-  const rx=ax[1]*d.vz-ax[2]*d.vy, ry=ax[2]*d.vx-ax[0]*d.vz, rz=ax[0]*d.vy-ax[1]*d.vx;
-  d.vx=d.vx*c+rx*s+ax[0]*dot*(1-c); d.vy=d.vy*c+ry*s+ax[1]*dot*(1-c); d.vz=d.vz*c+rz*s+ax[2]*dot*(1-c);
-}
+// (behaveButterflyComet supprimé en B249 : les antennes vont DROIT — « pas de mouvement bizarre », user)
 // MÉDUSE (B235) : les 4 spermatozoïdes (comp 1) — montent avec la queue de cheval, puis
 // DANDINENT (oscillation latérale, axe et rythme propres). Pendant le dandinement, la traînée
 // normale S'ARRÊTE et l'étoile lâche des étincelles MINUSCULES (grain 0.35) et ÉPHÉMÈRES
@@ -721,8 +715,8 @@ const EFFECTS = {
   // existe en 100 mm 510461000, 130 m). 2 ailes de 16 points ROSES qui s'écartent + 2 comètes
   // or arquées à traînée qui survivent aux ailes (~×1,5 de vie).
   butterfly: { apex:90, heat:false, pureColor:true, stars:62, starSize:1.9, speedMul:1.1, speedJit:0.08,   // B248 (user) : ~30 étoiles PAR demi-cercle (+2 comètes)
-               gravStar:0.45, dragStar:0.5, lifeBase75:1.5, lifeJitter:0.12, compLife:{1:1.5}, compSize:{1:2.6},
-               dist:distButterfly3D, behave:behaveButterflyComet, trailComps:[1], colors:[PINK, GOLD],
+               gravStar:0.45, dragStar:0.5, lifeBase75:1.5, lifeJitter:0.12, compLife:{1:1.5}, compSize:{1:2.2},   // B249 (user) : antennes DROITES (plus de virage) et un peu plus petites (2.6 -> 2.2)
+               dist:distButterfly3D, trailComps:[1], colors:[PINK, GOLD],
                trailing:{emitUntil:0.95, period:0.008, grain:0.9, gF:0.13, lifeMul:4, color:COPPER, fixedColor:true, spark:true, jit:0.25, bright:0.85} },
   smiley:    { apex:95, heat:false, stars:22, starSize:2.4, dist2D:shapeSmiley, pureColor:true,
                colors:[new THREE.Color(1.0,0.45,0.08), GRN, RED] },   // « bombe 75 mm à effet sourire » (575547000, 95 m) — 15 cercle ORANGE + 2 yeux VERTS + 5 bouche ROUGE (user B128) ; texture neutre pour un vert franc
