@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B253';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B254';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -1435,7 +1435,7 @@ export class ThreeFireworks {
   fire(arch, color){ this.current=EFFECTS[arch]?arch:'peony';
     this._clear();
     this.shells=[new Shell(this.current,0,0,undefined, color?{color}:undefined)];
-    if (this.onLaunch) this.onLaunch(this.current);   // B167 : SON du départ (la chasse à la sortie du tube)
+    if (this.onLaunch) this.onLaunch(this.current, this.shells[0].cal);   // B167 : SON du départ (la chasse). B254 : + calibre (son calibré)
     this._hud((LABELS[this.current]||this.current)+' '+this.shells[0].cal); }   // calibre RÉEL (cfg.cal, ex cœur=100), plus le « 75 » codé en dur
   fireNext(){
     // DÉMO FORMES (user B127) : focus sur sourire ou cœur -> on tire les DEUX EN MÊME TEMPS,
@@ -1445,7 +1445,7 @@ export class ThreeFireworks {
       this.current=this.focus;
       this._clear();
       this.shells=SHAPES_DUO.map((a,i)=>new Shell(a,0,0,undefined,{lean:[(i*2-1)*DUO_LEAN,0]}));
-      if (this.onLaunch) this.onLaunch(this.current);
+      if (this.onLaunch) this.onLaunch(this.current, this.shells[0].cal);
       this._hud('sourire 75 + cœur 100 (éventail)');
     } else if (COMPACTS[this.focus]){
       // COMPACT (B241) : on démarre la SÉQUENCE — les tirs partent au fil de la mèche dans update().
@@ -1470,7 +1470,7 @@ export class ThreeFireworks {
       while (c.i<c.queue.length && c.queue[c.i].t<=c.t){
         const q=c.queue[c.i++];
         this.shells.push(new Shell(c.def.arch,0,0,undefined,{lean:[Math.tan(q.a)*c.apexS,0], pair:c.pair||undefined}));
-        if (this.onLaunch) this.onLaunch(c.def.arch);
+        if (this.onLaunch) this.onLaunch(c.def.arch, this.shells[this.shells.length-1].cal);
       }
       if (c.i>=c.queue.length) this.compact=null;   // mèche finie — le repos/refire reprend quand tout est mort
     }
@@ -1480,7 +1480,7 @@ export class ThreeFireworks {
         // ses PAILLETTES vivent ~7s après l'éclatement -> sans ça, le tir suivant noyait la fin de la traîne)
         this.restDelay=0.8+((EFFECTS[this.current]&&EFFECTS[this.current].restExtra)||0); } }
     for (const s of this.shells){ const ph=s.phase; s.update(dt);
-      if (ph!=='burst' && s.phase==='burst' && this.onBurst) this.onBurst(s.arch); }  // hook son à CHAQUE éclatement
+      if (ph!=='burst' && s.phase==='burst' && this.onBurst) this.onBurst(s.arch, s.cal); }  // hook son à CHAQUE éclatement (B254 : + calibre)
     updateTrails(dt);
     updatePuffs(dt);
   }

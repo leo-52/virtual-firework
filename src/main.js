@@ -143,11 +143,14 @@ document.body.appendChild(sndBtn);
 setTimeout(updateSndBtn, 300);
 addEventListener('pointerdown', () => setTimeout(updateSndBtn, 150));   // le 1er clic n'importe où débloque aussi -> maj du label
 
-layer.onLaunch = () => audio.breakPop();                // B167 : le pop ÉTOUFFÉ = la CHASSE, à la sortie du tube
-layer.onBurst = (arch) => {
-  if (arch === 'dragonEgg') audio.dragonEgg();
+layer.onLaunch = (arch, cal) => audio.launch(cal);      // B254 : le DÉPART (thump sourd + roulement), recalé sur la réf user + CALIBRÉ
+layer.onBurst = (arch, cal) => {
+  if (arch === 'dragonEgg') audio.dragonEgg(cal);
+  else if (arch === 'crackling') audio.crackling(cal);  // B254 : rafale dédiée (~100 pops/1 s), recalée sur la réf user
   else if (arch === 'salute') audio.marron(0.03);       // marron simple : boom quasi immédiat
-  else audio.breakOpen();                               // B167 : l'EXPLOSION en l'air = son OUVERT (claquement net)
+  else if (arch === 'saluteMulti') audio.breakOpen(40); // revue B254 : petit pop d'ouverture — les 5 BOOMS des marrons portent le son
+  else if (arch === 'spinner') audio.hibou();           // B254 : tourbillon = hululement (réf « Hibou » de l'user)
+  else audio.breakOpen(cal);                            // B254 : claquement bref + roulement qui enfle + écho (réf « Bombe 75mm »)
 };
 // MULTI marron d'air : le BOOM part PILE au moment où chaque mini marron détone (hook moteur,
 // plus fiable que des délais programmés — timing 1,0→3,0 s géré par behaveMarron).
