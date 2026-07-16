@@ -109,14 +109,14 @@ Object.assign(pick.style, { position:'fixed', top:'10px', right:'10px', zIndex:'
 for (const [k, label] of Object.entries(LABELS)){
   const o = document.createElement('option'); o.value = k; o.textContent = label; pick.appendChild(o);
 }
-pick.value = 'willowTrunk';
+pick.value = 'fmRing';
 // changer d'effet dans le menu -> couleur PAR DÉFAUT de l'effet (null annule l'override de la démo)
 pick.addEventListener('change', e => layer.setFocus(e.target.value, null));
 document.body.appendChild(pick);
 
-// DÉMO (réglage en cours) : À TRONC SAULE KAMURO 75mm (575165000, 95 m, B253) — le saule
-// kamuro validé + la queue de fusée de référence (B232) pendant la montée.
-layer.setFocus('willowTrunk');
+// DÉMO (réglage en cours) : CERCLE PROGRESSIF FEUILLE MORTE 100mm (510517-510522, 129 m,
+// B257 — vidéo décomposée) : FM au centre + cercle de 16 étoiles à allumage balayé.
+layer.setFocus('fmRing');
 
 // TIMELINE de lecture (barre en bas) + ESPACE = pause/play (fige les feux, caméra libre).
 const timeline = new Timeline(layer, LABELS);

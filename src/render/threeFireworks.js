@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B256';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B257';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -395,6 +395,43 @@ function shapeDaisy(_r,cal,nc){ const nPet=11, pts=[];   // 11 pétales EXACTEME
 // D8-D10 « cercle traçant/kamuro »… ; la bombe cercle SEULE reste arrêtée, cf B127. Décision
 // user 2026-07-10 : « oui il faut quand même l'effet cercle ».) Anneau de 24 étoiles, mêmes
 // règles que les formes 2D (défauts ±0.05, orientation aléatoire ~55 % bon sens, vitesse ∝ rayon).
+// CERCLE PROGRESSIF FEUILLE MORTE (B257, vidéo 6uYWtp3o_T8 décomposée + définition user :
+// « une feuille morte, entourée de 16 étoiles, qui s'allument les unes après les autres ») :
+// au break, les 16 étoiles du cercle partent ÉTEINTES dans un plan debout face public
+// (vitesse unique = cercle qui reste rond) ; l'allumage BALAYE le tour en ~1,15 s depuis un
+// point de départ aléatoire (vidéo : ~3 allumées à +0,25 s, cercle complet à +1,15 s), chaque
+// étoile brûle ~2,1 s avec une petite queue vers l'extérieur (couleur de l'étoile). Au centre,
+// la FEUILLE MORTE (nuage lent qui tombe en tanguant, ~4 s — recette fallingLeaves B125).
+let _fmB=null;
+function distFmRing(i,n,rnd){
+  if (i===0){
+    const F=norm([(rnd()*2-1)*0.25, 0.10+(rnd()*2-1)*0.06, -1]);   // normale ~face public, léger jeu
+    let U=cross(F,[0,1,0]); if(len2(U)<0.01)U=cross(F,[1,0,0]); U=norm(U);
+    const V=norm(cross(F,U));
+    _fmB={U,V};
+  }
+  const B=_fmB;
+  if (i<16){
+    const th=2*Math.PI*i/16+(rnd()-0.5)*0.06, ct=Math.cos(th), st=Math.sin(th);
+    return {dx:B.U[0]*ct+B.V[0]*st, dy:B.U[1]*ct+B.V[1]*st, dz:B.U[2]*ct+B.V[2]*st, spMul:1.0, comp:0};
+  }
+  const v=vrand(rnd);                                              // FM : nuage 3D lent, biaisé vers le bas
+  return {dx:v[0], dy:v[1]*0.6-0.15, dz:v[2], spMul:0.14+rnd()*0.38, comp:1};
+}
+function behaveFmRing(d,A,dt,ctx){
+  if (d.comp!==0) return;
+  if (d.tipAt===undefined){
+    if (ctx._fmK0===undefined){ ctx._fmK0=(Math.random()*16)|0; ctx._fmDir=Math.random()<0.5?1:-1; }
+    const order=(((d._i-ctx._fmK0)*ctx._fmDir)%16+16)%16;          // ordre du balayage autour du cercle
+    d.tipAt=0.12+order*0.072*(0.92+Math.random()*0.16);
+    d.life=d.tipAt+1.9+Math.random()*0.5;                          // ~2,1 s de combustion une fois allumée
+    d.trailing=false;                                              // pas de queue avant l'allumage
+    d.gMul=(d.gMul||1)*0.6;                                        // le cercle retombe moins vite que la FM
+    d.swF=0; d.phase=0; d.swF2=0; d.phase2=Math.PI/2;              // annule le tangage (réservé à la FM)
+  }
+  if (!d._lit && d.age>=d.tipAt){ d._lit=true; d.trailing=true; }
+}
+function fmRingFn(d,A,dt){ return d.comp===0 ? (d._lit?{intenMul:1.25}:{intenMul:0}) : null; }
 function shapeRing(){ const pts=[], n=24;
   for (let k=0;k<n;k++){ const t=2*Math.PI*k/n; pts.push({x:Math.cos(t),y:Math.sin(t),comp:0}); }
   return pts; }
@@ -743,6 +780,16 @@ const EFFECTS = {
   ring:      { apex:95, heat:false, pureColor:true, stars:24, starSize:2.2, dist2D:shapeRing,
                colorPairs:[[RED],[GRN],[BLU],[YEL],[PINK],[PURP]] },
 
+  // CERCLE PROGRESSIF FEUILLE MORTE — « bombe 100 mm cercle progressif <c1> feuille morte <c2> »
+  // (510517000-510522000, 129 m, vidéos). [couleur du CERCLE, couleur de la FM] au sort par tir :
+  // citron/bleu, vert/violet, bleu/rouge, rose/citron, orange/vert, rouge/argent.
+  fmRing: { apex:129, cal:100, heat:false, pureColor:true, stars:61, starSize:2.2, speedMul:1.15, speedJit:0.04,
+            gravStar:0.75, gravJit:0.2, dragStar:0.5, lifeBase75:3.5, lifeJitter:0.12, compLife:{1:0.82}, compSize:{1:0.95},
+            sway:1.5, wind:1.8, restExtra:2,
+            dist:distFmRing, behave:behaveFmRing, onStar:fmRingFn, trailComps:[0],
+            trailing:{emitUntil:0.97, period:0.006, grain:0.8, gF:0.13, lifeMul:1.1, spark:true, jit:0.3, bright:0.85},   // queue héritée de la COULEUR de l'étoile (pas de fixedColor)
+            colorPairs:[[YEL,BLU],[GRN,PURP],[BLU,RED],[PINK,YEL],[new THREE.Color(1.0,0.45,0.08),GRN],[RED,SILVER]] },
+
   // === MOTIFS 3D multi-couleurs ===
   // ATOME (B191, « bombe 150 mm atome <couleur> », 12 réfs, 165 m — N'EXISTE QU'EN 150mm ; étapes
   // vidéo GTIeDTIQl-0 disséquées par l'user) : PIVOINE couleur (vie courte, ×0.6 — elle meurt à
@@ -820,7 +867,7 @@ const EFFECTS = {
 export const LABELS = { peony:'pivoine', chrysanthemum:'chrysanthème', willow:'saule (kamuro)', willowTrunk:'à tronc saule kamuro', willowStrobe:'saule or pointes scintillant', willowTips:'saule or pointes', willowTips100:'saule or pointes 100 mm', comet:'comète',
   sphere:'sphère', crackling:'crackling', dragonEgg:'œuf de dragon', strobe:'scintillant', cli:'cli. blanc/rouge', dahliaCli:'dahlia centre cli. blanc', kamuroCli:'ext. kamuro centre cli. blanc', halfSwapCli:'moitié changeante centre cli.', finalCli:'final cli. blanc rose', palmMulti:'palme multicolore', palmStrobe:'palme or scintillant',
   fallingLeaves:'feuille morte', palm:'palme', heart:'cœur', butterfly:'papillon', smiley:'smiley',
-  daisy:'marguerite', atom:'atome', halfHalf:'demi-demi', tracer:'traçante', zigzag:'zigzag', ring:'cercle (brique)', medusa:'méduse', horsetail:'queue de cheval',
+  daisy:'marguerite', atom:'atome', halfHalf:'demi-demi', tracer:'traçante', zigzag:'zigzag', ring:'cercle (brique)', fmRing:'cercle progressif feuille morte', medusa:'méduse', horsetail:'queue de cheval',
   cascade:'cascade', fish:'poisson', spinner:'tourbillon', saucer:'soucoupe', mosaic:'mosaïque', mosaicMix:'mosaïque assortie',
   mine:'pot à feu', salute:"salut (marron d'air)", saluteMulti:"multi marron d'air",
   zMeduse:'compact 40 tirs z méduse' };
