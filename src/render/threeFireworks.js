@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B251';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B252';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -364,7 +364,7 @@ function distButterfly3D(i,n,rnd){
     const th=2*Math.PI*i/(n-2)+(rnd()-0.5)*0.10, ct=Math.cos(th), st=Math.sin(th);
     const r=Math.sqrt(rnd());
     const q=[(B.U[0]*ct+B.V[0]*st)*r, (B.U[1]*ct+B.V[1]*st)*r, (B.U[2]*ct+B.V[2]*st)*r];
-    const side=(q[0]*B.P[0]+q[1]*B.P[1]+q[2]*B.P[2])>=0?1:-1, k=0.9;   // poussée ≈ rayon -> écart net
+    const side=(q[0]*B.P[0]+q[1]*B.P[1]+q[2]*B.P[2])>=0?1:-1, k=0.68;  // B252 (user) : ailes MOINS écartées à la fin (0.9 -> 0.68)
     const v=vrand(rnd);
     const dx=q[0]+B.P[0]*side*k+v[0]*0.05, dy=q[1]+B.P[1]*side*k+v[1]*0.05, dz=q[2]+B.P[2]*side*k+v[2]*0.05;
     const L=Math.hypot(dx,dy,dz)||1;
@@ -719,13 +719,13 @@ const EFFECTS = {
   // PAPILLON (B246, vidéo décomposée) : « bombe 75 mm à effet papillon » (575525000, 90 m ;
   // existe en 100 mm 510461000, 130 m). 2 ailes de 16 points ROSES qui s'écartent + 2 comètes
   // or arquées à traînée qui survivent aux ailes (~×1,5 de vie).
-  butterfly: { apex:90, heat:false, pureColor:true, stars:62, starSize:1.9, speedMul:1.1, speedJit:0.08,   // B248 (user) : ~30 étoiles PAR demi-cercle (+2 comètes)
+  butterfly: { apex:90, heat:false, pureColor:true, stars:62, starSize:1.75, speedMul:1.1, speedJit:0.08,   // B248 (user) : ~30 étoiles PAR demi-cercle (+2 comètes). B252 : étoiles d'aile un poil plus petites (1.9 -> 1.75)
                gravStar:0.45, dragStar:0.5, lifeBase75:1.5, lifeJitter:0.12, compLife:{1:1.5},   // B249 (user) : antennes DROITES (plus de virage)
                dist:distButterfly3D, onStar:butterflyFn, trailComps:[1], colors:[PINK, GOLD],
                // B250 (user) : traînée d'antenne = LA RÉFÉRENCE queue du zigzag (B232) — grains FINS
                // cuivre 0.65 le long du trajet, vies ÉTAGÉES ~72 % brèves / 22 % moyennes / 6 % longues
                // (longLaw p constant 0.28, tirage biaisé bas) ; étoile invisible, la POINTE = les grains frais.
-               trailing:{emitUntil:0.97, period:0.002, grain:0.65, gF:0.13, lifeMul:1.3, color:COPPER, fixedColor:true, spark:true, jit:0.4, bright:0.9,
+               trailing:{emitUntil:0.97, period:0.002, grain:0.85, gF:0.13, lifeMul:1.3, color:COPPER, fixedColor:true, spark:true, jit:0.4, bright:0.9,   // B252 (user) : traînée d'antenne un peu plus grosse (grain 0.65 -> 0.85)
                  longLaw:{p0:0.28, p1:0.28, min:0.65, max:2.9, pow:2}} },
   smiley:    { apex:95, heat:false, stars:22, starSize:2.4, dist2D:shapeSmiley, pureColor:true,
                colors:[new THREE.Color(1.0,0.45,0.08), GRN, RED] },   // « bombe 75 mm à effet sourire » (575547000, 95 m) — 15 cercle ORANGE + 2 yeux VERTS + 5 bouche ROUGE (user B128) ; texture neutre pour un vert franc
