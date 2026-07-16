@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B259';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B260';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -405,7 +405,7 @@ function shapeDaisy(_r,cal,nc){ const nPet=11, pts=[];   // 11 pétales EXACTEME
 let _fmB=null;
 function distFmRing(i,n,rnd){
   if (i===0){
-    const F=norm([(rnd()*2-1)*0.25, 0.10+(rnd()*2-1)*0.06, -1]);   // normale ~face public, léger jeu
+    const F=vrand(rnd);                                            // B260 (user) : SENS ALÉATOIRE par tir (à plat, de biais, face…), comme les cercles
     let U=cross(F,[0,1,0]); if(len2(U)<0.01)U=cross(F,[1,0,0]); U=norm(U);
     const V=norm(cross(F,U));
     _fmB={U,V};
@@ -433,7 +433,7 @@ function behaveFmRing(d,A,dt,ctx){
     }
     const S=ctx._fmSched, order=(((d._i-S.k0)*S.dir)%16+16)%16;    // ordre du balayage autour du cercle
     d.tipAt=Math.max(0.05, S.sched[order]);
-    d.life=d.tipAt+1.5+Math.random()*1.3;                          // B259 : combustion INÉGALE 1,5-2,8 s (certaines restent bien plus longtemps)
+    d.life=d.tipAt+1.05+Math.random()*0.9;                         // B260 (user) : combustion plus courte, toujours INÉGALE (1,05-1,95 s)
     d.trailing=false;                                              // pas de queue avant l'allumage
     d.gMul=(d.gMul||1)*0.6;                                        // le cercle retombe moins vite que la FM
     d.swF=0; d.phase=0; d.swF2=0; d.phase2=Math.PI/2;              // annule le tangage (réservé à la FM)
