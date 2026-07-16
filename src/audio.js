@@ -12,6 +12,11 @@
 const K = (fc, sr) => 1 - Math.exp(-2*Math.PI*fc/sr);   // coeff passe-bas 1 pôle pour une coupure fc
 const vol  = c => Math.min(1.6, Math.max(0.30, Math.pow((c||75)/75, 0.9)));    // gain par calibre
 const deep = c => Math.min(1.20, Math.max(0.85, Math.pow(75/(c||75), 0.12)));  // gros calibre = + grave
+// DISTANCE caméra -> bombe (B256, user : « adapter le son selon la distance ») :
+// loi en 1/d, référence 150 m (la vue public par défaut) ; et le son ARRIVE en retard (343 m/s)
+// -> à la vue par défaut le boom claque ~0,5 s après le flash, comme en vrai.
+const att = d => Math.max(0.03, Math.min(1.8, 150/Math.max(d||150, 25)));
+const dly = d => d ? d/343 : 0;
 
 // [fichier web/sons/<n>.mp3, gain de normalisation (pics mesurés : oeuf 0.20, sifflet 0.11)]
 const SAMPLES = {
@@ -32,7 +37,7 @@ export class PyroAudio {
       if (!this.ctx){
         try {
           this.ctx = new (window.AudioContext || window.webkitAudioContext)();
-          this.master = this.ctx.createGain(); this.master.gain.value = 0.7;
+          this.master = this.ctx.createGain(); this.master.gain.value = 0.5;   // B256 (user : « trop fort ») : 0.7 -> 0.5
           // LIMITEUR (revue B254) : compacts = salves, multi-marron = 5 booms — sans headroom
           // la somme écrête DUR. Seuil haut + ratio fort : un son seul passe quasi intact.
           const lim = this.ctx.createDynamicsCompressor();
@@ -65,21 +70,32 @@ export class PyroAudio {
     }
   }
 
-  _play(buf, gain, when = 0, rateJit = 0.10, rateMul = 1){
+  // fadeOut (B256, user : « ça se coupe net ») : fondu de fin programmé sur le gain — les mp3
+  // sont des extraits coupés, sans fondu la dernière couche s'arrête d'un coup.
+  _play(buf, gain, when = 0, rateJit = 0.10, rateMul = 1, fadeOut = 0){
     const src = this.ctx.createBufferSource();
     src.buffer = buf;
-    src.playbackRate.value = (1 - rateJit/2 + Math.random()*rateJit) * rateMul;
-    const g = this.ctx.createGain(); g.gain.value = gain;
+    const rate = (1 - rateJit/2 + Math.random()*rateJit) * rateMul;
+    src.playbackRate.value = rate;
+    const g = this.ctx.createGain();
+    const t0 = this.ctx.currentTime + Math.max(0, when);
+    g.gain.setValueAtTime(0, t0);
+    g.gain.linearRampToValueAtTime(gain, t0 + 0.006);              // micro fade-in anti-clic
+    if (fadeOut > 0){
+      const dur = buf.duration / rate;
+      g.gain.setValueAtTime(gain, t0 + Math.max(0.01, dur - fadeOut));
+      g.gain.linearRampToValueAtTime(0.0001, t0 + dur);
+    }
     src.connect(g).connect(this.master);
     src.onended = () => { try { src.disconnect(); g.disconnect(); } catch(e){} };   // pas de nœuds orphelins pour le GC
-    src.start(this.ctx.currentTime + Math.max(0, when));
+    src.start(t0);
   }
   // Joue l'échantillon k s'il est chargé ; sinon synthèse de secours SEULEMENT si le
   // chargement a échoué (pendant le chargement : silence, pas de son moche).
-  _shot(k, gain, when, rateJit, rateMul, fallback){
+  _shot(k, gain, when, rateJit, rateMul, fallback, fadeOut = 0){
     const s = this._smp[k];
-    if (s) return this._play(s.buf, gain * s.trim, when, rateJit, rateMul);
-    if (this._smpFail[k] && fallback) this._play(this._pool(k, fallback), gain, when, rateJit, rateMul);
+    if (s) return this._play(s.buf, gain * s.trim, when, rateJit, rateMul, fadeOut);
+    if (this._smpFail[k] && fallback) this._play(this._pool(k, fallback), gain, when, rateJit, rateMul, fadeOut);
   }
   _pool(name, maker){
     const P = this._pools[name] || (this._pools[name] = []);
@@ -91,48 +107,49 @@ export class PyroAudio {
     if (mx>0.99){ const g=0.99/mx; for (let i=0;i<n;i++) d[i]*=g; } }
 
   // DÉPART DE BOMBE (la chasse, à la sortie du tube) = « Départ de bombe.mp3 ».
-  launch(cal){
+  launch(cal, dist){
     if (!this._ready()) return;
-    this._shot('launch', 0.60*vol(cal), 0, 0.08, deep(cal), () => this._launchBuffer());
+    this._shot('launch', 0.60*vol(cal)*att(dist), dly(dist), 0.08, deep(cal), () => this._launchBuffer(), 0.25);
   }
 
   // EXPLOSION EN L'AIR (toute bombe) = « Bombe 75mm.mp3 » (claquement + boom qui roule + échos,
   // tels quels — le mp3 contient déjà tout).
-  breakOpen(cal){
+  breakOpen(cal, dist){
     if (!this._ready()) return;
-    this._shot('break', 0.90*vol(cal), 0, 0.09, deep(cal), () => this._breakOpenBuffer());
+    this._shot('break', 0.90*vol(cal)*att(dist), dly(dist), 0.09, deep(cal), () => this._breakOpenBuffer(), 0.40);
   }
 
   // CRACKLING : CHAQUE ÉTOILE crépite (user B255) — le son doit DURER tant que les étoiles
   // vivent. 3 couches du mp3 décalées et dé-synchronisées (vitesses différentes) = texture
-  // continue ~2,5-3 s qui s'éteint progressivement, au lieu d'une rafale unique au break.
-  crackling(cal){
+  // continue ~2,5-3 s qui S'ÉTEINT PROGRESSIVEMENT (fondus de 0,45 s, user B256 : « ça se
+  // coupe net »), au lieu d'une rafale unique au break.
+  crackling(cal, dist){
     if (!this._ready()) return;
-    const g = 0.85*vol(cal), dp = deep(cal), fb = () => this._cracklingBuffer();
-    this._shot('crack', g,      0,                        0.10, dp,      fb);
-    this._shot('crack', g*0.75, 0.55 + Math.random()*0.25, 0.16, dp*0.96, fb);
-    this._shot('crack', g*0.50, 1.20 + Math.random()*0.35, 0.16, dp*1.05, fb);
+    const g = 0.85*vol(cal)*att(dist), dp = deep(cal), t = dly(dist), fb = () => this._cracklingBuffer();
+    this._shot('crack', g,      t,                            0.10, dp,      fb, 0.30);
+    this._shot('crack', g*0.70, t + 0.55 + Math.random()*0.25, 0.16, dp*0.96, fb, 0.40);
+    this._shot('crack', g*0.45, t + 1.20 + Math.random()*0.35, 0.16, dp*1.05, fb, 0.50);
   }
 
   // ŒUF DE DRAGON = « Oeuf de dragon.mp3 » (break étouffé + rafale) + 1 couche décalée :
   // là aussi les étoiles crépitent après l'ouverture.
-  dragonEgg(cal){
+  dragonEgg(cal, dist){
     if (!this._ready()) return;
-    const g = 0.90*vol(cal), dp = deep(cal), fb = () => this._dragonEggBuffer();
-    this._shot('dragon', g,      0,                        0.08, dp,      fb);
-    this._shot('dragon', g*0.55, 0.70 + Math.random()*0.25, 0.14, dp*1.04, fb);
+    const g = 0.90*vol(cal)*att(dist), dp = deep(cal), t = dly(dist), fb = () => this._dragonEggBuffer();
+    this._shot('dragon', g,      t,                            0.08, dp,      fb, 0.25);
+    this._shot('dragon', g*0.55, t + 0.60 + Math.random()*0.25, 0.14, dp*1.04, fb, 0.35);
   }
 
   // SIFFLET = « Sifflet.mp3 » (pour les réfs « espagnole … sifflet »).
-  whistle(when = 0){
+  whistle(when = 0, dist){
     if (!this._ready()) return;
-    this._shot('whistle', 0.45, when, 0.06, 1, () => this._whistleBuffer());
+    this._shot('whistle', 0.45*att(dist), when + dly(dist), 0.06, 1, () => this._whistleBuffer(), 0.15);
   }
 
   // HIBOU = « Hibou.mp3 » (tourbillon hululant, câblé sur l'archétype spinner).
-  hibou(when = 0){
+  hibou(when = 0, dist){
     if (!this._ready()) return;
-    this._shot('hibou', 0.60, when, 0.06, 1, () => this._hibouBuffer());
+    this._shot('hibou', 0.60*att(dist), when + dly(dist), 0.06, 1, () => this._hibouBuffer(), 0.20);
   }
 
   // ============================== SYNTHÈSE DE SECOURS ==============================
@@ -298,8 +315,8 @@ export class PyroAudio {
   }
 
   // when = délai en secondes (les marrons du MULTI détonent décalés). gain fort (×1.25 vs bombe).
-  marron(when = 0){
+  marron(when = 0, dist){
     if (!this._ready()) return;
-    this._play(this._pool('marron', () => this._marronBuffer()), 1.25, when, 0.08);
+    this._play(this._pool('marron', () => this._marronBuffer()), 1.25*att(dist), when + dly(dist), 0.08, 1, 0.20);
   }
 }

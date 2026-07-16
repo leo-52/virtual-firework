@@ -143,18 +143,18 @@ document.body.appendChild(sndBtn);
 setTimeout(updateSndBtn, 300);
 addEventListener('pointerdown', () => setTimeout(updateSndBtn, 150));   // le 1er clic n'importe où débloque aussi -> maj du label
 
-layer.onLaunch = (arch, cal) => audio.launch(cal);      // B254 : le DÉPART (thump sourd + roulement), recalé sur la réf user + CALIBRÉ
-layer.onBurst = (arch, cal) => {
-  if (arch === 'dragonEgg') audio.dragonEgg(cal);
-  else if (arch === 'crackling') audio.crackling(cal);  // B254 : rafale dédiée (~100 pops/1 s), recalée sur la réf user
-  else if (arch === 'salute') audio.marron(0.03);       // marron simple : boom quasi immédiat
-  else if (arch === 'saluteMulti') audio.breakOpen(40); // revue B254 : petit pop d'ouverture — les 5 BOOMS des marrons portent le son
-  else if (arch === 'spinner') audio.hibou();           // B254 : tourbillon = hululement (réf « Hibou » de l'user)
-  else audio.breakOpen(cal);                            // B254 : claquement bref + roulement qui enfle + écho (réf « Bombe 75mm »)
+layer.onLaunch = (arch, cal, dist) => audio.launch(cal, dist);   // B254 : DÉPART calibré. B256 : atténué/retardé par la DISTANCE caméra
+layer.onBurst = (arch, cal, dist) => {
+  if (arch === 'dragonEgg') audio.dragonEgg(cal, dist);
+  else if (arch === 'crackling') audio.crackling(cal, dist);     // B255 : texture étalée (chaque étoile crépite)
+  else if (arch === 'salute') audio.marron(0.03, dist);          // marron simple : boom quasi immédiat
+  else if (arch === 'saluteMulti') audio.breakOpen(40, dist);    // revue B254 : petit pop d'ouverture — les 5 BOOMS des marrons portent le son
+  else if (arch === 'spinner') audio.hibou(0, dist);             // B254 : tourbillon = hululement (réf « Hibou » de l'user)
+  else audio.breakOpen(cal, dist);                               // = « Bombe 75mm.mp3 »
 };
 // MULTI marron d'air : le BOOM part PILE au moment où chaque mini marron détone (hook moteur,
 // plus fiable que des délais programmés — timing 1,0→3,0 s géré par behaveMarron).
-__setMarronPop(() => audio.marron(0));
+__setMarronPop((x, y, z) => audio.marron(0, layer.distTo(x, y, z)));   // B256 : chaque détonation atténuée/retardée selon sa distance
 
 // BOUCLE DE RENDU UNIQUE — on PREND LA MAIN sur Cesium (sinon il s'endort quand la scène
 // est stable et tout se fige). On pilote nous-mêmes : sim -> décor Cesium -> overlay feux.

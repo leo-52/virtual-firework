@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B255';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B256';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -568,7 +568,7 @@ function behaveMarron(d,A,dt,ctx){
     spawnTrail(px,py,pz, 1.40,1.44,1.55, 1.0, 0.35, (0.10+Math.random()*0.10)/0.26, v[0]*sp*4, v[1]*sp*4, v[2]*sp*4, 0.4, 0.42, true); }
   for (let c=0;c<220;c++){ const v=vrand(Math.random), sp=10.5+Math.random()*3.5;  // grains ORANGE fins (0,28-0,52 s -> le cercle final de ~10 m)
     spawnTrail(px,py,pz, 1.25,0.58,0.16, 0.7, 0.35, (0.28+Math.random()*0.24)/0.26, v[0]*sp*4, v[1]*sp*4, v[2]*sp*4, 0.5, 0.42, true); }
-  if (_onMarronPop) _onMarronPop();   // BOOM synchronisé pile sur la détonation visuelle
+  if (_onMarronPop) _onMarronPop(px, py, pz);   // BOOM synchronisé pile sur la détonation visuelle (B256 : + position pour la distance)
   d.age=d.life;   // le porteur meurt à la détonation
 }
 
@@ -1417,6 +1417,8 @@ export class ThreeFireworks {
     this.fixedToEnu=Cesium.Matrix4.inverseTransformation(this.enuToFixed, new Cesium.Matrix4()); }
   localToWorld(local){ return Cesium.Matrix4.multiplyByPoint(this.enuToFixed,
     new Cesium.Cartesian3(local[0],local[1],local[2]), new Cesium.Cartesian3()); }
+  // Distance caméra -> point (x,y,z) en coordonnées scène (B256 : son atténué/retardé par la distance)
+  distTo(x, y, z){ const p=this.camera.position; return Math.hypot(p.x-x, p.y-y, p.z-z); }
   syncCamera(){ const cam=this.viewer.camera;
     Cesium.Matrix4.multiplyByPoint(this.fixedToEnu, cam.positionWC, this._pe);
     Cesium.Matrix4.multiplyByPointAsVector(this.fixedToEnu, cam.directionWC, this._de);
@@ -1435,7 +1437,7 @@ export class ThreeFireworks {
   fire(arch, color){ this.current=EFFECTS[arch]?arch:'peony';
     this._clear();
     this.shells=[new Shell(this.current,0,0,undefined, color?{color}:undefined)];
-    if (this.onLaunch) this.onLaunch(this.current, this.shells[0].cal);   // B167 : SON du départ (la chasse). B254 : + calibre (son calibré)
+    if (this.onLaunch) this.onLaunch(this.current, this.shells[0].cal, this.distTo(this.shells[0].ox, 0, this.shells[0].oz));   // B167 : SON du départ. B254 : + calibre. B256 : + distance
     this._hud((LABELS[this.current]||this.current)+' '+this.shells[0].cal); }   // calibre RÉEL (cfg.cal, ex cœur=100), plus le « 75 » codé en dur
   fireNext(){
     // DÉMO FORMES (user B127) : focus sur sourire ou cœur -> on tire les DEUX EN MÊME TEMPS,
@@ -1445,7 +1447,7 @@ export class ThreeFireworks {
       this.current=this.focus;
       this._clear();
       this.shells=SHAPES_DUO.map((a,i)=>new Shell(a,0,0,undefined,{lean:[(i*2-1)*DUO_LEAN,0]}));
-      if (this.onLaunch) this.onLaunch(this.current, this.shells[0].cal);
+      if (this.onLaunch) this.onLaunch(this.current, this.shells[0].cal, this.distTo(this.shells[0].ox, 0, this.shells[0].oz));
       this._hud('sourire 75 + cœur 100 (éventail)');
     } else if (COMPACTS[this.focus]){
       // COMPACT (B241) : on démarre la SÉQUENCE — les tirs partent au fil de la mèche dans update().
@@ -1469,8 +1471,9 @@ export class ThreeFireworks {
       const c=this.compact; c.t+=dt;
       while (c.i<c.queue.length && c.queue[c.i].t<=c.t){
         const q=c.queue[c.i++];
-        this.shells.push(new Shell(c.def.arch,0,0,undefined,{lean:[Math.tan(q.a)*c.apexS,0], pair:c.pair||undefined}));
-        if (this.onLaunch) this.onLaunch(c.def.arch, this.shells[this.shells.length-1].cal);
+        const nsh=new Shell(c.def.arch,0,0,undefined,{lean:[Math.tan(q.a)*c.apexS,0], pair:c.pair||undefined});
+        this.shells.push(nsh);
+        if (this.onLaunch) this.onLaunch(c.def.arch, nsh.cal, this.distTo(nsh.ox, 0, nsh.oz));
       }
       if (c.i>=c.queue.length) this.compact=null;   // mèche finie — le repos/refire reprend quand tout est mort
     }
@@ -1480,7 +1483,7 @@ export class ThreeFireworks {
         // ses PAILLETTES vivent ~7s après l'éclatement -> sans ça, le tir suivant noyait la fin de la traîne)
         this.restDelay=0.8+((EFFECTS[this.current]&&EFFECTS[this.current].restExtra)||0); } }
     for (const s of this.shells){ const ph=s.phase; s.update(dt);
-      if (ph!=='burst' && s.phase==='burst' && this.onBurst) this.onBurst(s.arch, s.cal); }  // hook son à CHAQUE éclatement (B254 : + calibre)
+      if (ph!=='burst' && s.phase==='burst' && this.onBurst) this.onBurst(s.arch, s.cal, this.distTo(s.bx, s.cfg.apex, s.bz)); }  // hook son à CHAQUE éclatement (B254 : + calibre, B256 : + distance)
     updateTrails(dt);
     updatePuffs(dt);
   }
