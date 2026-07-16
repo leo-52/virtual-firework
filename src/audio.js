@@ -119,25 +119,30 @@ export class PyroAudio {
     this._shot('break', 0.90*vol(cal)*att(dist), dly(dist), 0.09, deep(cal), () => this._breakOpenBuffer(), 0.40);
   }
 
-  // CRACKLING : CHAQUE ÉTOILE crépite (user B255) — le son doit DURER tant que les étoiles
-  // vivent. 3 couches du mp3 décalées et dé-synchronisées (vitesses différentes) = texture
-  // continue ~2,5-3 s qui S'ÉTEINT PROGRESSIVEMENT (fondus de 0,45 s, user B256 : « ça se
-  // coupe net »), au lieu d'une rafale unique au break.
+  // CRACKLING : CHAQUE ÉTOILE crépite (user B255) et le son de chaque vague part de la bombe
+  // AU MOMENT VISUEL du crépitement puis voyage (B258, user : « le crépitement arrive dès que
+  // je vois l'étoile crépiter » — il doit arriver APRÈS). Timing visuel du moteur : l'effet
+  // crackling = pivoine + pistil œuf de dragon qui explose 0,9 -> 1,5 s après le break
+  // (cfg crackling.core.crackleAt 0.9, jitter 0.6 — si ça change là-bas, recaler ici).
   crackling(cal, dist){
     if (!this._ready()) return;
-    const g = 0.85*vol(cal)*att(dist), dp = deep(cal), t = dly(dist), fb = () => this._cracklingBuffer();
-    this._shot('crack', g,      t,                            0.10, dp,      fb, 0.30);
-    this._shot('crack', g*0.70, t + 0.55 + Math.random()*0.25, 0.16, dp*0.96, fb, 0.40);
-    this._shot('crack', g*0.45, t + 1.20 + Math.random()*0.35, 0.16, dp*1.05, fb, 0.50);
+    const gB = 0.60*vol(cal)*att(dist), g = 0.85*vol(cal)*att(dist), dp = deep(cal), t = dly(dist), fb = () => this._cracklingBuffer();
+    this._shot('break', gB,     t,                            0.09, dp,      () => this._breakOpenBuffer(), 0.40);   // l'ÉCLATEMENT de la pivoine
+    this._shot('crack', g,      t + 0.90,                     0.10, dp,      fb, 0.35);   // le pistil crépite (visuel 0,9-1,5 s)
+    this._shot('crack', g*0.65, t + 1.35 + Math.random()*0.20, 0.16, dp*1.04, fb, 0.50);
   }
 
-  // ŒUF DE DRAGON = « Oeuf de dragon.mp3 » (break étouffé + rafale) + 1 couche décalée :
-  // là aussi les étoiles crépitent après l'ouverture.
+  // ŒUF DE DRAGON — couches calées sur le TIMING VISUEL du moteur (B258) : le CŒUR crépite à
+  // ~0,5-0,65 s (cfg dragonEgg.core.crackleAt 0.5), les ÉTOILES explosent entre 1,3 et 1,9 s
+  // (cfg crackleStars delay 1.3 jitter 0.6) — chaque vague part de la bombe à son instant
+  // visuel PUIS voyage vers la caméra. La rafale du mp3 démarre ~0,2 s après son début
+  // -> chaque couche est posée 0,2 s avant l'instant visuel visé.
   dragonEgg(cal, dist){
     if (!this._ready()) return;
     const g = 0.90*vol(cal)*att(dist), dp = deep(cal), t = dly(dist), fb = () => this._dragonEggBuffer();
-    this._shot('dragon', g,      t,                            0.08, dp,      fb, 0.25);
-    this._shot('dragon', g*0.55, t + 0.60 + Math.random()*0.25, 0.14, dp*1.04, fb, 0.35);
+    this._shot('dragon', g,      t + 0.30,                     0.08, dp,      fb, 0.25);   // cœur : rafale audible à ~t+0,5
+    this._shot('dragon', g*0.75, t + 1.10 + Math.random()*0.20, 0.12, dp*1.03, fb, 0.30);   // étoiles : 1,3-1,9 s
+    this._shot('dragon', g*0.50, t + 1.50 + Math.random()*0.25, 0.14, dp*0.97, fb, 0.40);
   }
 
   // SIFFLET = « Sifflet.mp3 » (pour les réfs « espagnole … sifflet »).
