@@ -109,14 +109,14 @@ Object.assign(pick.style, { position:'fixed', top:'10px', right:'10px', zIndex:'
 for (const [k, label] of Object.entries(LABELS)){
   const o = document.createElement('option'); o.value = k; o.textContent = label; pick.appendChild(o);
 }
-pick.value = 'butterfly';
+pick.value = 'willowTrunk';
 // changer d'effet dans le menu -> couleur PAR DÉFAUT de l'effet (null annule l'override de la démo)
 pick.addEventListener('change', e => layer.setFocus(e.target.value, null));
 document.body.appendChild(pick);
 
-// DÉMO (réglage en cours) : PAPILLON 75mm (575525000, 90 m, B246 — réécrit depuis la vidéo) —
-// 2 ailes roses qui s'écartent + 2 comètes or arquées.
-layer.setFocus('butterfly');
+// DÉMO (réglage en cours) : À TRONC SAULE KAMURO 75mm (575165000, 95 m, B253) — le saule
+// kamuro validé + la queue de fusée de référence (B232) pendant la montée.
+layer.setFocus('willowTrunk');
 
 // TIMELINE de lecture (barre en bas) + ESPACE = pause/play (fige les feux, caméra libre).
 const timeline = new Timeline(layer, LABELS);
