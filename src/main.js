@@ -130,18 +130,18 @@ const sndBtn = document.createElement('button');
 Object.assign(sndBtn.style, { position:'fixed', top:'52px', right:'10px', zIndex:'10',
   background:'rgba(0,0,0,.55)', color:'#fff', border:'1px solid #555', borderRadius:'6px',
   padding:'6px 10px', fontFamily:'system-ui, sans-serif', fontSize:'13px', cursor:'pointer' });
-function updateSndBtn(){
-  const on = audio.enabled && audio.ctx && audio.ctx.state === 'running';
-  sndBtn.textContent = on ? '🔊 Son ON' : '🔇 Son OFF';
-}
+// B259 (user : « le bouton son bug ») : l'ancien label dépendait de l'état du ctx (asynchrone),
+// et le pointerdown GLOBAL débloquait l'audio juste avant le clic -> le 1er appui sur le bouton
+// COUPAIT le son au lieu de l'activer. Désormais : le son est ON par défaut (il démarre au 1er
+// geste, politique navigateur), le bouton ne fait que BASCULER enabled, le label suit enabled.
+function updateSndBtn(){ sndBtn.textContent = audio.enabled ? '🔊 Son ON' : '🔇 Son OFF'; }
 sndBtn.addEventListener('click', () => {
-  if (!audio.ctx || audio.ctx.state !== 'running'){ audio.unlock(); audio.enabled = true; }
-  else audio.enabled = !audio.enabled;
-  setTimeout(updateSndBtn, 80);   // laisse le resume() aboutir avant de rafraîchir le label
+  audio.unlock();
+  audio.enabled = !audio.enabled;
+  updateSndBtn();
 });
 document.body.appendChild(sndBtn);
-setTimeout(updateSndBtn, 300);
-addEventListener('pointerdown', () => setTimeout(updateSndBtn, 150));   // le 1er clic n'importe où débloque aussi -> maj du label
+updateSndBtn();
 
 layer.onLaunch = (arch, cal, dist) => audio.launch(cal, dist);   // B254 : DÉPART calibré. B256 : atténué/retardé par la DISTANCE caméra
 layer.onBurst = (arch, cal, dist) => {

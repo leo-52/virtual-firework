@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B258';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B259';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -421,10 +421,19 @@ function distFmRing(i,n,rnd){
 function behaveFmRing(d,A,dt,ctx){
   if (d.comp!==0) return;
   if (d.tipAt===undefined){
-    if (ctx._fmK0===undefined){ ctx._fmK0=(Math.random()*16)|0; ctx._fmDir=Math.random()<0.5?1:-1; }
-    const order=(((d._i-ctx._fmK0)*ctx._fmDir)%16+16)%16;          // ordre du balayage autour du cercle
-    d.tipAt=0.12+order*0.072*(0.92+Math.random()*0.16);
-    d.life=d.tipAt+1.9+Math.random()*0.5;                          // ~2,1 s de combustion une fois allumée
+    // B259 (user : « trop parfait ») : PETITS DÉFAUTS de mèche — le balayage est pré-tiré pour
+    // tout le cercle : ~15 % des pas sont quasi NULS (2 étoiles s'allument ensemble), les autres
+    // varient, et chaque instant a son propre jeu (l'ordre peut localement s'inverser).
+    if (!ctx._fmSched){
+      const k0=(Math.random()*16)|0, dir=Math.random()<0.5?1:-1, sched=new Array(16);
+      let t=0.12;
+      for (let o=0;o<16;o++){ sched[o]=t+(Math.random()-0.5)*0.05;
+        t += (Math.random()<0.15) ? 0.008 : 0.060+Math.random()*0.032; }
+      ctx._fmSched={k0,dir,sched};
+    }
+    const S=ctx._fmSched, order=(((d._i-S.k0)*S.dir)%16+16)%16;    // ordre du balayage autour du cercle
+    d.tipAt=Math.max(0.05, S.sched[order]);
+    d.life=d.tipAt+1.5+Math.random()*1.3;                          // B259 : combustion INÉGALE 1,5-2,8 s (certaines restent bien plus longtemps)
     d.trailing=false;                                              // pas de queue avant l'allumage
     d.gMul=(d.gMul||1)*0.6;                                        // le cercle retombe moins vite que la FM
     d.swF=0; d.phase=0; d.swF2=0; d.phase2=Math.PI/2;              // annule le tangage (réservé à la FM)
@@ -1479,7 +1488,12 @@ export class ThreeFireworks {
   // compat : timeline.js lit layer.shell (barre de progression) -> 1re bombe encore VIVANTE du
   // groupe (sinon en trio la barre retombait à 0 dès la mort de la 1re alors que 2 brillent encore)
   get shell(){ for (const s of this.shells) if (!s.dead) return s; return this.shells[0]||null; }
-  _hud(txt){ if (this.hud) this.hud.innerHTML='<b>PrevoFX — aperçu web</b> <span style="color:#7fff7f">['+BUILD+']</span><br>'+txt+' · QZSD + clic-glisser · Espace = pause'; }
+  // B259 (user) : sur MOBILE, HUD réduit au seul tampon [Bnnn] (détecteur de cache) — pas de
+  // titre « aperçu web », pas de nom d'effet/calibre, pas d'aides clavier (QZSD/Espace).
+  _hud(txt){ if (!this.hud) return;
+    const mob = (typeof matchMedia!=='undefined') && matchMedia('(pointer: coarse)').matches;
+    this.hud.innerHTML = mob ? '<span style="color:#7fff7f">['+BUILD+']</span>'
+      : '<b>PrevoFX — aperçu web</b> <span style="color:#7fff7f">['+BUILD+']</span><br>'+txt+' · QZSD + clic-glisser · Espace = pause'; }
   _clear(){ for (const s of this.shells) s.destroy(); }   // abandon propre des bombes remplacées
   fire(arch, color){ this.current=EFFECTS[arch]?arch:'peony';
     this._clear();
