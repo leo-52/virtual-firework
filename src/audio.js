@@ -26,6 +26,7 @@ const SAMPLES = {
   dragon:  ['oeuf',      3.50],
   whistle: ['sifflet',   3.50],
   hibou:   ['hibou',     1.17],
+  marron:  ['marron',    0.64],   // B263 : « marron d'air ok » de l'user (boom + roulement ~4 s, pic 1.40)
 };
 
 export class PyroAudio {
@@ -341,9 +342,12 @@ export class PyroAudio {
     return buf;
   }
 
-  // when = délai en secondes (les marrons du MULTI détonent décalés). gain fort (×1.25 vs bombe).
-  marron(when = 0, dist){
+  // MARRON D'AIR = « marron d'air ok.mp3 » (B263, fourni par l'user ; synthèse B154 en secours).
+  // when = instant VISUEL de la détonation ; gain fort (×1.25 vs bombe) MAIS calibré : un marron
+  // 50 mm cogne moins qu'un 75, et les MINI-marrons du multi passent par gainMul<1 (user B263 :
+  // « plus ou moins fort selon l'effet et les calibres »).
+  marron(when = 0, dist, cal, gainMul = 1){
     if (!this._ready()) return;
-    this._play(this._pool('marron', () => this._marronBuffer()), 1.25*att(dist), when + dly(dist), 0.08, 1, 0.20);
+    this._shot('marron', 1.25*vol(cal)*att(dist)*gainMul, when + dly(dist), 0.08, deep(cal), () => this._marronBuffer(), 0.35);
   }
 }
