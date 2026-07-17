@@ -160,6 +160,13 @@ export class PyroAudio {
     this._shot('dragon', g*0.50, t + 1.50 + Math.random()*0.25, 0.14, dp*0.97, fb, 0.40);
   }
 
+  // Couche de crépitement GÉNÉRIQUE (B262, composés type D8) : posée à `when` (instant VISUEL,
+  // en s après le break) + trajet — pour les effets dont les étoiles crépitent tard.
+  crackle(cal, dist, when = 0, gainMul = 1){
+    if (!this._ready()) return;
+    this._shot('crack', 0.85*vol(cal)*att(dist)*gainMul, when + dly(dist), 0.14, deep(cal), () => this._cracklingBuffer(), 0.45);
+  }
+
   // SIFFLET = « Sifflet.mp3 » (pour les réfs « espagnole … sifflet »).
   whistle(when = 0, dist){
     if (!this._ready()) return;

@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B261';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B262';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -395,6 +395,42 @@ function shapeDaisy(_r,cal,nc){ const nPet=11, pts=[];   // 11 pétales EXACTEME
 // D8-D10 « cercle traçant/kamuro »… ; la bombe cercle SEULE reste arrêtée, cf B127. Décision
 // user 2026-07-10 : « oui il faut quand même l'effet cercle ».) Anneau de 24 étoiles, mêmes
 // règles que les formes 2D (défauts ±0.05, orientation aléatoire ~55 % bon sens, vitesse ∝ rayon).
+// D8 (B262, vidéo sTkNxTRs1F8 décomposée) : « bombe 150 mm D8 — centre bleu + cercle traçant
+// rouge + jaune à violet à œuf de dragon » (515088000, 183 m) — COMPOSÉ, TOUT EN MÊME TEMPS
+// (règle user) :  1) CENTRE BLEU : petit amas de 35 étoiles (~2 s) ;  2) CERCLE TRAÇANT ROUGE :
+// anneau de 22 étoiles rouges à rayons traçants cuivre (recette traçante B211), sens ALÉATOIRE
+// par tir — la traînée domine d'abord, la tête ROUGE ressort quand l'étoile ralentit (vidéo :
+// pointes rouges à +1,9 s) ;  3) JAUNE À VIOLET À ŒUF : sphère de 75 étoiles JAUNES -> fondu
+// VIOLET étalé étoile par étoile (1,7-2,7 s, fondu 0,25 s façon moitié changeante) -> chaque
+// étoile EXPLOSE en amas œuf de dragon (3,1-4,1 s ; vidéo : amas dorés partout à +4 s).
+let _d8B=null;
+function distD8(i,n,rnd){
+  if (i===0){
+    const F=vrand(rnd);
+    let U=cross(F,[0,1,0]); if(len2(U)<0.01)U=cross(F,[1,0,0]); U=norm(U);
+    _d8B={U, V:norm(cross(F,U))};
+  }
+  if (i<35){ const v=vrand(rnd); return {dx:v[0],dy:v[1],dz:v[2], spMul:0.20+rnd()*0.10, comp:0}; }
+  if (i<57){ const B=_d8B, th=2*Math.PI*(i-35)/22+(rnd()-0.5)*0.05, ct=Math.cos(th), st=Math.sin(th);
+    return {dx:B.U[0]*ct+B.V[0]*st, dy:B.U[1]*ct+B.V[1]*st, dz:B.U[2]*ct+B.V[2]*st, spMul:1.0, comp:1}; }
+  const v=vrand(rnd); return {dx:v[0],dy:v[1],dz:v[2], spMul:0.68+rnd()*0.14, comp:2};
+}
+function behaveD8(d,A,dt,ctx){
+  if (d.comp!==2) return;
+  if (d._swAt===undefined){
+    d._swAt=1.7+Math.random()*1.0;                                 // jaune -> violet, étalé
+    d.crackleAt=3.1+Math.random()*1.0;                             // puis œuf de dragon
+    d.crackle=true; d.eggSplode=true;
+    d.life=Math.max(d.life, d.crackleAt+0.5);
+  }
+  if (d._swapped || d.age<d._swAt) return;
+  const c0=ctx.cfg.colors[2], c1=ctx.cfg.colors[3];                // fondu 0,25 s (règle B228)
+  const f=Math.min(1,(d.age-d._swAt)/0.25);
+  if (f>=1){ d._swapped=true; d.coreColor=c1; return; }
+  if (!d._mix) d._mix=new THREE.Color();
+  d._mix.setRGB(c0.r+(c1.r-c0.r)*f, c0.g+(c1.g-c0.g)*f, c0.b+(c1.b-c0.b)*f);
+  d.coreColor=d._mix;
+}
 // CERCLE PROGRESSIF FEUILLE MORTE (B257, vidéo 6uYWtp3o_T8 décomposée + définition user :
 // « une feuille morte, entourée de 16 étoiles, qui s'allument les unes après les autres ») :
 // au break, les 16 étoiles du cercle partent ÉTEINTES dans un plan debout face public
@@ -799,6 +835,13 @@ const EFFECTS = {
             trailing:{emitUntil:0.97, period:0.006, grain:0.8, gF:0.13, lifeMul:1.1, spark:true, jit:0.3, bright:0.85},   // queue héritée de la COULEUR de l'étoile (pas de fixedColor)
             colorPairs:[[YEL,BLU],[GRN,PURP],[BLU,RED],[PINK,YEL],[new THREE.Color(1.0,0.45,0.08),GRN],[RED,SILVER]] },
 
+  // D8 — composé 150 mm (515088000, 183 m) : centre bleu + cercle traçant rouge + jaune à
+  // violet à œuf de dragon, TOUT en même temps. Traînées = recette traçante B211 (comp 1 seul).
+  d8: { apex:183, cal:150, heat:false, pureColor:true, stars:132, starSize:2.2, speedMul:1.85, speedJit:0.05,   // B262 : envergure de 150 mm (anneau Ø ~90 m)
+        gravStar:0.5, dragStar:0.45, lifeBase75:0.9, lifeJitter:0.10, compLife:{1:1.25, 2:1.6}, compSize:{0:1.8, 1:2.6},
+        restExtra:3, dist:distD8, behave:behaveD8, trailComps:[1], colors:[BLU, RED, YEL, PURP],
+        trailing:{emitUntil:0.97, period:0.010, grain:0.9, gF:0.13, lifeMul:2.8, color:COPPER, fixedColor:true, spark:true, jit:0.16, bright:0.85} },
+
   // === MOTIFS 3D multi-couleurs ===
   // ATOME (B191, « bombe 150 mm atome <couleur> », 12 réfs, 165 m — N'EXISTE QU'EN 150mm ; étapes
   // vidéo GTIeDTIQl-0 disséquées par l'user) : PIVOINE couleur (vie courte, ×0.6 — elle meurt à
@@ -876,7 +919,7 @@ const EFFECTS = {
 export const LABELS = { peony:'pivoine', chrysanthemum:'chrysanthème', willow:'saule (kamuro)', willowTrunk:'à tronc saule kamuro', willowStrobe:'saule or pointes scintillant', willowTips:'saule or pointes', willowTips100:'saule or pointes 100 mm', comet:'comète',
   sphere:'sphère', crackling:'crackling', dragonEgg:'œuf de dragon', strobe:'scintillant', cli:'cli. blanc/rouge', dahliaCli:'dahlia centre cli. blanc', kamuroCli:'ext. kamuro centre cli. blanc', halfSwapCli:'moitié changeante centre cli.', finalCli:'final cli. blanc rose', palmMulti:'palme multicolore', palmStrobe:'palme or scintillant',
   fallingLeaves:'feuille morte', palm:'palme', heart:'cœur', butterfly:'papillon', smiley:'smiley',
-  daisy:'marguerite', atom:'atome', halfHalf:'demi-demi', tracer:'traçante', zigzag:'zigzag', ring:'cercle (brique)', fmRing:'cercle progressif feuille morte', medusa:'méduse', horsetail:'queue de cheval',
+  daisy:'marguerite', atom:'atome', halfHalf:'demi-demi', tracer:'traçante', zigzag:'zigzag', ring:'cercle (brique)', fmRing:'cercle progressif feuille morte', d8:'150 mm D8 (composé)', medusa:'méduse', horsetail:'queue de cheval',
   cascade:'cascade', fish:'poisson', spinner:'tourbillon', saucer:'soucoupe', mosaic:'mosaïque', mosaicMix:'mosaïque assortie',
   mine:'pot à feu', salute:"salut (marron d'air)", saluteMulti:"multi marron d'air",
   zMeduse:'compact 40 tirs z méduse' };

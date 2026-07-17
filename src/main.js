@@ -109,14 +109,14 @@ Object.assign(pick.style, { position:'fixed', top:'10px', right:'10px', zIndex:'
 for (const [k, label] of Object.entries(LABELS)){
   const o = document.createElement('option'); o.value = k; o.textContent = label; pick.appendChild(o);
 }
-pick.value = 'fmRing';
+pick.value = 'd8';
 // changer d'effet dans le menu -> couleur PAR DÉFAUT de l'effet (null annule l'override de la démo)
 pick.addEventListener('change', e => layer.setFocus(e.target.value, null));
 document.body.appendChild(pick);
 
-// DÉMO (réglage en cours) : CERCLE PROGRESSIF FEUILLE MORTE 100mm (510517-510522, 129 m,
-// B257 — vidéo décomposée) : FM au centre + cercle de 16 étoiles à allumage balayé.
-layer.setFocus('fmRing');
+// DÉMO (réglage en cours) : 150 mm D8 (515088000, 183 m, B262 — vidéo décomposée) : centre
+// bleu + cercle traçant rouge + sphère jaune -> violet -> œuf de dragon, tout en même temps.
+layer.setFocus('d8');
 
 // TIMELINE de lecture (barre en bas) + ESPACE = pause/play (fige les feux, caméra libre).
 const timeline = new Timeline(layer, LABELS);
@@ -150,6 +150,8 @@ layer.onBurst = (arch, cal, dist) => {
   else if (arch === 'salute') audio.marron(0.03, dist);          // marron simple : boom quasi immédiat
   else if (arch === 'saluteMulti') audio.breakOpen(40, dist);    // revue B254 : petit pop d'ouverture — les 5 BOOMS des marrons portent le son
   else if (arch === 'spinner') audio.hibou(0, dist);             // B254 : tourbillon = hululement (réf « Hibou » de l'user)
+  else if (arch === 'd8'){ audio.breakOpen(cal, dist);           // B262 : D8 = break, puis les étoiles finissent en ŒUF DE DRAGON
+    audio.crackle(cal, dist, 3.2); audio.crackle(cal, dist, 3.75, 0.7); }   //        (crépitement visuel 3,1-4,1 s -> 2 couches calées dessus + trajet)
   else audio.breakOpen(cal, dist);                               // = « Bombe 75mm.mp3 »
 };
 // MULTI marron d'air : le BOOM part PILE au moment où chaque mini marron détone (hook moteur,
