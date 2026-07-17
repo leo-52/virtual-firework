@@ -47,6 +47,21 @@ export class PyroAudio {
         } catch(e){ /* pas d'audio dispo */ }
       }
       if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume();
+      // B261 (user : « pas de son SANS écouteurs, avec écouteurs ça marche ») = iOS : le
+      // COMMUTATEUR SILENCIEUX coupe le Web Audio sur haut-parleur (pas sur écouteurs).
+      // Parade double : 1) API audioSession (iOS 16.4+) -> catégorie « lecture » qui ignore
+      // le commutateur ; 2) un <audio> SILENCIEUX en boucle lancé au 1er geste (même effet
+      // sur les iOS plus vieux — l'astuce standard des jeux web).
+      try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch(e){}
+      if (!this._iosKick){
+        try {
+          const a = document.createElement('audio');
+          a.loop = true; a.playsInline = true; a.preload = 'auto'; a.volume = 0.01;
+          a.src = 'data:audio/wav;base64,UklGRnQAAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YVAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==';
+          a.play().catch(()=>{});
+          this._iosKick = a;
+        } catch(e){}
+      }
       this._loadSamples();
     };
     addEventListener('pointerdown', this._resume);
