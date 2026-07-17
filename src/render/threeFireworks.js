@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B264';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B265';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -416,8 +416,8 @@ function distD8(i,n,rnd){
   }
   if (i<55){ const v=vrand(rnd); return {dx:v[0],dy:v[1],dz:v[2], spMul:0.20+rnd()*0.10, comp:0}; }
   if (i<77){ const B=_d8B, th=2*Math.PI*(i-55)/22+(rnd()-0.5)*0.05, ct=Math.cos(th), st=Math.sin(th);
-    return {dx:B.U[0]*ct+B.V[0]*st, dy:B.U[1]*ct+B.V[1]*st, dz:B.U[2]*ct+B.V[2]*st, spMul:1.0, comp:1}; }
-  const v=vrand(rnd); return {dx:v[0],dy:v[1],dz:v[2], spMul:0.95+rnd()*0.10, comp:2};   // pivoine DE LA TAILLE DU CERCLE
+    return {dx:B.U[0]*ct+B.V[0]*st, dy:B.U[1]*ct+B.V[1]*st, dz:B.U[2]*ct+B.V[2]*st, spMul:0.75, comp:1}; }   // B265 (user) : cercle PLUS PETIT (1.0 -> 0.75)
+  const v=vrand(rnd); return {dx:v[0],dy:v[1],dz:v[2], spMul:0.71+rnd()*0.08, comp:2};   // pivoine DE LA TAILLE DU CERCLE (suit le rétrécissement)
 }
 function behaveD8(d,A,dt,ctx){
   if (d.comp===1){                                                 // tête rouge à 1,5 s (léger jeu)
@@ -431,12 +431,15 @@ function behaveD8(d,A,dt,ctx){
     const L=Math.hypot(d.vx,d.vy,d.vz)||1, W=ctx._d8W;
     const u=((d.vx*W[0]+d.vy*W[1]+d.vz*W[2])/L+1)/2;               // 0 = côté de départ, 1 = côté opposé
     d._apAt=2.0+u*0.8+Math.random()*0.08;
-    d._ckAt=d._apAt+1.55+Math.random()*0.35;                       // œuf de dragon ~1,6 s après l'apparition
+    d._ckAt=d._apAt+1.85+Math.random()*0.35;                       // œuf de dragon ~1,9-2,2 s après l'apparition (le NOIR s'intercale)
     d.life=Math.max(d.life, d._ckAt+0.5);
   }
   if (!d.crackle && d.age>=d._ckAt){ d.crackle=true; d.eggSplode=true; d.crackleAt=d._ckAt; return; }
   if (d.age<d._apAt) return;
   d._on=true;
+  // B265 (user) : l'étoile passe par du « NOIR » avant de crépiter — fondu vers 0 sur les
+  // 0,35 s qui précèdent l'œuf de dragon (via d._fade, lu par d8Fn).
+  d._fade = d.age>=d._ckAt-0.35 ? Math.max(0, (d._ckAt-d.age)/0.35) : 1;
   const tt=d.age-d._apAt;                                          // chaîne ROUGE -> ORANGE -> JAUNE
   let c0=null, c1=null, f=0;
   if (tt<0.55){ d.coreColor=RED; return; }
@@ -450,7 +453,7 @@ function behaveD8(d,A,dt,ctx){
 }
 function d8Fn(d,A,dt){
   if (d.comp===1) return d._lit ? {intenMul:1.3} : {intenMul:0};   // comète SANS TÊTE puis tête rouge
-  if (d.comp===2) return d._on ? null : {intenMul:0};              // pivoine invisible avant son balayage
+  if (d.comp===2) return d._on ? {intenMul:1.15*(d._fade!=null?d._fade:1)} : {intenMul:0};   // invisible avant le balayage, NOIR avant l'œuf
   return null;
 }
 // CERCLE PROGRESSIF FEUILLE MORTE (B257, vidéo 6uYWtp3o_T8 décomposée + définition user :
@@ -863,7 +866,7 @@ const EFFECTS = {
   d8: { apex:183, cal:150, heat:false, pureColor:true, stars:152, starSize:2.2, speedMul:1.85, speedJit:0.05,   // B262 : envergure de 150 mm (anneau Ø ~90 m)
         gravStar:0.5, dragStar:0.45, lifeBase75:0.9, lifeJitter:0.10, compLife:{1:1.25, 2:1.6}, compSize:{0:1.8, 1:2.6},
         restExtra:3, dist:distD8, behave:behaveD8, onStar:d8Fn, trailComps:[1], colors:[BLU, RED, RED],
-        trailing:{emitUntil:0.97, period:0.010, grain:0.9, gF:0.13, lifeMul:2.8, color:COPPER, fixedColor:true, spark:true, jit:0.16, bright:0.85} },
+        trailing:{emitUntil:0.97, period:0.010, grain:0.9, gF:0.13, lifeMul:4.0, color:COPPER, fixedColor:true, spark:true, jit:0.16, bright:0.85} },   // B265 (user) : traînées plus longues (2.8 -> 4.0)
 
   // === MOTIFS 3D multi-couleurs ===
   // ATOME (B191, « bombe 150 mm atome <couleur> », 12 réfs, 165 m — N'EXISTE QU'EN 150mm ; étapes

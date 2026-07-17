@@ -32,7 +32,7 @@ const SAMPLES = {
 export class PyroAudio {
   constructor(){
     this.ctx = null; this.master = null;
-    this.enabled = true;   // B169 : coupé/activé par le bouton son (indépendant du déblocage navigateur)
+    this.enabled = false;  // B265 (user) : son OFF PAR DÉFAUT — il s'active uniquement via le bouton
     this._pools = {}; this._smp = {}; this._smpFail = {}; this._smpLoading = false;
     this._resume = () => {
       if (!this.ctx){
@@ -57,12 +57,12 @@ export class PyroAudio {
       if (!this._iosKick){
         try {
           const a = document.createElement('audio');
-          a.loop = true; a.playsInline = true; a.preload = 'auto'; a.volume = 0.01;
+          a.loop = true; a.playsInline = true; a.setAttribute('playsinline',''); a.preload = 'auto'; a.volume = 0.01;
           a.src = 'data:audio/wav;base64,UklGRnQAAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YVAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==';
-          a.play().catch(()=>{});
           this._iosKick = a;
         } catch(e){}
       }
+      if (this._iosKick && this._iosKick.paused) this._iosKick.play().catch(()=>{});   // relancé à CHAQUE geste (un play() refusé une fois ne condamne plus le haut-parleur)
       this._loadSamples();
     };
     addEventListener('pointerdown', this._resume);
