@@ -151,7 +151,7 @@ layer.onBurst = (arch, cal, dist) => {
   else if (arch === 'saluteMulti') audio.breakOpen(40, dist);    // revue B254 : petit pop d'ouverture — les 5 BOOMS des marrons portent le son
   else if (arch === 'spinner') audio.hibou(0, dist);             // B254 : tourbillon = hululement (réf « Hibou » de l'user)
   else if (arch === 'd8'){ audio.breakOpen(cal, dist);           // B262 : D8 = break, puis les étoiles finissent en ŒUF DE DRAGON
-    audio.crackle(cal, dist, 3.95); audio.crackle(cal, dist, 4.6, 0.7); }   //        B265 : crépitement visuel ~3,9-5,1 s -> 2 couches calées dessus + trajet
+    audio.crackle(cal, dist, 4.1); audio.crackle(cal, dist, 4.75, 0.7); }   //        B266 : crépitement visuel ~4,0-5,2 s -> 2 couches calées dessus + trajet
   else audio.breakOpen(cal, dist);                               // = « Bombe 75mm.mp3 »
 };
 // MULTI marron d'air : le BOOM part PILE au moment où chaque mini marron détone (hook moteur,

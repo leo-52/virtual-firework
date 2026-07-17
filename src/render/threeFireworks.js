@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B265';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B266';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -421,8 +421,16 @@ function distD8(i,n,rnd){
 }
 function behaveD8(d,A,dt,ctx){
   if (d.comp===1){                                                 // tête rouge à 1,5 s (léger jeu)
-    if (d.tipAt===undefined) d.tipAt=1.5+(Math.random()-0.5)*0.3;
+    if (d.tipAt===undefined){ d.tipAt=1.5+(Math.random()-0.5)*0.3;
+      d._sz=(ctx.cfg.compSize&&ctx.cfg.compSize[1])||ctx.cfg.starSize; }
     if (!d._lit && d.age>=d.tipAt) d._lit=true;
+    // B266 (user : « pas par magie, je veux que ça GROSSISSE ») : la tête enfle en ~0,45 s
+    // (taille 25 % -> 100 % + intensité qui suit, via d._gk lu par d8Fn).
+    if (d._lit && (d._gk===undefined || d._gk<1)){
+      d._gk=Math.min(1,(d.age-d.tipAt)/0.45);
+      ctx.size[d._i]=d._sz*STAR_SCALE*(0.25+0.75*d._gk);
+      ctx.geo.attributes.size.needsUpdate=true;
+    }
     return;
   }
   if (d.comp!==2) return;
@@ -431,15 +439,16 @@ function behaveD8(d,A,dt,ctx){
     const L=Math.hypot(d.vx,d.vy,d.vz)||1, W=ctx._d8W;
     const u=((d.vx*W[0]+d.vy*W[1]+d.vz*W[2])/L+1)/2;               // 0 = côté de départ, 1 = côté opposé
     d._apAt=2.0+u*0.8+Math.random()*0.08;
-    d._ckAt=d._apAt+1.85+Math.random()*0.35;                       // œuf de dragon ~1,9-2,2 s après l'apparition (le NOIR s'intercale)
+    d._ckAt=d._apAt+2.0+Math.random()*0.35;                        // œuf de dragon ~2,0-2,35 s après l'apparition (le NOIR s'intercale)
     d.life=Math.max(d.life, d._ckAt+0.5);
   }
   if (!d.crackle && d.age>=d._ckAt){ d.crackle=true; d.eggSplode=true; d.crackleAt=d._ckAt; return; }
   if (d.age<d._apAt) return;
   d._on=true;
-  // B265 (user) : l'étoile passe par du « NOIR » avant de crépiter — fondu vers 0 sur les
-  // 0,35 s qui précèdent l'œuf de dragon (via d._fade, lu par d8Fn).
-  d._fade = d.age>=d._ckAt-0.35 ? Math.max(0, (d._ckAt-d.age)/0.35) : 1;
+  // B265/B266 (user) : le NOIR dure 0,5 s EN TOUT avant l'œuf — fondu 0,2 s puis vraiment
+  // ÉTEINT 0,3 s (via d._fade, lu par d8Fn).
+  const tb=d._ckAt-0.5;
+  d._fade = d.age<tb ? 1 : Math.max(0, 1-(d.age-tb)/0.2);
   const tt=d.age-d._apAt;                                          // chaîne ROUGE -> ORANGE -> JAUNE
   let c0=null, c1=null, f=0;
   if (tt<0.55){ d.coreColor=RED; return; }
@@ -452,7 +461,7 @@ function behaveD8(d,A,dt,ctx){
   d.coreColor=d._mix;
 }
 function d8Fn(d,A,dt){
-  if (d.comp===1) return d._lit ? {intenMul:1.3} : {intenMul:0};   // comète SANS TÊTE puis tête rouge
+  if (d.comp===1) return d._lit ? {intenMul:1.3*Math.pow(d._gk||0,0.7)} : {intenMul:0};   // comète SANS TÊTE puis tête rouge qui GROSSIT
   if (d.comp===2) return d._on ? {intenMul:1.15*(d._fade!=null?d._fade:1)} : {intenMul:0};   // invisible avant le balayage, NOIR avant l'œuf
   return null;
 }
