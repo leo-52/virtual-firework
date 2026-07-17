@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B271';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B272';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -510,19 +510,31 @@ function behaveD9(d,A,dt,ctx){
     }
     return;
   }
+  if (d.comp===1){
+    // B272 (user) : À LA FIN, la pivoine sans étoile CLIGNOTE ROUGE comme le centre mais PLUS
+    // VITE (2 clignotements en ~0,45 s), après les plumes du centre.
+    if (d._t1===undefined){ d._t1=4.35+Math.random()*0.15; d.life=Math.max(d.life, d._t1+0.55); }
+    if (!d._rl && d.age>=d._t1){ d._rl=true; d.coreColor=RED; d.trailing=false; }
+    return;
+  }
   if (d.comp!==2) return;
-  if (d._t0===undefined){ d._pf=9+Math.random()*6;                 // centre : après la fin du cercle rouge
-    d._t0=3.3+Math.random()*0.3; d.life=Math.max(d.life, d._t0+1.2+Math.random()*0.5); }
+  if (d._t0===undefined){                                          // centre : après la fin du cercle rouge
+    d._t0=3.3+Math.random()*0.3; d.coreColor=RED; d.life=d._t0+1.0; }
 }
+// B272 (user) : plume du centre = DEUX clignotements seulement — noir/ROUGE/noir/ROUGE en 1 s.
 function d9Fn(d,A,dt){
-  if (d.comp===1) return {intenMul:0};                             // pivoine SANS étoile : traînées seules
+  if (d.comp===1){                                                 // pivoine SANS étoile… jusqu'au final
+    if (!d._rl) return {intenMul:0};
+    const p=d.age-d._t1;                                           // 2 clignotements RAPIDES (~0,45 s)
+    return {intenMul: ((p>0.04&&p<0.16)||(p>0.28&&p<0.40)) ? 0.95 : 0};
+  }
   if (d.comp===0){
     if (d._lit) return {intenMul:1.25*Math.pow(d._gk||0,0.7)};     // ROUGE qui grossit
     if (d._bkAt===undefined || d.age<d._bkAt) return {intenMul:1.2};   // JAUNE
     return {intenMul:1.2*Math.max(0,1-(d.age-d._bkAt)/0.25)};      // fondu vers le NOIR
   }
-  if (d.age<(d._t0||9)) return {intenMul:0};                       // centre invisible avant ~3,3 s
-  return {intenMul: Math.sin(d.age*d._pf*2+d.phase*7)>-0.1 ? 0.55 : 0.15};   // clignote TRÈS légèrement (plume)
+  const p=d.age-(d._t0||9);                                        // centre : noir/ROUGE/noir/ROUGE en 1 s
+  return {intenMul: ((p>0.10&&p<0.35)||(p>0.60&&p<0.85)) ? 0.75 : 0};
 }
 // CERCLE PROGRESSIF FEUILLE MORTE (B257, vidéo 6uYWtp3o_T8 décomposée + définition user :
 // « une feuille morte, entourée de 16 étoiles, qui s'allument les unes après les autres ») :
