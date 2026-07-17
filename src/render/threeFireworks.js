@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B263';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B264';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -395,41 +395,63 @@ function shapeDaisy(_r,cal,nc){ const nPet=11, pts=[];   // 11 pétales EXACTEME
 // D8-D10 « cercle traçant/kamuro »… ; la bombe cercle SEULE reste arrêtée, cf B127. Décision
 // user 2026-07-10 : « oui il faut quand même l'effet cercle ».) Anneau de 24 étoiles, mêmes
 // règles que les formes 2D (défauts ±0.05, orientation aléatoire ~55 % bon sens, vitesse ∝ rayon).
-// D8 (B262, vidéo sTkNxTRs1F8 décomposée) : « bombe 150 mm D8 — centre bleu + cercle traçant
-// rouge + jaune à violet à œuf de dragon » (515088000, 183 m) — COMPOSÉ, TOUT EN MÊME TEMPS
-// (règle user) :  1) CENTRE BLEU : petit amas de 35 étoiles (~2 s) ;  2) CERCLE TRAÇANT ROUGE :
-// anneau de 22 étoiles rouges à rayons traçants cuivre (recette traçante B211), sens ALÉATOIRE
-// par tir — la traînée domine d'abord, la tête ROUGE ressort quand l'étoile ralentit (vidéo :
-// pointes rouges à +1,9 s) ;  3) JAUNE À VIOLET À ŒUF : sphère de 75 étoiles JAUNES -> fondu
-// VIOLET étalé étoile par étoile (1,7-2,7 s, fondu 0,25 s façon moitié changeante) -> chaque
-// étoile EXPLOSE en amas œuf de dragon (3,1-4,1 s ; vidéo : amas dorés partout à +4 s).
+// D8 (B262 vidéo sTkNxTRs1F8, REFAIT B264 sur la définition user) : « bombe 150 mm D8 »
+// (515088000, 183 m) — composé, tout en même temps au break :
+//  1) CENTRE BLEU : 55 étoiles (~2 s) ;
+//  2) CERCLE de 22 TRAÇANTES « comme des COMÈTES SANS TÊTE » : on ne voit QUE les rayons
+//     traçants cuivre (recette B211), sens aléatoire par tir ; à 1,5 s les TÊTES ROUGES
+//     apparaissent ;
+//  3) ~0,5 s après (≈2 s) : PIVOINE DE LA TAILLE DU CERCLE, étoiles invisibles au début, qui
+//     APPARAISSENT EN ROUGE d'UN CÔTÉ VERS L'AUTRE (balayage ~0,8 s le long d'un axe aléatoire),
+//     puis chaque étoile passe ROUGE -> ORANGE -> JAUNE (fondus 0,2 s, règle B228) et se
+//     TRANSFORME EN ŒUF DE DRAGON (amas doré, ~1,6 s après son apparition).
+//  ⚠️ eggSplode rend l'étoile invisible hors crépitement -> posé SEULEMENT à l'instant du crackle.
 let _d8B=null;
+const D8_ORG=new THREE.Color(1.0,0.45,0.08);
 function distD8(i,n,rnd){
   if (i===0){
     const F=vrand(rnd);
     let U=cross(F,[0,1,0]); if(len2(U)<0.01)U=cross(F,[1,0,0]); U=norm(U);
     _d8B={U, V:norm(cross(F,U))};
   }
-  if (i<35){ const v=vrand(rnd); return {dx:v[0],dy:v[1],dz:v[2], spMul:0.20+rnd()*0.10, comp:0}; }
-  if (i<57){ const B=_d8B, th=2*Math.PI*(i-35)/22+(rnd()-0.5)*0.05, ct=Math.cos(th), st=Math.sin(th);
+  if (i<55){ const v=vrand(rnd); return {dx:v[0],dy:v[1],dz:v[2], spMul:0.20+rnd()*0.10, comp:0}; }
+  if (i<77){ const B=_d8B, th=2*Math.PI*(i-55)/22+(rnd()-0.5)*0.05, ct=Math.cos(th), st=Math.sin(th);
     return {dx:B.U[0]*ct+B.V[0]*st, dy:B.U[1]*ct+B.V[1]*st, dz:B.U[2]*ct+B.V[2]*st, spMul:1.0, comp:1}; }
-  const v=vrand(rnd); return {dx:v[0],dy:v[1],dz:v[2], spMul:0.68+rnd()*0.14, comp:2};
+  const v=vrand(rnd); return {dx:v[0],dy:v[1],dz:v[2], spMul:0.95+rnd()*0.10, comp:2};   // pivoine DE LA TAILLE DU CERCLE
 }
 function behaveD8(d,A,dt,ctx){
-  if (d.comp!==2) return;
-  if (d._swAt===undefined){
-    d._swAt=1.7+Math.random()*1.0;                                 // jaune -> violet, étalé
-    d.crackleAt=3.1+Math.random()*1.0;                             // puis œuf de dragon
-    d.crackle=true; d.eggSplode=true;
-    d.life=Math.max(d.life, d.crackleAt+0.5);
+  if (d.comp===1){                                                 // tête rouge à 1,5 s (léger jeu)
+    if (d.tipAt===undefined) d.tipAt=1.5+(Math.random()-0.5)*0.3;
+    if (!d._lit && d.age>=d.tipAt) d._lit=true;
+    return;
   }
-  if (d._swapped || d.age<d._swAt) return;
-  const c0=ctx.cfg.colors[2], c1=ctx.cfg.colors[3];                // fondu 0,25 s (règle B228)
-  const f=Math.min(1,(d.age-d._swAt)/0.25);
-  if (f>=1){ d._swapped=true; d.coreColor=c1; return; }
+  if (d.comp!==2) return;
+  if (d._apAt===undefined){
+    if (!ctx._d8W) ctx._d8W=vrand(Math.random);                    // axe du balayage, par tir
+    const L=Math.hypot(d.vx,d.vy,d.vz)||1, W=ctx._d8W;
+    const u=((d.vx*W[0]+d.vy*W[1]+d.vz*W[2])/L+1)/2;               // 0 = côté de départ, 1 = côté opposé
+    d._apAt=2.0+u*0.8+Math.random()*0.08;
+    d._ckAt=d._apAt+1.55+Math.random()*0.35;                       // œuf de dragon ~1,6 s après l'apparition
+    d.life=Math.max(d.life, d._ckAt+0.5);
+  }
+  if (!d.crackle && d.age>=d._ckAt){ d.crackle=true; d.eggSplode=true; d.crackleAt=d._ckAt; return; }
+  if (d.age<d._apAt) return;
+  d._on=true;
+  const tt=d.age-d._apAt;                                          // chaîne ROUGE -> ORANGE -> JAUNE
+  let c0=null, c1=null, f=0;
+  if (tt<0.55){ d.coreColor=RED; return; }
+  else if (tt<0.75){ c0=RED; c1=D8_ORG; f=(tt-0.55)/0.2; }
+  else if (tt<1.05){ d.coreColor=D8_ORG; return; }
+  else if (tt<1.25){ c0=D8_ORG; c1=YEL; f=(tt-1.05)/0.2; }
+  else { d.coreColor=YEL; return; }
   if (!d._mix) d._mix=new THREE.Color();
   d._mix.setRGB(c0.r+(c1.r-c0.r)*f, c0.g+(c1.g-c0.g)*f, c0.b+(c1.b-c0.b)*f);
   d.coreColor=d._mix;
+}
+function d8Fn(d,A,dt){
+  if (d.comp===1) return d._lit ? {intenMul:1.3} : {intenMul:0};   // comète SANS TÊTE puis tête rouge
+  if (d.comp===2) return d._on ? null : {intenMul:0};              // pivoine invisible avant son balayage
+  return null;
 }
 // CERCLE PROGRESSIF FEUILLE MORTE (B257, vidéo 6uYWtp3o_T8 décomposée + définition user :
 // « une feuille morte, entourée de 16 étoiles, qui s'allument les unes après les autres ») :
@@ -835,11 +857,12 @@ const EFFECTS = {
             trailing:{emitUntil:0.97, period:0.006, grain:0.8, gF:0.13, lifeMul:1.1, spark:true, jit:0.3, bright:0.85},   // queue héritée de la COULEUR de l'étoile (pas de fixedColor)
             colorPairs:[[YEL,BLU],[GRN,PURP],[BLU,RED],[PINK,YEL],[new THREE.Color(1.0,0.45,0.08),GRN],[RED,SILVER]] },
 
-  // D8 — composé 150 mm (515088000, 183 m) : centre bleu + cercle traçant rouge + jaune à
-  // violet à œuf de dragon, TOUT en même temps. Traînées = recette traçante B211 (comp 1 seul).
-  d8: { apex:183, cal:150, heat:false, pureColor:true, stars:132, starSize:2.2, speedMul:1.85, speedJit:0.05,   // B262 : envergure de 150 mm (anneau Ø ~90 m)
+  // D8 — composé 150 mm (515088000, 183 m), définition user B264 : 55 centre bleu + 22 comètes
+  // traçantes sans tête (têtes rouges à 1,5 s) + pivoine de la taille du cercle qui apparaît en
+  // rouge par balayage à ~2 s puis rouge->orange->jaune->œuf de dragon.
+  d8: { apex:183, cal:150, heat:false, pureColor:true, stars:152, starSize:2.2, speedMul:1.85, speedJit:0.05,   // B262 : envergure de 150 mm (anneau Ø ~90 m)
         gravStar:0.5, dragStar:0.45, lifeBase75:0.9, lifeJitter:0.10, compLife:{1:1.25, 2:1.6}, compSize:{0:1.8, 1:2.6},
-        restExtra:3, dist:distD8, behave:behaveD8, trailComps:[1], colors:[BLU, RED, YEL, PURP],
+        restExtra:3, dist:distD8, behave:behaveD8, onStar:d8Fn, trailComps:[1], colors:[BLU, RED, RED],
         trailing:{emitUntil:0.97, period:0.010, grain:0.9, gF:0.13, lifeMul:2.8, color:COPPER, fixedColor:true, spark:true, jit:0.16, bright:0.85} },
 
   // === MOTIFS 3D multi-couleurs ===
