@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B268';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B269';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -468,6 +468,41 @@ function d8Fn(d,A,dt){
   if (d.comp===2) return d._on ? {intenMul:1.15*(d._fade!=null?d._fade:1)} : {intenMul:0};   // invisible avant le balayage, NOIR avant l'œuf
   return null;
 }
+// D9 (B269, vidéo 04dM-fWApkg décomposée) : « bombe 150 mm D9 — kamuro à final plume rouge +
+// centre plume rouge + cercle jaune » (515089000, 183 m) — tout en même temps au break :
+//  1) CERCLE JAUNE : anneau SERRÉ de 17 étoiles (rayon ~1/3 du kamuro), sens aléatoire,
+//     défauts B268, vif et BREF (~1 s — vidéo : brillant à +0,2 s, éteint à +1 s) ;
+//  2) KAMURO : ~100 brins or retombants (recette willow validée B136/B139) ; à la FIN de chaque
+//     brin, PLUME ROUGE = bref scintillement rouge LÉGER (brique plume, def user) pendant les
+//     0,55-0,9 dernières secondes — les brins finissent décalés -> plumes éparpillées (+0,6/+2,5 s) ;
+//  3) CENTRE PLUME ROUGE : ~25 étoiles rouges au centre qui scintillent légèrement dès
+//     l'ouverture, courtes (~1,4 s).
+let _d9B=null;
+function distD9(i,n,rnd){
+  if (i===0){
+    const F=vrand(rnd);
+    let U=cross(F,[0,1,0]); if(len2(U)<0.01)U=cross(F,[1,0,0]); U=norm(U);
+    _d9B={F, U, V:norm(cross(F,U))};
+  }
+  if (i<17){ const B=_d9B, th=2*Math.PI*i/17+(rnd()-0.5)*0.16, ct=Math.cos(th), st=Math.sin(th);
+    const w=(rnd()-0.5)*0.16;
+    const dx=B.U[0]*ct+B.V[0]*st+B.F[0]*w, dy=B.U[1]*ct+B.V[1]*st+B.F[1]*w, dz=B.U[2]*ct+B.V[2]*st+B.F[2]*w;
+    const L=Math.hypot(dx,dy,dz)||1;
+    return {dx:dx/L, dy:dy/L, dz:dz/L, spMul:1.02*(0.90+rnd()*0.20), comp:0}; }   // RAPIDE : le cercle est formé dès +0,3 s (vidéo) puis s'éteint, ~1/3 du kamuro
+  if (i<42){ const v=vrand(rnd); return {dx:v[0],dy:v[1],dz:v[2], spMul:0.11+rnd()*0.08, comp:2}; }
+  const v=vrand(rnd); return {dx:v[0],dy:v[1],dz:v[2], spMul:0.82+rnd()*0.36, comp:1};   // kamuro : longueurs de brins variées
+}
+function behaveD9(d,A,dt,ctx){
+  if (d.comp!==1) return;
+  if (d._plDur===undefined){ d._plDur=0.55+Math.random()*0.35; d._pf=11+Math.random()*7; }
+  if (!d._plume && d.age>=d.life-d._plDur){ d._plume=true; d.coreColor=RED; d.trailing=false; }   // le brin s'arrête, la plume rouge prend le relais
+}
+function d9Fn(d,A,dt){
+  const flick=()=> (Math.sin(d.age*d._pf*2+d.phase*7)> -0.25 ? 1.35 : 0.35);   // scintillement LÉGER (plume)
+  if (d.comp===2){ if (d._pf===undefined){ d._pf=11+Math.random()*7; } return {intenMul:flick()}; }
+  if (d.comp===1 && d._plume) return {intenMul:flick()};
+  return null;
+}
 // CERCLE PROGRESSIF FEUILLE MORTE (B257, vidéo 6uYWtp3o_T8 décomposée + définition user :
 // « une feuille morte, entourée de 16 étoiles, qui s'allument les unes après les autres ») :
 // au break, les 16 étoiles du cercle partent ÉTEINTES dans un plan debout face public
@@ -880,6 +915,13 @@ const EFFECTS = {
         restExtra:3, dist:distD8, behave:behaveD8, onStar:d8Fn, trailComps:[1], colors:[BLU, RED, RED],
         trailing:{emitUntil:0.97, period:0.010, grain:0.9, gF:0.13, lifeMul:4.0, color:COPPER, fixedColor:true, spark:true, jit:0.16, bright:0.85} },   // B265 (user) : traînées plus longues (2.8 -> 4.0)
 
+  // D9 — composé 150 mm (515089000, 183 m) : cercle jaune bref + kamuro à final plume rouge +
+  // centre plume rouge. Base kamuro = recette willow VALIDÉE (B136/B139), traînées comp 1 seul.
+  d9: { apex:183, cal:150, heat:false, pureColor:true, stars:142, starSize:0.9, speedMul:1.25, speedJit:0.05,   // B269 : envergure 150 mm (kamuro ~50 m de rayon)
+        gravStar:0.5, dragStar:0.25, lifeBase75:1.6, lifeJitter:0.25, compLife:{0:0.25, 2:0.38}, compSize:{0:2.3, 2:1.9},
+        restExtra:4, dist:distD9, behave:behaveD9, onStar:d9Fn, trailComps:[1], colors:[YEL, DIMGOLD, RED],
+        trailing:{emitUntil:0.95, period:0.008, grain:1.4, gF:0.13, lifeMul:18, color:COPPER, spark:true, jit:0.22} },
+
   // === MOTIFS 3D multi-couleurs ===
   // ATOME (B191, « bombe 150 mm atome <couleur> », 12 réfs, 165 m — N'EXISTE QU'EN 150mm ; étapes
   // vidéo GTIeDTIQl-0 disséquées par l'user) : PIVOINE couleur (vie courte, ×0.6 — elle meurt à
@@ -957,7 +999,7 @@ const EFFECTS = {
 export const LABELS = { peony:'pivoine', chrysanthemum:'chrysanthème', willow:'saule (kamuro)', willowTrunk:'à tronc saule kamuro', willowStrobe:'saule or pointes scintillant', willowTips:'saule or pointes', willowTips100:'saule or pointes 100 mm', comet:'comète',
   sphere:'sphère', crackling:'crackling', dragonEgg:'œuf de dragon', strobe:'scintillant', cli:'cli. blanc/rouge', dahliaCli:'dahlia centre cli. blanc', kamuroCli:'ext. kamuro centre cli. blanc', halfSwapCli:'moitié changeante centre cli.', finalCli:'final cli. blanc rose', palmMulti:'palme multicolore', palmStrobe:'palme or scintillant',
   fallingLeaves:'feuille morte', palm:'palme', heart:'cœur', butterfly:'papillon', smiley:'smiley',
-  daisy:'marguerite', atom:'atome', halfHalf:'demi-demi', tracer:'traçante', zigzag:'zigzag', ring:'cercle (brique)', fmRing:'cercle progressif feuille morte', d8:'150 mm D8 (composé)', medusa:'méduse', horsetail:'queue de cheval',
+  daisy:'marguerite', atom:'atome', halfHalf:'demi-demi', tracer:'traçante', zigzag:'zigzag', ring:'cercle (brique)', fmRing:'cercle progressif feuille morte', d8:'150 mm D8 (composé)', d9:'150 mm D9 (composé)', medusa:'méduse', horsetail:'queue de cheval',
   cascade:'cascade', fish:'poisson', spinner:'tourbillon', saucer:'soucoupe', mosaic:'mosaïque', mosaicMix:'mosaïque assortie',
   mine:'pot à feu', salute:"salut (marron d'air)", saluteMulti:"multi marron d'air",
   zMeduse:'compact 40 tirs z méduse' };
