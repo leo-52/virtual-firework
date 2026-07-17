@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B267';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B268';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -412,11 +412,14 @@ function distD8(i,n,rnd){
   if (i===0){
     const F=vrand(rnd);
     let U=cross(F,[0,1,0]); if(len2(U)<0.01)U=cross(F,[1,0,0]); U=norm(U);
-    _d8B={U, V:norm(cross(F,U))};
+    _d8B={F, U, V:norm(cross(F,U))};
   }
   if (i<55){ const v=vrand(rnd); return {dx:v[0],dy:v[1],dz:v[2], spMul:0.20+rnd()*0.10, comp:0}; }
-  if (i<77){ const B=_d8B, th=2*Math.PI*(i-55)/22+(rnd()-0.5)*0.05, ct=Math.cos(th), st=Math.sin(th);
-    return {dx:B.U[0]*ct+B.V[0]*st, dy:B.U[1]*ct+B.V[1]*st, dz:B.U[2]*ct+B.V[2]*st, spMul:0.75, comp:1}; }   // B265 (user) : cercle PLUS PETIT (1.0 -> 0.75)
+  if (i<77){ const B=_d8B, th=2*Math.PI*(i-55)/22+(rnd()-0.5)*0.16, ct=Math.cos(th), st=Math.sin(th);   // B268 (user) : DÉFAUTS — angle ±4,5°,
+    const w=(rnd()-0.5)*0.16;                                                                           // sortie de plan ±4,5°, vitesse/distance ±10 %
+    const dx=B.U[0]*ct+B.V[0]*st+B.F[0]*w, dy=B.U[1]*ct+B.V[1]*st+B.F[1]*w, dz=B.U[2]*ct+B.V[2]*st+B.F[2]*w;
+    const L=Math.hypot(dx,dy,dz)||1;
+    return {dx:dx/L, dy:dy/L, dz:dz/L, spMul:0.75*(0.90+rnd()*0.20), comp:1}; }   // B265 (user) : cercle PLUS PETIT (1.0 -> 0.75)
   const v=vrand(rnd); return {dx:v[0],dy:v[1],dz:v[2], spMul:0.71+rnd()*0.08, comp:2};   // pivoine DE LA TAILLE DU CERCLE — 130 étoiles (B267, comptées ~135 sur la photo user)
 }
 function behaveD8(d,A,dt,ctx){
