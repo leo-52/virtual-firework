@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B266';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B267';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -417,7 +417,7 @@ function distD8(i,n,rnd){
   if (i<55){ const v=vrand(rnd); return {dx:v[0],dy:v[1],dz:v[2], spMul:0.20+rnd()*0.10, comp:0}; }
   if (i<77){ const B=_d8B, th=2*Math.PI*(i-55)/22+(rnd()-0.5)*0.05, ct=Math.cos(th), st=Math.sin(th);
     return {dx:B.U[0]*ct+B.V[0]*st, dy:B.U[1]*ct+B.V[1]*st, dz:B.U[2]*ct+B.V[2]*st, spMul:0.75, comp:1}; }   // B265 (user) : cercle PLUS PETIT (1.0 -> 0.75)
-  const v=vrand(rnd); return {dx:v[0],dy:v[1],dz:v[2], spMul:0.71+rnd()*0.08, comp:2};   // pivoine DE LA TAILLE DU CERCLE (suit le rétrécissement)
+  const v=vrand(rnd); return {dx:v[0],dy:v[1],dz:v[2], spMul:0.71+rnd()*0.08, comp:2};   // pivoine DE LA TAILLE DU CERCLE — 130 étoiles (B267, comptées ~135 sur la photo user)
 }
 function behaveD8(d,A,dt,ctx){
   if (d.comp===1){                                                 // tête rouge à 1,5 s (léger jeu)
@@ -872,7 +872,7 @@ const EFFECTS = {
   // D8 — composé 150 mm (515088000, 183 m), définition user B264 : 55 centre bleu + 22 comètes
   // traçantes sans tête (têtes rouges à 1,5 s) + pivoine de la taille du cercle qui apparaît en
   // rouge par balayage à ~2 s puis rouge->orange->jaune->œuf de dragon.
-  d8: { apex:183, cal:150, heat:false, pureColor:true, stars:152, starSize:2.2, speedMul:1.85, speedJit:0.05,   // B262 : envergure de 150 mm (anneau Ø ~90 m)
+  d8: { apex:183, cal:150, heat:false, pureColor:true, stars:207, starSize:2.2, speedMul:1.85, speedJit:0.05,   // B267 : 55 centre + 22 cercle + 130 pivoine (photo user ~135 étoiles visibles)
         gravStar:0.5, dragStar:0.45, lifeBase75:0.9, lifeJitter:0.10, compLife:{1:1.25, 2:1.6}, compSize:{0:1.8, 1:2.6},
         restExtra:3, dist:distD8, behave:behaveD8, onStar:d8Fn, trailComps:[1], colors:[BLU, RED, RED],
         trailing:{emitUntil:0.97, period:0.010, grain:0.9, gF:0.13, lifeMul:4.0, color:COPPER, fixedColor:true, spark:true, jit:0.16, bright:0.85} },   // B265 (user) : traînées plus longues (2.8 -> 4.0)
