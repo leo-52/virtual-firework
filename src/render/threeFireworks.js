@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B270';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B271';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -468,14 +468,14 @@ function d8Fn(d,A,dt){
   if (d.comp===2) return d._on ? {intenMul:1.15*(d._fade!=null?d._fade:1)} : {intenMul:0};   // invisible avant le balayage, NOIR avant l'œuf
   return null;
 }
-// D9 (B270, REFAIT sur la définition user) : « bombe 150 mm D9 » (515089000, 183 m) :
-//  1) au break, un ANNEAU de 26 brins — étoiles INVISIBLES, seule la TRAÎNÉE se voit :
-//     du kamuro « beaucoup plus chaud, presque couleur BRONZE » -> le cercle jaune du début ;
-//  2) à l'EXTRÉMITÉ de ces brins se forme un CERCLE ROUGE PROGRESSIF (balayage du tour dès
-//     ~1,6 s, ~0,07 s/étoile, têtes qui GROSSISSENT — mécanique B266) ; le brin s'arrête
-//     quand sa tête s'allume ;
-//  3) une fois le cercle rouge FINI (~3,4 s), le CENTRE clignote TRÈS LÉGÈREMENT (plume =
-//     très léger, à peine distinguable au milieu des traînées bronze résiduelles).
+// D9 (B271, définition user + 2 captures vidéo) : « bombe 150 mm D9 » (515089000, 183 m) :
+//  1) au break : CERCLE JAUNE de 17 étoiles VISIBLES (sens aléatoire, défauts B268) + PIVOINE
+//     SANS ÉTOILE : ~80 brins aux étoiles invisibles, traînées kamuro BRONZE (chaudes) qui
+//     partent TOUTES DU CENTRE, vitesses variées -> boule PLEINE, pas de trou ;
+//  2) quand les traînées sont assez grandes (~1,9 s) : les MÊMES étoiles du cercle passent
+//     JAUNE -> NOIR (fondu ~1,2 s, éteintes 0,3-1 s) -> puis NOIR -> ROUGE en PROGRESSIF
+//     (balayage du tour, têtes qui regrossissent — même plan que le jaune, mêmes étoiles) ;
+//  3) à la fin (~3,3 s) : le CENTRE clignote TRÈS LÉGÈREMENT (plume) dans les traînées.
 let _d9B=null;
 const D9_BRONZE=new THREE.Color(1.10,0.55,0.18);
 function distD9(i,n,rnd){
@@ -484,36 +484,44 @@ function distD9(i,n,rnd){
     let U=cross(F,[0,1,0]); if(len2(U)<0.01)U=cross(F,[1,0,0]); U=norm(U);
     _d9B={F, U, V:norm(cross(F,U))};
   }
-  if (i<26){ const B=_d9B, th=2*Math.PI*i/26+(rnd()-0.5)*0.14, ct=Math.cos(th), st=Math.sin(th);   // défauts B268 : angle, plan, vitesse
+  if (i<17){ const B=_d9B, th=2*Math.PI*i/17+(rnd()-0.5)*0.14, ct=Math.cos(th), st=Math.sin(th);   // CERCLE (défauts B268)
     const w=(rnd()-0.5)*0.14;
     const dx=B.U[0]*ct+B.V[0]*st+B.F[0]*w, dy=B.U[1]*ct+B.V[1]*st+B.F[1]*w, dz=B.U[2]*ct+B.V[2]*st+B.F[2]*w;
     const L=Math.hypot(dx,dy,dz)||1;
     return {dx:dx/L, dy:dy/L, dz:dz/L, spMul:1.0*(0.91+rnd()*0.18), comp:0}; }
-  const v=vrand(rnd); return {dx:v[0],dy:v[1],dz:v[2], spMul:0.11+rnd()*0.08, comp:1};   // centre discret
+  if (i<37){ const v=vrand(rnd); return {dx:v[0],dy:v[1],dz:v[2], spMul:0.11+rnd()*0.08, comp:2}; }   // centre discret
+  const v=vrand(rnd); return {dx:v[0],dy:v[1],dz:v[2], spMul:0.45+rnd()*0.62, comp:1};   // PIVOINE de traînées : pleine depuis le centre
 }
 function behaveD9(d,A,dt,ctx){
   if (d.comp===0){
-    if (d.tipAt===undefined){
-      if (!ctx._d9S) ctx._d9S={k0:(Math.random()*26)|0, dir:Math.random()<0.5?1:-1};
-      const S=ctx._d9S, order=(((d._i-S.k0)*S.dir)%26+26)%26;
-      d.tipAt=1.6+order*0.07+(Math.random()-0.5)*0.06;             // CERCLE ROUGE PROGRESSIF (balayage ~1,8 s)
-      d.life=d.tipAt+1.2+Math.random()*0.4;
+    if (d._bkAt===undefined){
+      if (!ctx._d9S) ctx._d9S={k0:(Math.random()*17)|0, dir:Math.random()<0.5?1:-1};
+      const S=ctx._d9S, order=(((d._i-S.k0)*S.dir)%17+17)%17;
+      d._bkAt=1.15+Math.random()*0.2;                              // JAUNE -> NOIR
+      d._redAt=Math.max(d._bkAt+0.3, 1.85+order*0.06+(Math.random()-0.5)*0.05);   // NOIR -> ROUGE, balayage
+      d.life=d._redAt+1.2+Math.random()*0.4;
       d._sz=(ctx.cfg.compSize&&ctx.cfg.compSize[0])||ctx.cfg.starSize;
     }
-    if (!d._lit && d.age>=d.tipAt){ d._lit=true; d.coreColor=RED; d.trailing=false; }   // le brin s'arrête, la tête rouge naît à son extrémité
-    if (d._lit && (d._gk===undefined || d._gk<1)){
-      d._gk=Math.min(1,(d.age-d.tipAt)/0.4);
+    if (!d._lit && d.age>=d._redAt){ d._lit=true; d.coreColor=RED; }
+    if (d._lit && (d._gk===undefined || d._gk<1)){                 // la tête ROUGE regrossit (B266)
+      d._gk=Math.min(1,(d.age-d._redAt)/0.35);
       ctx.size[d._i]=d._sz*STAR_SCALE*(0.25+0.75*d._gk);
       ctx.geo.attributes.size.needsUpdate=true;
     }
     return;
   }
-  if (d._t0===undefined){ d._pf=9+Math.random()*6;                 // centre : après la FIN du cercle rouge
-    d._t0=3.4+Math.random()*0.3; d.life=Math.max(d.life, d._t0+1.2+Math.random()*0.5); }
+  if (d.comp!==2) return;
+  if (d._t0===undefined){ d._pf=9+Math.random()*6;                 // centre : après la fin du cercle rouge
+    d._t0=3.3+Math.random()*0.3; d.life=Math.max(d.life, d._t0+1.2+Math.random()*0.5); }
 }
 function d9Fn(d,A,dt){
-  if (d.comp===0) return d._lit ? {intenMul:1.25*Math.pow(d._gk||0,0.7)} : {intenMul:0};
-  if (d.age<(d._t0||9)) return {intenMul:0};                       // centre invisible avant ~3,4 s
+  if (d.comp===1) return {intenMul:0};                             // pivoine SANS étoile : traînées seules
+  if (d.comp===0){
+    if (d._lit) return {intenMul:1.25*Math.pow(d._gk||0,0.7)};     // ROUGE qui grossit
+    if (d._bkAt===undefined || d.age<d._bkAt) return {intenMul:1.2};   // JAUNE
+    return {intenMul:1.2*Math.max(0,1-(d.age-d._bkAt)/0.25)};      // fondu vers le NOIR
+  }
+  if (d.age<(d._t0||9)) return {intenMul:0};                       // centre invisible avant ~3,3 s
   return {intenMul: Math.sin(d.age*d._pf*2+d.phase*7)>-0.1 ? 0.55 : 0.15};   // clignote TRÈS légèrement (plume)
 }
 // CERCLE PROGRESSIF FEUILLE MORTE (B257, vidéo 6uYWtp3o_T8 décomposée + définition user :
@@ -928,12 +936,12 @@ const EFFECTS = {
         restExtra:3, dist:distD8, behave:behaveD8, onStar:d8Fn, trailComps:[1], colors:[BLU, RED, RED],
         trailing:{emitUntil:0.97, period:0.010, grain:0.9, gF:0.13, lifeMul:4.0, color:COPPER, fixedColor:true, spark:true, jit:0.16, bright:0.85} },   // B265 (user) : traînées plus longues (2.8 -> 4.0)
 
-  // D9 — composé 150 mm (515089000, 183 m), définition user B270 : anneau de brins BRONZE
-  // (étoiles invisibles, traînées kamuro chaudes) -> cercle rouge progressif aux extrémités
-  // -> centre qui clignote à peine. Traînées comp 0 seul.
-  d9: { apex:183, cal:150, heat:false, pureColor:true, stars:46, starSize:2.4, speedMul:1.2, speedJit:0.05,   // B270 : anneau ~Ø 100 m au moment du cercle rouge
-        gravStar:0.5, dragStar:0.25, lifeBase75:1.6, lifeJitter:0.10, compSize:{1:1.7},
-        restExtra:4, dist:distD9, behave:behaveD9, onStar:d9Fn, trailComps:[0], colors:[RED, RED],
+  // D9 — composé 150 mm (515089000, 183 m), définition user B271 : cercle JAUNE->NOIR->ROUGE
+  // (mêmes étoiles) + pivoine sans étoile (traînées bronze pleines depuis le centre) + centre
+  // qui clignote à peine. Traînées comp 1 seul.
+  d9: { apex:183, cal:150, heat:false, pureColor:true, stars:117, starSize:2.4, speedMul:1.2, speedJit:0.05,   // cercle ~Ø 85 m au moment du rouge
+        gravStar:0.5, dragStar:0.25, lifeBase75:1.6, lifeJitter:0.10, compSize:{2:1.7},
+        restExtra:4, dist:distD9, behave:behaveD9, onStar:d9Fn, trailComps:[1], colors:[YEL, DIMGOLD, RED],
         trailing:{emitUntil:0.97, period:0.006, grain:1.3, gF:0.13, lifeMul:13, color:D9_BRONZE, fixedColor:true, spark:true, jit:0.22} },
 
   // === MOTIFS 3D multi-couleurs ===
