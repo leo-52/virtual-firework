@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B276';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B277';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -955,10 +955,11 @@ const EFFECTS = {
   // D9 — composé 150 mm (515089000, 183 m), définition user B271 : cercle JAUNE->NOIR->ROUGE
   // (mêmes étoiles) + pivoine sans étoile (traînées bronze pleines depuis le centre) + centre
   // qui clignote à peine. Traînées comp 1 seul.
-  d9: { apex:183, cal:150, heat:false, pureColor:true, stars:199, starSize:1.9, speedMul:2.3, speedJit:0.05,   // B274 : 19 cercle + 20 centre + 160 traînées (×2), étoiles + petites
-        gravStar:1.0, dragStar:0.70, lifeBase75:1.6, lifeJitter:0.10, compSize:{2:1.5},
+  d9: { apex:183, cal:150, heat:false, pureColor:true, stars:199, starSize:1.9, speedMul:2.3, speedJit:0.05,   // B274 : 19 cercle + 20 centre + 160 traînées (×2)
+        gravStar:1.0, dragStar:0.70, lifeBase75:1.6, lifeJitter:0.10, compSize:{0:2.6, 2:1.5},   // B277 (user) : étoiles du CERCLE plus grosses
+        sway:1.2, wind:1.5,                                        // B277 : brins légèrement ONDULÉS + dérive commune (photo user)
         restExtra:4, dist:distD9, behave:behaveD9, onStar:d9Fn, trailComps:[1], colors:[YEL, DIMGOLD, RED],
-        trailing:{emitUntil:0.97, period:0.012, grain:1.3, gF:0.005, lifeMul:13, color:D9_BRONZE, fixedColor:true, spark:true, jit:0.15} },   // B275 (user) : ZÉRO retombée des grains (gF 0.005) + émission coupée à 1,4 s (voir behave) -> rayons droits figés
+        trailing:{emitUntil:0.97, period:0.005, grain:0.7, gF:0.005, lifeMul:13, color:D9_BRONZE, fixedColor:true, spark:true, jit:0.05, bright:0.9} },   // B277 (photo user) : FILAMENTS fins continus (grain 0.7 serré, zéro dispersion) — plus la nuée pivoine
 
   // === MOTIFS 3D multi-couleurs ===
   // ATOME (B191, « bombe 150 mm atome <couleur> », 12 réfs, 165 m — N'EXISTE QU'EN 150mm ; étapes
