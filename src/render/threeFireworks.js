@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B281';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B282';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -958,11 +958,11 @@ const EFFECTS = {
   // D9 — composé 150 mm (515089000, 183 m), définition user B271 : cercle JAUNE->NOIR->ROUGE
   // (mêmes étoiles) + pivoine sans étoile (traînées bronze pleines depuis le centre) + centre
   // qui clignote à peine. Traînées comp 1 seul.
-  d9: { apex:183, cal:150, heat:false, pureColor:true, stars:199, starSize:1.9, speedMul:2.3, speedJit:0.05,   // B274 : 19 cercle + 20 centre + 160 traînées (×2)
+  d9: { apex:183, cal:150, heat:false, pureColor:true, stars:199, starSize:1.9, speedMul:1.85, speedJit:0.05,   // B282 (user) : moins de vitesse d'éclatement -> figure finale moins grosse
         gravStar:1.0, dragStar:0.70, lifeBase75:1.6, lifeJitter:0.10, compSize:{0:2.1, 2:1.5},   // B279 : étoiles rouges du cercle recalées (photo : petites, dans le champ de rayons)
         noFlash:true, burstSparks:false,                           // B281 : traînées BIEN DROITES jusqu'au bout (sway ET vent supprimés — le vent courbait les brins lents de ~5 m) ; pas de cœur brillant
         restExtra:5, dist:distD9, behave:behaveD9, onStar:d9Fn, trailComps:[1], colors:[YEL, DIMGOLD, RED],
-        trailing:{emitUntil:0.97, period:0.017, grain:0.65, gF:0.005, lifeMul:24, color:D9_BRONZE, fixedColor:true, spark:true, jit:0.08, bright:0.55, rampIn:true} },   // B279 (photos user) : les grains PERSISTENT jusqu'au final (~4-5 s, lifeMul 24) — la boule doit encore être là quand les pointes clignotent ; rampIn = pas de boule lumineuse au centre ; discret (bright 0.55)
+        trailing:{emitUntil:0.97, period:0.017, grain:0.65, gF:0.005, lifeMul:24, color:D9_BRONZE, fixedColor:true, spark:true, jit:0.08, bright:0.82, rampIn:true} },   // B282 (user) : rayons PLUS VOYANTS (bright 0.55 -> 0.82) ; persistance jusqu'au final (lifeMul 24) ; rampIn = pas de boule au centre
 
   // === MOTIFS 3D multi-couleurs ===
   // ATOME (B191, « bombe 150 mm atome <couleur> », 12 réfs, 165 m — N'EXISTE QU'EN 150mm ; étapes
