@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B279';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B280';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -523,7 +523,8 @@ function behaveD9(d,A,dt,ctx){
   }
   if (d.comp!==2) return;
   if (d._t0===undefined){                                          // B276 (user) : le centre clignote DIRECT après la fin du cercle rouge (2,5 s)
-    d._t0=2.5+Math.random()*0.15; d.coreColor=RED; d.life=d._t0+1.0; }
+    d._t0=2.5+Math.random()*0.15; d.coreColor=RED; d.life=d._t0+1.0;
+    d.gMul=0.03; }                                                 // B280 (user) : le centre cli reste VRAIMENT AU CENTRE — pas de chute (la nappe de grains ne tombe pas non plus, tout dérive ensemble au vent)
 }
 // B272 (user) : plume du centre = DEUX clignotements seulement — noir/ROUGE/noir/ROUGE en 1 s.
 function d9Fn(d,A,dt){
@@ -957,7 +958,7 @@ const EFFECTS = {
   // qui clignote à peine. Traînées comp 1 seul.
   d9: { apex:183, cal:150, heat:false, pureColor:true, stars:199, starSize:1.9, speedMul:2.3, speedJit:0.05,   // B274 : 19 cercle + 20 centre + 160 traînées (×2)
         gravStar:1.0, dragStar:0.70, lifeBase75:1.6, lifeJitter:0.10, compSize:{0:2.1, 2:1.5},   // B279 : étoiles rouges du cercle recalées (photo : petites, dans le champ de rayons)
-        sway:1.6, wind:1.5, noFlash:true, burstSparks:false,       // B279 (photo) : pas de cœur orange brillant au centre
+        wind:1.5, noFlash:true, burstSparks:false,                 // B280 (user) : traînées BIEN DROITES jusqu'au bout (sway supprimé) ; pas de cœur brillant
         restExtra:5, dist:distD9, behave:behaveD9, onStar:d9Fn, trailComps:[1], colors:[YEL, DIMGOLD, RED],
         trailing:{emitUntil:0.97, period:0.017, grain:0.65, gF:0.005, lifeMul:24, color:D9_BRONZE, fixedColor:true, spark:true, jit:0.08, bright:0.55, rampIn:true} },   // B279 (photos user) : les grains PERSISTENT jusqu'au final (~4-5 s, lifeMul 24) — la boule doit encore être là quand les pointes clignotent ; rampIn = pas de boule lumineuse au centre ; discret (bright 0.55)
 
