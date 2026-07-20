@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B274';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B275';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -488,7 +488,7 @@ function distD9(i,n,rnd){
     const w=(rnd()-0.5)*0.14;
     const dx=B.U[0]*ct+B.V[0]*st+B.F[0]*w, dy=B.U[1]*ct+B.V[1]*st+B.F[1]*w, dz=B.U[2]*ct+B.V[2]*st+B.F[2]*w;
     const L=Math.hypot(dx,dy,dz)||1;
-    return {dx:dx/L, dy:dy/L, dz:dz/L, spMul:1.0*(0.91+rnd()*0.18), comp:0}; }
+    return {dx:dx/L, dy:dy/L, dz:dz/L, spMul:0.75*(0.91+rnd()*0.18), comp:0}; }   // B275 (user) : MÊME VITESSE que la pivoine (le cercle reste au bord de la boule)
   if (i<39){ const v=vrand(rnd); return {dx:v[0],dy:v[1],dz:v[2], spMul:0.11+rnd()*0.08, comp:2}; }   // centre discret
   const v=vrand(rnd); return {dx:v[0],dy:v[1],dz:v[2], spMul:0.45+rnd()*0.62, comp:1};   // PIVOINE de traînées : pleine depuis le centre
 }
@@ -497,11 +497,11 @@ function behaveD9(d,A,dt,ctx){
     if (d._bkAt===undefined){
       if (!ctx._d9S) ctx._d9S={k0:(Math.random()*19)|0, dir:Math.random()<0.5?1:-1};
       const S=ctx._d9S, order=(((d._i-S.k0)*S.dir)%19+19)%19;
-      d._bkAt=0.45+Math.random()*0.15;                             // B274 : JAUNE ULTRA COURT (~0,5 s)
-      // ROUGE en CHENILLE (user B274) : apparitions étalées avec du jeu ; vies COURTES ->
-      // quand la DERNIÈRE s'allume (~+3,0 s), la 10ᵉ est DÉJÀ éteinte.
-      d._redAt=Math.max(d._bkAt+0.25, 1.5+order*0.085+(Math.random()-0.5)*0.12);
-      d.life=d._redAt+0.55+Math.random()*0.15;
+      d._bkAt=0.28+Math.random()*0.06;                             // B275 (user) : JAUNE 0,3 s -> NOIR 0,3 s -> le rouge commence
+      // ROUGE en CHENILLE : balayage 0,75 -> 3,45 s (~7 allumées à la fois), vies ~1,1 s ->
+      // quand la DERNIÈRE s'allume, la 10ᵉ est déjà éteinte.
+      d._redAt=Math.max(d._bkAt+0.30, 0.75+order*0.15+(Math.random()-0.5)*0.12);
+      d.life=d._redAt+1.05+Math.random()*0.2;
       d._sz=(ctx.cfg.compSize&&ctx.cfg.compSize[0])||ctx.cfg.starSize;
     }
     if (!d._lit && d.age>=d._redAt){ d._lit=true; d.coreColor=RED; }
@@ -514,13 +514,16 @@ function behaveD9(d,A,dt,ctx){
   }
   if (d.comp===1){
     // Les POINTES de la pivoine clignotent À LA TOUTE FIN (2 clignotements rapides ~0,45 s).
-    if (d._t1===undefined){ d._t1=3.8+Math.random()*0.15; d.life=Math.max(d.life, d._t1+0.55); }
-    if (!d._rl && d.age>=d._t1){ d._rl=true; d.coreColor=RED; d.trailing=false; }
+    if (d._t1===undefined){ d._t1=4.75+Math.random()*0.15; d.life=Math.max(d.life, d._t1+0.55); }
+    // B275 (user : « pas de retombée ») : on n'émet les grains QUE pendant l'expansion (1,4 s,
+    // trajectoire droite) — après, l'étoile invisible retombe SANS allonger/courber son rayon.
+    if (d.trailing && d.age>=1.4) d.trailing=false;
+    if (!d._rl && d.age>=d._t1){ d._rl=true; d.coreColor=RED; }
     return;
   }
   if (d.comp!==2) return;
   if (d._t0===undefined){                                          // B274 : plume du centre PENDANT le cercle rouge
-    d._t0=2.0+Math.random()*0.25; d.coreColor=RED; d.life=d._t0+1.0; }
+    d._t0=1.9+Math.random()*0.3; d.coreColor=RED; d.life=d._t0+1.0; }
 }
 // B272 (user) : plume du centre = DEUX clignotements seulement — noir/ROUGE/noir/ROUGE en 1 s.
 function d9Fn(d,A,dt){
@@ -532,7 +535,7 @@ function d9Fn(d,A,dt){
   if (d.comp===0){
     if (d._lit) return {intenMul:1.7*Math.pow(d._gk||0,0.7)};      // ROUGE qui grossit — VIF (B274)
     if (d._bkAt===undefined || d.age<d._bkAt) return {intenMul:1.7};   // JAUNE VIF, ultra court
-    return {intenMul:1.7*Math.max(0,1-(d.age-d._bkAt)/0.20)};      // fondu vers le NOIR
+    return {intenMul:1.7*Math.max(0,1-(d.age-d._bkAt)/0.15)};      // fondu vers le NOIR
   }
   const p=d.age-(d._t0||9);                                        // centre : noir/ROUGE/noir/ROUGE en 1 s
   return {intenMul: ((p>0.10&&p<0.35)||(p>0.60&&p<0.85)) ? 0.75 : 0};
@@ -955,7 +958,7 @@ const EFFECTS = {
   d9: { apex:183, cal:150, heat:false, pureColor:true, stars:199, starSize:1.9, speedMul:2.3, speedJit:0.05,   // B274 : 19 cercle + 20 centre + 160 traînées (×2), étoiles + petites
         gravStar:1.0, dragStar:0.70, lifeBase75:1.6, lifeJitter:0.10, compSize:{2:1.5},
         restExtra:4, dist:distD9, behave:behaveD9, onStar:d9Fn, trailComps:[1], colors:[YEL, DIMGOLD, RED],
-        trailing:{emitUntil:0.97, period:0.012, grain:1.3, gF:0.04, lifeMul:13, color:D9_BRONZE, fixedColor:true, spark:true, jit:0.15} },   // B274 (user) : rayons DROITS (gF 0.04, pas de retombée kamuro), bronze, ×2 traînées (period 0.012 pour tenir dans le pool)
+        trailing:{emitUntil:0.97, period:0.012, grain:1.3, gF:0.005, lifeMul:13, color:D9_BRONZE, fixedColor:true, spark:true, jit:0.15} },   // B275 (user) : ZÉRO retombée des grains (gF 0.005) + émission coupée à 1,4 s (voir behave) -> rayons droits figés
 
   // === MOTIFS 3D multi-couleurs ===
   // ATOME (B191, « bombe 150 mm atome <couleur> », 12 réfs, 165 m — N'EXISTE QU'EN 150mm ; étapes
