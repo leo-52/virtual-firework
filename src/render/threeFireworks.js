@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B277';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B278';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -477,7 +477,7 @@ function d8Fn(d,A,dt){
 //     (balayage du tour, têtes qui regrossissent — même plan que le jaune, mêmes étoiles) ;
 //  3) à la fin (~3,3 s) : le CENTRE clignote TRÈS LÉGÈREMENT (plume) dans les traînées.
 let _d9B=null;
-const D9_BRONZE=new THREE.Color(1.0,0.42,0.12);                    // B274 (user) : BRONZE, pas doré
+const D9_BRONZE=new THREE.Color(1.05,0.62,0.28);                   // B278 (photo user) : or pâle chaud — le B274 rendait trop ORANGE saturé
 function distD9(i,n,rnd){
   if (i===0){
     const F=vrand(rnd);
@@ -490,7 +490,7 @@ function distD9(i,n,rnd){
     const L=Math.hypot(dx,dy,dz)||1;
     return {dx:dx/L, dy:dy/L, dz:dz/L, spMul:0.75*(0.91+rnd()*0.18), comp:0}; }   // B275 (user) : MÊME VITESSE que la pivoine (le cercle reste au bord de la boule)
   if (i<39){ const v=vrand(rnd); return {dx:v[0],dy:v[1],dz:v[2], spMul:0.11+rnd()*0.08, comp:2}; }   // centre discret
-  const v=vrand(rnd); return {dx:v[0],dy:v[1],dz:v[2], spMul:0.45+rnd()*0.62, comp:1};   // PIVOINE de traînées : pleine depuis le centre
+  const v=vrand(rnd); return {dx:v[0],dy:v[1],dz:v[2], spMul:0.35+rnd()*0.85, comp:1};   // PIVOINE de traînées : pleine depuis le centre, LONGUEURS très inégales (B278, photo)
 }
 function behaveD9(d,A,dt,ctx){
   if (d.comp===0){
@@ -957,9 +957,9 @@ const EFFECTS = {
   // qui clignote à peine. Traînées comp 1 seul.
   d9: { apex:183, cal:150, heat:false, pureColor:true, stars:199, starSize:1.9, speedMul:2.3, speedJit:0.05,   // B274 : 19 cercle + 20 centre + 160 traînées (×2)
         gravStar:1.0, dragStar:0.70, lifeBase75:1.6, lifeJitter:0.10, compSize:{0:2.6, 2:1.5},   // B277 (user) : étoiles du CERCLE plus grosses
-        sway:1.2, wind:1.5,                                        // B277 : brins légèrement ONDULÉS + dérive commune (photo user)
+        sway:1.6, wind:1.5,                                        // B278 : courbures un peu plus marquées (photo)
         restExtra:4, dist:distD9, behave:behaveD9, onStar:d9Fn, trailComps:[1], colors:[YEL, DIMGOLD, RED],
-        trailing:{emitUntil:0.97, period:0.005, grain:0.7, gF:0.005, lifeMul:13, color:D9_BRONZE, fixedColor:true, spark:true, jit:0.05, bright:0.9} },   // B277 (photo user) : FILAMENTS fins continus (grain 0.7 serré, zéro dispersion) — plus la nuée pivoine
+        trailing:{emitUntil:0.97, period:0.017, grain:0.65, gF:0.005, lifeMul:13, color:D9_BRONZE, fixedColor:true, spark:true, jit:0.08, bright:0.75} },   // B278 (2 photos user) : rayons POINTILLÉS — chapelets de grains fins ESPACÉS (period 0.017), pas des traits pleins ; discret (bright 0.75)
 
   // === MOTIFS 3D multi-couleurs ===
   // ATOME (B191, « bombe 150 mm atome <couleur> », 12 réfs, 165 m — N'EXISTE QU'EN 150mm ; étapes
