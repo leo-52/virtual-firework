@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B275';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B276';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -497,11 +497,11 @@ function behaveD9(d,A,dt,ctx){
     if (d._bkAt===undefined){
       if (!ctx._d9S) ctx._d9S={k0:(Math.random()*19)|0, dir:Math.random()<0.5?1:-1};
       const S=ctx._d9S, order=(((d._i-S.k0)*S.dir)%19+19)%19;
-      d._bkAt=0.28+Math.random()*0.06;                             // B275 (user) : JAUNE 0,3 s -> NOIR 0,3 s -> le rouge commence
-      // ROUGE en CHENILLE : balayage 0,75 -> 3,45 s (~7 allumées à la fois), vies ~1,1 s ->
-      // quand la DERNIÈRE s'allume, la 10ᵉ est déjà éteinte.
-      d._redAt=Math.max(d._bkAt+0.30, 0.75+order*0.15+(Math.random()-0.5)*0.12);
-      d.life=d._redAt+1.05+Math.random()*0.2;
+      d._bkAt=0.48+Math.random()*0.06;                             // B276 (user) : JAUNE 0,5 s -> NOIR 0,5 s -> le rouge commence à 1 s
+      // ROUGE en CHENILLE : le tour se fait en 1,5 s (apparitions 1,0 -> 2,5 s), vies ~0,65 s
+      // -> quand la DERNIÈRE s'allume, la 10ᵉ est déjà éteinte.
+      d._redAt=Math.max(d._bkAt+0.30, 1.0+order*0.083+(Math.random()-0.5)*0.10);
+      d.life=d._redAt+0.60+Math.random()*0.12;
       d._sz=(ctx.cfg.compSize&&ctx.cfg.compSize[0])||ctx.cfg.starSize;
     }
     if (!d._lit && d.age>=d._redAt){ d._lit=true; d.coreColor=RED; }
@@ -514,7 +514,7 @@ function behaveD9(d,A,dt,ctx){
   }
   if (d.comp===1){
     // Les POINTES de la pivoine clignotent À LA TOUTE FIN (2 clignotements rapides ~0,45 s).
-    if (d._t1===undefined){ d._t1=4.75+Math.random()*0.15; d.life=Math.max(d.life, d._t1+0.55); }
+    if (d._t1===undefined){ d._t1=4.0+Math.random()*0.12; d.life=Math.max(d.life, d._t1+0.55); }   // B276 : 0,5 s de temps mort après le centre, puis les pointes
     // B275 (user : « pas de retombée ») : on n'émet les grains QUE pendant l'expansion (1,4 s,
     // trajectoire droite) — après, l'étoile invisible retombe SANS allonger/courber son rayon.
     if (d.trailing && d.age>=1.4) d.trailing=false;
@@ -522,8 +522,8 @@ function behaveD9(d,A,dt,ctx){
     return;
   }
   if (d.comp!==2) return;
-  if (d._t0===undefined){                                          // B274 : plume du centre PENDANT le cercle rouge
-    d._t0=1.9+Math.random()*0.3; d.coreColor=RED; d.life=d._t0+1.0; }
+  if (d._t0===undefined){                                          // B276 (user) : le centre clignote DIRECT après la fin du cercle rouge (2,5 s)
+    d._t0=2.5+Math.random()*0.15; d.coreColor=RED; d.life=d._t0+1.0; }
 }
 // B272 (user) : plume du centre = DEUX clignotements seulement — noir/ROUGE/noir/ROUGE en 1 s.
 function d9Fn(d,A,dt){
