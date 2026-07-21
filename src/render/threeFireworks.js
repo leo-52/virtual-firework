@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B283';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B284';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -477,7 +477,7 @@ function d8Fn(d,A,dt){
 //     (balayage du tour, têtes qui regrossissent — même plan que le jaune, mêmes étoiles) ;
 //  3) à la fin (~3,3 s) : le CENTRE clignote TRÈS LÉGÈREMENT (plume) dans les traînées.
 let _d9B=null;
-const D9_BRONZE=new THREE.Color(1.05,0.70,0.40);                   // B279 (photos user) : rose-champagne pâle — encore moins orange
+const D9_BRONZE=new THREE.Color(1.05,0.58,0.22);                   // B284 (user) : plus BRONZÉ (entre le champagne B279 et l'orange B274)
 function distD9(i,n,rnd){
   if (i===0){
     const F=vrand(rnd);
@@ -515,7 +515,7 @@ function behaveD9(d,A,dt,ctx){
   }
   if (d.comp===1){
     // Les POINTES de la pivoine clignotent À LA TOUTE FIN (2 clignotements rapides ~0,45 s).
-    if (d._t1===undefined){ d._t1=4.0+Math.random()*0.12; d.life=Math.max(d.life, d._t1+0.55);   // B276 : 0,5 s de temps mort après le centre, puis les pointes
+    if (d._t1===undefined){ d._t1=4.0+Math.random()*0.12; d.life=Math.max(d.life, d._t1+0.85);   // B276 : 0,5 s de temps mort après le centre, puis les pointes (B284 : pulsations douces, +0,85 s)
       d.gMul=0.04; }                                               // B281 (user : « le centre on dirait un saule ») : SANS gravité les brins lents ne tombent plus pendant l'émission — rayons droits partout, pas de queues qui pendent au cœur
     // B275 (user : « pas de retombée ») : on n'émet les grains QUE pendant l'expansion (1,4 s,
     // trajectoire droite) — après, l'étoile invisible retombe SANS allonger/courber son rayon.
@@ -525,23 +525,25 @@ function behaveD9(d,A,dt,ctx){
   }
   if (d.comp!==2) return;
   if (d._t0===undefined){                                          // B276 (user) : le centre clignote DIRECT après la fin du cercle rouge (2,5 s)
-    d._t0=2.5+Math.random()*0.15; d.coreColor=RED; d.life=d._t0+1.0;
+    d._t0=2.5+Math.random()*0.15; d.coreColor=RED; d.life=d._t0+1.2;   // B284 : pulsations douces (2×0,5 s)
     d.gMul=0.03; }                                                 // B280 (user) : le centre cli reste VRAIMENT AU CENTRE — pas de chute (la nappe de grains ne tombe pas non plus, tout dérive ensemble au vent)
 }
-// B272 (user) : plume du centre = DEUX clignotements seulement — noir/ROUGE/noir/ROUGE en 1 s.
+// B272 (user) : plume = DEUX clignotements seulement. B284 : clignotement DOUX (enveloppe en
+// cloche sinus, montée/descente progressives) et MOINS RAPIDE.
+const d9Bump=(p,a,dur)=> (p>a&&p<a+dur) ? Math.sin(Math.PI*(p-a)/dur) : 0;
 function d9Fn(d,A,dt){
   if (d.comp===1){                                                 // pivoine SANS étoile… jusqu'au final
     if (!d._rl) return {intenMul:0};
-    const p=d.age-d._t1;                                           // 2 clignotements RAPIDES (~0,45 s)
-    return {intenMul: ((p>0.04&&p<0.16)||(p>0.28&&p<0.40)) ? 0.95 : 0};
+    const p=d.age-d._t1;                                           // 2 clignotements doux (~0,75 s au total)
+    return {intenMul: 0.95*Math.max(d9Bump(p,0.02,0.34), d9Bump(p,0.44,0.34))};
   }
   if (d.comp===0){
     if (d._lit) return {intenMul:1.7*Math.pow(d._gk||0,0.7)};      // ROUGE qui grossit — VIF (B274)
     if (d._bkAt===undefined || d.age<d._bkAt) return {intenMul:1.7};   // JAUNE VIF, ultra court
     return {intenMul:1.7*Math.max(0,1-(d.age-d._bkAt)/0.15)};      // fondu vers le NOIR
   }
-  const p=d.age-(d._t0||9);                                        // centre : noir/ROUGE/noir/ROUGE en 1 s
-  return {intenMul: ((p>0.10&&p<0.35)||(p>0.60&&p<0.85)) ? 0.75 : 0};
+  const p=d.age-(d._t0||9);                                        // centre : noir/ROUGE/noir/ROUGE, doux (~1,2 s)
+  return {intenMul: 0.75*Math.max(d9Bump(p,0.06,0.50), d9Bump(p,0.64,0.50))};
 }
 // CERCLE PROGRESSIF FEUILLE MORTE (B257, vidéo 6uYWtp3o_T8 décomposée + définition user :
 // « une feuille morte, entourée de 16 étoiles, qui s'allument les unes après les autres ») :
@@ -962,7 +964,7 @@ const EFFECTS = {
         gravStar:1.0, dragStar:0.70, lifeBase75:1.6, lifeJitter:0.10, compSize:{0:2.1, 2:1.5},   // B279 : étoiles rouges du cercle recalées (photo : petites, dans le champ de rayons)
         noFlash:true, burstSparks:false,                           // B281 : traînées BIEN DROITES jusqu'au bout (sway ET vent supprimés — le vent courbait les brins lents de ~5 m) ; pas de cœur brillant
         restExtra:5, dist:distD9, behave:behaveD9, onStar:d9Fn, trailComps:[1], colors:[YEL, DIMGOLD, RED],
-        trailing:{emitUntil:0.97, period:0.017, grain:0.95, gF:0.005, lifeMul:24, color:D9_BRONZE, fixedColor:true, spark:true, jit:0.08, bright:0.90, rampIn:true} },   // B283 (user) : rayons ENCORE plus voyants — grains plus GROS (0.65 -> 0.95), bright 0.90 ; persistance lifeMul 24 ; rampIn anti-boule centrale
+        trailing:{emitUntil:0.97, period:0.013, grain:1.0, gF:0.005, lifeMul:24, color:D9_BRONZE, fixedColor:true, spark:true, jit:0.28, bright:1.0, rampIn:true} },   // B284 (user) : la TRAÎNÉE elle-même plus grosse — plus dense (period 0.013) + un peu de LARGEUR (jit 0.28), grains raisonnables (1.0), un poil + lumineux
 
   // === MOTIFS 3D multi-couleurs ===
   // ATOME (B191, « bombe 150 mm atome <couleur> », 12 réfs, 165 m — N'EXISTE QU'EN 150mm ; étapes
