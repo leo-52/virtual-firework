@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B284';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B285';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -517,10 +517,9 @@ function behaveD9(d,A,dt,ctx){
     // Les POINTES de la pivoine clignotent À LA TOUTE FIN (2 clignotements rapides ~0,45 s).
     if (d._t1===undefined){ d._t1=4.0+Math.random()*0.12; d.life=Math.max(d.life, d._t1+0.85);   // B276 : 0,5 s de temps mort après le centre, puis les pointes (B284 : pulsations douces, +0,85 s)
       d.gMul=0.04; }                                               // B281 (user : « le centre on dirait un saule ») : SANS gravité les brins lents ne tombent plus pendant l'émission — rayons droits partout, pas de queues qui pendent au cœur
-    // B275 (user : « pas de retombée ») : on n'émet les grains QUE pendant l'expansion (1,4 s,
-    // trajectoire droite) — après, l'étoile invisible retombe SANS allonger/courber son rayon.
-    if (d.trailing && d.age>=1.4) d.trailing=false;
-    if (!d._rl && d.age>=d._t1){ d._rl=true; d.coreColor=RED; }
+    // B285 (vidéo user) : les brins CONTINUENT DE GRANDIR — plus de coupure à 1,4 s (la
+    // trajectoire reste droite : gravité ~0 + pas de vent) ; l'émission ne s'arrête qu'au final.
+    if (!d._rl && d.age>=d._t1){ d._rl=true; d.coreColor=RED; d.trailing=false; }
     return;
   }
   if (d.comp!==2) return;
@@ -960,8 +959,8 @@ const EFFECTS = {
   // D9 — composé 150 mm (515089000, 183 m), définition user B271 : cercle JAUNE->NOIR->ROUGE
   // (mêmes étoiles) + pivoine sans étoile (traînées bronze pleines depuis le centre) + centre
   // qui clignote à peine. Traînées comp 1 seul.
-  d9: { apex:183, cal:150, heat:false, pureColor:true, stars:199, starSize:1.9, speedMul:1.85, speedJit:0.05,   // B282 (user) : moins de vitesse d'éclatement -> figure finale moins grosse
-        gravStar:1.0, dragStar:0.70, lifeBase75:1.6, lifeJitter:0.10, compSize:{0:2.1, 2:1.5},   // B279 : étoiles rouges du cercle recalées (photo : petites, dans le champ de rayons)
+  d9: { apex:183, cal:150, heat:false, pureColor:true, stars:199, starSize:1.9, speedMul:0.95, speedJit:0.05,   // B285 : croissance CONTINUE (drag 0.35) — vitesse recalée pour garder la taille finale B282
+        gravStar:1.0, dragStar:0.35, lifeBase75:1.6, lifeJitter:0.10, compSize:{0:2.1, 2:1.5},   // B279 : étoiles rouges du cercle recalées (photo : petites, dans le champ de rayons)
         noFlash:true, burstSparks:false,                           // B281 : traînées BIEN DROITES jusqu'au bout (sway ET vent supprimés — le vent courbait les brins lents de ~5 m) ; pas de cœur brillant
         restExtra:5, dist:distD9, behave:behaveD9, onStar:d9Fn, trailComps:[1], colors:[YEL, DIMGOLD, RED],
         trailing:{emitUntil:0.97, period:0.013, grain:1.0, gF:0.005, lifeMul:24, color:D9_BRONZE, fixedColor:true, spark:true, jit:0.28, bright:1.0, rampIn:true} },   // B284 (user) : la TRAÎNÉE elle-même plus grosse — plus dense (period 0.013) + un peu de LARGEUR (jit 0.28), grains raisonnables (1.0), un poil + lumineux
