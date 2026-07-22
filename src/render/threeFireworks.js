@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B288';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B289';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -966,8 +966,8 @@ const EFFECTS = {
   // D9 — composé 150 mm (515089000, 183 m), définition user B271 : cercle JAUNE->NOIR->ROUGE
   // (mêmes étoiles) + pivoine sans étoile (traînées bronze pleines depuis le centre) + centre
   // qui clignote à peine. Traînées comp 1 seul.
-  d9: { apex:183, cal:150, heat:false, pureColor:true, stars:199, starSize:1.9, speedMul:0.95, speedJit:0.05,   // B285 : croissance CONTINUE (drag 0.35) — vitesse recalée pour garder la taille finale B282
-        gravStar:1.0, dragStar:0.35, lifeBase75:1.6, lifeJitter:0.10, compSize:{0:2.1, 2:1.5},   // B279 : étoiles rouges du cercle recalées (photo : petites, dans le champ de rayons)
+  d9: { apex:183, cal:150, heat:false, pureColor:true, stars:199, starSize:2.1, speedMul:0.95, speedJit:0.05,   // B285 : croissance CONTINUE (drag 0.35) — vitesse recalée pour garder la taille finale B282
+        gravStar:1.0, dragStar:0.35, lifeBase75:1.6, lifeJitter:0.10, compSize:{0:2.3, 2:1.7},   // B289 (user) : toutes les étoiles +0,2
         noFlash:true, burstSparks:false,                           // B281 : traînées BIEN DROITES jusqu'au bout (sway ET vent supprimés — le vent courbait les brins lents de ~5 m) ; pas de cœur brillant
         restExtra:5, dist:distD9, behave:behaveD9, onStar:d9Fn, trailComps:[1], colors:[YEL, DIMGOLD, RED],
         trailing:{emitUntil:0.97, period:0.013, grain:1.0, gF:0.005, lifeMul:24, color:D9_BRONZE, fixedColor:true, spark:true, jit:0.28, bright:0.62, rampIn:true} },   // B288 (photo user) : MOINS VISIBLE (bright 0.62), cuivre sombre — traînée dense/large (period 0.013, jit 0.28)
