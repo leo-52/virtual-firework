@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B286';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B287';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -515,7 +515,13 @@ function behaveD9(d,A,dt,ctx){
   }
   if (d.comp===1){
     // Les POINTES de la pivoine clignotent À LA TOUTE FIN (2 clignotements rapides ~0,45 s).
-    if (d._t1===undefined){ d._t1=4.0+Math.random()*0.12; d.life=Math.max(d.life, d._t1+0.85);   // B276 : 0,5 s de temps mort après le centre, puis les pointes (B284 : pulsations douces, +0,85 s)
+    if (d._t1===undefined){
+      // B287 (user : « trop précis, on dirait des boules de Noël ») : chaque pointe a SON
+      // départ (fenêtre 0,45 s) et SES durées/écarts de pulsations.
+      d._t1=4.0+Math.random()*0.45;
+      d._a1=0.02+Math.random()*0.08; d._d1=0.26+Math.random()*0.14;
+      d._a2=d._a1+d._d1+0.05+Math.random()*0.14; d._d2=0.26+Math.random()*0.14;
+      d.life=Math.max(d.life, d._t1+d._a2+d._d2+0.05);
       d.gMul=0.04; }                                               // B281 (user : « le centre on dirait un saule ») : SANS gravité les brins lents ne tombent plus pendant l'émission — rayons droits partout, pas de queues qui pendent au cœur
     // B285 (vidéo user) : les brins CONTINUENT DE GRANDIR — plus de coupure à 1,4 s (la
     // trajectoire reste droite : gravité ~0 + pas de vent) ; l'émission ne s'arrête qu'au final.
@@ -524,7 +530,10 @@ function behaveD9(d,A,dt,ctx){
   }
   if (d.comp!==2) return;
   if (d._t0===undefined){                                          // B276 (user) : le centre clignote DIRECT après la fin du cercle rouge (2,5 s)
-    d._t0=2.5+Math.random()*0.15; d.coreColor=RED; d.life=d._t0+1.2;   // B284 : pulsations douces (2×0,5 s)
+    d._t0=2.5+Math.random()*0.40; d.coreColor=RED;                 // B287 : départs ÉTALÉS + pulsations propres à chaque étoile (anti « boules de Noël »)
+    d._a1=0.04+Math.random()*0.12; d._d1=0.40+Math.random()*0.18;
+    d._a2=d._a1+d._d1+0.06+Math.random()*0.18; d._d2=0.40+Math.random()*0.18;
+    d.life=d._t0+d._a2+d._d2+0.05;
     d.gMul=0.03; }                                                 // B280 (user) : le centre cli reste VRAIMENT AU CENTRE — pas de chute (la nappe de grains ne tombe pas non plus, tout dérive ensemble au vent)
 }
 // B272 (user) : plume = DEUX clignotements seulement. B284 : clignotement DOUX (enveloppe en
@@ -533,16 +542,16 @@ const d9Bump=(p,a,dur)=> (p>a&&p<a+dur) ? Math.sin(Math.PI*(p-a)/dur) : 0;
 function d9Fn(d,A,dt){
   if (d.comp===1){                                                 // pivoine SANS étoile… jusqu'au final
     if (!d._rl) return {intenMul:0};
-    const p=d.age-d._t1;                                           // 2 clignotements doux (~0,75 s au total)
-    return {intenMul: 0.95*Math.max(d9Bump(p,0.02,0.34), d9Bump(p,0.44,0.34))};
+    const p=d.age-d._t1;                                           // 2 clignotements doux, propres à CHAQUE étoile (B287)
+    return {intenMul: 0.95*Math.max(d9Bump(p,d._a1,d._d1), d9Bump(p,d._a2,d._d2))};
   }
   if (d.comp===0){
     if (d._lit) return {intenMul:1.7*Math.pow(d._gk||0,0.7)};      // ROUGE qui grossit — VIF (B274)
     if (d._bkAt===undefined || d.age<d._bkAt) return {intenMul:1.7};   // JAUNE VIF, ultra court
     return {intenMul:1.7*Math.max(0,1-(d.age-d._bkAt)/0.15)};      // fondu vers le NOIR
   }
-  const p=d.age-(d._t0||9);                                        // centre : noir/ROUGE/noir/ROUGE, doux (~1,2 s)
-  return {intenMul: 0.75*Math.max(d9Bump(p,0.06,0.50), d9Bump(p,0.64,0.50))};
+  const p=d.age-(d._t0||9);                                        // centre : noir/ROUGE/noir/ROUGE, doux et DÉSYNCHRONISÉ (B287)
+  return {intenMul: d._a1!==undefined ? 0.75*Math.max(d9Bump(p,d._a1,d._d1), d9Bump(p,d._a2,d._d2)) : 0};
 }
 // CERCLE PROGRESSIF FEUILLE MORTE (B257, vidéo 6uYWtp3o_T8 décomposée + définition user :
 // « une feuille morte, entourée de 16 étoiles, qui s'allument les unes après les autres ») :
