@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B285';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B286';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -490,7 +490,7 @@ function distD9(i,n,rnd){
     const L=Math.hypot(dx,dy,dz)||1;
     return {dx:dx/L, dy:dy/L, dz:dz/L, spMul:0.75*(0.91+rnd()*0.18), comp:0}; }   // B275 (user) : MÊME VITESSE que la pivoine (le cercle reste au bord de la boule)
   if (i<39){ const v=vrand(rnd); return {dx:v[0],dy:v[1],dz:v[2], spMul:0.11+rnd()*0.08, comp:2}; }   // centre discret
-  const v=vrand(rnd); return {dx:v[0],dy:v[1],dz:v[2], spMul:0.35+rnd()*0.85, comp:1};   // PIVOINE de traînées : pleine depuis le centre, LONGUEURS très inégales (B278, photo)
+  const v=vrand(rnd); return {dx:v[0],dy:v[1],dz:v[2], spMul:0.82+rnd()*0.28, comp:1};   // PIVOINE de traînées : pleine depuis le centre, enveloppe SPHÉRIQUE ±15 % (B286, user)
 }
 function behaveD9(d,A,dt,ctx){
   if (d.comp===0){
