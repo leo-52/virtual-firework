@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B289';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B290';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -551,6 +551,56 @@ function d9Fn(d,A,dt){
   const p=d.age-(d._t0||9);                                        // centre : UN scintillement ROUGE doux, désynchronisé (B288)
   return {intenMul: d._a1!==undefined ? 0.75*d9Bump(p,d._a1,d._d1) : 0};
 }
+// D10 (B290, vidéo S0MK2jOLu4g + définition user) : « bombe 150 mm D10 » (515090000, 183 m) —
+// tout en même temps au break :
+//  1) MINI PIVOINE BLEUE : ~30 étoiles en petite boule ronde (~1,7 s) ;
+//  2) 20 COMÈTES KAMURO en cercle (plan aléatoire, défauts B268), recette traçante B211 en or —
+//     gros rayons pointus qui durent (~4-4,5 s) et retombent doucement ;
+//  3) CERCLE ROUGE PROGRESSIF (son propre plan) : les 19 étoiles apparaissent une à une
+//     (balayage ~1,8 s, têtes qui grossissent B266) puis chacune DEVIENT UN SCINTILLANT BLANC
+//     à la fin (strobe blanc ~0,7-0,95 s) et s'éteint.
+let _d10B=null;
+function distD10(i,n,rnd){
+  if (i===0){
+    const mk=()=>{ const F=vrand(rnd);
+      let U=cross(F,[0,1,0]); if(len2(U)<0.01)U=cross(F,[1,0,0]); U=norm(U);
+      return {F, U, V:norm(cross(F,U))}; };
+    _d10B={A:mk(), B:mk()};                                        // deux plans indépendants
+  }
+  const ring=(P,k,nn,sp)=>{ const th=2*Math.PI*k/nn+(rnd()-0.5)*0.14, ct=Math.cos(th), st=Math.sin(th);
+    const w=(rnd()-0.5)*0.14;
+    const dx=P.U[0]*ct+P.V[0]*st+P.F[0]*w, dy=P.U[1]*ct+P.V[1]*st+P.F[1]*w, dz=P.U[2]*ct+P.V[2]*st+P.F[2]*w;
+    const L=Math.hypot(dx,dy,dz)||1;
+    return {dx:dx/L, dy:dy/L, dz:dz/L, spMul:sp*(0.91+rnd()*0.18)}; };
+  if (i<30){ const v=vrand(rnd); return {dx:v[0],dy:v[1],dz:v[2], spMul:0.24+rnd()*0.08, comp:0}; }   // MINI PIVOINE bleue (coquille ronde)
+  if (i<50){ const r=ring(_d10B.A, i-30, 20, 1.0); r.comp=1; return r; }                              // comètes kamuro
+  const r=ring(_d10B.B, i-50, 19, 0.80); r.comp=2; return r;                                          // cercle rouge progressif
+}
+function behaveD10(d,A,dt,ctx){
+  if (d.comp!==2) return;
+  if (d._redAt===undefined){
+    if (!ctx._d10S) ctx._d10S={k0:(Math.random()*19)|0, dir:Math.random()<0.5?1:-1};
+    const S=ctx._d10S, order=(((d._i-50-S.k0)*S.dir)%19+19)%19;
+    d._redAt=0.9+order*0.10+(Math.random()-0.5)*0.08;              // balayage du tour ~1,8 s
+    d._whAt=d._redAt+1.0+Math.random()*0.3;                        // puis SCINTILLANT BLANC
+    d._pf=15+Math.random()*8;
+    d.life=d._whAt+0.7+Math.random()*0.25;
+    d._sz=(ctx.cfg.compSize&&ctx.cfg.compSize[2])||ctx.cfg.starSize;
+  }
+  if (!d._lit && d.age>=d._redAt){ d._lit=true; d.coreColor=RED; }
+  if (d._lit && (d._gk===undefined || d._gk<1)){                   // la tête rouge grossit (B266)
+    d._gk=Math.min(1,(d.age-d._redAt)/0.30);
+    ctx.size[d._i]=d._sz*STAR_SCALE*(0.25+0.75*d._gk);
+    ctx.geo.attributes.size.needsUpdate=true;
+  }
+}
+function d10Fn(d,A,dt){
+  if (d.comp!==2) return null;
+  if (!d._lit) return {intenMul:0};                                // invisible avant son tour
+  if (d.age>=d._whAt)                                              // SCINTILLANT BLANC final
+    return {intenMul: Math.sin(d.age*d._pf*2+d.phase*7)>-0.2 ? 1.7 : 0.12, whiteMix:0.95};
+  return {intenMul:1.25*Math.pow(d._gk||0,0.7)};                   // phase ROUGE
+}
 // CERCLE PROGRESSIF FEUILLE MORTE (B257, vidéo 6uYWtp3o_T8 décomposée + définition user :
 // « une feuille morte, entourée de 16 étoiles, qui s'allument les unes après les autres ») :
 // au break, les 16 étoiles du cercle partent ÉTEINTES dans un plan debout face public
@@ -963,6 +1013,13 @@ const EFFECTS = {
         restExtra:3, dist:distD8, behave:behaveD8, onStar:d8Fn, trailComps:[1], colors:[BLU, RED, RED],
         trailing:{emitUntil:0.97, period:0.010, grain:0.9, gF:0.13, lifeMul:4.0, color:COPPER, fixedColor:true, spark:true, jit:0.16, bright:0.85} },   // B265 (user) : traînées plus longues (2.8 -> 4.0)
 
+  // D10 — composé 150 mm (515090000, 183 m), définition user : mini pivoine bleue + 20 comètes
+  // kamuro (recette traçante B211 en or) + cercle ROUGE PROGRESSIF -> scintillant BLANC final.
+  d10: { apex:183, cal:150, heat:false, pureColor:true, stars:69, starSize:2.1, speedMul:1.5, speedJit:0.05,
+         gravStar:0.5, dragStar:0.45, lifeBase75:1.85, lifeJitter:0.12, compLife:{0:0.4}, compSize:{0:1.9, 1:2.6, 2:2.3},
+         restExtra:3, dist:distD10, behave:behaveD10, onStar:d10Fn, trailComps:[1], colors:[BLU, DIMGOLD, RED],
+         trailing:{emitUntil:0.95, period:0.010, grain:0.9, gF:0.13, lifeMul:2.8, color:COPPER, fixedColor:true, spark:true, jit:0.16, bright:0.85} },
+
   // D9 — composé 150 mm (515089000, 183 m), définition user B271 : cercle JAUNE->NOIR->ROUGE
   // (mêmes étoiles) + pivoine sans étoile (traînées bronze pleines depuis le centre) + centre
   // qui clignote à peine. Traînées comp 1 seul.
@@ -1049,7 +1106,7 @@ const EFFECTS = {
 export const LABELS = { peony:'pivoine', chrysanthemum:'chrysanthème', willow:'saule (kamuro)', willowTrunk:'à tronc saule kamuro', willowStrobe:'saule or pointes scintillant', willowTips:'saule or pointes', willowTips100:'saule or pointes 100 mm', comet:'comète',
   sphere:'sphère', crackling:'crackling', dragonEgg:'œuf de dragon', strobe:'scintillant', cli:'cli. blanc/rouge', dahliaCli:'dahlia centre cli. blanc', kamuroCli:'ext. kamuro centre cli. blanc', halfSwapCli:'moitié changeante centre cli.', finalCli:'final cli. blanc rose', palmMulti:'palme multicolore', palmStrobe:'palme or scintillant',
   fallingLeaves:'feuille morte', palm:'palme', heart:'cœur', butterfly:'papillon', smiley:'smiley',
-  daisy:'marguerite', atom:'atome', halfHalf:'demi-demi', tracer:'traçante', zigzag:'zigzag', ring:'cercle (brique)', fmRing:'cercle progressif feuille morte', d8:'150 mm D8 (composé)', d9:'150 mm D9 (composé)', medusa:'méduse', horsetail:'queue de cheval',
+  daisy:'marguerite', atom:'atome', halfHalf:'demi-demi', tracer:'traçante', zigzag:'zigzag', ring:'cercle (brique)', fmRing:'cercle progressif feuille morte', d8:'150 mm D8 (composé)', d9:'150 mm D9 (composé)', d10:'150 mm D10 (composé)', medusa:'méduse', horsetail:'queue de cheval',
   cascade:'cascade', fish:'poisson', spinner:'tourbillon', saucer:'soucoupe', mosaic:'mosaïque', mosaicMix:'mosaïque assortie',
   mine:'pot à feu', salute:"salut (marron d'air)", saluteMulti:"multi marron d'air",
   zMeduse:'compact 40 tirs z méduse' };

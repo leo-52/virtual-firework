@@ -109,14 +109,14 @@ Object.assign(pick.style, { position:'fixed', top:'10px', right:'10px', zIndex:'
 for (const [k, label] of Object.entries(LABELS)){
   const o = document.createElement('option'); o.value = k; o.textContent = label; pick.appendChild(o);
 }
-pick.value = 'd9';
+pick.value = 'd10';
 // changer d'effet dans le menu -> couleur PAR DÉFAUT de l'effet (null annule l'override de la démo)
 pick.addEventListener('change', e => layer.setFocus(e.target.value, null));
 document.body.appendChild(pick);
 
-// DÉMO (réglage en cours) : 150 mm D9 (515089000, 183 m, B269 — vidéo décomposée) : cercle
-// jaune bref + kamuro à final plume rouge + centre plume rouge, tout en même temps.
-layer.setFocus('d9');
+// DÉMO (réglage en cours) : 150 mm D10 (515090000, 183 m, B290 — vidéo + définition user) :
+// mini pivoine bleue + 20 comètes kamuro + cercle rouge progressif -> scintillant blanc.
+layer.setFocus('d10');
 
 // TIMELINE de lecture (barre en bas) + ESPACE = pause/play (fige les feux, caméra libre).
 const timeline = new Timeline(layer, LABELS);
