@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B294';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B295';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -572,9 +572,9 @@ function distD10(i,n,rnd){
     const dx=P.U[0]*ct+P.V[0]*st+P.F[0]*w, dy=P.U[1]*ct+P.V[1]*st+P.F[1]*w, dz=P.U[2]*ct+P.V[2]*st+P.F[2]*w;
     const L=Math.hypot(dx,dy,dz)||1;
     return {dx:dx/L, dy:dy/L, dz:dz/L, spMul:sp*(0.91+rnd()*0.18)}; };
-  if (i<30){ const v=vrand(rnd); return {dx:v[0],dy:v[1],dz:v[2], spMul:0.24+rnd()*0.08, comp:0}; }   // MINI PIVOINE bleue (coquille ronde)
-  if (i<50){ const r=ring(_d10B.A, i-30, 20, 1.0); r.comp=1; return r; }                              // comètes kamuro
-  const r=ring(_d10B.A, i-50, 19, 0.80); r.comp=2; return r;                                          // cercle rouge progressif — MÊME PLAN que les comètes (B291, user)
+  if (i<30){ const v=vrand(rnd); return {dx:v[0],dy:v[1],dz:v[2], spMul:0.10+rnd()*0.22, comp:0}; }   // MINI PIVOINE bleue REMPLIE (B295 : plus une coquille-anneau)
+  if (i<50){ const v=vrand(rnd); return {dx:v[0],dy:v[1],dz:v[2], spMul:0.88+rnd()*0.24, comp:1}; }   // B295 (photos user) : PIVOINE DE COMÈTES en 3D, toutes directions, longueurs variées — plus le cercle plat « planète à rayons »
+  const r=ring(_d10B.A, i-50, 19, 0.80); r.comp=2; return r;                                          // cercle rouge progressif (son plan aléatoire)
 }
 function behaveD10(d,A,dt,ctx){
   if (d.comp!==2) return;
