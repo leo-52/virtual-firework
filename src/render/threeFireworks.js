@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B303';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B304';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -892,9 +892,9 @@ const EFFECTS = {
   // KAMURO LONGUE DURÉE (B302, user : « comme le kamuro normal 75/100 ») : la recette willow
   // VALIDÉE déclinée — 550014000 (50 mm, 74 m) et 515007000 (150 mm, 200 m). Les brins du 150
   // durent naturellement bien plus longtemps (échelle des étoiles) = la « longue durée ».
-  willowLong50: { apex:74, cal:50, heat:false, color:DIMGOLD, gravStar:0.5, dragStar:0.25, lifeBase75:2.7, lifeJitter:0.28, restExtra:4,
+  willowLong50: { apex:74, cal:50, heat:false, color:DIMGOLD, gravStar:0.28, dragStar:0.25, lifeBase75:2.7, lifeJitter:0.28, restExtra:4,   // B304 (user) : ça retombe moins vite
             starSize:0.9, speedMul:0.55, trailing:{emitUntil:0.95, period:0.008, grain:1.4, gF:0.13, lifeMul:18, color:COPPER, spark:true, jit:0.22} },
-  willowLong150: { apex:200, cal:150, heat:false, color:DIMGOLD, gravStar:0.5, dragStar:0.25, lifeBase75:2.7, lifeJitter:0.28, restExtra:6,
+  willowLong150: { apex:200, cal:150, heat:false, color:DIMGOLD, gravStar:0.28, dragStar:0.25, lifeBase75:2.7, lifeJitter:0.28, restExtra:6,   // B304 (user) : ça retombe moins vite
             starSize:0.9, speedMul:1.5, trailing:{emitUntil:0.95, period:0.008, grain:1.4, gF:0.13, lifeMul:18, color:COPPER, spark:true, jit:0.22} },
   // À TRONC SAULE KAMURO (B253, user : « saule kamuro avec le tronc de la zigzag ») :
   // « bombe 75/100 mm à tronc saule kamuro » (575165000 95 m / 510156000 116 m) = le saule
