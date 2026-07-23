@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B295';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B296';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -572,15 +572,15 @@ function distD10(i,n,rnd){
     const dx=P.U[0]*ct+P.V[0]*st+P.F[0]*w, dy=P.U[1]*ct+P.V[1]*st+P.F[1]*w, dz=P.U[2]*ct+P.V[2]*st+P.F[2]*w;
     const L=Math.hypot(dx,dy,dz)||1;
     return {dx:dx/L, dy:dy/L, dz:dz/L, spMul:sp*(0.91+rnd()*0.18)}; };
-  if (i<30){ const v=vrand(rnd); return {dx:v[0],dy:v[1],dz:v[2], spMul:0.10+rnd()*0.22, comp:0}; }   // MINI PIVOINE bleue REMPLIE (B295 : plus une coquille-anneau)
-  if (i<50){ const v=vrand(rnd); return {dx:v[0],dy:v[1],dz:v[2], spMul:0.88+rnd()*0.24, comp:1}; }   // B295 (photos user) : PIVOINE DE COMÈTES en 3D, toutes directions, longueurs variées — plus le cercle plat « planète à rayons »
-  const r=ring(_d10B.A, i-50, 19, 0.80); r.comp=2; return r;                                          // cercle rouge progressif (son plan aléatoire)
+  if (i<65){ const v=vrand(rnd); return {dx:v[0],dy:v[1],dz:v[2], spMul:0.10+rnd()*0.22, comp:0}; }   // MINI PIVOINE bleue REMPLIE — 65 étoiles (B296, user : « beaucoup plus »)
+  if (i<85){ const v=vrand(rnd); return {dx:v[0],dy:v[1],dz:v[2], spMul:0.88+rnd()*0.24, comp:1}; }   // B295 (photos user) : PIVOINE DE COMÈTES en 3D, toutes directions, longueurs variées
+  const r=ring(_d10B.A, i-85, 19, 0.80); r.comp=2; return r;                                          // cercle rouge progressif (son plan aléatoire)
 }
 function behaveD10(d,A,dt,ctx){
   if (d.comp!==2) return;
   if (d._redAt===undefined){
     if (!ctx._d10S) ctx._d10S={k0:(Math.random()*19)|0, dir:Math.random()<0.5?1:-1};
-    const S=ctx._d10S, order=(((d._i-50-S.k0)*S.dir)%19+19)%19;
+    const S=ctx._d10S, order=(((d._i-85-S.k0)*S.dir)%19+19)%19;
     d._bkAt=0.35+Math.random()*0.10;                               // B292 (user) : JAUNE très bref au break, puis extinction brève
     // B294 (user) : PROGRESSIF une par une, mais vie ≈ 4-5 étoiles -> un ARC COURANT de 4-5
     // rouges qui fait le tour (droite -> bas -> gauche -> haut sur les photos).
@@ -1026,14 +1026,12 @@ const EFFECTS = {
 
   // D10 — composé 150 mm (515090000, 183 m), définition user : mini pivoine bleue + 20 comètes
   // kamuro (recette traçante B211 en or) + cercle ROUGE PROGRESSIF -> scintillant BLANC final.
-  d10: { apex:183, cal:150, heat:false, pureColor:true, stars:69, starSize:2.1, speedMul:1.5, speedJit:0.05,
+  d10: { apex:183, cal:150, heat:false, pureColor:true, stars:104, starSize:2.1, speedMul:1.5, speedJit:0.05,   // B296 : 65 bleues + 20 comètes + 19 cercle
          gravStar:0.5, dragStar:0.45, lifeBase75:1.85, lifeJitter:0.12, compLife:{0:0.4}, compSize:{0:1.9, 1:2.6, 2:2.3},
          restExtra:3, dist:distD10, behave:behaveD10, onStar:d10Fn, trailComps:[1], colors:[BLU, DIMGOLD, YEL],   // B292 : le cercle naît JAUNE (rouge posé par behave au balayage)
-         // B291 (user : « en forme de FUSÉE, pas de boule ») : LA traînée de référence (tronc
-         // zigzag B232 / antennes papillon B251) — grains fins DENSES le long du trajet, vies
-         // ÉTAGÉES (longLaw p 0.28 constant) -> pointe dense qui file, corps qui s'effile derrière.
-         trailing:{emitUntil:0.97, period:0.0025, grain:0.8, gF:0.13, lifeMul:1.3, color:COPPER, fixedColor:true, spark:true, jit:0.4, bright:0.9,
-           longLaw:{p0:0.28, p1:0.28, min:0.65, max:2.9, pow:2}} },
+         // B296 (user : « les queues dorées étaient bien comme AVANT ») : retour à la recette
+         // traçante B211 (grains 0.9 espacés, queues dorées épaisses) — pointe sans boule conservée.
+         trailing:{emitUntil:0.95, period:0.010, grain:0.9, gF:0.13, lifeMul:2.8, color:COPPER, fixedColor:true, spark:true, jit:0.16, bright:0.85} },
 
   // D9 — composé 150 mm (515089000, 183 m), définition user B271 : cercle JAUNE->NOIR->ROUGE
   // (mêmes étoiles) + pivoine sans étoile (traînées bronze pleines depuis le centre) + centre
