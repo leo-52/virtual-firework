@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B290';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B291';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -574,7 +574,7 @@ function distD10(i,n,rnd){
     return {dx:dx/L, dy:dy/L, dz:dz/L, spMul:sp*(0.91+rnd()*0.18)}; };
   if (i<30){ const v=vrand(rnd); return {dx:v[0],dy:v[1],dz:v[2], spMul:0.24+rnd()*0.08, comp:0}; }   // MINI PIVOINE bleue (coquille ronde)
   if (i<50){ const r=ring(_d10B.A, i-30, 20, 1.0); r.comp=1; return r; }                              // comètes kamuro
-  const r=ring(_d10B.B, i-50, 19, 0.80); r.comp=2; return r;                                          // cercle rouge progressif
+  const r=ring(_d10B.A, i-50, 19, 0.80); r.comp=2; return r;                                          // cercle rouge progressif — MÊME PLAN que les comètes (B291, user)
 }
 function behaveD10(d,A,dt,ctx){
   if (d.comp!==2) return;
@@ -595,6 +595,7 @@ function behaveD10(d,A,dt,ctx){
   }
 }
 function d10Fn(d,A,dt){
+  if (d.comp===1) return {intenMul:0};                             // B291 (user) : PAS de boule — la POINTE de la traînée fait la comète
   if (d.comp!==2) return null;
   if (!d._lit) return {intenMul:0};                                // invisible avant son tour
   if (d.age>=d._whAt)                                              // SCINTILLANT BLANC final
@@ -1018,7 +1019,11 @@ const EFFECTS = {
   d10: { apex:183, cal:150, heat:false, pureColor:true, stars:69, starSize:2.1, speedMul:1.5, speedJit:0.05,
          gravStar:0.5, dragStar:0.45, lifeBase75:1.85, lifeJitter:0.12, compLife:{0:0.4}, compSize:{0:1.9, 1:2.6, 2:2.3},
          restExtra:3, dist:distD10, behave:behaveD10, onStar:d10Fn, trailComps:[1], colors:[BLU, DIMGOLD, RED],
-         trailing:{emitUntil:0.95, period:0.010, grain:0.9, gF:0.13, lifeMul:2.8, color:COPPER, fixedColor:true, spark:true, jit:0.16, bright:0.85} },
+         // B291 (user : « en forme de FUSÉE, pas de boule ») : LA traînée de référence (tronc
+         // zigzag B232 / antennes papillon B251) — grains fins DENSES le long du trajet, vies
+         // ÉTAGÉES (longLaw p 0.28 constant) -> pointe dense qui file, corps qui s'effile derrière.
+         trailing:{emitUntil:0.97, period:0.0025, grain:0.8, gF:0.13, lifeMul:1.3, color:COPPER, fixedColor:true, spark:true, jit:0.4, bright:0.9,
+           longLaw:{p0:0.28, p1:0.28, min:0.65, max:2.9, pow:2}} },
 
   // D9 — composé 150 mm (515089000, 183 m), définition user B271 : cercle JAUNE->NOIR->ROUGE
   // (mêmes étoiles) + pivoine sans étoile (traînées bronze pleines depuis le centre) + centre
