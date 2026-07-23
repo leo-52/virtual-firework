@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B299';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B300';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -581,7 +581,7 @@ function behaveD10(d,A,dt,ctx){
   if (d._redAt===undefined){
     if (!ctx._d10S) ctx._d10S={k0:(Math.random()*19)|0, dir:Math.random()<0.5?1:-1};
     const S=ctx._d10S, order=(((d._i-85-S.k0)*S.dir)%19+19)%19;
-    d._bkAt=0.35+Math.random()*0.10;                               // B292 (user) : JAUNE très bref au break, puis extinction brève
+    d._bkAt=0.22+Math.random()*0.06;                               // B300 (user) : JAUNE encore plus bref (~0,25 s), puis extinction brève
     // B294 (user) : PROGRESSIF une par une, mais vie ≈ 4-5 étoiles -> un ARC COURANT de 4-5
     // rouges qui fait le tour (droite -> bas -> gauche -> haut sur les photos).
     d._redAt=Math.max(d._bkAt+0.25, 0.9+order*0.10+(Math.random()-0.5)*0.08);
