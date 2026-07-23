@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B297';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B298';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -587,8 +587,8 @@ function behaveD10(d,A,dt,ctx){
     d._redAt=Math.max(d._bkAt+0.25, 0.9+order*0.10+(Math.random()-0.5)*0.08);
     d._redDur=0.42+Math.random()*0.14;                             // ≈ 4-5 pas de balayage allumés à la fois
     d._whAt=3.3+Math.random()*0.28;                                // BLANC quasi EN MÊME TEMPS, après le tour complet
-    d._pf=15+Math.random()*8;
-    d.life=d._whAt+0.7+Math.random()*0.25;
+    d._wd=0.30+Math.random()*0.15;                                 // B298 (user) : blanc UNE FOIS (cloche douce) puis extinction — pas de clignotement
+    d.life=d._whAt+d._wd+0.05;
     d._sz=(ctx.cfg.compSize&&ctx.cfg.compSize[2])||ctx.cfg.starSize;
   }
   if (!d._lit && d.age>=d._redAt){ d._lit=true; d.coreColor=RED; }
@@ -607,8 +607,8 @@ function d10Fn(d,A,dt){
     const f=(d.age-d._bkAt)/0.15;
     return {intenMul: f<1 ? 1.5*(1-f) : 0};
   }
-  if (d.age>=d._whAt)                                              // SCINTILLANT BLANC final (quasi simultané)
-    return {intenMul: Math.sin(d.age*d._pf*2+d.phase*7)>-0.2 ? 1.7 : 0.12, whiteMix:0.95};
+  if (d.age>=d._whAt)                                              // BLANC UNE FOIS (B298) : cloche douce puis extinction
+    return {intenMul: 1.7*d9Bump(d.age-d._whAt, 0, d._wd||0.4), whiteMix:0.95};
   if (d.age>=d._redAt+d._redDur) return {intenMul:0};              // B293 : la salve s'éteint avant la suivante
   return {intenMul:1.25*Math.pow(d._gk||0,0.7)};                   // phase ROUGE (salve)
 }
