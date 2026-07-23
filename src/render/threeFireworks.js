@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B298';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B299';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -1027,7 +1027,7 @@ const EFFECTS = {
   // D10 — composé 150 mm (515090000, 183 m), définition user : mini pivoine bleue + 20 comètes
   // kamuro (recette traçante B211 en or) + cercle ROUGE PROGRESSIF -> scintillant BLANC final.
   d10: { apex:183, cal:150, heat:false, pureColor:true, stars:104, starSize:2.1, speedMul:1.5, speedJit:0.05,   // B296 : 65 bleues + 20 comètes + 19 cercle
-         gravStar:0.5, dragStar:0.45, lifeBase75:1.85, lifeJitter:0.12, compLife:{0:0.4}, compSize:{0:1.9, 1:2.6, 2:2.3},
+         gravStar:0.5, dragStar:0.45, lifeBase75:1.85, lifeJitter:0.12, compLife:{0:0.66}, compSize:{0:1.9, 1:2.6, 2:2.3},   // B299 (user) : la pivoine bleue s'éteint ~à la fin du cercle rouge (~2,8 s)
          restExtra:3, dist:distD10, behave:behaveD10, onStar:d10Fn, trailComps:[1], colors:[BLU, DIMGOLD, YEL],   // B292 : le cercle naît JAUNE (rouge posé par behave au balayage)
          // B297 (user : « reviens à la B294 ») : queues FUSÉE de la B294 — LA traînée de
          // référence (zigzag/papillon), grains fins denses, vies étagées longLaw.
