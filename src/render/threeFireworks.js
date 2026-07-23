@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B300';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B301';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -584,9 +584,9 @@ function behaveD10(d,A,dt,ctx){
     d._bkAt=0.22+Math.random()*0.06;                               // B300 (user) : JAUNE encore plus bref (~0,25 s), puis extinction brève
     // B294 (user) : PROGRESSIF une par une, mais vie ≈ 4-5 étoiles -> un ARC COURANT de 4-5
     // rouges qui fait le tour (droite -> bas -> gauche -> haut sur les photos).
-    d._redAt=Math.max(d._bkAt+0.25, 0.9+order*0.10+(Math.random()-0.5)*0.08);
+    d._redAt=Math.max(d._bkAt+0.25, 0.65+order*0.10+(Math.random()-0.5)*0.08);   // B301 : décalé de -0,25 s (suit la pivoine raccourcie)
     d._redDur=0.42+Math.random()*0.14;                             // ≈ 4-5 pas de balayage allumés à la fois
-    d._whAt=3.3+Math.random()*0.28;                                // BLANC quasi EN MÊME TEMPS, après le tour complet
+    d._whAt=3.0+Math.random()*0.28;                                // BLANC quasi EN MÊME TEMPS, après le tour complet
     d._wd=0.30+Math.random()*0.15;                                 // B298 (user) : blanc UNE FOIS (cloche douce) puis extinction — pas de clignotement
     d.life=d._whAt+d._wd+0.05;
     d._sz=(ctx.cfg.compSize&&ctx.cfg.compSize[2])||ctx.cfg.starSize;
@@ -1027,7 +1027,7 @@ const EFFECTS = {
   // D10 — composé 150 mm (515090000, 183 m), définition user : mini pivoine bleue + 20 comètes
   // kamuro (recette traçante B211 en or) + cercle ROUGE PROGRESSIF -> scintillant BLANC final.
   d10: { apex:183, cal:150, heat:false, pureColor:true, stars:104, starSize:2.1, speedMul:1.5, speedJit:0.05,   // B296 : 65 bleues + 20 comètes + 19 cercle
-         gravStar:0.5, dragStar:0.45, lifeBase75:1.85, lifeJitter:0.12, compLife:{0:0.66}, compSize:{0:1.9, 1:2.6, 2:2.3},   // B299 (user) : la pivoine bleue s'éteint ~à la fin du cercle rouge (~2,8 s)
+         gravStar:0.5, dragStar:0.45, lifeBase75:1.85, lifeJitter:0.12, compLife:{0:0.59}, compSize:{0:1.8, 1:2.6, 2:2.3},   // B301 (user) : pivoine bleue -0,1 de taille et -0,3 s (~2,5 s), toujours calée sur la fin du rouge
          restExtra:3, dist:distD10, behave:behaveD10, onStar:d10Fn, trailComps:[1], colors:[BLU, DIMGOLD, YEL],   // B292 : le cercle naît JAUNE (rouge posé par behave au balayage)
          // B297 (user : « reviens à la B294 ») : queues FUSÉE de la B294 — LA traînée de
          // référence (zigzag/papillon), grains fins denses, vies étagées longLaw.
