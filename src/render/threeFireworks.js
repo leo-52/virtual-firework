@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B293';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B294';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -582,12 +582,11 @@ function behaveD10(d,A,dt,ctx){
     if (!ctx._d10S) ctx._d10S={k0:(Math.random()*19)|0, dir:Math.random()<0.5?1:-1};
     const S=ctx._d10S, order=(((d._i-50-S.k0)*S.dir)%19+19)%19;
     d._bkAt=0.35+Math.random()*0.10;                               // B292 (user) : JAUNE très bref au break, puis extinction brève
-    // B293 (4 photos user) : le rouge apparaît PAR SALVES de 4-5 étoiles ADJACENTES qui font le
-    // tour (droite -> bas -> gauche -> haut), chaque salve S'ÉTEINT avant la suivante.
-    const g=(order/5)|0;                                           // salve 0..3 (5/5/5/4)
-    d._redAt=Math.max(d._bkAt+0.25, 0.9+g*0.55+(Math.random()-0.5)*0.10);
-    d._redDur=0.50+Math.random()*0.12;                             // le rouge brûle ~0,5 s puis noir
-    d._whAt=3.15+Math.random()*0.28;                               // BLANC quasi EN MÊME TEMPS, après la dernière salve
+    // B294 (user) : PROGRESSIF une par une, mais vie ≈ 4-5 étoiles -> un ARC COURANT de 4-5
+    // rouges qui fait le tour (droite -> bas -> gauche -> haut sur les photos).
+    d._redAt=Math.max(d._bkAt+0.25, 0.9+order*0.10+(Math.random()-0.5)*0.08);
+    d._redDur=0.42+Math.random()*0.14;                             // ≈ 4-5 pas de balayage allumés à la fois
+    d._whAt=3.3+Math.random()*0.28;                                // BLANC quasi EN MÊME TEMPS, après le tour complet
     d._pf=15+Math.random()*8;
     d.life=d._whAt+0.7+Math.random()*0.25;
     d._sz=(ctx.cfg.compSize&&ctx.cfg.compSize[2])||ctx.cfg.starSize;
