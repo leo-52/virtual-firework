@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B302';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B303';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -1036,10 +1036,10 @@ const EFFECTS = {
   d10: { apex:183, cal:150, heat:false, pureColor:true, stars:104, starSize:2.1, speedMul:1.5, speedJit:0.05,   // B296 : 65 bleues + 20 comètes + 19 cercle
          gravStar:0.5, dragStar:0.45, lifeBase75:1.85, lifeJitter:0.12, compLife:{0:0.59}, compSize:{0:1.8, 1:2.6, 2:2.3},   // B301 (user) : pivoine bleue -0,1 de taille et -0,3 s (~2,5 s), toujours calée sur la fin du rouge
          restExtra:3, dist:distD10, behave:behaveD10, onStar:d10Fn, trailComps:[1], colors:[BLU, DIMGOLD, YEL],   // B292 : le cercle naît JAUNE (rouge posé par behave au balayage)
-         // B297 (user : « reviens à la B294 ») : queues FUSÉE de la B294 — LA traînée de
-         // référence (zigzag/papillon), grains fins denses, vies étagées longLaw.
-         trailing:{emitUntil:0.97, period:0.0025, grain:0.8, gF:0.13, lifeMul:1.3, color:COPPER, fixedColor:true, spark:true, jit:0.4, bright:0.9,
-           longLaw:{p0:0.28, p1:0.28, min:0.65, max:2.9, pow:2}} },
+         // B297 : queues FUSÉE (référence zigzag/papillon). B303 (photo user) : vies des grains
+         // ~×2,5 — les queues bronze restent LONGUES jusqu'à la fin du cercle rouge (~3 s).
+         trailing:{emitUntil:0.97, period:0.0025, grain:0.8, gF:0.13, lifeMul:3.0, color:COPPER, fixedColor:true, spark:true, jit:0.4, bright:0.9,
+           longLaw:{p0:0.30, p1:0.30, min:1.2, max:3.6, pow:2}} },
 
   // D9 — composé 150 mm (515089000, 183 m), définition user B271 : cercle JAUNE->NOIR->ROUGE
   // (mêmes étoiles) + pivoine sans étoile (traînées bronze pleines depuis le centre) + centre
