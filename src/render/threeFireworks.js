@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B301';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B302';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -889,6 +889,13 @@ const EFFECTS = {
                    colorPairs:[[BLU],[YEL],[PINK],[GRN],[PURP],[RED],[WHITE],[new THREE.Color(1.0,0.45,0.08)]] },
   willow: { apex:95, heat:false, color:DIMGOLD, gravStar:0.5, dragStar:0.25, lifeBase75:2.7, lifeJitter:0.28, restExtra:4,   // B139 (user : « le haut ne monte pas, le bas baisse trop vite ») : gravStar 0.92->0.5 — le haut MONTE encore à t=1.5s, chute terminale 18->10 m/s, envergure INTACTE (la gravité ne joue pas sur l'horizontal)   // « bombe 75 mm à effet saule kamuro » (catalogue 95 m). B136 (photos user) : vies d'étoiles PLUS VARIABLES (±28% -> branches inégales, extinction échelonnée) ; restExtra 4 = laisser s'éteindre les longs brins (~1.9k grains résiduels au tir suivant, mesuré)
             starSize:0.9, speedMul:0.8, trailing:{emitUntil:0.95, period:0.008, grain:1.4, gF:0.13, lifeMul:18, color:COPPER, spark:true, jit:0.22} },  // ⚠️ B138 : RETOUR EXACT au B136 (user : « beaucoup trop gros ») — le "B137" déployé était un ÉDIT RATÉ (speedMul 1.5 passé SANS le dragStar 0.55 compensateur -> envergure ~118 m). B136 (photos) : brin = COLLIER DE PERLES fines/serrées (grain 1.4, period 0.008), très long (lifeMul 18), couleur CUIVRE, jit 0.22 = zéro poussière. SAULE = forme qui PEND ; KAMURO = or pailleté (spark) ; tête = POINTE (user B94)
+  // KAMURO LONGUE DURÉE (B302, user : « comme le kamuro normal 75/100 ») : la recette willow
+  // VALIDÉE déclinée — 550014000 (50 mm, 74 m) et 515007000 (150 mm, 200 m). Les brins du 150
+  // durent naturellement bien plus longtemps (échelle des étoiles) = la « longue durée ».
+  willowLong50: { apex:74, cal:50, heat:false, color:DIMGOLD, gravStar:0.5, dragStar:0.25, lifeBase75:2.7, lifeJitter:0.28, restExtra:4,
+            starSize:0.9, speedMul:0.55, trailing:{emitUntil:0.95, period:0.008, grain:1.4, gF:0.13, lifeMul:18, color:COPPER, spark:true, jit:0.22} },
+  willowLong150: { apex:200, cal:150, heat:false, color:DIMGOLD, gravStar:0.5, dragStar:0.25, lifeBase75:2.7, lifeJitter:0.28, restExtra:6,
+            starSize:0.9, speedMul:1.5, trailing:{emitUntil:0.95, period:0.008, grain:1.4, gF:0.13, lifeMul:18, color:COPPER, spark:true, jit:0.22} },
   // À TRONC SAULE KAMURO (B253, user : « saule kamuro avec le tronc de la zigzag ») :
   // « bombe 75/100 mm à tronc saule kamuro » (575165000 95 m / 510156000 116 m) = le saule
   // kamuro VALIDÉ ci-dessus, à l'identique, + la queue de fusée de RÉFÉRENCE (B232) à la montée.
@@ -1117,7 +1124,7 @@ const EFFECTS = {
     color:new THREE.Color(0.30,0.32,0.36), dist:distMarron, randomAxis:true, behave:behaveMarron },                                                   // les 5 MARRONS sont DU MÊME CÔTÉ de la bombe -> l'explosion les pousse TOUS dans la même direction (cône serré, orientation aléatoire par tir) ; invisibles ; 1,5 s puis détonations aléatoires dans 0,5 s
 };
 
-export const LABELS = { peony:'pivoine', chrysanthemum:'chrysanthème', willow:'saule (kamuro)', willowTrunk:'à tronc saule kamuro', willowStrobe:'saule or pointes scintillant', willowTips:'saule or pointes', willowTips100:'saule or pointes 100 mm', comet:'comète',
+export const LABELS = { peony:'pivoine', chrysanthemum:'chrysanthème', willow:'saule (kamuro)', willowLong50:'kamuro longue durée 50 mm', willowLong150:'kamuro longue durée 150 mm', willowTrunk:'à tronc saule kamuro', willowStrobe:'saule or pointes scintillant', willowTips:'saule or pointes', willowTips100:'saule or pointes 100 mm', comet:'comète',
   sphere:'sphère', crackling:'crackling', dragonEgg:'œuf de dragon', strobe:'scintillant', cli:'cli. blanc/rouge', dahliaCli:'dahlia centre cli. blanc', kamuroCli:'ext. kamuro centre cli. blanc', halfSwapCli:'moitié changeante centre cli.', finalCli:'final cli. blanc rose', palmMulti:'palme multicolore', palmStrobe:'palme or scintillant',
   fallingLeaves:'feuille morte', palm:'palme', heart:'cœur', butterfly:'papillon', smiley:'smiley',
   daisy:'marguerite', atom:'atome', halfHalf:'demi-demi', tracer:'traçante', zigzag:'zigzag', ring:'cercle (brique)', fmRing:'cercle progressif feuille morte', d8:'150 mm D8 (composé)', d9:'150 mm D9 (composé)', d10:'150 mm D10 (composé)', medusa:'méduse', horsetail:'queue de cheval',
