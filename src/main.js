@@ -109,14 +109,14 @@ Object.assign(pick.style, { position:'fixed', top:'10px', right:'10px', zIndex:'
 for (const [k, label] of Object.entries(LABELS)){
   const o = document.createElement('option'); o.value = k; o.textContent = label; pick.appendChild(o);
 }
-pick.value = 'corolle';
+pick.value = 'corolleOr';
 // changer d'effet dans le menu -> couleur PAR DÉFAUT de l'effet (null annule l'override de la démo)
 pick.addEventListener('change', e => layer.setFocus(e.target.value, null));
 document.body.appendChild(pick);
 
-// DÉMO (réglage en cours) : COROLLE À POINTES 100 mm (510463000, 130 m, B307 — vidéo
-// décomposée) : 8 faisceaux de comètes orange, pointes qui s'allument en couleurs.
-layer.setFocus('corolle');
+// DÉMO (réglage en cours) : COROLLE OR POINTES ROUGE 75 mm (575524000, 90 m, B310) —
+// traînées or kamuro, étoiles rouges aux pointes.
+layer.setFocus('corolleOr');
 
 // TIMELINE de lecture (barre en bas) + ESPACE = pause/play (fige les feux, caméra libre).
 const timeline = new Timeline(layer, LABELS);
