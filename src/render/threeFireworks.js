@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B308';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B309';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -559,23 +559,32 @@ function d9Fn(d,A,dt){
 let _corB=null;
 const COR_MULTI=[RED, GRN, BLU, YEL, PINK, PURP, SILVER];
 function distCorolle(i,n,rnd){
-  if (i===0){
-    _corB=[];
-    for (let b=0;b<8;b++){ const az=rnd()*Math.PI*2, el=(-25+rnd()*70)*Math.PI/180;
-      _corB.push([Math.cos(az)*Math.cos(el), Math.sin(el), Math.sin(az)*Math.cos(el)]); }
-  }
-  const A=_corB[i%8], v=vrand(rnd);                                // B308 (user) : 8 BOMBETTES de 4 brins chacune (32)
-  const dx=A[0]+v[0]*0.13, dy=A[1]+v[1]*0.13, dz=A[2]+v[2]*0.13;
-  const L=Math.hypot(dx,dy,dz)||1;
-  return {dx:dx/L, dy:dy/L, dz:dz/L, spMul:0.9+rnd()*0.25, comp:0};
+  const az=rnd()*Math.PI*2, el=(-25+rnd()*70)*Math.PI/180;         // B309 : 8 PORTEURS seulement (les brins naissent au fork, photo user : bombettes DISTINCTES)
+  return {dx:Math.cos(az)*Math.cos(el), dy:Math.sin(el), dz:Math.sin(az)*Math.cos(el), spMul:0.9+rnd()*0.2, comp:0};
 }
 function behaveCorolle(d,A,dt,ctx){
-  if (d.tipAt===undefined){
-    d.tipAt=0.55+Math.random()*0.5;
-    const tc=ctx.cfg.colors[1];
-    d._tip = (tc && tc.isColor) ? tc : COR_MULTI[(Math.random()*COR_MULTI.length)|0];
+  if (d._split){                                                   // BRIN : la pointe s'allume peu après sa naissance
+    if (d.tipAt===undefined){
+      d.tipAt=0.25+Math.random()*0.40;
+      const tc=ctx.cfg.colors[1];
+      d._tip = (tc && tc.isColor) ? tc : COR_MULTI[(Math.random()*COR_MULTI.length)|0];
+    }
+    if (!d._lit && d.age>=d.tipAt){ d._lit=true; d.coreColor=d._tip; }
+    return;
   }
-  if (!d._lit && d.age>=d.tipAt){ d._lit=true; d.coreColor=d._tip; }
+  // PORTEUR (bombette) : vole ~0,3-0,45 s avec sa traînée kamuro puis crache ses 4 brins
+  if (d._splitAt===undefined) d._splitAt=0.30+Math.random()*0.15;
+  if (d.age<d._splitAt) return;
+  const px=ctx.pos[d._i*3], py=ctx.pos[d._i*3+1], pz=ctx.pos[d._i*3+2];
+  const vL=Math.hypot(d.vx,d.vy,d.vz)||1, ux=d.vx/vL, uy=d.vy/vL, uz=d.vz/vL;
+  const base=ctx.cfg.burstRadius;
+  for (let c=0;c<4 && ctx.nAlive<ctx.nMax;c++){
+    const v=vrand(Math.random);
+    const ix=ux+v[0]*0.17, iy=uy+v[1]*0.17, iz=uz+v[2]*0.17;       // éventail serré autour de l'élan du porteur
+    const L=Math.hypot(ix,iy,iz)||1, esp=base*(1.0+Math.random()*0.35);
+    ctx.addStar(px,py,pz, ix/L*esp, iy/L*esp, iz/L*esp, 2.0+Math.random()*0.4, 0, true, null);
+  }
+  d.age=d.life;                                                    // le porteur meurt au fork
 }
 function corolleFn(d,A,dt){ return d._lit ? {intenMul:1.6} : {intenMul:0.5}; }   // tête discrète (la traînée domine) puis POINTE colorée vive
 // D10 (B290, vidéo S0MK2jOLu4g + définition user) : « bombe 150 mm D10 » (515090000, 183 m) —
@@ -1060,7 +1069,7 @@ const EFFECTS = {
 
   // COROLLE À POINTES — 100 mm (510463/468/469, 130 m) + 75 mm or/rouge (575524000, 90 m).
   // [tête avant allumage, couleur de POINTE] au sort par tir ('multi' = couleur au hasard PAR pointe).
-  corolle: { apex:130, cal:100, heat:false, pureColor:true, stars:32, starSize:2.6, speedMul:1.35, speedJit:0.06,   // B308 (user) : 8 bombettes × 4 brins
+  corolle: { apex:130, cal:100, heat:false, pureColor:true, stars:8, nMax:44, starSize:2.6, speedMul:1.35, speedJit:0.06,   // B309 : 8 PORTEURS qui forkent en 4 brins chacun (photo user : bombettes distinctes)
              gravStar:0.85, dragStar:0.5, lifeBase75:1.75, lifeJitter:0.15, restExtra:3,
              dist:distCorolle, behave:behaveCorolle, onStar:corolleFn, trailComps:[0],
              colorPairs:[[SILVER,'multi'], [SILVER,RED], [SILVER,'multi'], [GOLD,RED]],
