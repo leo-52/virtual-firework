@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B306';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B307';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -551,6 +551,33 @@ function d9Fn(d,A,dt){
   const p=d.age-(d._t0||9);                                        // centre : UN scintillement ROUGE doux, désynchronisé (B288)
   return {intenMul: d._a1!==undefined ? 0.75*d9Bump(p,d._a1,d._d1) : 0};
 }
+// COROLLE À POINTES (B307, vidéo R9CxUBmsER0 décomposée) : « bombe 100 mm corolle à pointes
+// argent/rouge/multicolore » (510463/468/469, 130 m) + « 75 mm corolle or pointes rouge »
+// (575524000, 90 m). ~8 FAISCEAUX de 2-4 comètes orange épaisses, directions asymétriques,
+// qui retombent en pétales (corolle) ; à +0,55-1,05 s la POINTE de chaque comète s'allume
+// dans sa couleur (argent/multicolore = couleurs au hasard par pointe), ~1,2 s, le tout ~2,5 s.
+let _corB=null;
+const COR_MULTI=[RED, GRN, BLU, YEL, PINK, PURP, SILVER];
+function distCorolle(i,n,rnd){
+  if (i===0){
+    _corB=[];
+    for (let b=0;b<8;b++){ const az=rnd()*Math.PI*2, el=(-25+rnd()*70)*Math.PI/180;
+      _corB.push([Math.cos(az)*Math.cos(el), Math.sin(el), Math.sin(az)*Math.cos(el)]); }
+  }
+  const A=_corB[i%8], v=vrand(rnd);
+  const dx=A[0]+v[0]*0.13, dy=A[1]+v[1]*0.13, dz=A[2]+v[2]*0.13;
+  const L=Math.hypot(dx,dy,dz)||1;
+  return {dx:dx/L, dy:dy/L, dz:dz/L, spMul:0.9+rnd()*0.25, comp:0};
+}
+function behaveCorolle(d,A,dt,ctx){
+  if (d.tipAt===undefined){
+    d.tipAt=0.55+Math.random()*0.5;
+    const tc=ctx.cfg.colors[1];
+    d._tip = (tc && tc.isColor) ? tc : COR_MULTI[(Math.random()*COR_MULTI.length)|0];
+  }
+  if (!d._lit && d.age>=d.tipAt){ d._lit=true; d.coreColor=d._tip; }
+}
+function corolleFn(d,A,dt){ return d._lit ? {intenMul:1.6} : {intenMul:0.5}; }   // tête discrète (la traînée domine) puis POINTE colorée vive
 // D10 (B290, vidéo S0MK2jOLu4g + définition user) : « bombe 150 mm D10 » (515090000, 183 m) —
 // tout en même temps au break :
 //  1) MINI PIVOINE BLEUE : ~30 étoiles en petite boule ronde (~1,7 s) ;
@@ -1031,6 +1058,14 @@ const EFFECTS = {
         restExtra:3, dist:distD8, behave:behaveD8, onStar:d8Fn, trailComps:[1], colors:[BLU, RED, RED],
         trailing:{emitUntil:0.97, period:0.010, grain:0.9, gF:0.13, lifeMul:4.0, color:COPPER, fixedColor:true, spark:true, jit:0.16, bright:0.85} },   // B265 (user) : traînées plus longues (2.8 -> 4.0)
 
+  // COROLLE À POINTES — 100 mm (510463/468/469, 130 m) + 75 mm or/rouge (575524000, 90 m).
+  // [tête avant allumage, couleur de POINTE] au sort par tir ('multi' = couleur au hasard PAR pointe).
+  corolle: { apex:130, cal:100, heat:false, pureColor:true, stars:24, starSize:2.6, speedMul:1.35, speedJit:0.06,
+             gravStar:0.85, dragStar:0.5, lifeBase75:1.75, lifeJitter:0.15, restExtra:3,
+             dist:distCorolle, behave:behaveCorolle, onStar:corolleFn, trailComps:[0],
+             colorPairs:[[SILVER,'multi'], [SILVER,RED], [SILVER,'multi'], [GOLD,RED]],
+             trailing:{emitUntil:0.95, period:0.006, grain:1.3, gF:0.35, lifeMul:5.5, color:new THREE.Color(1.12,0.55,0.20), fixedColor:true, spark:true, jit:0.3, bright:0.9} },   // grosses queues ORANGE de palme, retombantes
+
   // D10 — composé 150 mm (515090000, 183 m), définition user : mini pivoine bleue + 20 comètes
   // kamuro (recette traçante B211 en or) + cercle ROUGE PROGRESSIF -> scintillant BLANC final.
   d10: { apex:183, cal:150, heat:false, pureColor:true, stars:104, starSize:2.1, speedMul:1.5, speedJit:0.05,   // B296 : 65 bleues + 20 comètes + 19 cercle
@@ -1127,7 +1162,7 @@ const EFFECTS = {
 export const LABELS = { peony:'pivoine', chrysanthemum:'chrysanthème', willow:'saule (kamuro)', willowLong50:'kamuro longue durée 50 mm', willowLong150:'kamuro longue durée 150 mm', willowTrunk:'à tronc saule kamuro', willowStrobe:'saule or pointes scintillant', willowTips:'saule or pointes', willowTips100:'saule or pointes 100 mm', comet:'comète',
   sphere:'sphère', crackling:'crackling', dragonEgg:'œuf de dragon', strobe:'scintillant', cli:'cli. blanc/rouge', dahliaCli:'dahlia centre cli. blanc', kamuroCli:'ext. kamuro centre cli. blanc', halfSwapCli:'moitié changeante centre cli.', finalCli:'final cli. blanc rose', palmMulti:'palme multicolore', palmStrobe:'palme or scintillant',
   fallingLeaves:'feuille morte', palm:'palme', heart:'cœur', butterfly:'papillon', smiley:'smiley',
-  daisy:'marguerite', atom:'atome', halfHalf:'demi-demi', tracer:'traçante', zigzag:'zigzag', ring:'cercle (brique)', fmRing:'cercle progressif feuille morte', d8:'150 mm D8 (composé)', d9:'150 mm D9 (composé)', d10:'150 mm D10 (composé)', medusa:'méduse', horsetail:'queue de cheval',
+  daisy:'marguerite', atom:'atome', halfHalf:'demi-demi', tracer:'traçante', zigzag:'zigzag', ring:'cercle (brique)', fmRing:'cercle progressif feuille morte', d8:'150 mm D8 (composé)', d9:'150 mm D9 (composé)', d10:'150 mm D10 (composé)', corolle:'corolle à pointes', medusa:'méduse', horsetail:'queue de cheval',
   cascade:'cascade', fish:'poisson', spinner:'tourbillon', saucer:'soucoupe', mosaic:'mosaïque', mosaicMix:'mosaïque assortie',
   mine:'pot à feu', salute:"salut (marron d'air)", saluteMulti:"multi marron d'air",
   zMeduse:'compact 40 tirs z méduse' };

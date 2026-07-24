@@ -109,13 +109,14 @@ Object.assign(pick.style, { position:'fixed', top:'10px', right:'10px', zIndex:'
 for (const [k, label] of Object.entries(LABELS)){
   const o = document.createElement('option'); o.value = k; o.textContent = label; pick.appendChild(o);
 }
-pick.value = 'willowLong50';
+pick.value = 'corolle';
 // changer d'effet dans le menu -> couleur PAR DÉFAUT de l'effet (null annule l'override de la démo)
 pick.addEventListener('change', e => layer.setFocus(e.target.value, null));
 document.body.appendChild(pick);
 
-// DÉMO (réglage en cours) : KAMURO LONGUE DURÉE 50 mm (550014000, 74 m, B305).
-layer.setFocus('willowLong50');
+// DÉMO (réglage en cours) : COROLLE À POINTES 100 mm (510463000, 130 m, B307 — vidéo
+// décomposée) : 8 faisceaux de comètes orange, pointes qui s'allument en couleurs.
+layer.setFocus('corolle');
 
 // TIMELINE de lecture (barre en bas) + ESPACE = pause/play (fige les feux, caméra libre).
 const timeline = new Timeline(layer, LABELS);
