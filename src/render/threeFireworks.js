@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B310';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B311';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -559,8 +559,8 @@ function d9Fn(d,A,dt){
 let _corB=null;
 const COR_MULTI=[RED, GRN, BLU, YEL, PINK, PURP, SILVER];
 function distCorolle(i,n,rnd){
-  const az=rnd()*Math.PI*2, el=(-25+rnd()*70)*Math.PI/180;         // B309 : 8 PORTEURS seulement (les brins naissent au fork, photo user : bombettes DISTINCTES)
-  return {dx:Math.cos(az)*Math.cos(el), dy:Math.sin(el), dz:Math.sin(az)*Math.cos(el), spMul:0.9+rnd()*0.2, comp:0};
+  const v=vrand(rnd);                                              // B311 (user) : 8 PORTEURS dans des directions TOTALEMENT aléatoires (avant/arrière/côtés/diago…)
+  return {dx:v[0], dy:v[1], dz:v[2], spMul:0.9+rnd()*0.2, comp:0};
 }
 function behaveCorolle(d,A,dt,ctx){
   if (d._split){                                                   // BRIN : la pointe s'allume peu après sa naissance
