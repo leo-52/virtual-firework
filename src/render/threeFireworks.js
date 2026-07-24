@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B307';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B308';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -564,7 +564,7 @@ function distCorolle(i,n,rnd){
     for (let b=0;b<8;b++){ const az=rnd()*Math.PI*2, el=(-25+rnd()*70)*Math.PI/180;
       _corB.push([Math.cos(az)*Math.cos(el), Math.sin(el), Math.sin(az)*Math.cos(el)]); }
   }
-  const A=_corB[i%8], v=vrand(rnd);
+  const A=_corB[i%8], v=vrand(rnd);                                // B308 (user) : 8 BOMBETTES de 4 brins chacune (32)
   const dx=A[0]+v[0]*0.13, dy=A[1]+v[1]*0.13, dz=A[2]+v[2]*0.13;
   const L=Math.hypot(dx,dy,dz)||1;
   return {dx:dx/L, dy:dy/L, dz:dz/L, spMul:0.9+rnd()*0.25, comp:0};
@@ -1060,11 +1060,11 @@ const EFFECTS = {
 
   // COROLLE À POINTES — 100 mm (510463/468/469, 130 m) + 75 mm or/rouge (575524000, 90 m).
   // [tête avant allumage, couleur de POINTE] au sort par tir ('multi' = couleur au hasard PAR pointe).
-  corolle: { apex:130, cal:100, heat:false, pureColor:true, stars:24, starSize:2.6, speedMul:1.35, speedJit:0.06,
+  corolle: { apex:130, cal:100, heat:false, pureColor:true, stars:32, starSize:2.6, speedMul:1.35, speedJit:0.06,   // B308 (user) : 8 bombettes × 4 brins
              gravStar:0.85, dragStar:0.5, lifeBase75:1.75, lifeJitter:0.15, restExtra:3,
              dist:distCorolle, behave:behaveCorolle, onStar:corolleFn, trailComps:[0],
              colorPairs:[[SILVER,'multi'], [SILVER,RED], [SILVER,'multi'], [GOLD,RED]],
-             trailing:{emitUntil:0.95, period:0.006, grain:1.3, gF:0.35, lifeMul:5.5, color:new THREE.Color(1.12,0.55,0.20), fixedColor:true, spark:true, jit:0.3, bright:0.9} },   // grosses queues ORANGE de palme, retombantes
+             trailing:{emitUntil:0.95, period:0.008, grain:1.4, gF:0.13, lifeMul:10, color:COPPER, fixedColor:true, spark:true, jit:0.22, backOff:0.35} },   // B308 (user) : chaque brin = TRAÎNÉE DE KAMURO (collier de perles cuivre), qui démarre ~30 cm derrière l'étoile de pointe
 
   // D10 — composé 150 mm (515090000, 183 m), définition user : mini pivoine bleue + 20 comètes
   // kamuro (recette traçante B211 en or) + cercle ROUGE PROGRESSIF -> scintillant BLANC final.
@@ -1633,7 +1633,11 @@ class Shell {
         let nEmit=Math.floor(d.since/tr.period); if (nEmit>0){ if (nEmit>8) nEmit=8; d.since-=nEmit*tr.period;
           const tc=tr.fixedColor ? (tr.color||GOLD) : (d.coreColor||tr.color||GOLD);   // fixedColor : la traînée garde SA couleur (ex palme multicolore = queue OR, pointe colorée) ; sinon héritée de l'étoile (mosaïque assortie)
           for (let e=0;e<nEmit;e++){ const fq=Math.random();                            // position aléatoire entre l'ancienne et la nouvelle -> pas de paquets
-            const mx=d.lastX+(px-d.lastX)*fq, my=d.lastY+(py-d.lastY)*fq, mz=d.lastZ+(pz-d.lastZ)*fq;
+            let mx=d.lastX+(px-d.lastX)*fq, my=d.lastY+(py-d.lastY)*fq, mz=d.lastZ+(pz-d.lastZ)*fq;
+            // backOff (B308, corolle) : la traînée démarre X mètres DERRIÈRE l'étoile (petit
+            // vide entre l'étoile de pointe et son brin — « une trentaine de cm », user).
+            if (tr.backOff){ const vL=Math.hypot(d.vx,d.vy,d.vz)||1e-6, k=tr.backOff/vL;
+              mx-=d.vx*k; my-=d.vy*k; mz-=d.vz*k; }
             // longLaw (B181, loi user) : proba qu'une étincelle soit LONGUE, GRADUELLE selon la
             // position d'émission — « 2/10 au début (centre), ~3,5/10 au milieu, 5/10 à la fin ».
             // Parmi les longues, les très longues (max, ex 7 s) restent RARES (tirage biaisé bas).
