@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B319';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B320';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -557,16 +557,26 @@ function d9Fn(d,A,dt){
 // CENTRE argent puis rouge (0,15/0,60 s) -> EXTÉRIEUR argent puis rouge (1,15/1,60 s) ->
 // CENTRE argent puis rouge (2,15/2,60 s). Chaque flash = UNE cloche douce ~0,3 s avec le
 // décalage aléatoire habituel par étoile. Total ~3 s.
+let _ftB=null;
 function distFantome(i,n,rnd){
-  if (i<85){ const v=vrand(rnd); return {dx:v[0],dy:v[1],dz:v[2], spMul:0.30+rnd()*0.35, comp:0}; }   // CENTRE (rangées intérieures)
-  const v=vrand(rnd); return {dx:v[0],dy:v[1],dz:v[2], spMul:0.97+rnd()*0.08, comp:1};               // EXTÉRIEUR (dernière rangée, coquille)
+  if (i===0){ const F=vrand(rnd);                                  // B320 (user) : GALETTE — disque plat, orientation aléatoire
+    let U=cross(F,[0,1,0]); if(len2(U)<0.01)U=cross(F,[1,0,0]); U=norm(U);
+    _ftB={F, U, V:norm(cross(F,U))}; }
+  const B=_ftB, w=(rnd()-0.5)*0.10;                                // légère épaisseur
+  let ct, st, sp;
+  if (i<30){ const th=rnd()*Math.PI*2, r=0.12+Math.sqrt(rnd())*0.50; ct=Math.cos(th)*r; st=Math.sin(th)*r; sp=r; }   // CENTRE : disque REMPLI (30)
+  else { const th=2*Math.PI*(i-30)/50+(rnd()-0.5)*0.10; const r=0.94+rnd()*0.12; ct=Math.cos(th)*r; st=Math.sin(th)*r; sp=r; }   // EXTÉRIEUR : couronne (50)
+  const dx=B.U[0]*ct+B.V[0]*st+B.F[0]*w, dy=B.U[1]*ct+B.V[1]*st+B.F[1]*w, dz=B.U[2]*ct+B.V[2]*st+B.F[2]*w;
+  const L=Math.hypot(dx,dy,dz)||1;
+  return {dx:dx/L, dy:dy/L, dz:dz/L, spMul:sp, comp:i<30?0:1};     // vitesse ∝ rayon -> la galette reste une galette
 }
 function behaveFantome(d,A,dt,ctx){
   if (d._f===undefined){
-    const j=()=>(Math.random()-0.5)*0.16, du=()=>0.28+Math.random()*0.10;
+    const j=()=>(Math.random()-0.5)*0.14;
+    const duA=()=>0.14+Math.random()*0.06, duR=()=>0.26+Math.random()*0.08;   // B320 (user) : + rapide, ARGENT plus bref que ROUGE
     d._f = d.comp===0
-      ? [[0.15+j(),du(),SILVER],[0.60+j(),du(),RED],[2.15+j(),du(),SILVER],[2.60+j(),du(),RED]]
-      : [[1.15+j(),du(),SILVER],[1.60+j(),du(),RED]];
+      ? [[0.15+j(),duA(),SILVER],[0.60+j(),duR(),RED],[2.15+j(),duA(),SILVER],[2.60+j(),duR(),RED]]
+      : [[1.15+j(),duA(),SILVER],[1.60+j(),duR(),RED]];
     d.life=3.1+Math.random()*0.2;
   }
   d._m=0;
@@ -1095,7 +1105,7 @@ const EFFECTS = {
 
   // FANTÔME ARGENT POINTES ROUGE — 100 mm (510464000, 130 m) : pivoine qui n'apparaît que par
   // flashs de zones alternées (centre/extérieur/centre, argent puis rouge à chaque fois).
-  fantome: { apex:130, cal:100, heat:false, pureColor:true, stars:130, starSize:2.3, speedMul:2.4, speedJit:0.06,
+  fantome: { apex:130, cal:100, heat:false, pureColor:true, stars:80, starSize:2.3, speedMul:2.4, speedJit:0.06,   // B320 : GALETTE 30 centre + 50 couronne
              gravStar:1.0, dragStar:0.70, lifeBase75:2.2, lifeJitter:0.08, restExtra:2,
              dist:distFantome, behave:behaveFantome, onStar:fantomeFn, colors:[SILVER, SILVER] },
 
