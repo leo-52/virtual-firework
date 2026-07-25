@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B312';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B313';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -583,7 +583,9 @@ function behaveCorolle(d,A,dt,ctx){
     const v=vrand(Math.random);
     const ix=ux+v[0]*0.30, iy=uy+v[1]*0.30, iz=uz+v[2]*0.30;       // éventail autour de l'élan du porteur (B310, user : moins serré)
     const L=Math.hypot(ix,iy,iz)||1, esp=base*(1.0+Math.random()*0.35);
-    ctx.addStar(px,py,pz, ix/L*esp, iy/L*esp, iz/L*esp, 2.0+Math.random()*0.4, 0, true, null);
+    // B313 (user) : brins SÉPARÉS dès la base — chacun naît un peu décalé latéralement
+    const ox=(ix/L-ux)*1.5, oy=(iy/L-uy)*1.5, oz=(iz/L-uz)*1.5;
+    ctx.addStar(px+ox,py+oy,pz+oz, ix/L*esp, iy/L*esp, iz/L*esp, 2.0+Math.random()*0.4, 0, true, null);
   }
   d.age=d.life;                                                    // le porteur meurt au fork
 }
@@ -1074,13 +1076,13 @@ const EFFECTS = {
              gravStar:0.2, dragStar:0.5, lifeBase75:1.75, lifeJitter:0.15, restExtra:3,   // B312 (user) : ca ne retombe quasiment pas
              dist:distCorolle, behave:behaveCorolle, onStar:corolleFn, trailComps:[0],
              colorPairs:[[SILVER,'multi'], [SILVER,RED], [SILVER,'multi']],
-             trailing:{emitUntil:0.95, period:0.008, grain:1.4, gF:0.13, lifeMul:7, color:COPPER, fixedColor:true, spark:true, jit:0.22, backOff:0.35} },   // B308 (user) : chaque brin = TRAÎNÉE DE KAMURO (collier de perles cuivre), qui démarre ~30 cm derrière l'étoile de pointe
+             trailing:{emitUntil:0.95, period:0.008, grain:1.4, gF:0.13, lifeMul:15, color:COPPER, fixedColor:true, spark:true, jit:0.22, backOff:0.35} },   // B308 (user) : chaque brin = TRAÎNÉE DE KAMURO (collier de perles cuivre), qui démarre ~30 cm derrière l'étoile de pointe
   // 75 mm COROLLE OR POINTES ROUGE (575524000, 90 m) : même mécanique, traînée or, étoiles rouges.
   corolleOr: { apex:90, cal:75, heat:false, pureColor:true, stars:8, nMax:44, starSize:2.6, speedMul:1.35, speedJit:0.06,
              gravStar:0.2, dragStar:0.5, lifeBase75:1.75, lifeJitter:0.15, restExtra:3,   // B312 (user) : ca ne retombe quasiment pas
              dist:distCorolle, behave:behaveCorolle, onStar:corolleFn, trailComps:[0],
              colorPairs:[[GOLD,RED]],
-             trailing:{emitUntil:0.95, period:0.008, grain:1.4, gF:0.13, lifeMul:7, color:COPPER, fixedColor:true, spark:true, jit:0.22, backOff:0.35} },
+             trailing:{emitUntil:0.95, period:0.008, grain:1.4, gF:0.13, lifeMul:15, color:COPPER, fixedColor:true, spark:true, jit:0.22, backOff:0.35} },
 
   // D10 — composé 150 mm (515090000, 183 m), définition user : mini pivoine bleue + 20 comètes
   // kamuro (recette traçante B211 en or) + cercle ROUGE PROGRESSIF -> scintillant BLANC final.
