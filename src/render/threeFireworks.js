@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B317';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B318';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -557,7 +557,7 @@ function d9Fn(d,A,dt){
 // qui retombent en pétales (corolle) ; à +0,55-1,05 s la POINTE de chaque comète s'allume
 // dans sa couleur (argent/multicolore = couleurs au hasard par pointe), ~1,2 s, le tout ~2,5 s.
 let _corB=null;
-const COR_MULTI=[RED, GRN, BLU, YEL, PINK, PURP, SILVER];
+const COR_MULTI=[GRN, RED];                                        // B318 (user) : la multicolore c'est du VERT et du ROUGE
 function distCorolle(i,n,rnd){
   const v=vrand(rnd);                                              // B311 (user) : 8 PORTEURS dans des directions TOTALEMENT aléatoires (avant/arrière/côtés/diago…)
   return {dx:v[0], dy:v[1], dz:v[2], spMul:0.9+rnd()*0.2, comp:0};
@@ -578,10 +578,10 @@ function behaveCorolle(d,A,dt,ctx){
   if (d.age<d._splitAt) return;
   const px=ctx.pos[d._i*3], py=ctx.pos[d._i*3+1], pz=ctx.pos[d._i*3+2];
   const vL=Math.hypot(d.vx,d.vy,d.vz)||1, ux=d.vx/vL, uy=d.vy/vL, uz=d.vz/vL;
-  const base=ctx.cfg.burstRadius;
-  for (let c=0;c<4 && ctx.nAlive<ctx.nMax;c++){
+  const base=ctx.cfg.burstRadius, nB=ctx.cfg.corN||4, cone=ctx.cfg.corCone||0.30;   // B318 : brins/bombette et ouverture PAR CONFIG (100 mm : 7 brins, + serré)
+  for (let c=0;c<nB && ctx.nAlive<ctx.nMax;c++){
     const v=vrand(Math.random);
-    const ix=ux+v[0]*0.30, iy=uy+v[1]*0.30, iz=uz+v[2]*0.30;       // éventail autour de l'élan du porteur (B310, user : moins serré)
+    const ix=ux+v[0]*cone, iy=uy+v[1]*cone, iz=uz+v[2]*cone;       // éventail autour de l'élan du porteur (B310, user : moins serré)
     const L=Math.hypot(ix,iy,iz)||1, esp=base*(1.0+Math.random()*0.35);
     // B313 (user) : brins SÉPARÉS dès la base — chacun naît un peu décalé latéralement
     const ox=(ix/L-ux)*1.5, oy=(iy/L-uy)*1.5, oz=(iz/L-uz)*1.5;
@@ -1072,13 +1072,13 @@ const EFFECTS = {
 
   // COROLLE À POINTES — 100 mm (510463/468/469, 130 m) + 75 mm or/rouge (575524000, 90 m).
   // [tête avant allumage, couleur de POINTE] au sort par tir ('multi' = couleur au hasard PAR pointe).
-  corolle: { apex:130, cal:100, heat:false, pureColor:true, stars:8, nMax:44, starSize:2.6, speedMul:1.35, speedJit:0.06,   // B309 : 8 PORTEURS qui forkent en 4 brins chacun (photo user : bombettes distinctes)
+  corolle: { apex:130, cal:100, heat:false, pureColor:true, stars:8, nMax:70, corN:7, corCone:0.24, starSize:2.6, speedMul:1.35, speedJit:0.06,   // B318 (user) : 100 mm = 7 brins/bombette, un peu plus serrés que le 75
              gravStar:0.2, dragStar:0.5, lifeBase75:1.75, lifeJitter:0.15, restExtra:3,   // B312 (user) : ca ne retombe quasiment pas
              dist:distCorolle, behave:behaveCorolle, onStar:corolleFn, trailComps:[0],
              colorPairs:[[SILVER,SILVER], [SILVER,RED], [SILVER,'multi']],   // B317 (user) : les 3 corolles 100 mm — pointes ARGENT / ROUGES / MULTI
              trailing:{emitUntil:0.95, period:0.008, grain:1.4, gF:0.13, lifeMul:15, color:COPPER, fixedColor:true, spark:true, jit:0.22, backOff:1.0} },   // B308 (user) : chaque brin = TRAÎNÉE DE KAMURO (collier de perles cuivre), qui démarre ~30 cm derrière l'étoile de pointe
   // 75 mm COROLLE OR POINTES ROUGE (575524000, 90 m) : même mécanique, traînée or, étoiles rouges.
-  corolleOr: { apex:90, cal:75, heat:false, pureColor:true, stars:8, nMax:44, starSize:2.6, speedMul:1.35, speedJit:0.06,
+  corolleOr: { apex:90, cal:75, heat:false, pureColor:true, stars:8, nMax:44, corN:4, corCone:0.30, starSize:2.6, speedMul:1.35, speedJit:0.06,
              gravStar:0.2, dragStar:0.5, lifeBase75:1.75, lifeJitter:0.15, restExtra:3,   // B312 (user) : ca ne retombe quasiment pas
              dist:distCorolle, behave:behaveCorolle, onStar:corolleFn, trailComps:[0],
              colorPairs:[[GOLD,RED]],
