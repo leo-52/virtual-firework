@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B318';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B319';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -551,6 +551,29 @@ function d9Fn(d,A,dt){
   const p=d.age-(d._t0||9);                                        // centre : UN scintillement ROUGE doux, désynchronisé (B288)
   return {intenMul: d._a1!==undefined ? 0.75*d9Bump(p,d._a1,d._d1) : 0};
 }
+// FANTÔME ARGENT POINTES ROUGE (B319, définition user) : « bombe 100 mm à effet fantôme »
+// (510464000, 130 m) — une PIVOINE normale de 130 étoiles (85 centre + 45 dernière rangée)
+// qui n'apparaît que par FLASHS de zones alternées, tout éteint entre deux :
+// CENTRE argent puis rouge (0,15/0,60 s) -> EXTÉRIEUR argent puis rouge (1,15/1,60 s) ->
+// CENTRE argent puis rouge (2,15/2,60 s). Chaque flash = UNE cloche douce ~0,3 s avec le
+// décalage aléatoire habituel par étoile. Total ~3 s.
+function distFantome(i,n,rnd){
+  if (i<85){ const v=vrand(rnd); return {dx:v[0],dy:v[1],dz:v[2], spMul:0.30+rnd()*0.35, comp:0}; }   // CENTRE (rangées intérieures)
+  const v=vrand(rnd); return {dx:v[0],dy:v[1],dz:v[2], spMul:0.97+rnd()*0.08, comp:1};               // EXTÉRIEUR (dernière rangée, coquille)
+}
+function behaveFantome(d,A,dt,ctx){
+  if (d._f===undefined){
+    const j=()=>(Math.random()-0.5)*0.16, du=()=>0.28+Math.random()*0.10;
+    d._f = d.comp===0
+      ? [[0.15+j(),du(),SILVER],[0.60+j(),du(),RED],[2.15+j(),du(),SILVER],[2.60+j(),du(),RED]]
+      : [[1.15+j(),du(),SILVER],[1.60+j(),du(),RED]];
+    d.life=3.1+Math.random()*0.2;
+  }
+  d._m=0;
+  for (const w of d._f){ const p=d.age-w[0];
+    if (p>0 && p<w[1]){ const b=Math.sin(Math.PI*p/w[1]); if (b>d._m){ d._m=b; d.coreColor=w[2]; } } }
+}
+function fantomeFn(d,A,dt){ return {intenMul: 1.8*(d._m||0)}; }
 // COROLLE À POINTES (B307, vidéo R9CxUBmsER0 décomposée) : « bombe 100 mm corolle à pointes
 // argent/rouge/multicolore » (510463/468/469, 130 m) + « 75 mm corolle or pointes rouge »
 // (575524000, 90 m). ~8 FAISCEAUX de 2-4 comètes orange épaisses, directions asymétriques,
@@ -1070,6 +1093,12 @@ const EFFECTS = {
         restExtra:3, dist:distD8, behave:behaveD8, onStar:d8Fn, trailComps:[1], colors:[BLU, RED, RED],
         trailing:{emitUntil:0.97, period:0.010, grain:0.9, gF:0.13, lifeMul:4.0, color:COPPER, fixedColor:true, spark:true, jit:0.16, bright:0.85} },   // B265 (user) : traînées plus longues (2.8 -> 4.0)
 
+  // FANTÔME ARGENT POINTES ROUGE — 100 mm (510464000, 130 m) : pivoine qui n'apparaît que par
+  // flashs de zones alternées (centre/extérieur/centre, argent puis rouge à chaque fois).
+  fantome: { apex:130, cal:100, heat:false, pureColor:true, stars:130, starSize:2.3, speedMul:2.4, speedJit:0.06,
+             gravStar:1.0, dragStar:0.70, lifeBase75:2.2, lifeJitter:0.08, restExtra:2,
+             dist:distFantome, behave:behaveFantome, onStar:fantomeFn, colors:[SILVER, SILVER] },
+
   // COROLLE À POINTES — 100 mm (510463/468/469, 130 m) + 75 mm or/rouge (575524000, 90 m).
   // [tête avant allumage, couleur de POINTE] au sort par tir ('multi' = couleur au hasard PAR pointe).
   corolle: { apex:130, cal:100, heat:false, pureColor:true, stars:8, nMax:70, corN:7, corCone:0.24, starSize:2.6, speedMul:1.35, speedJit:0.06,   // B318 (user) : 100 mm = 7 brins/bombette, un peu plus serrés que le 75
@@ -1180,7 +1209,7 @@ const EFFECTS = {
 export const LABELS = { peony:'pivoine', chrysanthemum:'chrysanthème', willow:'saule (kamuro)', willowLong50:'kamuro longue durée 50 mm', willowLong150:'kamuro longue durée 150 mm', willowTrunk:'à tronc saule kamuro', willowStrobe:'saule or pointes scintillant', willowTips:'saule or pointes', willowTips100:'saule or pointes 100 mm', comet:'comète',
   sphere:'sphère', crackling:'crackling', dragonEgg:'œuf de dragon', strobe:'scintillant', cli:'cli. blanc/rouge', dahliaCli:'dahlia centre cli. blanc', kamuroCli:'ext. kamuro centre cli. blanc', halfSwapCli:'moitié changeante centre cli.', finalCli:'final cli. blanc rose', palmMulti:'palme multicolore', palmStrobe:'palme or scintillant',
   fallingLeaves:'feuille morte', palm:'palme', heart:'cœur', butterfly:'papillon', smiley:'smiley',
-  daisy:'marguerite', atom:'atome', halfHalf:'demi-demi', tracer:'traçante', zigzag:'zigzag', ring:'cercle (brique)', fmRing:'cercle progressif feuille morte', d8:'150 mm D8 (composé)', d9:'150 mm D9 (composé)', d10:'150 mm D10 (composé)', corolle:'corolle à pointes 100 mm', corolleOr:'corolle or pointes rouge 75 mm', medusa:'méduse', horsetail:'queue de cheval',
+  daisy:'marguerite', atom:'atome', halfHalf:'demi-demi', tracer:'traçante', zigzag:'zigzag', ring:'cercle (brique)', fmRing:'cercle progressif feuille morte', d8:'150 mm D8 (composé)', d9:'150 mm D9 (composé)', d10:'150 mm D10 (composé)', corolle:'corolle à pointes 100 mm', corolleOr:'corolle or pointes rouge 75 mm', fantome:'fantôme argent pointes rouge', medusa:'méduse', horsetail:'queue de cheval',
   cascade:'cascade', fish:'poisson', spinner:'tourbillon', saucer:'soucoupe', mosaic:'mosaïque', mosaicMix:'mosaïque assortie',
   mine:'pot à feu', salute:"salut (marron d'air)", saluteMulti:"multi marron d'air",
   zMeduse:'compact 40 tirs z méduse' };
