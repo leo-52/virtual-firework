@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B314';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B315';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -566,7 +566,7 @@ function behaveCorolle(d,A,dt,ctx){
   if (d._split){                                                   // BRIN : la pointe s'allume peu après sa naissance
     if (d.tipAt===undefined){
       d.tipAt=0.15+Math.random()*0.30;                             // B314 (user) : la pointe s'allume un peu plus tôt
-      d.life=Math.min(d.life, d.tipAt+0.95+Math.random()*0.15);    // B312 (user) : l'étoile rouge n'est visible que ~1 s
+      d.life=Math.min(d.life, d.tipAt+1.40+Math.random()*0.20);    // B315 (user) : l'étoile rouge dure plus longtemps (~1,5 s)
       const tc=ctx.cfg.colors[1];
       d._tip = (tc && tc.isColor) ? tc : COR_MULTI[(Math.random()*COR_MULTI.length)|0];
     }
@@ -589,7 +589,7 @@ function behaveCorolle(d,A,dt,ctx){
   }
   d.age=d.life;                                                    // le porteur meurt au fork
 }
-function corolleFn(d,A,dt){ return d._lit ? {intenMul:1.6} : {intenMul:0.5}; }   // tête discrète (la traînée domine) puis POINTE colorée vive
+function corolleFn(d,A,dt){ return d._lit ? {intenMul:1.6} : {intenMul:0}; }   // B315 (user) : AUCUNE étoile avant l'allumage — traînée pointue seule, puis l'étoile colorée apparaît
 // D10 (B290, vidéo S0MK2jOLu4g + définition user) : « bombe 150 mm D10 » (515090000, 183 m) —
 // tout en même temps au break :
 //  1) MINI PIVOINE BLEUE : ~30 étoiles en petite boule ronde (~1,7 s) ;
