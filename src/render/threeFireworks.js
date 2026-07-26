@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B326';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B327';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -1222,10 +1222,17 @@ const EFFECTS = {
             stars:22, starSize:0.8, speedMul:0.55, riseLean:2.5, riseTrail:false, headSize:0.7, riseColor:new THREE.Color(0.55,0.40,0.20),
             noFlash:true, burstSparks:false,
             trailing:{emitUntil:0.95, period:0.008, grain:1.0, gF:0.13, lifeMul:8, color:COPPER, spark:true, jit:0.22} },
+  // BOMBETTE ROUGE 30 mm (B327) : mini pivoine rouge (pour « pot à feu et bombette rouge »).
+  bombRouge: { apex:42, cal:30, heat:false, pureColor:true, color:RED, gravStar:0.55, dragStar:0.5, lifeBase75:2.4, lifeJitter:0.15, restExtra:1,
+            stars:20, starSize:1.0, speedMul:0.6, riseLean:2.5, riseTrail:false, headSize:0.7, riseColor:new THREE.Color(0.55,0.40,0.20),
+            noFlash:true, burstSparks:false },
   // POT À FEU 30 mm (B325) : la gerbe du pot à feu validé, réduite à l'échelle du compact.
   mine30: { cal:30, color:DIMGOLD, heat:false, pureColor:true, starSize:1.2, stars:30, gravStar:1.0, dragStar:0.21, shrink:true,
             trailing:{emitUntil:0.95, period:0.008, grain:0.8, gF:0.05, lifeMul:6, color:new THREE.Color(0.30,0.17,0.14), jit:0.15},
             gerbe:{ dur:0.1, cometRate:190, cone:0.11, speedMul:0.9 } },   // B326 (user) : moins haut, moins de matière
+  mine30r: { cal:30, color:RED, heat:false, pureColor:true, starSize:1.2, stars:30, gravStar:1.0, dragStar:0.21, shrink:true,
+            trailing:{emitUntil:0.95, period:0.008, grain:0.8, gF:0.05, lifeMul:6, color:new THREE.Color(0.30,0.17,0.14), jit:0.15},
+            gerbe:{ dur:0.1, cometRate:190, cone:0.11, speedMul:0.9 } },
   salute: { apex:62, cal:50, heat:false, stars:14, starSize:2.0, lifeBase75:0.22, color:SILVER, dist:distSalute, flashBig:true },   // « bombe 50 mm espagnole marron d'air » (62 m) : flash argenté MINIME — l'effet principal = le BRUIT (boom grave, audio.js)
   saluteMulti: { apex:77, heat:false, stars:5, nMax:5, starSize:1.1, lifeBase75:2.5, lifeJitter:0.05, speedMul:0.35, speedJit:0.15, gravStar:0.45,   // « bombe 75 mm CYLINDRIQUE espagnole MULTI marron d'air » (77 m, B160 user) : vie porteur 2.5 > détonation max 2.2 (sinon un marron mourait sans claquer)
     flashMini:true,                                                                                                                                   // break = mini flash + les 100 grains de riz universels (plus l'override orange fusionné)
@@ -1238,7 +1245,7 @@ export const LABELS = { peony:'pivoine', chrysanthemum:'chrysanthème', willow:'
   daisy:'marguerite', atom:'atome', halfHalf:'demi-demi', tracer:'traçante', zigzag:'zigzag', ring:'cercle (brique)', fmRing:'cercle progressif feuille morte', d8:'150 mm D8 (composé)', d9:'150 mm D9 (composé)', d10:'150 mm D10 (composé)', corolle:'corolle à pointes 100 mm', corolleOr:'corolle or pointes rouge 75 mm', fantome:'fantôme argent pointes rouge', medusa:'méduse', horsetail:'queue de cheval',
   cascade:'cascade', fish:'poisson', spinner:'tourbillon', saucer:'soucoupe', mosaic:'mosaïque', mosaicMix:'mosaïque assortie',
   mine:'pot à feu', salute:"salut (marron d'air)", saluteMulti:"multi marron d'air",
-  zMeduse:'compact 40 tirs z méduse', cPotKamuro:'compact 20 tirs pot à feu + bombette kamuro' };
+  zMeduse:'compact 40 tirs z méduse', cPotKamuro:'compact 20 tirs pot à feu + bombette kamuro', cPotRouge:'compact 20 tirs pot à feu + bombette rouge' };
 
 // ============================================================================
 // SHELL
@@ -1764,6 +1771,8 @@ export const COMPACTS = {
   // = un pot à feu au sol + la bombette qui monte au travers.
   cPotKamuro: { arch:'bombKamuro', tirs:20, dur:30, pattern:'droit', mine:'mine30',
              label:'compact 20 tirs 30 mm pot à feu et bombette kamuro (30 s)' },
+  cPotRouge: { arch:'bombRouge', tirs:20, dur:30, pattern:'droit', mine:'mine30r',
+             label:'compact 20 tirs 30 mm pot à feu et bombette rouge (30 s)' },   // 500303000
 };
 // B242 (user : « il faut quelques défauts — ça reste de la POUDRE ») : chaque intervalle de
 // mèche brûle un peu inégalement (±6 % entre tubes, ±10 % entre rangées), les tubes ont ±1°
