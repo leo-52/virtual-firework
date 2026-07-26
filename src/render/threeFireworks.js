@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B323';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B324';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -577,12 +577,13 @@ function distFantome(i,n,rnd){
 }
 function behaveFantome(d,A,dt,ctx){
   if (d._f===undefined){
-    const j=()=>(Math.random()-0.5)*0.14;
-    const duA=()=>0.14+Math.random()*0.06, duR=()=>0.26+Math.random()*0.08;   // B320 (user) : + rapide, ARGENT plus bref que ROUGE
-    d._f = d.comp===0
-      ? [[0.15+j(),duA(),SILVER],[0.60+j(),duR(),RED],[2.15+j(),duA(),SILVER],[2.60+j(),duR(),RED]]
-      : [[1.15+j(),duA(),SILVER],[1.60+j(),duR(),RED]];
-    d.life=3.1+Math.random()*0.2;
+    // B324 (user) : PAS de noir entre argent et rouge (le rouge ENCHAÎNE pile), scintillement
+    // plus rapide, effet total 2,5 s. Argent (~0,14 s) toujours plus bref que rouge (~0,25 s).
+    const j=()=>(Math.random()-0.5)*0.12;
+    const mk=(t0)=>{ const a=t0+j(), dA=0.12+Math.random()*0.04, dR=0.22+Math.random()*0.06;
+      return [[a,dA,SILVER],[a+dA,dR,RED]]; };
+    d._f = d.comp===0 ? [...mk(0.12), ...mk(1.72)] : mk(0.92);
+    d.life=2.45+Math.random()*0.15;
   }
   d._m=0;
   for (const w of d._f){ const p=d.age-w[0];
