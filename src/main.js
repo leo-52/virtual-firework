@@ -109,14 +109,14 @@ Object.assign(pick.style, { position:'fixed', top:'10px', right:'10px', zIndex:'
 for (const [k, label] of Object.entries(LABELS)){
   const o = document.createElement('option'); o.value = k; o.textContent = label; pick.appendChild(o);
 }
-pick.value = 'fantome';
+pick.value = 'cPotKamuro';
 // changer d'effet dans le menu -> couleur PAR DÉFAUT de l'effet (null annule l'override de la démo)
 pick.addEventListener('change', e => layer.setFocus(e.target.value, null));
 document.body.appendChild(pick);
 
-// DÉMO (réglage en cours) : FANTÔME ARGENT POINTES ROUGE 100 mm (510464000, 130 m, B319) —
-// pivoine par flashs de zones alternées centre/extérieur, argent puis rouge.
-layer.setFocus('fantome');
+// DÉMO (réglage en cours) : COMPACT 20 TIRS POT À FEU + BOMBETTE KAMURO (500300000, 30 s,
+// B325) — tirs droits séquentiels, pot à feu au sol + bombette kamuro par tir.
+layer.setFocus('cPotKamuro');
 
 // TIMELINE de lecture (barre en bas) + ESPACE = pause/play (fige les feux, caméra libre).
 const timeline = new Timeline(layer, LABELS);

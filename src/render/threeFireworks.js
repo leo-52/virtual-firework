@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B324';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B325';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -1216,6 +1216,16 @@ const EFFECTS = {
   mine:   { color:RED, heat:false, pureColor:true, starSize:1.8, stars:55, gravStar:1.0, dragStar:0.21, shrink:true,   // POT À FEU (B145-146, définition user) : « bombe 75 mm pot à feu ROUGE » (575477000). EXPULSION INSTANTANÉE (bouchon de micro-billes) ; chaque bille = COMÈTE qui SE CONSUME (shrink) et s'éteint
             trailing:{emitUntil:0.95, period:0.008, grain:1.0, gF:0.05, lifeMul:7, color:new THREE.Color(0.30,0.17,0.14), jit:0.15},   // B146 (photo user) : la ligne derrière l'étoile = SA FUMÉE (mate, sous le seuil du bloom, quasi immobile, persistante) — PAS des étincelles qui brûlent. ⚠️ emitUntil OBLIGATOIRE sinon aucune émission (bug silencieux des B143-145)
             gerbe:{ dur:0.1, cometRate:420, cone:0.11, speedMul:2.0 } },                                    // ~42 billes en 0,1 s (75mm pur : nb à confirmer par l'user — règle : 40mm pur = 40 étoiles ; +comète = moins) ; vitesses 0.72-1.30 -> BAS DE COLONNE VIDE, pointe ~30 m. Variante « cli. rouge » (575488000)
+  // BOMBETTE KAMURO 30 mm (B325, pour les compacts pot à feu + bombette) : mini saule à
+  // l'échelle bombette (mêmes règles que la méduse : montée discrète sans traînée, petit break).
+  bombKamuro: { apex:42, cal:30, heat:false, color:DIMGOLD, gravStar:0.4, dragStar:0.25, lifeBase75:3.2, lifeJitter:0.28, restExtra:2,
+            stars:22, starSize:0.8, speedMul:0.55, riseLean:2.5, riseTrail:false, headSize:0.7, riseColor:new THREE.Color(0.55,0.40,0.20),
+            noFlash:true, burstSparks:false,
+            trailing:{emitUntil:0.95, period:0.008, grain:1.0, gF:0.13, lifeMul:8, color:COPPER, spark:true, jit:0.22} },
+  // POT À FEU 30 mm (B325) : la gerbe du pot à feu validé, réduite à l'échelle du compact.
+  mine30: { cal:30, color:DIMGOLD, heat:false, pureColor:true, starSize:1.2, stars:30, gravStar:1.0, dragStar:0.21, shrink:true,
+            trailing:{emitUntil:0.95, period:0.008, grain:0.8, gF:0.05, lifeMul:6, color:new THREE.Color(0.30,0.17,0.14), jit:0.15},
+            gerbe:{ dur:0.1, cometRate:280, cone:0.11, speedMul:1.15 } },
   salute: { apex:62, cal:50, heat:false, stars:14, starSize:2.0, lifeBase75:0.22, color:SILVER, dist:distSalute, flashBig:true },   // « bombe 50 mm espagnole marron d'air » (62 m) : flash argenté MINIME — l'effet principal = le BRUIT (boom grave, audio.js)
   saluteMulti: { apex:77, heat:false, stars:5, nMax:5, starSize:1.1, lifeBase75:2.5, lifeJitter:0.05, speedMul:0.35, speedJit:0.15, gravStar:0.45,   // « bombe 75 mm CYLINDRIQUE espagnole MULTI marron d'air » (77 m, B160 user) : vie porteur 2.5 > détonation max 2.2 (sinon un marron mourait sans claquer)
     flashMini:true,                                                                                                                                   // break = mini flash + les 100 grains de riz universels (plus l'override orange fusionné)
@@ -1228,7 +1238,7 @@ export const LABELS = { peony:'pivoine', chrysanthemum:'chrysanthème', willow:'
   daisy:'marguerite', atom:'atome', halfHalf:'demi-demi', tracer:'traçante', zigzag:'zigzag', ring:'cercle (brique)', fmRing:'cercle progressif feuille morte', d8:'150 mm D8 (composé)', d9:'150 mm D9 (composé)', d10:'150 mm D10 (composé)', corolle:'corolle à pointes 100 mm', corolleOr:'corolle or pointes rouge 75 mm', fantome:'fantôme argent pointes rouge', medusa:'méduse', horsetail:'queue de cheval',
   cascade:'cascade', fish:'poisson', spinner:'tourbillon', saucer:'soucoupe', mosaic:'mosaïque', mosaicMix:'mosaïque assortie',
   mine:'pot à feu', salute:"salut (marron d'air)", saluteMulti:"multi marron d'air",
-  zMeduse:'compact 40 tirs z méduse' };
+  zMeduse:'compact 40 tirs z méduse', cPotKamuro:'compact 20 tirs pot à feu + bombette kamuro' };
 
 // ============================================================================
 // SHELL
@@ -1749,6 +1759,11 @@ class Shell {
 export const COMPACTS = {
   zMeduse: { arch:'medusa', tirs:40, dur:30, pattern:'z', rowSize:5, fanDeg:25,
              label:'compact 40 tirs 30 mm z méduse (30 s)' },   // 500345000-500355000, couleur au sort par bombette
+  // POT À FEU + BOMBETTE (B325) : « compact 20 tirs 30 mm pot à feu et bombette kamuro »
+  // (500300000, 30 s) — désignation SANS z/éventaillé -> tirs DROITS séquentiels ; chaque tir
+  // = un pot à feu au sol + la bombette qui monte au travers.
+  cPotKamuro: { arch:'bombKamuro', tirs:20, dur:30, pattern:'droit', mine:'mine30',
+             label:'compact 20 tirs 30 mm pot à feu et bombette kamuro (30 s)' },
 };
 // B242 (user : « il faut quelques défauts — ça reste de la POUDRE ») : chaque intervalle de
 // mèche brûle un peu inégalement (±6 % entre tubes, ±10 % entre rangées), les tubes ont ±1°
@@ -1757,7 +1772,11 @@ function buildCompactQueue(def){
   const rows=Math.max(1, Math.round(def.tirs/def.rowSize)), q=[];
   const half=(def.fanDeg||25)*Math.PI/180, jA=0.0175;   // ±1° par tube
   const ang=k=>-half+(2*half)*(def.rowSize>1?k/(def.rowSize-1):0.5)+(Math.random()-0.5)*2*jA;
-  if (def.pattern==='fan'){
+  if (def.pattern==='droit'){                       // B325 : tirs SÉQUENTIELS réguliers, tubes droits (±1°)
+    const step=def.dur/Math.max(1, def.tirs-1);
+    let t=0;
+    for (let k=0;k<def.tirs;k++){ q.push({ t, a:(Math.random()-0.5)*2*jA }); t+=step*(0.94+Math.random()*0.12); }
+  } else if (def.pattern==='fan'){
     const step=def.dur/rows;                        // ex 8 salves sur 30 s -> une rangée toutes les 3,75 s
     for (let r=0;r<rows;r++){ const tr=r*step*(1+(Math.random()-0.5)*0.05);
       for (let k=0;k<def.rowSize;k++)
@@ -1887,6 +1906,7 @@ export class ThreeFireworks {
         const q=c.queue[c.i++];
         const nsh=new Shell(c.def.arch,0,0,undefined,{lean:[Math.tan(q.a)*c.apexS,0], pair:c.pair||undefined});
         this.shells.push(nsh);
+        if (c.def.mine) this.shells.push(new Shell(c.def.mine,0,0,undefined,{}));   // B325 : le POT À FEU part du même tube, en même temps
         if (this.onLaunch) this.onLaunch(c.def.arch, nsh.cal, this.distTo(nsh.ox, 0, nsh.oz));
       }
       if (c.i>=c.queue.length) this.compact=null;   // mèche finie — le repos/refire reprend quand tout est mort
