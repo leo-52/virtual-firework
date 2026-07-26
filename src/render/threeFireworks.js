@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B320';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B321';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -559,16 +559,21 @@ function d9Fn(d,A,dt){
 // décalage aléatoire habituel par étoile. Total ~3 s.
 let _ftB=null;
 function distFantome(i,n,rnd){
-  if (i===0){ const F=vrand(rnd);                                  // B320 (user) : GALETTE — disque plat, orientation aléatoire
+  if (i===0){ const F=vrand(rnd);                                  // B321 (user) : SATURNE — centre = SPHÈRE (planète), extérieur = ANNEAU (orientation aléatoire)
     let U=cross(F,[0,1,0]); if(len2(U)<0.01)U=cross(F,[1,0,0]); U=norm(U);
     _ftB={F, U, V:norm(cross(F,U))}; }
-  const B=_ftB, w=(rnd()-0.5)*0.10;                                // légère épaisseur
-  let ct, st, sp;
-  if (i<30){ const th=rnd()*Math.PI*2, r=0.12+Math.sqrt(rnd())*0.50; ct=Math.cos(th)*r; st=Math.sin(th)*r; sp=r; }   // CENTRE : disque REMPLI (30)
-  else { const th=2*Math.PI*(i-30)/50+(rnd()-0.5)*0.10; const r=0.94+rnd()*0.12; ct=Math.cos(th)*r; st=Math.sin(th)*r; sp=r; }   // EXTÉRIEUR : couronne (50)
+  const B=_ftB;
+  if (i<30){                                                       // CENTRE : sphère homogène (Fibonacci + petits défauts)
+    const f=distFibonacci(i,30,rnd), v=vrand(rnd);
+    const dx=f.dx+v[0]*0.10, dy=f.dy+v[1]*0.10, dz=f.dz+v[2]*0.10;
+    const L=Math.hypot(dx,dy,dz)||1;
+    return {dx:dx/L, dy:dy/L, dz:dz/L, spMul:0.48+rnd()*0.07, comp:0};
+  }
+  const th=2*Math.PI*(i-30)/50+(rnd()-0.5)*0.10, ct=Math.cos(th), st=Math.sin(th);   // EXTÉRIEUR : anneau (défauts B268)
+  const w=(rnd()-0.5)*0.12;
   const dx=B.U[0]*ct+B.V[0]*st+B.F[0]*w, dy=B.U[1]*ct+B.V[1]*st+B.F[1]*w, dz=B.U[2]*ct+B.V[2]*st+B.F[2]*w;
   const L=Math.hypot(dx,dy,dz)||1;
-  return {dx:dx/L, dy:dy/L, dz:dz/L, spMul:sp, comp:i<30?0:1};     // vitesse ∝ rayon -> la galette reste une galette
+  return {dx:dx/L, dy:dy/L, dz:dz/L, spMul:1.0*(0.93+rnd()*0.14), comp:1};
 }
 function behaveFantome(d,A,dt,ctx){
   if (d._f===undefined){
