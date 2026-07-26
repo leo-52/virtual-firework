@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B322';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B323';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -573,7 +573,7 @@ function distFantome(i,n,rnd){
   const w=(rnd()-0.5)*0.12;
   const dx=B.U[0]*ct+B.V[0]*st+B.F[0]*w, dy=B.U[1]*ct+B.V[1]*st+B.F[1]*w, dz=B.U[2]*ct+B.V[2]*st+B.F[2]*w;
   const L=Math.hypot(dx,dy,dz)||1;
-  return {dx:dx/L, dy:dy/L, dz:dz/L, spMul:1.0*(0.93+rnd()*0.14), comp:1};
+  return {dx:dx/L, dy:dy/L, dz:dz/L, spMul:0.52*(0.95+rnd()*0.10), comp:1};   // B323 (user) : l'anneau COLLÉ à la pivoine (tout est côte à côte dans la bombe)
 }
 function behaveFantome(d,A,dt,ctx){
   if (d._f===undefined){
