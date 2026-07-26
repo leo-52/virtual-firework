@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B321';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B322';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -565,9 +565,9 @@ function distFantome(i,n,rnd){
   const B=_ftB;
   if (i<30){                                                       // CENTRE : sphère homogène (Fibonacci + petits défauts)
     const f=distFibonacci(i,30,rnd), v=vrand(rnd);
-    const dx=f.dx+v[0]*0.10, dy=f.dy+v[1]*0.10, dz=f.dz+v[2]*0.10;
+    const dx=f.dx+v[0]*0.06, dy=f.dy+v[1]*0.06, dz=f.dz+v[2]*0.06;
     const L=Math.hypot(dx,dy,dz)||1;
-    return {dx:dx/L, dy:dy/L, dz:dz/L, spMul:0.48+rnd()*0.07, comp:0};
+    return {dx:dx/L, dy:dy/L, dz:dz/L, spMul:0.38+rnd()*0.05, comp:0};   // B322 (photo user) : plus PETITE et PRÉCISE (coquille serrée)
   }
   const th=2*Math.PI*(i-30)/50+(rnd()-0.5)*0.10, ct=Math.cos(th), st=Math.sin(th);   // EXTÉRIEUR : anneau (défauts B268)
   const w=(rnd()-0.5)*0.12;
