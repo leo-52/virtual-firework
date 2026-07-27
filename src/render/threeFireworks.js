@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B338';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B339';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -935,8 +935,8 @@ function behaveTourb(d,A,dt,ctx){
     const a=d._sa+(k%2)*Math.PI+(Math.random()-0.5)*0.25, ca=Math.cos(a), sa=Math.sin(a);
     const sp=5.5+Math.random()*3;
     const vx=(U[0]*ca+V[0]*sa)*sp, vy=(U[1]*ca+V[1]*sa)*sp, vz=(U[2]*ca+V[2]*sa)*sp;
-    // étincelles qui TOMBENT du tourbillon (gF élevé), comme la traînée de sortie de tube
-    spawnTrail(px,py,pz, 1.5,1.5,1.6, 0.9, 0.55, (0.45+Math.random()*0.5)/0.26, vx*4, vy*4, vz*4, 0.5, 0.42, true);
+    // B339 (user) : des ÉTINCELLES légères — quasi pas de gravité (pas le temps de tomber), vies courtes
+    spawnTrail(px,py,pz, 1.5,1.5,1.6, 0.9, 0.10, (0.30+Math.random()*0.35)/0.26, vx*4, vy*4, vz*4, 0.5, 0.42, true);
   }
 }
 function distTourb(i,n,rnd){ const v=vrand(rnd); return {dx:v[0], dy:Math.abs(v[1]), dz:v[2], spMul:0.05, comp:0}; }
