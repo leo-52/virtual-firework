@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B336';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B337';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -913,6 +913,21 @@ function behaveMarron(d,A,dt,ctx){
   d.age=d.life;   // le porteur meurt à la détonation
 }
 
+// TOURBILLON EN BOMBETTE (B337, vidéo ve0y33-8GmE décomposée) : montée ROUGE puis, au sommet,
+// le tourbillon TOURNE (~3,5-4,5 tours/s) pendant ~1,3 s en éjectant des étincelles blanc-argent
+// par 2 jets tangentiels opposés -> le « disque » d'étincelles s'élargit autour du cœur brillant.
+function behaveTourb(d,A,dt,ctx){
+  if (d._sa===undefined){ d._sa=Math.random()*Math.PI*2; d._sr=(22+Math.random()*6)*(Math.random()<0.5?1:-1);
+    d.vx*=0.2; d.vz*=0.2; d.vy=2.5; d.gMul=0.05; }
+  d._sa+=d._sr*dt;
+  const px=ctx.pos[d._i*3], py=ctx.pos[d._i*3+1], pz=ctx.pos[d._i*3+2];
+  for (let k=0;k<3;k++){
+    const a=d._sa+(k%2)*Math.PI+(Math.random()-0.5)*0.25, sp=9+Math.random()*5;
+    const vx=Math.cos(a)*sp, vz=Math.sin(a)*sp, vy=(Math.random()-0.35)*3.5;
+    spawnTrail(px,py,pz, 1.5,1.5,1.6, 0.9, 0.25, (0.35+Math.random()*0.45)/0.26, vx*4, vy*4, vz*4, 0.6, 0.42, true);
+  }
+}
+function distTourb(i,n,rnd){ const v=vrand(rnd); return {dx:v[0], dy:Math.abs(v[1]), dz:v[2], spMul:0.05, comp:0}; }
 function behaveMosaic(d,A,dt,ctx){
   if (d._split) return;                                                 // secondaires : ne re-forkent jamais
   if (d._splitAt===undefined) d._splitAt = 1.5 + Math.random()*0.5;     // DÉLAI burst->division : 1.5..2.0s ALÉATOIRE par comète
@@ -1232,6 +1247,11 @@ const EFFECTS = {
             stars:22, starSize:0.8, speedMul:0.55, riseLean:2.5, riseTrail:false, headSize:1.6, riseColor:new THREE.Color(0.40,0.70,2.0),   // B336 (user) : montée PLUS VOYANTE (tête 1.6, bleu vif)
             noFlash:true, burstSparks:false,
             trailing:{emitUntil:0.95, period:0.008, grain:1.0, gF:0.13, lifeMul:8, color:COPPER, spark:true, jit:0.22} },
+  // TOURBILLON 30 mm à ascension rouge (B337) — « compact 20 tirs disque de tourbillons
+  // ascension rouge » (500143000). 1 « étoile » = le moteur du tourbillon, cœur blanc brillant.
+  tourbBomb: { apex:38, cal:30, heat:false, pureColor:true, stars:1, starSize:5.0, lifeBase75:2.8, lifeJitter:0.10, restExtra:1,
+            color:new THREE.Color(1.5,1.5,1.6), riseLean:2.5, riseTrail:false, headSize:1.6, riseColor:new THREE.Color(2.0,0.35,0.30),
+            noFlash:true, burstSparks:false, dist:distTourb, behave:behaveTourb },
   // POT À FEU 30 mm (B325) : la gerbe du pot à feu validé, réduite à l'échelle du compact.
   mine30: { cal:30, color:DIMGOLD, heat:false, pureColor:true, starSize:1.2, stars:30, gravStar:1.0, dragStar:0.21, shrink:true,
             trailing:{emitUntil:0.95, period:0.008, grain:0.8, gF:0.05, lifeMul:6, color:new THREE.Color(0.30,0.17,0.14), jit:0.15},
@@ -1253,7 +1273,7 @@ export const LABELS = { peony:'pivoine', chrysanthemum:'chrysanthème', willow:'
   daisy:'marguerite', atom:'atome', halfHalf:'demi-demi', tracer:'traçante', zigzag:'zigzag', ring:'cercle (brique)', fmRing:'cercle progressif feuille morte', d8:'150 mm D8 (composé)', d9:'150 mm D9 (composé)', d10:'150 mm D10 (composé)', corolle:'corolle à pointes 100 mm', corolleOr:'corolle or pointes rouge 75 mm', fantome:'fantôme argent pointes rouge', medusa:'méduse', horsetail:'queue de cheval',
   cascade:'cascade', fish:'poisson', spinner:'tourbillon', saucer:'soucoupe', mosaic:'mosaïque', mosaicMix:'mosaïque assortie',
   mine:'pot à feu', salute:"salut (marron d'air)", saluteMulti:"multi marron d'air",
-  zMeduse:'compact 40 tirs z méduse', cPotKamuro:'compact 20 tirs pot à feu + bombette kamuro', cPotRouge:'compact 20 tirs pot à feu + bombette rouge', cAscBleu:'compact 20 tirs kamuro ascension bleue' };
+  zMeduse:'compact 40 tirs z méduse', cPotKamuro:'compact 20 tirs pot à feu + bombette kamuro', cPotRouge:'compact 20 tirs pot à feu + bombette rouge', cAscBleu:'compact 20 tirs kamuro ascension bleue', cTourbRouge:'compact 20 tirs disque de tourbillons asc. rouge' };
 
 // ============================================================================
 // SHELL
@@ -1783,6 +1803,8 @@ export const COMPACTS = {
              label:'compact 20 tirs 30 mm pot à feu et bombette rouge (30 s)' },   // 500303000
   cAscBleu: { arch:'bombKamuroAscBleu', tirs:20, dur:30, pattern:'droit',
              label:'compact 20 tirs 30 mm bombettes kamuro ascension bleue (30 s)' },   // 500036000
+  cTourbRouge: { arch:'tourbBomb', tirs:20, dur:30, pattern:'droit',
+             label:'compact 20 tirs 30 mm disque de tourbillons ascension rouge (30 s)' },   // 500143000
 };
 // B242 (user : « il faut quelques défauts — ça reste de la POUDRE ») : chaque intervalle de
 // mèche brûle un peu inégalement (±6 % entre tubes, ±10 % entre rangées), les tubes ont ±1°
