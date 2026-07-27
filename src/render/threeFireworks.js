@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B337';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B338';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -917,14 +917,26 @@ function behaveMarron(d,A,dt,ctx){
 // le tourbillon TOURNE (~3,5-4,5 tours/s) pendant ~1,3 s en éjectant des étincelles blanc-argent
 // par 2 jets tangentiels opposés -> le « disque » d'étincelles s'élargit autour du cœur brillant.
 function behaveTourb(d,A,dt,ctx){
-  if (d._sa===undefined){ d._sa=Math.random()*Math.PI*2; d._sr=(22+Math.random()*6)*(Math.random()<0.5?1:-1);
-    d.vx*=0.2; d.vz*=0.2; d.vy=2.5; d.gMul=0.05; }
+  if (d._sa===undefined){
+    d._sa=Math.random()*Math.PI*2; d._sr=(22+Math.random()*6)*(Math.random()<0.5?1:-1);
+    // B338 (user) : mini-fusée DISQUE — l'axe de rotation suit l'orientation (aléatoire) du
+    // disque : surtout vers le HAUT, parfois de côté, parfois vers le bas.
+    let W=vrand(Math.random); W=[W[0], W[1]+1.3, W[2]];
+    if (Math.random()<0.15) W[1]-=2.4;
+    const Lw=Math.hypot(W[0],W[1],W[2])||1; W=[W[0]/Lw, W[1]/Lw, W[2]/Lw];
+    let U=cross(W,[0,1,0]); if(len2(U)<0.01)U=cross(W,[1,0,0]); U=norm(U);
+    d._U=U; d._V=norm(cross(W,U));
+    d.vx*=0.1; d.vz*=0.1; d.vy=2.2; d.gMul=0.03;                   // le cœur bouge À PEINE (~1,5 m effectif avec le freinage)
+  }
   d._sa+=d._sr*dt;
   const px=ctx.pos[d._i*3], py=ctx.pos[d._i*3+1], pz=ctx.pos[d._i*3+2];
+  const U=d._U, V=d._V;
   for (let k=0;k<3;k++){
-    const a=d._sa+(k%2)*Math.PI+(Math.random()-0.5)*0.25, sp=9+Math.random()*5;
-    const vx=Math.cos(a)*sp, vz=Math.sin(a)*sp, vy=(Math.random()-0.35)*3.5;
-    spawnTrail(px,py,pz, 1.5,1.5,1.6, 0.9, 0.25, (0.35+Math.random()*0.45)/0.26, vx*4, vy*4, vz*4, 0.6, 0.42, true);
+    const a=d._sa+(k%2)*Math.PI+(Math.random()-0.5)*0.25, ca=Math.cos(a), sa=Math.sin(a);
+    const sp=5.5+Math.random()*3;
+    const vx=(U[0]*ca+V[0]*sa)*sp, vy=(U[1]*ca+V[1]*sa)*sp, vz=(U[2]*ca+V[2]*sa)*sp;
+    // étincelles qui TOMBENT du tourbillon (gF élevé), comme la traînée de sortie de tube
+    spawnTrail(px,py,pz, 1.5,1.5,1.6, 0.9, 0.55, (0.45+Math.random()*0.5)/0.26, vx*4, vy*4, vz*4, 0.5, 0.42, true);
   }
 }
 function distTourb(i,n,rnd){ const v=vrand(rnd); return {dx:v[0], dy:Math.abs(v[1]), dz:v[2], spMul:0.05, comp:0}; }
