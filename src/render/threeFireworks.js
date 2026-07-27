@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B341';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B342';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -919,21 +919,45 @@ function behaveMarron(d,A,dt,ctx){
 function behaveTourb(d,A,dt,ctx){
   // B340 (user) : comme une COMÈTE KAMURO (pointe discrète, belle traînée) dont le TRAJET est
   // une HÉLICE de 1-2 m de haut — c'est la traînée qui dessine le tourbillon, pas des jets.
+  // B342 (user) : c'est la FORME du disque qui fait tourner -> comme un avion en papier, tout
+  // dépend du vent, du pliage, du sens... donc TRÈS aléatoire d'un tir à l'autre, et l'axe DÉRIVE
+  // en vol (le tourbillon part en vrille, se redresse, se couche...).
   if (d._sa===undefined){
-    d._sa=Math.random()*Math.PI*2; d._sr=(9+Math.random()*4)*(Math.random()<0.5?1:-1);   // B341 : MOINS de tours (~2-3 au total) — guirlande, pas pelote
+    d._sa=Math.random()*Math.PI*2;
+    const q=Math.random();
+    d._sr=(q<0.18 ? 3.5+Math.random()*3                            // parfois ça vrille à peine (presque droit)
+         : q<0.80 ? 7+Math.random()*7                              // le cas courant
+         :          15+Math.random()*8) * (Math.random()<0.5?1:-1);// parfois ça part en toupie
     let W=vrand(Math.random); W=[W[0], W[1]+1.3, W[2]];            // axe : surtout vers le HAUT, parfois côté/bas
     if (Math.random()<0.15) W[1]-=2.4;
     const Lw=Math.hypot(W[0],W[1],W[2])||1; W=[W[0]/Lw, W[1]/Lw, W[2]/Lw];
     let U=cross(W,[0,1,0]); if(len2(U)<0.01)U=cross(W,[1,0,0]); U=norm(U);
     d._U=U; d._V=norm(cross(W,U)); d._W=W;
-    d._R=0.32+Math.random()*0.18; d._va=0.95+Math.random()*0.35;   // B341 : spirale plus serrée qui AVANCE (1,3-1,8 m parcourus) — comme une guirlande de sapin
+    d._R=0.14+Math.random()*0.55; d._va=0.50+Math.random()*0.95;   // serrage et avance très variables (1 à 2 m parcourus)
+    d._dr=(Math.random()*2-1)*0.55;                                // le régime de rotation monte ou tombe pendant le vol
+    d._om=[(Math.random()*2-1)*0.5, (Math.random()*2-1)*0.5, (Math.random()*2-1)*0.5];  // dérive de l'axe : ça gîte en vol, sans repartir en arrière
     d.gMul=0.02;
   }
+  const O=d._om, U=d._U, V=d._V, W=d._W;
+  const rot=(X)=>{ const x=X[0]+(O[1]*X[2]-O[2]*X[1])*dt, y=X[1]+(O[2]*X[0]-O[0]*X[2])*dt, z=X[2]+(O[0]*X[1]-O[1]*X[0])*dt;
+                   const L=Math.hypot(x,y,z)||1; X[0]=x/L; X[1]=y/L; X[2]=z/L; };
+  rot(W); rot(U);                                                  // l'axe de vrille dérive doucement
+  const uw=U[0]*W[0]+U[1]*W[1]+U[2]*W[2];                          // re-orthogonalisation (U ⊥ W)
+  U[0]-=W[0]*uw; U[1]-=W[1]*uw; U[2]-=W[2]*uw;
+  const Lu=Math.hypot(U[0],U[1],U[2])||1; U[0]/=Lu; U[1]/=Lu; U[2]/=Lu;
+  V[0]=W[1]*U[2]-W[2]*U[1]; V[1]=W[2]*U[0]-W[0]*U[2]; V[2]=W[0]*U[1]-W[1]*U[0];
+  d._sr*=(1+d._dr*dt);
   d._sa+=d._sr*dt;
-  const U=d._U, V=d._V, W=d._W, sa=Math.sin(d._sa), ca=Math.cos(d._sa), k=d._R*d._sr;
+  const sa=Math.sin(d._sa), ca=Math.cos(d._sa), k=d._R*d._sr;
   d.vx=(-U[0]*sa+V[0]*ca)*k + W[0]*d._va;                          // vitesse = tangente de l'hélice (le drag est écrasé chaque frame)
   d.vy=(-U[1]*sa+V[1]*ca)*k + W[1]*d._va;
   d.vz=(-U[2]*sa+V[2]*ca)*k + W[2]*d._va;
+  // B342 : l'étoile CRACHE des étincelles (en plus de sa traînée), projetées tout autour
+  if (Math.random()<0.55){
+    const px=ctx.pos[d._i*3], py=ctx.pos[d._i*3+1], pz=ctx.pos[d._i*3+2], e=vrand(Math.random), sp=1.6+Math.random()*2.6;
+    spawnTrail(px,py,pz, 1.10,1.05,0.90, 0.85, 0.16, (0.22+Math.random()*0.28)/0.26,
+               d.vx*0.5+e[0]*sp, d.vy*0.5+e[1]*sp, d.vz*0.5+e[2]*sp, 0.5, 0.40, true);
+  }
 }
 function distTourb(i,n,rnd){ const v=vrand(rnd); return {dx:v[0], dy:Math.abs(v[1]), dz:v[2], spMul:0.05, comp:0}; }
 function behaveMosaic(d,A,dt,ctx){
@@ -1257,10 +1281,10 @@ const EFFECTS = {
             trailing:{emitUntil:0.95, period:0.008, grain:1.0, gF:0.13, lifeMul:8, color:COPPER, spark:true, jit:0.22} },
   // TOURBILLON 30 mm à ascension rouge (B337) — « compact 20 tirs disque de tourbillons
   // ascension rouge » (500143000). 1 « étoile » = le moteur du tourbillon, cœur blanc brillant.
-  tourbBomb: { apex:38, cal:30, heat:false, pureColor:true, stars:1, starSize:1.3, lifeBase75:2.8, lifeJitter:0.10, restExtra:1,   // B340 : pointe DISCRÈTE (comète kamuro), la traînée fait le tourbillon
+  tourbBomb: { apex:38, cal:30, heat:false, pureColor:true, stars:1, starSize:2.2, lifeBase75:2.8, lifeJitter:0.18, restExtra:1,   // B342 : étoile plus GROSSE (l'envergure du tourbillon, elle, ne bouge pas)
             color:new THREE.Color(1.5,1.5,1.6), riseLean:2.5, riseTrail:false, headSize:1.6, riseColor:new THREE.Color(2.0,0.35,0.30),
             noFlash:true, burstSparks:false, dist:distTourb, behave:behaveTourb,
-            trailing:{emitUntil:0.97, period:0.004, grain:1.0, gF:0.13, lifeMul:6, color:new THREE.Color(1.10,1.05,0.90), fixedColor:true, spark:true, jit:0.15} },   // B341 : un peu plus ARGENTÉ (champagne, plus cuivre)
+            trailing:{emitUntil:0.97, period:0.0017, grain:1.0, gF:0.13, lifeMul:6, color:new THREE.Color(1.10,1.05,0.90), fixedColor:true, spark:true, jit:0.30} },   // B341 champagne / B342 : BEAUCOUP plus d'étincelles
   // POT À FEU 30 mm (B325) : la gerbe du pot à feu validé, réduite à l'échelle du compact.
   mine30: { cal:30, color:DIMGOLD, heat:false, pureColor:true, starSize:1.2, stars:30, gravStar:1.0, dragStar:0.21, shrink:true,
             trailing:{emitUntil:0.95, period:0.008, grain:0.8, gF:0.05, lifeMul:6, color:new THREE.Color(0.30,0.17,0.14), jit:0.15},
