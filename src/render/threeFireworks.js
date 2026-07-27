@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B342';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B343';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -952,11 +952,14 @@ function behaveTourb(d,A,dt,ctx){
   d.vx=(-U[0]*sa+V[0]*ca)*k + W[0]*d._va;                          // vitesse = tangente de l'hélice (le drag est écrasé chaque frame)
   d.vy=(-U[1]*sa+V[1]*ca)*k + W[1]*d._va;
   d.vz=(-U[2]*sa+V[2]*ca)*k + W[2]*d._va;
-  // B342 : l'étoile CRACHE des étincelles (en plus de sa traînée), projetées tout autour
-  if (Math.random()<0.55){
-    const px=ctx.pos[d._i*3], py=ctx.pos[d._i*3+1], pz=ctx.pos[d._i*3+2], e=vrand(Math.random), sp=1.6+Math.random()*2.6;
-    spawnTrail(px,py,pz, 1.10,1.05,0.90, 0.85, 0.16, (0.22+Math.random()*0.28)/0.26,
-               d.vx*0.5+e[0]*sp, d.vy*0.5+e[1]*sp, d.vz*0.5+e[2]*sp, 0.5, 0.40, true);
+  // B343 (photos user) : l'étoile crache des étincelles PAR MILLIERS, toutes fines, doré-argenté
+  // -> ça fait une masse lumineuse dense qui suit le trajet, pas un trait dessiné.
+  const px=ctx.pos[d._i*3], py=ctx.pos[d._i*3+1], pz=ctx.pos[d._i*3+2];
+  for (let k=0;k<11;k++){
+    const e=vrand(Math.random), sp=0.6+Math.random()*1.7, gold=Math.random()<0.5;
+    spawnTrail(px,py,pz, gold?1.22:0.95, gold?0.98:1.02, gold?0.62:1.12, 0.72, 0.16,
+               (0.28+Math.random()*0.50)/0.26,
+               d.vx*0.5+e[0]*sp, d.vy*0.5+e[1]*sp, d.vz*0.5+e[2]*sp, 0.5, 0.34, true);
   }
 }
 function distTourb(i,n,rnd){ const v=vrand(rnd); return {dx:v[0], dy:Math.abs(v[1]), dz:v[2], spMul:0.05, comp:0}; }
@@ -1284,7 +1287,7 @@ const EFFECTS = {
   tourbBomb: { apex:38, cal:30, heat:false, pureColor:true, stars:1, starSize:2.2, lifeBase75:2.8, lifeJitter:0.18, restExtra:1,   // B342 : étoile plus GROSSE (l'envergure du tourbillon, elle, ne bouge pas)
             color:new THREE.Color(1.5,1.5,1.6), riseLean:2.5, riseTrail:false, headSize:1.6, riseColor:new THREE.Color(2.0,0.35,0.30),
             noFlash:true, burstSparks:false, dist:distTourb, behave:behaveTourb,
-            trailing:{emitUntil:0.97, period:0.0017, grain:1.0, gF:0.13, lifeMul:6, color:new THREE.Color(1.10,1.05,0.90), fixedColor:true, spark:true, jit:0.30} },   // B341 champagne / B342 : BEAUCOUP plus d'étincelles
+            trailing:{emitUntil:0.97, period:0.0009, grain:0.55, gF:0.13, lifeMul:6, color:new THREE.Color(1.10,1.05,0.90), fixedColor:true, spark:true, jit:0.30} },   // B343 : des MILLIERS d'étincelles TRÈS FINES (photos user)
   // POT À FEU 30 mm (B325) : la gerbe du pot à feu validé, réduite à l'échelle du compact.
   mine30: { cal:30, color:DIMGOLD, heat:false, pureColor:true, starSize:1.2, stars:30, gravStar:1.0, dragStar:0.21, shrink:true,
             trailing:{emitUntil:0.95, period:0.008, grain:0.8, gF:0.05, lifeMul:6, color:new THREE.Color(0.30,0.17,0.14), jit:0.15},
