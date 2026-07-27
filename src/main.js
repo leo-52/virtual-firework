@@ -109,14 +109,14 @@ Object.assign(pick.style, { position:'fixed', top:'10px', right:'10px', zIndex:'
 for (const [k, label] of Object.entries(LABELS)){
   const o = document.createElement('option'); o.value = k; o.textContent = label; pick.appendChild(o);
 }
-pick.value = 'cPotRouge';
+pick.value = 'cAscBleu';
 // changer d'effet dans le menu -> couleur PAR DÉFAUT de l'effet (null annule l'override de la démo)
 pick.addEventListener('change', e => layer.setFocus(e.target.value, null));
 document.body.appendChild(pick);
 
-// DÉMO (réglage en cours) : COMPACT 20 TIRS POT À FEU + BOMBETTE ROUGE (500303000, 30 s,
-// B327) — mini pivoines rouges + pots à feu rouges.
-layer.setFocus('cPotRouge');
+// DÉMO (réglage en cours) : COMPACT 20 TIRS BOMBETTES KAMURO ASCENSION BLEUE (500036000,
+// 30 s, B335) — la montée est BLEUE au lieu du doré discret.
+layer.setFocus('cAscBleu');
 
 // TIMELINE de lecture (barre en bas) + ESPACE = pause/play (fige les feux, caméra libre).
 const timeline = new Timeline(layer, LABELS);

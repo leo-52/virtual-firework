@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B334';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B335';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -1226,6 +1226,12 @@ const EFFECTS = {
   bombRouge: { apex:42, cal:30, heat:false, pureColor:true, color:RED, gravStar:0.7, dragStar:0.70, lifeBase75:2.4, lifeJitter:0.15, restExtra:1,   // B330 (user) : physique pivoine — punch bref puis les étoiles SE FIGENT (elles filaient trop)
             stars:55, starSize:0.85, speedMul:0.82, riseLean:2.5, riseTrail:false, headSize:0.7, riseColor:new THREE.Color(0.55,0.40,0.20),   // B334 (user) : 55 étoiles encore plus petites (0.85)
             noFlash:true, burstSparks:false },
+  // BOMBETTE KAMURO À ASCENSION BLEUE (B335, user : « ascension X = la couleur de la montée,
+  // au lieu d'être dorée ») — pour « compact 20 tirs bombettes kamuro ascension bleue » (500036000).
+  bombKamuroAscBleu: { apex:42, cal:30, heat:false, color:DIMGOLD, gravStar:0.4, dragStar:0.25, lifeBase75:3.2, lifeJitter:0.28, restExtra:2,
+            stars:22, starSize:0.8, speedMul:0.55, riseLean:2.5, riseTrail:false, headSize:1.0, riseColor:new THREE.Color(0.25,0.45,1.35),
+            noFlash:true, burstSparks:false,
+            trailing:{emitUntil:0.95, period:0.008, grain:1.0, gF:0.13, lifeMul:8, color:COPPER, spark:true, jit:0.22} },
   // POT À FEU 30 mm (B325) : la gerbe du pot à feu validé, réduite à l'échelle du compact.
   mine30: { cal:30, color:DIMGOLD, heat:false, pureColor:true, starSize:1.2, stars:30, gravStar:1.0, dragStar:0.21, shrink:true,
             trailing:{emitUntil:0.95, period:0.008, grain:0.8, gF:0.05, lifeMul:6, color:new THREE.Color(0.30,0.17,0.14), jit:0.15},
@@ -1247,7 +1253,7 @@ export const LABELS = { peony:'pivoine', chrysanthemum:'chrysanthème', willow:'
   daisy:'marguerite', atom:'atome', halfHalf:'demi-demi', tracer:'traçante', zigzag:'zigzag', ring:'cercle (brique)', fmRing:'cercle progressif feuille morte', d8:'150 mm D8 (composé)', d9:'150 mm D9 (composé)', d10:'150 mm D10 (composé)', corolle:'corolle à pointes 100 mm', corolleOr:'corolle or pointes rouge 75 mm', fantome:'fantôme argent pointes rouge', medusa:'méduse', horsetail:'queue de cheval',
   cascade:'cascade', fish:'poisson', spinner:'tourbillon', saucer:'soucoupe', mosaic:'mosaïque', mosaicMix:'mosaïque assortie',
   mine:'pot à feu', salute:"salut (marron d'air)", saluteMulti:"multi marron d'air",
-  zMeduse:'compact 40 tirs z méduse', cPotKamuro:'compact 20 tirs pot à feu + bombette kamuro', cPotRouge:'compact 20 tirs pot à feu + bombette rouge' };
+  zMeduse:'compact 40 tirs z méduse', cPotKamuro:'compact 20 tirs pot à feu + bombette kamuro', cPotRouge:'compact 20 tirs pot à feu + bombette rouge', cAscBleu:'compact 20 tirs kamuro ascension bleue' };
 
 // ============================================================================
 // SHELL
@@ -1775,6 +1781,8 @@ export const COMPACTS = {
              label:'compact 20 tirs 30 mm pot à feu et bombette kamuro (30 s)' },
   cPotRouge: { arch:'bombRouge', tirs:20, dur:30, pattern:'droit', mine:'mine30r',
              label:'compact 20 tirs 30 mm pot à feu et bombette rouge (30 s)' },   // 500303000
+  cAscBleu: { arch:'bombKamuroAscBleu', tirs:20, dur:30, pattern:'droit',
+             label:'compact 20 tirs 30 mm bombettes kamuro ascension bleue (30 s)' },   // 500036000
 };
 // B242 (user : « il faut quelques défauts — ça reste de la POUDRE ») : chaque intervalle de
 // mèche brûle un peu inégalement (±6 % entre tubes, ±10 % entre rangées), les tubes ont ±1°
