@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B340';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B341';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -920,13 +920,13 @@ function behaveTourb(d,A,dt,ctx){
   // B340 (user) : comme une COMÈTE KAMURO (pointe discrète, belle traînée) dont le TRAJET est
   // une HÉLICE de 1-2 m de haut — c'est la traînée qui dessine le tourbillon, pas des jets.
   if (d._sa===undefined){
-    d._sa=Math.random()*Math.PI*2; d._sr=(22+Math.random()*6)*(Math.random()<0.5?1:-1);
+    d._sa=Math.random()*Math.PI*2; d._sr=(9+Math.random()*4)*(Math.random()<0.5?1:-1);   // B341 : MOINS de tours (~2-3 au total) — guirlande, pas pelote
     let W=vrand(Math.random); W=[W[0], W[1]+1.3, W[2]];            // axe : surtout vers le HAUT, parfois côté/bas
     if (Math.random()<0.15) W[1]-=2.4;
     const Lw=Math.hypot(W[0],W[1],W[2])||1; W=[W[0]/Lw, W[1]/Lw, W[2]/Lw];
     let U=cross(W,[0,1,0]); if(len2(U)<0.01)U=cross(W,[1,0,0]); U=norm(U);
     d._U=U; d._V=norm(cross(W,U)); d._W=W;
-    d._R=0.5+Math.random()*0.4; d._va=0.8+Math.random()*0.4;       // rayon du tire-bouchon + montée le long de l'axe (~1-2 m au total)
+    d._R=0.32+Math.random()*0.18; d._va=0.95+Math.random()*0.35;   // B341 : spirale plus serrée qui AVANCE (1,3-1,8 m parcourus) — comme une guirlande de sapin
     d.gMul=0.02;
   }
   d._sa+=d._sr*dt;
@@ -1260,7 +1260,7 @@ const EFFECTS = {
   tourbBomb: { apex:38, cal:30, heat:false, pureColor:true, stars:1, starSize:1.3, lifeBase75:2.8, lifeJitter:0.10, restExtra:1,   // B340 : pointe DISCRÈTE (comète kamuro), la traînée fait le tourbillon
             color:new THREE.Color(1.5,1.5,1.6), riseLean:2.5, riseTrail:false, headSize:1.6, riseColor:new THREE.Color(2.0,0.35,0.30),
             noFlash:true, burstSparks:false, dist:distTourb, behave:behaveTourb,
-            trailing:{emitUntil:0.97, period:0.004, grain:1.0, gF:0.13, lifeMul:6, color:COPPER, fixedColor:true, spark:true, jit:0.15} },
+            trailing:{emitUntil:0.97, period:0.004, grain:1.0, gF:0.13, lifeMul:6, color:new THREE.Color(1.10,1.05,0.90), fixedColor:true, spark:true, jit:0.15} },   // B341 : un peu plus ARGENTÉ (champagne, plus cuivre)
   // POT À FEU 30 mm (B325) : la gerbe du pot à feu validé, réduite à l'échelle du compact.
   mine30: { cal:30, color:DIMGOLD, heat:false, pureColor:true, starSize:1.2, stars:30, gravStar:1.0, dragStar:0.21, shrink:true,
             trailing:{emitUntil:0.95, period:0.008, grain:0.8, gF:0.05, lifeMul:6, color:new THREE.Color(0.30,0.17,0.14), jit:0.15},
