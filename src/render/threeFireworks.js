@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B335';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B336';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -1229,7 +1229,7 @@ const EFFECTS = {
   // BOMBETTE KAMURO À ASCENSION BLEUE (B335, user : « ascension X = la couleur de la montée,
   // au lieu d'être dorée ») — pour « compact 20 tirs bombettes kamuro ascension bleue » (500036000).
   bombKamuroAscBleu: { apex:42, cal:30, heat:false, color:DIMGOLD, gravStar:0.4, dragStar:0.25, lifeBase75:3.2, lifeJitter:0.28, restExtra:2,
-            stars:22, starSize:0.8, speedMul:0.55, riseLean:2.5, riseTrail:false, headSize:1.0, riseColor:new THREE.Color(0.25,0.45,1.35),
+            stars:22, starSize:0.8, speedMul:0.55, riseLean:2.5, riseTrail:false, headSize:1.6, riseColor:new THREE.Color(0.40,0.70,2.0),   // B336 (user) : montée PLUS VOYANTE (tête 1.6, bleu vif)
             noFlash:true, burstSparks:false,
             trailing:{emitUntil:0.95, period:0.008, grain:1.0, gF:0.13, lifeMul:8, color:COPPER, spark:true, jit:0.22} },
   // POT À FEU 30 mm (B325) : la gerbe du pot à feu validé, réduite à l'échelle du compact.
