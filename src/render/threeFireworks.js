@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B330';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B331';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -1224,7 +1224,7 @@ const EFFECTS = {
             trailing:{emitUntil:0.95, period:0.008, grain:1.0, gF:0.13, lifeMul:8, color:COPPER, spark:true, jit:0.22} },
   // BOMBETTE ROUGE 30 mm (B327) : mini pivoine rouge (pour « pot à feu et bombette rouge »).
   bombRouge: { apex:42, cal:30, heat:false, pureColor:true, color:RED, gravStar:0.7, dragStar:0.70, lifeBase75:2.4, lifeJitter:0.15, restExtra:1,   // B330 (user) : physique pivoine — punch bref puis les étoiles SE FIGENT (elles filaient trop)
-            stars:26, starSize:1.8, speedMul:0.82, riseLean:2.5, riseTrail:false, headSize:0.7, riseColor:new THREE.Color(0.55,0.40,0.20),   // B329 : 26 étoiles à 1.8 ; B330 : vitesse compensée (même envergure avec le gros freinage)
+            stars:34, starSize:1.55, speedMul:0.82, riseLean:2.5, riseTrail:false, headSize:0.7, riseColor:new THREE.Color(0.55,0.40,0.20),   // B331 (user) : encore plus d'étoiles (34), plus petites (1.55)
             noFlash:true, burstSparks:false },
   // POT À FEU 30 mm (B325) : la gerbe du pot à feu validé, réduite à l'échelle du compact.
   mine30: { cal:30, color:DIMGOLD, heat:false, pureColor:true, starSize:1.2, stars:30, gravStar:1.0, dragStar:0.21, shrink:true,
