@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B353';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B354';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -1411,6 +1411,7 @@ class Shell {
     // de montée, pas qu'à l'altitude — balistique v0 ∝ √h => durée ∝ √h. Référence 80 m (pivoine 75) :
     // les 75 mm ne bougent pas (~2,2 s), cœur/marguerite 100 mm +10 %, atome 150 mm ~3,0 s.
     this.riseTime = this.cfg.riseTime * APEX_SCALE * Math.sqrt(this.cfg.apex/80) * (0.95 + Math.random()*0.10);
+    if (opts && opts.riseMul) this.riseTime *= opts.riseMul;   // B354 : chandelles — chaque coup brûle sa propre durée
     this.headLastX=this.ox; this.headLastY=0; this.headLastZ=this.oz; this.headTimer=0;
     this.nMax = (this.cfg.nMax || this.cfg.stars) + (this.cfg.core ? this.cfg.core.stars : 0); this.nAlive = 0;
     this.data = []; this.flash=null; this.hasMuzzle=false;
@@ -1963,7 +1964,11 @@ function buildCompactQueue(def){
     const lastC=q[q.length-1].t||1, scC=(def.dur+(Math.random()*2-1)*(def.dur/30))/lastC;   // durée totale ramenée à 29-31 s
     for (const e of q) e.t*=scC;
     for (let k=1;k<q.length;k++) if (q[k].t-q[k-1].t<0.03) q[k].t=q[k-1].t+0.03;  // B353 : deux chandelles PEUVENT partir quasi ensemble
-    for (const e of q) e.apexMul=0.80+0.60*(e.t/def.dur);                         // la chandelle monte de plus en plus haut
+    // B354 (user) : « en vrai l'arrêt des étoiles est beaucoup moins précis ». Chaque coup a SA
+    // charge et SA composition : la hauteur d'extinction et la durée de combustion varient
+    // fortement d'un tir à l'autre (jusqu'à ~1 s d'écart), par-dessus la montée progressive.
+    for (const e of q){ e.apexMul=(0.80+0.60*(e.t/def.dur))*(0.78+0.44*Math.random());
+                        e.riseMul=0.72+0.56*Math.random(); }
     return q;
   } else if (def.pattern==='droit'){                // B325 : tirs SÉQUENTIELS réguliers, tubes droits (±1°)
     const step=def.dur/Math.max(1, def.tirs-1);
@@ -2099,7 +2104,7 @@ export class ThreeFireworks {
       const c=this.compact; c.t+=dt;
       while (c.i<c.queue.length && c.queue[c.i].t<=c.t){
         const q=c.queue[c.i++];
-        const nsh=new Shell(c.def.arch,0,0,undefined,{lean:[Math.tan(q.a)*c.apexS,0], pair:c.pair||undefined, apexMul:q.apexMul});
+        const nsh=new Shell(c.def.arch,0,0,undefined,{lean:[Math.tan(q.a)*c.apexS,0], pair:c.pair||undefined, apexMul:q.apexMul, riseMul:q.riseMul});
         this.shells.push(nsh);
         if (c.def.mine) this.shells.push(new Shell(c.def.mine,0,0,undefined,{}));   // B325 : le POT À FEU part du même tube, en même temps
         if (this.onLaunch) this.onLaunch(c.def.arch, nsh.cal, this.distTo(nsh.ox, 0, nsh.oz));
