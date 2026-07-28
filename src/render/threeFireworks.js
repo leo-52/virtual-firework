@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B350';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B351';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -997,6 +997,17 @@ function emitTourbSparks(d,ctx,dt,mul){
   }
 }
 function distTourb(i,n,rnd){ const v=vrand(rnd); return {dx:v[0], dy:Math.abs(v[1]), dz:v[2], spMul:0.05, comp:0}; }
+// CHANDELLE ROMAINE (B351, vidéo décomposée) : dans les 0,3 dernières secondes, 1 à 3 micro-braises
+// se détachent 0,5 à 2 m SOUS la tête en restant sur la trajectoire (des scories, pas un éclatement).
+function behaveCandle(d,A,dt,ctx){
+  if (d._sc===undefined) d._sc=1+Math.floor(Math.random()*3);
+  if (d._sc>0 && A>0.55 && Math.random()<dt*8){
+    d._sc--;
+    const px=ctx.pos[d._i*3], py=ctx.pos[d._i*3+1], pz=ctx.pos[d._i*3+2], drop=0.5+Math.random()*1.5;
+    spawnTrail(px+(Math.random()-0.5)*0.3, py-drop, pz+(Math.random()-0.5)*0.3,
+               EMBER.r, EMBER.g, EMBER.b, 0.6, 0.35, (0.35+Math.random()*0.35)/0.26, 0,0,0, 0.2, 0.5, true);
+  }
+}
 function behaveMosaic(d,A,dt,ctx){
   if (d._split) return;                                                 // secondaires : ne re-forkent jamais
   if (d._splitAt===undefined) d._splitAt = 1.5 + Math.random()*0.5;     // DÉLAI burst->division : 1.5..2.0s ALÉATOIRE par comète
@@ -1019,7 +1030,7 @@ function behaveMosaic(d,A,dt,ctx){
 // ============================================================================
 // TABLE DES EFFETS (clé absente -> BASE = profil pivoine)
 // ============================================================================
-const CAL_SCALE = { 30:0.50, 50:0.67, 75:1.0, 100:1.44, 125:1.87, 150:2.30, 200:2.58 };   // 30 mm ajouté B233 (bombettes de compact)
+const CAL_SCALE = { 10:0.22, 20:0.36, 30:0.50, 40:0.58, 49:0.66, 50:0.67, 75:1.0, 100:1.44, 125:1.87, 150:2.30, 200:2.58 };   // 30 mm ajouté B233 (bombettes de compact) ; 10/20/40/49 ajoutés B351 (chandelles romaines et monocoups)
 const STAR_SCALE = 1.0;   // taille globale des étoiles (user 2026-07-02 : 1.2 -> 1.1 ("un tout petit peu") puis -> 1.0 ("baisse encore").
                           //  Les effets à GROSSES étoiles — comète, palme, toupie, soucoupe, mosaïques — sont COMPENSÉS à chaque baisse pour ne pas changer.)
 const BURST_PUNCH = 2.0;  // PUNCH d'explosion (user, vidéos réelles) : vitesse initiale ×2 ET freinage ×2 -> même envergure
@@ -1306,6 +1317,26 @@ const EFFECTS = {
             stars:22, starSize:0.8, speedMul:0.55, riseLean:2.5, riseTrail:false, headSize:0.7, riseColor:new THREE.Color(0.55,0.40,0.20),
             noFlash:true, burstSparks:false,
             trailing:{emitUntil:0.95, period:0.008, grain:1.0, gF:0.13, lifeMul:8, color:COPPER, spark:true, jit:0.22} },
+  // CHANDELLE ROMAINE 10 mm (B351) : le coup d'une botte de 3 ou 7 chandelles (20 tirs, 30 s).
+  // C'est le plus petit produit du catalogue : une bille propulsée qui monte en traçant, puis un
+  // TOUT PETIT éclatement (archétype Peony au catalogue) de quelques étoiles.
+  // (vidéo décomposée) Un coup = UNE COMÈTE, PAS d'éclatement : la bille monte en traînant un
+  // chapelet d'étincelles ambre et s'éteint À L'APEX (on ne la voit jamais redescendre). Tête
+  // blanc chaud doré-citron, queue orange-ambre de 1,5-2,5 m qui raccourcit en haut de course.
+  candle10: { apex:22, cal:10, heat:false, pureColor:true, gravStar:0.5, dragStar:2.2, lifeBase75:0.55, lifeJitter:0.22, restExtra:0.3,
+            stars:1, starSize:1.5, speedMul:0.02, riseTime:3.4, riseLean:0, riseTrail:false, headSize:1.1,   // riseTime est mis à l'échelle par le moteur -> 3.4 donne les 1,5 s mesurés sur la vidéo
+            riseColor:new THREE.Color(1.60,1.42,0.80), noFlash:true, burstSparks:false, behave:behaveCandle,
+            riseSparks:{ n:3, size:0.55, life:0.09, jit:0.35, color:EMBER },   // -> chapelet de ~2 m en pleine vitesse, réduit à quelques perles près de l'apex
+            color:new THREE.Color(1.60,1.42,0.80) },
+  // BOTTE DE 7 (vidéo décomposée) : même comète, mais BI-PHASE — 0,15 s de sortie DORÉE/BLANCHE
+  // puis virage franc en ROUGE ROSE pour tout le reste de la montée (« tige dorée » en bas,
+  // « perles rouges » en haut). Elle s'éteint AVANT l'apex, en montant encore.
+  candle10r: { apex:16, cal:10, heat:false, pureColor:true, gravStar:0.5, dragStar:2.2, lifeBase75:0.40, lifeJitter:0.22, restExtra:0.3,
+            stars:1, starSize:1.4, speedMul:0.02, riseTime:2.7, riseLean:0, riseTrail:false, headSize:1.0,   // -> ~1,0 s de montée (mesuré 0,7-1,2 s)
+            riseColor:new THREE.Color(1.55,1.20,0.85), riseColor2:new THREE.Color(1.60,0.42,0.46), riseSwitch:0.15,
+            noFlash:true, burstSparks:false, behave:behaveCandle,
+            riseSparks:{ n:3, size:0.5, life:0.085, jit:0.35, color:new THREE.Color(1.35,1.10,0.80) },
+            color:new THREE.Color(1.60,0.42,0.46) },
   // BOMBETTE ROUGE 30 mm (B327) : mini pivoine rouge (pour « pot à feu et bombette rouge »).
   bombRouge: { apex:42, cal:30, heat:false, pureColor:true, color:RED, gravStar:0.7, dragStar:0.70, lifeBase75:2.4, lifeJitter:0.15, restExtra:1,   // B330 (user) : physique pivoine — punch bref puis les étoiles SE FIGENT (elles filaient trop)
             stars:55, starSize:0.85, speedMul:0.82, riseLean:2.5, riseTrail:false, headSize:0.7, riseColor:new THREE.Color(0.55,0.40,0.20),   // B334 (user) : 55 étoiles encore plus petites (0.85)
@@ -1343,7 +1374,8 @@ export const LABELS = { peony:'pivoine', chrysanthemum:'chrysanthème', willow:'
   daisy:'marguerite', atom:'atome', halfHalf:'demi-demi', tracer:'traçante', zigzag:'zigzag', ring:'cercle (brique)', fmRing:'cercle progressif feuille morte', d8:'150 mm D8 (composé)', d9:'150 mm D9 (composé)', d10:'150 mm D10 (composé)', corolle:'corolle à pointes 100 mm', corolleOr:'corolle or pointes rouge 75 mm', fantome:'fantôme argent pointes rouge', medusa:'méduse', horsetail:'queue de cheval',
   cascade:'cascade', fish:'poisson', spinner:'tourbillon', saucer:'soucoupe', mosaic:'mosaïque', mosaicMix:'mosaïque assortie',
   mine:'pot à feu', salute:"salut (marron d'air)", saluteMulti:"multi marron d'air",
-  zMeduse:'compact 40 tirs z méduse', cPotKamuro:'compact 20 tirs pot à feu + bombette kamuro', cPotRouge:'compact 20 tirs pot à feu + bombette rouge', cAscBleu:'compact 20 tirs kamuro ascension bleue', cTourbRouge:'compact 20 tirs disque de tourbillons asc. rouge' };
+  zMeduse:'compact 40 tirs z méduse', cPotKamuro:'compact 20 tirs pot à feu + bombette kamuro', cPotRouge:'compact 20 tirs pot à feu + bombette rouge', cAscBleu:'compact 20 tirs kamuro ascension bleue', cTourbRouge:'compact 20 tirs disque de tourbillons asc. rouge',
+  botte3:'botte de 3 chandelles 10 mm 20 tirs', botte7:'botte de 7 chandelles 10 mm 20 tirs' };
 
 // ============================================================================
 // SHELL
@@ -1353,6 +1385,7 @@ class Shell {
     this.arch = EFFECTS[arch] ? arch : 'peony';
     this.cfg = Object.assign({}, BASE, EFFECTS[this.arch]);
     this.cfg.apex *= APEX_SCALE;   // abaisse TOUTES les hauteurs d'un coup (cfg est une copie -> safe)
+    if (opts && opts.apexMul) this.cfg.apex *= opts.apexMul;   // B351 : la chandelle « s'allonge » — les derniers coups montent plus haut que les premiers
     if (opts && opts.color) this.cfg.color = opts.color;   // override couleur (ex "crackling aqua", "mosaïque rouge")
     // PAIRES du catalogue (demi-demi) : chaque TIR pioche sa paire de couleurs (cfg = copie -> safe)
     if (this.cfg.colorPairs) this.cfg.colors = this.cfg.colorPairs[Math.floor(Math.random()*this.cfg.colorPairs.length)];
@@ -1713,6 +1746,12 @@ class Shell {
         // riseTrail:false (B243, user — bombettes de compact) : PAS de traînée de montée,
         // on voit juste l'étoile monter, très légèrement.
         if (this.cfg.riseTrail!==false) spawnTrail(mx,my,mz, rc.r,rc.g,rc.b, big?1.4:1.1, 0.4, big?1.6:1.0);
+        // CHANDELLE (B351) : chapelet d'étincelles DISCRÈTES le long de la montée (1,5-2,5 m ;
+        // il raccourcit tout seul en haut de course puisque la bille ralentit).
+        if (this.cfg.riseSparks){ const rs=this.cfg.riseSparks, sc=(this.cfg.riseSwitch!==undefined && T>this.cfg.riseSwitch && this.cfg.riseColor2) ? this.cfg.riseColor2 : rs.color;
+          for (let k=0;k<rs.n;k++){ const fq=Math.random();
+            spawnTrail(this.headLastX+(hx-this.headLastX)*fq, this.headLastY+(y-this.headLastY)*fq, this.headLastZ+(hz-this.headLastZ)*fq,
+                       sc.r, sc.g, sc.b, rs.size, 0.25, (rs.life*(0.7+Math.random()*0.6))/0.26, 0,0,0, rs.jit, 0.5, true); } }
         // TRONC (B229/B231/B232, zigzag « à tronc ») : QUEUE DE FUSÉE — étincelles FINES (0.65)
         // réparties LE LONG du trajet (plus d'amas « œuf de dragon »), aux vies ÉTAGÉES (B232,
         // user) : GROSSE BANDE DENSE sous le projectile (72 % de grains brefs), milieu
@@ -1875,6 +1914,12 @@ export const COMPACTS = {
              label:'compact 20 tirs 30 mm bombettes kamuro ascension bleue (30 s)' },   // 500036000
   cTourbRouge: { arch:'tourbBomb', tirs:20, dur:30, pattern:'droit',
              label:'compact 20 tirs 30 mm disque de tourbillons ascension rouge (30 s)' },   // 500143000
+  // CHANDELLES ROMAINES (B351) : une BOTTE = plusieurs chandelles ficelées ensemble, chacune
+  // tirant ses 20 coups sur 30 s (catalogue : 10 coloris en botte de 3 et en botte de 7).
+  botte3: { arch:'candle10', tubes:3, shotsPerTube:20, tirs:60, dur:30, pattern:'candle', fanDeg:0,
+             label:'botte de 3 chandelles 10 mm 20 tirs (30 s)' },
+  botte7: { arch:'candle10r', tubes:7, shotsPerTube:20, tirs:140, dur:30, pattern:'candle', fanDeg:0,
+             label:'botte de 7 chandelles 10 mm 20 tirs (30 s)' },
 };
 // B242 (user : « il faut quelques défauts — ça reste de la POUDRE ») : chaque intervalle de
 // mèche brûle un peu inégalement (±6 % entre tubes, ±10 % entre rangées), les tubes ont ±1°
@@ -1883,7 +1928,30 @@ function buildCompactQueue(def){
   const rows=Math.max(1, Math.round(def.tirs/def.rowSize)), q=[];
   const half=(def.fanDeg||25)*Math.PI/180, jA=0.0175;   // ±1° par tube
   const ang=k=>-half+(2*half)*(def.rowSize>1?k/(def.rowSize-1):0.5)+(Math.random()-0.5)*2*jA;
-  if (def.pattern==='droit'){                       // B325 : tirs SÉQUENTIELS réguliers, tubes droits (±1°)
+  if (def.pattern==='candle'){
+    // B351 : CHANDELLE ROMAINE (vidéos décomposées). Les tubes d'une botte sont VERTICAUX ET
+    // PARALLÈLES (pas d'éventail : ±1-3° de défaut de fabrication seulement) et tirent EN RELAIS,
+    // jamais deux ensemble. La cadence n'est JAMAIS métronomique : des rafales serrées alternent
+    // avec des trous. Enveloppe = DÉCRESCENDO (creux au début, pic au milieu, fin très lente),
+    // et la chandelle « s'allonge » : les derniers coups montent 40 % plus haut que les premiers.
+    const n=def.tubes||1, per=def.shotsPerTube||def.tirs, step=def.dur/Math.max(1,per-1);
+    const gauss=()=>{ let u=0,v=0; while(!u)u=Math.random(); while(!v)v=Math.random();
+                      return Math.sqrt(-2*Math.log(u))*Math.cos(6.283*v); };
+    const drift=(0.5+Math.random()*2.0)*(Math.random()<0.5?1:-1)*Math.PI/180;   // brise : toutes les billes penchent du MÊME côté
+    const cadAt=t=>t<def.dur*0.25 ? 1.15 : t<def.dur*0.72 ? 0.85 : 1.35;        // décrescendo
+    for (let i=0;i<n;i++){
+      const cad=step*(0.96+Math.random()*0.08);     // chaque tube a SA cadence moyenne (±4 %)
+      let t=(i/n)*step+Math.random()*0.3;           // relais : les tubes démarrent décalés d'un tiers d'intervalle
+      for (let k=0;k<per;k++){ q.push({ t, a:drift+gauss()*0.0113, tube:i });   // ±1,1° d'écart-type par tir (mesuré)
+        t+=cad*cadAt(t)*Math.max(0.35, 1+gauss()*0.40); }                        // intervalles très inégaux (CV 0,4)
+    }
+    q.sort((x,y)=>x.t-y.t);
+    const lastC=q[q.length-1].t||1, scC=(def.dur+(Math.random()*2-1)*(def.dur/30))/lastC;   // durée totale ramenée à 29-31 s
+    for (const e of q) e.t*=scC;
+    for (let k=1;k<q.length;k++) if (q[k].t-q[k-1].t<0.15) q[k].t=q[k-1].t+0.15;  // jamais deux départs quasi simultanés
+    for (const e of q) e.apexMul=0.80+0.60*(e.t/def.dur);                         // la chandelle monte de plus en plus haut
+    return q;
+  } else if (def.pattern==='droit'){                // B325 : tirs SÉQUENTIELS réguliers, tubes droits (±1°)
     const step=def.dur/Math.max(1, def.tirs-1);
     let t=0;
     for (let k=0;k<def.tirs;k++){ q.push({ t, a:(Math.random()-0.5)*2*jA }); t+=step*(0.94+Math.random()*0.12); }
@@ -2015,7 +2083,7 @@ export class ThreeFireworks {
       const c=this.compact; c.t+=dt;
       while (c.i<c.queue.length && c.queue[c.i].t<=c.t){
         const q=c.queue[c.i++];
-        const nsh=new Shell(c.def.arch,0,0,undefined,{lean:[Math.tan(q.a)*c.apexS,0], pair:c.pair||undefined});
+        const nsh=new Shell(c.def.arch,0,0,undefined,{lean:[Math.tan(q.a)*c.apexS,0], pair:c.pair||undefined, apexMul:q.apexMul});
         this.shells.push(nsh);
         if (c.def.mine) this.shells.push(new Shell(c.def.mine,0,0,undefined,{}));   // B325 : le POT À FEU part du même tube, en même temps
         if (this.onLaunch) this.onLaunch(c.def.arch, nsh.cal, this.distTo(nsh.ox, 0, nsh.oz));

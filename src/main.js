@@ -109,14 +109,14 @@ Object.assign(pick.style, { position:'fixed', top:'10px', right:'10px', zIndex:'
 for (const [k, label] of Object.entries(LABELS)){
   const o = document.createElement('option'); o.value = k; o.textContent = label; pick.appendChild(o);
 }
-pick.value = 'cTourbRouge';
+pick.value = 'botte3';
 // changer d'effet dans le menu -> couleur PAR DÉFAUT de l'effet (null annule l'override de la démo)
 pick.addEventListener('change', e => layer.setFocus(e.target.value, null));
 document.body.appendChild(pick);
 
-// DÉMO (réglage en cours) : COMPACT 20 TIRS DISQUE DE TOURBILLONS ASC. ROUGE (500143000,
-// 30 s, B337 — vidéo décomposée) : montée rouge puis tourbillon blanc-argent qui tourne.
-layer.setFocus('cTourbRouge');
+// DÉMO (réglage en cours) : BOTTE DE 3 CHANDELLES 10 mm 20 TIRS (30 s, B351 — vidéo décomposée) :
+// 3 tubes ficelés qui enchaînent chacun leurs 20 coups.
+layer.setFocus('botte3');
 
 // TIMELINE de lecture (barre en bas) + ESPACE = pause/play (fige les feux, caméra libre).
 const timeline = new Timeline(layer, LABELS);
