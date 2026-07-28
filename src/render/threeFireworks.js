@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B349';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B350';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -927,7 +927,7 @@ function behaveTourb(d,A,dt,ctx){
     // B345 (user) : on pilote le NOMBRE DE TOURS du vol entier, pas une vitesse de rotation figée
     // -> « ça peut faire 1 tour, ou 2 tours, ou presque pas ». Souvent moins d'un tour.
     d._turns=1.0+1.3*Math.pow(Math.random(),1.2);                  // B347 : 1 à 2,3 ondulations (des S bien lisibles plutôt qu'un ressort serré)
-    d._rt=0.30+Math.random()*0.18;                                 // B348 (user) : tube d'étincelles PLUS ÉTROIT (l'effet doit être moins large)
+    d._rt=0.40+Math.random()*0.24;                                 // B350 (user) : traînée un peu plus LARGE (⌀ ~0,8 à 1,3 m)
     d._hold=0.20+Math.random()*0.12;                               // B348 (user) : elle s'ENFLAMME sur place 0,2-0,3 s avant de partir
     d._kick=d._hold+0.10;                                          // ...puis elle part n'importe comment (secousses à la « avion en papier »)
     d._sr=(2*Math.PI*d._turns/Math.max(d.life,0.6))*(Math.random()<0.5?1:-1);
@@ -986,7 +986,7 @@ function behaveTourb(d,A,dt,ctx){
 // chaque grain naît déjà réparti dans le tube (le long du trajet + dans la section), s'écarte à
 // peine, et vit assez longtemps pour que le bout de la traînée garde sa largeur.
 function emitTourbSparks(d,ctx,dt,mul){
-  const px=ctx.pos[d._i*3], py=ctx.pos[d._i*3+1], pz=ctx.pos[d._i*3+2], n=Math.round(44*mul);   // B349 (user) : un peu moins dense
+  const px=ctx.pos[d._i*3], py=ctx.pos[d._i*3+1], pz=ctx.pos[d._i*3+2], n=Math.round(33*mul);   // B350 (user) : encore moins dense (la traînée est plus large, donc l'aérer davantage)
   for (let k=0;k<n;k++){                                           // B347 (user) : MOINS DENSE (on doit distinguer chaque étincelle) — forme et largeur inchangées
     const e=vrand(Math.random), rr=d._rt*Math.cbrt(Math.random()), u=Math.random()*6*dt, gold=Math.random()<0.80;
     const sp=0.25+Math.random()*0.65;
