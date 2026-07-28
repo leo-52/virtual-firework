@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B345';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B346';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -926,17 +926,18 @@ function behaveTourb(d,A,dt,ctx){
     d._sa=Math.random()*Math.PI*2;
     // B345 (user) : on pilote le NOMBRE DE TOURS du vol entier, pas une vitesse de rotation figée
     // -> « ça peut faire 1 tour, ou 2 tours, ou presque pas ». Souvent moins d'un tour.
-    d._turns=0.15+2.6*Math.pow(Math.random(),1.9);
+    d._turns=1.0+2.0*Math.pow(Math.random(),1.2);                  // B346 (user) : en vrai c'est entre 1 et 3 tours
+    d._rt=0.55+Math.random()*0.30;                                 // B346 : rayon du TUBE d'étincelles — constant sur tout le trajet
     d._sr=(2*Math.PI*d._turns/Math.max(d.life,0.6))*(Math.random()<0.5?1:-1);
     let W=vrand(Math.random); W=[W[0], W[1]+1.3, W[2]];            // axe : surtout vers le HAUT, parfois côté/bas
     if (Math.random()<0.15) W[1]-=2.4;
     const Lw=Math.hypot(W[0],W[1],W[2])||1; W=[W[0]/Lw, W[1]/Lw, W[2]/Lw];
     let U=cross(W,[0,1,0]); if(len2(U)<0.01)U=cross(W,[1,0,0]); U=norm(U);
     d._U=U; d._V=norm(cross(W,U)); d._W=W;
-    d._R=0.35+Math.random()*1.05;                                  // B345 : boucles plus larges (mais lentes) — la vitesse ne monte pas
+    d._R=0.09+Math.random()*0.19;                                  // B346 (user) : DIAMÈTRE de boucle très variable, 20 cm à 70 cm
     d._va=2.7+Math.random()*1.7;                                   // B345 (user) : ENCORE plus de propulsion — ça part loin (6 à 9 m)
-    d._dr=(Math.random()*2-1)*0.55;                                // le régime de rotation monte ou tombe pendant le vol
-    d._om=[(Math.random()*2-1)*0.5, (Math.random()*2-1)*0.5, (Math.random()*2-1)*0.5];  // dérive de l'axe : ça gîte en vol, sans repartir en arrière
+    d._dr=(Math.random()*2-1)*0.18;                                // B346 : dérive de régime réduite — sinon le compte de tours s'emballait (jusqu'à 4,4)
+    d._om=[(Math.random()*2-1)*0.10, (Math.random()*2-1)*0.10, (Math.random()*2-1)*0.10];  // B346 : gîte douce — sinon la courbure du trajet gonflait la boucle bien au-delà de 70 cm
     // B345 : la vrille est IRRÉGULIÈRE (elle mollit, repart, s'élargit) — jamais une hélice parfaite
     d._p1=Math.random()*6.28; d._f1=0.5+Math.random()*0.8;
     d._p2=Math.random()*6.28; d._f2=1.4+Math.random()*1.6;
@@ -952,8 +953,8 @@ function behaveTourb(d,A,dt,ctx){
   V[0]=W[1]*U[2]-W[2]*U[1]; V[1]=W[2]*U[0]-W[0]*U[2]; V[2]=W[0]*U[1]-W[1]*U[0];
   d._sr*=(1+d._dr*dt);
   const w1=6.283*d._f1*d.age+d._p1, w2=6.283*d._f2*d.age+d._p2;
-  const srN=d._sr*(1+0.75*Math.sin(w1)+0.40*Math.sin(w2));         // le régime de vrille mollit, repart, s'inverse parfois
-  const rN =d._R *(1+0.45*Math.sin(w2+1.3));                       // et le rayon de la boucle respire
+  const srN=d._sr*(1+0.55*Math.sin(w1)+0.30*Math.sin(w2));         // le régime de vrille mollit, repart, s'inverse parfois
+  const rN =d._R *(1+0.28*Math.sin(w2+1.3));                       // et le rayon de la boucle respire (⌀ 20 à 70 cm)
   d._sa+=srN*dt;
   const sa=Math.sin(d._sa), ca=Math.cos(d._sa);
   let k=rN*srN; if (k> 2.6) k= 2.6; else if (k< -2.6) k=-2.6;      // B345 : la vrille peut s'emballer, la VITESSE non (plafond de la composante tangentielle)
@@ -963,11 +964,16 @@ function behaveTourb(d,A,dt,ctx){
   // B343 (photos user) : l'étoile crache des étincelles PAR MILLIERS, toutes fines, doré-argenté
   // -> ça fait une masse lumineuse dense qui suit le trajet, pas un trait dessiné.
   const px=ctx.pos[d._i*3], py=ctx.pos[d._i*3+1], pz=ctx.pos[d._i*3+2];
-  for (let k=0;k<105;k++){                                         // B345 (user) : traînée PLUS LARGE = encore plus d'étincelles, encore plus petites
-    const e=vrand(Math.random), sp=2.3+Math.random()*5.2, gold=Math.random()<0.80;   // dominante DORÉE (le reste = champagne clair)
-    spawnTrail(px,py,pz, gold?1.28:1.05, gold?0.94:1.00, gold?0.44:0.86, 0.21, 0.16,
-               (0.30+Math.random()*0.72)/0.26,
-               d.vx*0.5+e[0]*sp, d.vy*0.5+e[1]*sp, d.vz*0.5+e[2]*sp, 0.5, 0.34, true);
+  // B346 (user) : plus de bulbe à la tête ni de queue qui s'affine — un TUBE d'étincelles de largeur
+  // constante : chaque grain naît déjà réparti dans le tube (le long du trajet + dans la section),
+  // s'écarte à peine, et vit assez longtemps pour que le bout de la traînée garde sa largeur.
+  for (let k=0;k<105;k++){
+    const e=vrand(Math.random), rr=d._rt*Math.cbrt(Math.random()), u=Math.random()*6*dt, gold=Math.random()<0.80;
+    const sp=0.25+Math.random()*0.65;
+    spawnTrail(px-d.vx*u+e[0]*rr, py-d.vy*u+e[1]*rr, pz-d.vz*u+e[2]*rr,
+               gold?1.28:1.05, gold?0.94:1.00, gold?0.44:0.86, 0.21, 0.16,
+               (1.15+Math.random()*0.30)/0.26,
+               e[0]*sp, e[1]*sp, e[2]*sp, 0.16, 0.55, true);
   }
 }
 function distTourb(i,n,rnd){ const v=vrand(rnd); return {dx:v[0], dy:Math.abs(v[1]), dz:v[2], spMul:0.05, comp:0}; }
@@ -1292,10 +1298,10 @@ const EFFECTS = {
             trailing:{emitUntil:0.95, period:0.008, grain:1.0, gF:0.13, lifeMul:8, color:COPPER, spark:true, jit:0.22} },
   // TOURBILLON 30 mm à ascension rouge (B337) — « compact 20 tirs disque de tourbillons
   // ascension rouge » (500143000). 1 « étoile » = le moteur du tourbillon, cœur blanc brillant.
-  tourbBomb: { apex:38, cal:30, heat:false, pureColor:true, stars:1, starSize:2.2, lifeBase75:4.4, lifeJitter:0.22, restExtra:1,   // B345 : vol PLUS LONG (va plus loin sans aller plus vite)
+  tourbBomb: { apex:38, cal:30, heat:false, pureColor:true, stars:1, starSize:1.4, lifeBase75:4.4, lifeJitter:0.22, restExtra:1,   // B345 vol long / B346 : tête moins grosse
             color:new THREE.Color(1.5,1.5,1.6), riseLean:2.5, riseTrail:false, headSize:1.6, riseColor:new THREE.Color(2.0,0.35,0.30),
             noFlash:true, burstSparks:false, dist:distTourb, behave:behaveTourb,
-            trailing:{emitUntil:0.97, period:0.0009, grain:0.21, gF:0.13, lifeMul:6, color:new THREE.Color(1.25,0.98,0.58), fixedColor:true, spark:true, jit:0.30} },   // B343 fines / B344 doré / B345 : encore plus fines
+            trailing:{emitUntil:0.97, period:0.004, grain:0.21, gF:0.13, lifeMul:6, color:new THREE.Color(1.25,0.98,0.58), fixedColor:true, spark:true, jit:0.30} },   // B346 : le cœur serré autour de l'étoile est allégé (c'est le tube qui fait la traînée)
   // POT À FEU 30 mm (B325) : la gerbe du pot à feu validé, réduite à l'échelle du compact.
   mine30: { cal:30, color:DIMGOLD, heat:false, pureColor:true, starSize:1.2, stars:30, gravStar:1.0, dragStar:0.21, shrink:true,
             trailing:{emitUntil:0.95, period:0.008, grain:0.8, gF:0.05, lifeMul:6, color:new THREE.Color(0.30,0.17,0.14), jit:0.15},
