@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B366';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B367';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -1345,6 +1345,19 @@ const EFFECTS = {
             noFlash:true, burstSparks:false,
             riseSparks:{ n:3, size:0.55, life:0.09, jit:0.35, color:EMBER },   // -> chapelet de ~2 m en pleine vitesse, réduit à quelques perles près de l'apex
             color:new THREE.Color(1.60,1.42,0.80) },
+  // CHANDELLE 30 mm 8 TIRS POT À FEU + COMÈTE TRAÇANTE (B367) : réfs 501314000 & co (65 m, 25 s).
+  // Gros calibre de chandelle : à chaque coup, une GERBE au sol depuis le tube ET une COMÈTE
+  // TRAÇANTE qui monte, toutes deux de la couleur de la référence.
+  candle30: { apex:65, cal:30, heat:false, pureColor:true, gravStar:0.5, dragStar:2.0, lifeBase75:1.1, lifeJitter:0.22, restExtra:0.8,
+            noIgnite:true, onStar:candleFn,
+            stars:1, starSize:2.0, speedMul:0.02, riseTime:2.9, riseLean:0, riseTrail:false, headSize:2.0,
+            riseColor:new THREE.Color(1.50,1.15,0.72), riseColorFromStar:true, riseSwitch:0.10,
+            noFlash:true, burstSparks:false, riseSparksFromStar:true,
+            riseSparks:{ n:4, size:0.85, life:0.22, jit:0.22, color:SILVER } },
+  // POT À FEU DE CHANDELLE 30 mm (B367) : gerbe de la couleur de la référence, tirée en même
+  // temps que la comète (la couleur arrive par la paire de la séquence).
+  mine30c: { cal:30, color:SILVER, heat:false, pureColor:true, starSize:1.1, stars:34, gravStar:1.0, dragStar:0.21, shrink:true,
+            gerbe:{ dur:0.12, cometRate:130, cone:0.12, speedMul:1.15 } },
   // CHANDELLE ŒUF DE DRAGON (B358) : réfs « botte de 3 / de 7 chandelles 10 mm 20 tirs oeuf de
   // dragon » (501355000 / 501353000). Même bille, mais elle CRÉPITE en montant au lieu de tenir
   // une couleur : la tête reste dorée et sème des micro-éclats blanc chaud tout autour.
@@ -1398,7 +1411,8 @@ export const LABELS = { peony:'pivoine', chrysanthemum:'chrysanthème', willow:'
   mine:'pot à feu', salute:"salut (marron d'air)", saluteMulti:"multi marron d'air",
   zMeduse:'compact 40 tirs z méduse', cPotKamuro:'compact 20 tirs pot à feu + bombette kamuro', cPotRouge:'compact 20 tirs pot à feu + bombette rouge', cAscBleu:'compact 20 tirs kamuro ascension bleue', cTourbRouge:'compact 20 tirs disque de tourbillons asc. rouge',
   botte3:'botte de 3 chandelles 10 mm 20 tirs', botte7:'botte de 7 chandelles 10 mm 20 tirs',
-  botte7egg:'botte de 7 chandelles 20 tirs œuf de dragon', botte3egg:'botte de 3 chandelles 20 tirs œuf de dragon' };
+  botte7egg:'botte de 7 chandelles 20 tirs œuf de dragon', botte3egg:'botte de 3 chandelles 20 tirs œuf de dragon',
+  ch30pot:'chandelle 30 mm 8 tirs pot à feu + comète traçante' };
 
 // ============================================================================
 // SHELL
@@ -1419,6 +1433,9 @@ class Shell {
     // cfg.trailing est partagé avec le littéral EFFECTS -> CLONER avant d'écraser sa couleur.
     // CHANDELLE (B352) : la tête vire à la couleur de la référence tirée (cfg.colors vient de la paire).
     if (this.cfg.riseColorFromStar && this.cfg.colors) this.cfg.riseColor2 = this.cfg.colors[0];
+    // CHANDELLE 30 mm (B367) : « comète traçante verte » -> la TRAÎNÉE aussi est verte.
+    if (this.cfg.riseSparksFromStar && this.cfg.riseSparks && this.cfg.colors)
+      this.cfg.riseSparks = Object.assign({}, this.cfg.riseSparks, { color: this.cfg.colors[0] });
     if (this.cfg.trailColorFromStar && this.cfg.trailing && this.cfg.colors)
       this.cfg.trailing = Object.assign({}, this.cfg.trailing, { color: this.cfg.colors[0], fixedColor:true });
     this.cal = cal || this.cfg.cal || 75;   // cfg.cal = calibre PAR DÉFAUT de l'effet (ex cœur : n'existe qu'en 100mm)
@@ -1989,6 +2006,13 @@ export const COMPACTS = {
   botte3egg: { arch:'candle10egg', tubes:3, shotsPerTube:20, tirs:60, dur:30, pattern:'candle', fanDeg:0,
              label:'botte de 3 chandelles 10 mm 20 tirs',
              variants:[ {n:'œuf de dragon', r:'501355000', c:EGGGOLD} ] },
+  ch30pot: { arch:'candle30', tubes:1, shotsPerTube:8, tirs:8, dur:25, pattern:'candle', fanDeg:0,
+             mine:'mine30c', mineColored:true,
+             label:'chandelle 30 mm 8 tirs pot à feu + comète traçante',
+             variants:[ {n:'argent', r:'501314000', c:SILVER},  {n:'rouge', r:'501316000', c:RED},
+                        {n:'vert', r:'501319000', c:GRN},       {n:'violet', r:'501320000', c:PURP},
+                        {n:'aqua', r:'501323000', c:CYAN},      {n:'bleu', r:'501317000', c:BLU},
+                        {n:'rose', r:'501318000', c:PINK},      {n:'citron', r:'501321000', c:YEL} ] },
 };
 // B242 (user : « il faut quelques défauts — ça reste de la POUDRE ») : chaque intervalle de
 // mèche brûle un peu inégalement (±6 % entre tubes, ±10 % entre rangées), les tubes ont ±1°
@@ -2163,7 +2187,12 @@ export class ThreeFireworks {
         const q=c.queue[c.i++];
         const nsh=new Shell(c.def.arch,0,0,undefined,{lean:[Math.tan(q.a)*c.apexS,0], pair:c.pair||undefined, apexMul:q.apexMul, riseMul:q.riseMul});
         this.shells.push(nsh);
-        if (c.def.mine) this.shells.push(new Shell(c.def.mine,0,0,undefined,{}));   // B325 : le POT À FEU part du même tube, en même temps
+        // B325 : le POT À FEU part du même tube, en même temps. B367 : sur les chandelles 30 mm,
+        // le pot à feu est de LA COULEUR DE LA RÉFÉRENCE (« pot à feu vert + comète traçante
+        // verte ») -> on lui passe la couleur de la séquence ; les compacts kamuro, eux, gardent
+        // leur couleur propre (mineColored absent).
+        if (c.def.mine) this.shells.push(new Shell(c.def.mine,0,0,undefined,
+          c.def.mineColored && c.pair ? {pair:c.pair} : {}));
         if (this.onLaunch) this.onLaunch(c.def.arch, nsh.cal, this.distTo(nsh.ox, 0, nsh.oz));
       }
       if (c.i>=c.queue.length) this.compact=null;   // mèche finie — le repos/refire reprend quand tout est mort
