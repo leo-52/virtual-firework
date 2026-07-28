@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B354';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B355';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -999,6 +999,10 @@ function emitTourbSparks(d,ctx,dt,mul){
 function distTourb(i,n,rnd){ const v=vrand(rnd); return {dx:v[0], dy:Math.abs(v[1]), dz:v[2], spMul:0.05, comp:0}; }
 // CHANDELLE ROMAINE (B351, vidéo décomposée) : dans les 0,3 dernières secondes, 1 à 3 micro-braises
 // se détachent 0,5 à 2 m SOUS la tête en restant sur la trajectoire (des scories, pas un éclatement).
+// B355 (user) : « pas de déto ni de flash à la fin, c'est juste l'étoile de couleur qui s'éteint ».
+// On annule la montée de luminosité du moteur : la bille est déjà à son éclat, elle ne fait que
+// décroître jusqu'à disparaître.
+function candleFn(d,A){ return { intenMul: 0.30/(0.4+0.6*Math.min(1,d.age/0.25)) }; }   // 0.30 = l'étoile reprend EXACTEMENT l'éclat de la tête de montée (pas de sursaut)
 function behaveCandle(d,A,dt,ctx){
   if (d._sc===undefined) d._sc=1+Math.floor(Math.random()*3);
   if (d._sc>0 && A>0.55 && Math.random()<dt*8){
@@ -1325,8 +1329,9 @@ const EFFECTS = {
   // blanc chaud doré-citron, queue orange-ambre de 1,5-2,5 m qui raccourcit en haut de course.
   // La bille sort DORÉE (charge propulsive, ~0,15 s) puis prend LA COULEUR DE SA RÉFÉRENCE pour
   // tout le reste de la montée ; la queue d'étincelles, elle, reste ambrée quoi qu'il arrive.
-  candle10: { apex:22, cal:10, heat:false, pureColor:true, gravStar:0.5, dragStar:2.2, lifeBase75:0.55, lifeJitter:0.22, restExtra:0.3,
-            stars:1, starSize:1.5, speedMul:0.02, riseTime:3.4, riseLean:0, riseTrail:false, headSize:1.1,   // riseTime est mis à l'échelle par le moteur -> 3.4 donne les 1,5 s mesurés sur la vidéo
+  candle10: { apex:22, cal:10, heat:false, pureColor:true, gravStar:0.5, dragStar:2.2, lifeBase75:2.0, lifeJitter:0.22, restExtra:0.3,
+            noIgnite:true, onStar:candleFn,   // B355 : extinction en FONDU, sans rallumage ni pic
+            stars:1, starSize:1.1, speedMul:0.02, riseTime:3.4, riseLean:0, riseTrail:false, headSize:1.1,   // B355 : étoile de MÊME taille que la tête de montée -> aucun « pop » au passage. riseTime 3.4 = les 1,5 s mesurés sur la vidéo
             riseColor:new THREE.Color(1.55,1.20,0.85), riseColorFromStar:true, riseSwitch:0.15,
             noFlash:true, burstSparks:false, behave:behaveCandle,
             riseSparks:{ n:3, size:0.55, life:0.09, jit:0.35, color:EMBER },   // -> chapelet de ~2 m en pleine vitesse, réduit à quelques perles près de l'apex
@@ -1677,7 +1682,9 @@ class Shell {
     } else { r=c.r; g=c.g; b=c.b; }
     // COEUR CHAUD "qui brûle" : ignition blanc-jaune VIVE sur la 1re partie de vie -> couleur tenue.
     // Applique à toutes les étoiles (réaliste : incandescent blanc puis couleur) + donne le "feu/comète".
-    if (A<0.15){ const f=1-A/0.15, f2=f*f*0.5; r=r+(1-r)*f2; g=g+(1-g)*f2; b=b+(1-b)*f2; }
+    // noIgnite (B355, chandelles) : l'étoile brûle DÉJÀ depuis la montée — pas de rallumage blanc,
+    // sinon on voit un flash au moment où la tête de montée devient l'étoile.
+    if (A<0.15 && !this.cfg.noIgnite){ const f=1-A/0.15, f2=f*f*0.5; r=r+(1-r)*f2; g=g+(1-g)*f2; b=b+(1-b)*f2; }
     const fade=Math.max(0,1-A*A*0.85), fadeIn=0.4+0.6*Math.min(1,d.age/0.25);
     // +punch HDR (2.4->3.4) : le coeur sature en blanc-chaud, halo coloré au bloom => ça "brûle"
     return { r,g,b, inten:3.4*fade*d.dimVar*fadeIn };
