@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B369';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B370';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -1013,6 +1013,12 @@ function emitTourbSparks(d,ctx,dt,mul){
   }
 }
 function distTourb(i,n,rnd){ const v=vrand(rnd); return {dx:v[0], dy:Math.abs(v[1]), dz:v[2], spMul:0.05, comp:0}; }
+// QUEUE DE CHEVAL POINTE (B370, photo user) : les brins partent VERS LE HAUT en bouquet serré
+// (14-35° de l'axe), pas en étoile — la comète continue sa lancée en se divisant.
+function distQC(i,n,rnd){
+  const a=rnd()*Math.PI*2, tilt=0.25+rnd()*0.36, st=Math.sin(tilt);
+  return { dx:Math.cos(a)*st, dy:Math.cos(tilt), dz:Math.sin(a)*st, spMul:0.8+rnd()*0.55, comp:0 };
+}
 // CHANDELLE ROMAINE (B351, vidéo décomposée) : dans les 0,3 dernières secondes, 1 à 3 micro-braises
 // se détachent 0,5 à 2 m SOUS la tête en restant sur la trajectoire (des scories, pas un éclatement).
 // B355 (user) : « pas de déto ni de flash à la fin, c'est juste l'étoile de couleur qui s'éteint ».
@@ -1364,7 +1370,7 @@ const EFFECTS = {
   // SOURD (« presque comme une botte de chandelle à la sortie du tube ») en 4 PETITS BRINS fins
   // d'environ 1 m — la pointe en queue de cheval.
   candle30qc: { apex:43, cal:30, heat:false, pureColor:true, gravStar:0.9, dragStar:1.6, lifeBase75:1.5, lifeJitter:0.25, restExtra:1.2,
-            noIgnite:true, stars:4, starSize:0.85, speedMul:0.013, speedJit:0.30, randomAxis:true,   // brins COURTS : ~1 m (user)
+            noIgnite:true, stars:4, starSize:0.85, speedMul:0.075, speedJit:0.30, dist:distQC,   // brins COURTS (~1 m) et EN BOUQUET VERS LE HAUT (user)
             riseTime:3.41, riseLean:2, riseTrail:false, headSize:2.2, headShrink:true,
             riseColor:new THREE.Color(1.50,1.15,0.72), riseColorFromStar:true, riseSwitch:0.10,
             noFlash:true, burstSparks:false, riseSparksFromStar:true,
@@ -1454,6 +1460,13 @@ class Shell {
     // CHANDELLE 30 mm (B367) : « comète traçante verte » -> la TRAÎNÉE aussi est verte.
     if (this.cfg.riseSparksFromStar && this.cfg.riseSparks && this.cfg.colors)
       this.cfg.riseSparks = Object.assign({}, this.cfg.riseSparks, { color: this.cfg.colors[0] });
+    // B370 (user) : le trou de ~3 m est tantôt EN HAUT, tantôt EN BAS — tiré au sort par coup.
+    // (T est le temps de montée ; la montée étant freinée, 3 m sur ~38 valent T=0,04 en bas et
+    //  T=0,72 en haut.)
+    this._rsFrom=0; this._rsUntil=1.1;
+    if (this.cfg.riseSparks && this.cfg.riseSparks.gap!==false){
+      if (Math.random()<0.5) this._rsUntil=0.72; else this._rsFrom=0.04;
+    }
     if (this.cfg.trailColorFromStar && this.cfg.trailing && this.cfg.colors)
       this.cfg.trailing = Object.assign({}, this.cfg.trailing, { color: this.cfg.colors[0], fixedColor:true });
     this.cal = cal || this.cfg.cal || 75;   // cfg.cal = calibre PAR DÉFAUT de l'effet (ex cœur : n'existe qu'en 100mm)
@@ -1825,12 +1838,16 @@ class Shell {
         // CHANDELLE (B351) : chapelet d'étincelles DISCRÈTES le long de la montée (1,5-2,5 m ;
         // il raccourcit tout seul en haut de course puisque la bille ralentit). B352 : la queue
         // reste AMBRÉE même quand la tête a viré à la couleur de la référence.
-        // B369 (photos user) : la traînée S'ARRÊTE en cours de montée (le traceur est consommé)
-        // alors que la comète, elle, CONTINUE — d'où le trou noir entre la tête et la traînée.
-        if (this.cfg.riseSparks && T < (this.cfg.riseSparks.until!==undefined ? this.cfg.riseSparks.until : 1.1)){ const rs=this.cfg.riseSparks;
+        // B370 (user) : la traînée est COMPLÈTE, avec un trou de ~3 m à UNE des deux extrémités,
+        // tiré au sort par coup : soit du tube jusqu'à 3 m sous l'éclatement, soit à partir de
+        // 3 m au-dessus du tube et jusqu'à l'éclatement.
+        if (this.cfg.riseSparks && T>this._rsFrom && T<this._rsUntil){ const rs=this.cfg.riseSparks;
           for (let k=0;k<rs.n;k++){ const fq=Math.random();
+            // B370 (user) : quelques étincelles PERSISTANTES -> à l'apogée il reste encore une
+            // mini trace de la traînée dans le ciel.
+            const pers=Math.random()<0.05, lm=(rs.life*(pers?4.5+Math.random()*3:0.7+Math.random()*0.6))/0.26;
             spawnTrail(this.headLastX+(hx-this.headLastX)*fq, this.headLastY+(y-this.headLastY)*fq, this.headLastZ+(hz-this.headLastZ)*fq,
-                       rs.color.r, rs.color.g, rs.color.b, rs.size, 0.25, (rs.life*(0.7+Math.random()*0.6))/0.26, 0,0,0, rs.jit, 0.5, true); } }
+                       rs.color.r, rs.color.g, rs.color.b, rs.size*(pers?0.8:1), 0.25, lm, 0,0,0, rs.jit, 0.5, true); } }
         // B352 : la bille sort DORÉE puis vire à la couleur de SA référence (vert, rose, aqua...).
         if (this.cfg.riseColor2 && !this._riseSw && T>this.cfg.riseSwitch){ this._riseSw=true; this.headMat.color.copy(this.cfg.riseColor2); }
         // B368 (mesuré) : la tête FAIBLIT en montant — elle finit ~3 fois plus petite et bien
