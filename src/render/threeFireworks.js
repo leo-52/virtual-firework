@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B351';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B352';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -1323,20 +1323,14 @@ const EFFECTS = {
   // (vidéo décomposée) Un coup = UNE COMÈTE, PAS d'éclatement : la bille monte en traînant un
   // chapelet d'étincelles ambre et s'éteint À L'APEX (on ne la voit jamais redescendre). Tête
   // blanc chaud doré-citron, queue orange-ambre de 1,5-2,5 m qui raccourcit en haut de course.
+  // La bille sort DORÉE (charge propulsive, ~0,15 s) puis prend LA COULEUR DE SA RÉFÉRENCE pour
+  // tout le reste de la montée ; la queue d'étincelles, elle, reste ambrée quoi qu'il arrive.
   candle10: { apex:22, cal:10, heat:false, pureColor:true, gravStar:0.5, dragStar:2.2, lifeBase75:0.55, lifeJitter:0.22, restExtra:0.3,
             stars:1, starSize:1.5, speedMul:0.02, riseTime:3.4, riseLean:0, riseTrail:false, headSize:1.1,   // riseTime est mis à l'échelle par le moteur -> 3.4 donne les 1,5 s mesurés sur la vidéo
-            riseColor:new THREE.Color(1.60,1.42,0.80), noFlash:true, burstSparks:false, behave:behaveCandle,
+            riseColor:new THREE.Color(1.55,1.20,0.85), riseColorFromStar:true, riseSwitch:0.15,
+            noFlash:true, burstSparks:false, behave:behaveCandle,
             riseSparks:{ n:3, size:0.55, life:0.09, jit:0.35, color:EMBER },   // -> chapelet de ~2 m en pleine vitesse, réduit à quelques perles près de l'apex
             color:new THREE.Color(1.60,1.42,0.80) },
-  // BOTTE DE 7 (vidéo décomposée) : même comète, mais BI-PHASE — 0,15 s de sortie DORÉE/BLANCHE
-  // puis virage franc en ROUGE ROSE pour tout le reste de la montée (« tige dorée » en bas,
-  // « perles rouges » en haut). Elle s'éteint AVANT l'apex, en montant encore.
-  candle10r: { apex:16, cal:10, heat:false, pureColor:true, gravStar:0.5, dragStar:2.2, lifeBase75:0.40, lifeJitter:0.22, restExtra:0.3,
-            stars:1, starSize:1.4, speedMul:0.02, riseTime:2.7, riseLean:0, riseTrail:false, headSize:1.0,   // -> ~1,0 s de montée (mesuré 0,7-1,2 s)
-            riseColor:new THREE.Color(1.55,1.20,0.85), riseColor2:new THREE.Color(1.60,0.42,0.46), riseSwitch:0.15,
-            noFlash:true, burstSparks:false, behave:behaveCandle,
-            riseSparks:{ n:3, size:0.5, life:0.085, jit:0.35, color:new THREE.Color(1.35,1.10,0.80) },
-            color:new THREE.Color(1.60,0.42,0.46) },
   // BOMBETTE ROUGE 30 mm (B327) : mini pivoine rouge (pour « pot à feu et bombette rouge »).
   bombRouge: { apex:42, cal:30, heat:false, pureColor:true, color:RED, gravStar:0.7, dragStar:0.70, lifeBase75:2.4, lifeJitter:0.15, restExtra:1,   // B330 (user) : physique pivoine — punch bref puis les étoiles SE FIGENT (elles filaient trop)
             stars:55, starSize:0.85, speedMul:0.82, riseLean:2.5, riseTrail:false, headSize:0.7, riseColor:new THREE.Color(0.55,0.40,0.20),   // B334 (user) : 55 étoiles encore plus petites (0.85)
@@ -1394,6 +1388,8 @@ class Shell {
     if (opts && opts.pair) this.cfg.colors = opts.pair;
     // TRAÇANTE (B207) : la TRAÎNÉE prend la COULEUR de la volée (traçante rouge -> traînée rouge).
     // cfg.trailing est partagé avec le littéral EFFECTS -> CLONER avant d'écraser sa couleur.
+    // CHANDELLE (B352) : la tête vire à la couleur de la référence tirée (cfg.colors vient de la paire).
+    if (this.cfg.riseColorFromStar && this.cfg.colors) this.cfg.riseColor2 = this.cfg.colors[0];
     if (this.cfg.trailColorFromStar && this.cfg.trailing && this.cfg.colors)
       this.cfg.trailing = Object.assign({}, this.cfg.trailing, { color: this.cfg.colors[0], fixedColor:true });
     this.cal = cal || this.cfg.cal || 75;   // cfg.cal = calibre PAR DÉFAUT de l'effet (ex cœur : n'existe qu'en 100mm)
@@ -1747,11 +1743,14 @@ class Shell {
         // on voit juste l'étoile monter, très légèrement.
         if (this.cfg.riseTrail!==false) spawnTrail(mx,my,mz, rc.r,rc.g,rc.b, big?1.4:1.1, 0.4, big?1.6:1.0);
         // CHANDELLE (B351) : chapelet d'étincelles DISCRÈTES le long de la montée (1,5-2,5 m ;
-        // il raccourcit tout seul en haut de course puisque la bille ralentit).
-        if (this.cfg.riseSparks){ const rs=this.cfg.riseSparks, sc=(this.cfg.riseSwitch!==undefined && T>this.cfg.riseSwitch && this.cfg.riseColor2) ? this.cfg.riseColor2 : rs.color;
+        // il raccourcit tout seul en haut de course puisque la bille ralentit). B352 : la queue
+        // reste AMBRÉE même quand la tête a viré à la couleur de la référence.
+        if (this.cfg.riseSparks){ const rs=this.cfg.riseSparks;
           for (let k=0;k<rs.n;k++){ const fq=Math.random();
             spawnTrail(this.headLastX+(hx-this.headLastX)*fq, this.headLastY+(y-this.headLastY)*fq, this.headLastZ+(hz-this.headLastZ)*fq,
-                       sc.r, sc.g, sc.b, rs.size, 0.25, (rs.life*(0.7+Math.random()*0.6))/0.26, 0,0,0, rs.jit, 0.5, true); } }
+                       rs.color.r, rs.color.g, rs.color.b, rs.size, 0.25, (rs.life*(0.7+Math.random()*0.6))/0.26, 0,0,0, rs.jit, 0.5, true); } }
+        // B352 : la bille sort DORÉE puis vire à la couleur de SA référence (vert, rose, aqua...).
+        if (this.cfg.riseColor2 && !this._riseSw && T>this.cfg.riseSwitch){ this._riseSw=true; this.headMat.color.copy(this.cfg.riseColor2); }
         // TRONC (B229/B231/B232, zigzag « à tronc ») : QUEUE DE FUSÉE — étincelles FINES (0.65)
         // réparties LE LONG du trajet (plus d'amas « œuf de dragon »), aux vies ÉTAGÉES (B232,
         // user) : GROSSE BANDE DENSE sous le projectile (72 % de grains brefs), milieu
@@ -1916,10 +1915,22 @@ export const COMPACTS = {
              label:'compact 20 tirs 30 mm disque de tourbillons ascension rouge (30 s)' },   // 500143000
   // CHANDELLES ROMAINES (B351) : une BOTTE = plusieurs chandelles ficelées ensemble, chacune
   // tirant ses 20 coups sur 30 s (catalogue : 10 coloris en botte de 3 et en botte de 7).
+  // Chaque COLORIS est une référence distincte du catalogue : la séquence en tire une et le HUD
+  // affiche laquelle (user B352 : « il faut être précis quand tu me montres une réf »).
   botte3: { arch:'candle10', tubes:3, shotsPerTube:20, tirs:60, dur:30, pattern:'candle', fanDeg:0,
-             label:'botte de 3 chandelles 10 mm 20 tirs (30 s)' },
-  botte7: { arch:'candle10r', tubes:7, shotsPerTube:20, tirs:140, dur:30, pattern:'candle', fanDeg:0,
-             label:'botte de 7 chandelles 10 mm 20 tirs (30 s)' },
+             label:'botte de 3 chandelles 10 mm 20 tirs',
+             variants:[ {n:'vert', r:'501302000', c:GRN},   {n:'rose', r:'501303000', c:PINK},
+                        {n:'aqua', r:'501304000', c:CYAN},  {n:'citron', r:'501305000', c:YEL},
+                        {n:'violet', r:'501295000', c:PURP},{n:'bleu', r:'501296000', c:BLU},
+                        {n:'rouge', r:'501297000', c:RED},  {n:'argent', r:'501300000', c:SILVER},
+                        {n:'orange', r:'501311000', c:new THREE.Color(1.35,0.55,0.12)} ] },
+  botte7: { arch:'candle10', tubes:7, shotsPerTube:20, tirs:140, dur:30, pattern:'candle', fanDeg:0,
+             label:'botte de 7 chandelles 10 mm 20 tirs',
+             variants:[ {n:'rose', r:'501307000', c:PINK},  {n:'aqua', r:'501306000', c:CYAN},
+                        {n:'citron', r:'501308000', c:YEL}, {n:'vert', r:'501029000', c:GRN},
+                        {n:'bleu', r:'501024000', c:BLU},   {n:'blanc', r:'501026000', c:WHITE},
+                        {n:'rouge', r:'501027000', c:RED},  {n:'violet', r:'501030000', c:PURP},
+                        {n:'orange', r:'501310000', c:new THREE.Color(1.35,0.55,0.12)} ] },
 };
 // B242 (user : « il faut quelques défauts — ça reste de la POUDRE ») : chaque intervalle de
 // mèche brûle un peu inégalement (±6 % entre tubes, ±10 % entre rangées), les tubes ont ±1°
@@ -2067,10 +2078,12 @@ export class ThreeFireworks {
       this.current=def.arch;
       this._clear(); this.shells=[];
       const pairs=EFFECTS[def.arch]&&EFFECTS[def.arch].colorPairs;
+      // B352 (user) : une séquence = UNE RÉFÉRENCE précise du catalogue, affichée telle quelle.
+      const va=def.variants ? def.variants[Math.floor(Math.random()*def.variants.length)] : null;
       this.compact={ def, queue:buildCompactQueue(def), i:0, t:0,
-        pair: pairs ? pairs[Math.floor(Math.random()*pairs.length)] : null,   // UNE couleur pour toute la séquence (elle change à chaque boucle)
+        pair: va ? [va.c, va.c] : (pairs ? pairs[Math.floor(Math.random()*pairs.length)] : null),   // UNE couleur pour toute la séquence (elle change à chaque boucle)
         apexS:((EFFECTS[def.arch]&&EFFECTS[def.arch].apex)||90)*APEX_SCALE };
-      this._hud(def.label);
+      this._hud(va ? def.label+' '+va.n+' — réf '+va.r : def.label);
     } else this.fire(this.focus, this.focusColor);
   }
   setFocus(arch, color){ if (EFFECTS[arch] || COMPACTS[arch]){
