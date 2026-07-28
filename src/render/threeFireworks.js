@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B358';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B359';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -118,6 +118,7 @@ const trailPoints = new THREE.Points(trailGeo, trailMat);
 trailPoints.frustumCulled = false;   // CRITIQUE : sa bounding sphere reste à l'origine (grains nés à 0,0,0) ->
 scene.add(trailPoints);              // sinon Three.js CULL tout le pool quand la caméra vise le burst (origine hors champ) = "pas de traînées"
 
+const lastTrail = () => trail[(trailHead-1+TRAIL_MAX)%TRAIL_MAX];   // B359 : pour marquer le grain qu'on vient de poser (ex : scintillement)
 function spawnTrail(x,y,z, r,g,b, size, gF=0.4, lifeMul=1, vx0=0, vy0=0, vz0=0, jit=0.8, drag=0.42, flatLife=false, rin=0){
   const i = trailHead; trailHead = (trailHead + 1) % TRAIL_MAX;
   const t = trail[i];
@@ -125,7 +126,8 @@ function spawnTrail(x,y,z, r,g,b, size, gF=0.4, lifeMul=1, vx0=0, vy0=0, vz0=0, 
   t.vx=vx0*0.25+(Math.random()-0.5)*jit; t.vy=vy0*0.25-Math.random()*(jit*0.75); t.vz=vz0*0.25+(Math.random()-0.5)*jit;   // jit bas = pas de "nage" aléatoire (poissons/feuilles)
   t.age=0; t.life = lifeMul * 0.26 * (flatLife ? (0.85+Math.random()*0.3)                       // flatLife : vies QUASI ÉGALES (±15%) -> la nappe tombe d'un bloc et s'éteint ensemble
                                               : (0.35 + 1.45*Math.pow(Math.random(),1.6)));    // sinon : vies très inégales (fondu organique) — MAIS les profondes meurent d'abord => enveloppe qui "bute sur un sol"
-  t.size = size*(0.7+Math.random()*0.6); t.r=r; t.g=g; t.b=b; t.gF=gF; t.drag=drag; t.rin=rin; t.alive=true;   // rin : FONDU d'apparition (s) -> les grains frais empilés près de la tête ne crament plus en blanc
+  t.size = size*(0.7+Math.random()*0.6); t.r=r; t.g=g; t.b=b; t.gF=gF; t.drag=drag; t.rin=rin; t.alive=true;
+  t.flick=false;   // rin : FONDU d'apparition (s) -> les grains frais empilés près de la tête ne crament plus en blanc
 }
 // VENT DES ÉTINCELLES (B177, user : « les étincelles bougent légèrement avec le vent, emportées
 // toutes en même temps ») : brise COMMUNE (posée par le burst des effets à cfg.wind) qui dérive
@@ -147,9 +149,22 @@ function updateTrails(dt){
     t.x+=t.vx*dt; t.y+=t.vy*dt; t.z+=t.vz*dt;
     let a = 1 - t.age/t.life;
     if (t.rin>0 && t.age<t.rin) a *= t.age/t.rin;   // fondu d'apparition (cascade : anti "blanc cramé" près des têtes)
+    // SCINTILLEMENT (B359, mesuré sur la vidéo de l'œuf de dragon) : c'est LUI qui fait lire
+    // « crépitement », pas le mouvement. Le grain ne bouge plus, mais son éclat saute d'un
+    // facteur 2 à 5 toutes les ~80 ms (loi log-normale), et il REFROIDIT du blanc vers l'or.
+    let fr=t.r, fg=t.g, fb=t.b;
+    if (t.flick){
+      t.fT-=dt;
+      if (t.fT<=0){ t.fT=0.055+Math.random()*0.05;
+        const u=Math.random()||1e-6, v=Math.random();
+        t.fA=Math.exp(0.94*Math.sqrt(-2*Math.log(u))*Math.cos(6.283*v)); }
+      a*=Math.min(2.6, t.fA);
+      const cool=Math.min(1, t.age/0.55);                       // blanc chaud -> or en ~0,55 s
+      fg=t.g*(1-0.15*cool); fb=t.b*(1-0.38*cool);
+    }
     trailPos[i*3]=t.x; trailPos[i*3+1]=t.y; trailPos[i*3+2]=t.z;
-    trailCol[i*3]=t.r*a*0.85; trailCol[i*3+1]=t.g*a*0.85; trailCol[i*3+2]=t.b*a*0.85;
-    trailSize[i]=t.size*a;
+    trailCol[i*3]=fr*a*0.85; trailCol[i*3+1]=fg*a*0.85; trailCol[i*3+2]=fb*a*0.85;
+    trailSize[i]=t.flick ? t.size : t.size*a;                   // grains d'œuf de dragon : taille CONSTANTE, seul l'éclat varie
   }
   trailGeo.attributes.position.needsUpdate = true;
   trailGeo.attributes.aColor.needsUpdate = true;
@@ -1333,12 +1348,16 @@ const EFFECTS = {
   // CHANDELLE ŒUF DE DRAGON (B358) : réfs « botte de 3 / de 7 chandelles 10 mm 20 tirs oeuf de
   // dragon » (501355000 / 501353000). Même bille, mais elle CRÉPITE en montant au lieu de tenir
   // une couleur : la tête reste dorée et sème des micro-éclats blanc chaud tout autour.
-  candle10egg: { apex:22, cal:10, heat:false, pureColor:true, gravStar:0.5, dragStar:2.2, lifeBase75:2.0, lifeJitter:0.22, restExtra:0.3,
-            noIgnite:true, onStar:candleFn,
-            stars:1, starSize:1.1, speedMul:0.02, riseTime:3.4, riseLean:0, riseTrail:false, headSize:1.1,
-            riseColor:new THREE.Color(1.55,1.25,0.90), noFlash:true, burstSparks:false,
-            riseSparks:{ n:3, size:0.55, life:0.09, jit:0.35, color:EMBER },
-            riseCrackle:{ from:0.35, n:2, size:0.45, life:0.12, spread:1.2, color:EGGGOLD },
+  // (vidéo décomposée) La bille reste OR/CHARBON toute la montée — pas de bascule de couleur —
+  // avec une traînée orange-rouge FINE ET CONTINUE, et elle claque au sommet : le crépitement est
+  // TERMINAL, jamais pendant la montée. Elle éclate plus bas qu'une chandelle classique (12 m au
+  // 1er coup, ~20 m au 20e) et l'étoile est CONSOMMÉE (il ne reste que le nuage).
+  candle10egg: { apex:16, cal:10, heat:false, pureColor:true, gravStar:0.5, dragStar:2.2, lifeBase75:0.30, lifeJitter:0.22, restExtra:0.6,
+            noIgnite:true, hideStars:true,
+            stars:1, starSize:1.1, speedMul:0.02, riseTime:4.0, riseLean:0, riseTrail:false, headSize:1.1,
+            riseColor:new THREE.Color(1.50,1.08,0.62), noFlash:true, burstSparks:false,
+            riseSparks:{ n:2, size:0.40, life:0.05, jit:0.06, color:new THREE.Color(1.55,0.59,0.38) },   // traînée FINE et CONTINUE, orange-rouge profond (#FF9660)
+            burstCloud:{ n:230, size:0.45, color:new THREE.Color(1.45,1.36,1.29) },                      // blanc chaud #FFF0E4, refroidit vers l'or
             color:EGGGOLD },
   // BOMBETTE ROUGE 30 mm (B327) : mini pivoine rouge (pour « pot à feu et bombette rouge »).
   bombRouge: { apex:42, cal:30, heat:false, pureColor:true, color:RED, gravStar:0.7, dragStar:0.70, lifeBase75:2.4, lifeJitter:0.15, restExtra:1,   // B330 (user) : physique pivoine — punch bref puis les étoiles SE FIGENT (elles filaient trop)
@@ -1630,6 +1649,19 @@ class Shell {
     if (this.cfg.burstSparks){ const bs=this.cfg.burstSparks, c=bs.color||GOLD, calM=this.cal/75;
       for (let k=0;k<bs.n;k++){ const v=vrand(Math.random), sp2=(0.4+Math.random()*0.6)*bs.sp*calM;
         spawnTrail(bx,apex,bz, c.r,c.g,c.b, bs.grain||1.0, 0.4, (0.2+Math.random()*0.3)/0.26, v[0]*sp2*4, v[1]*sp2*4, v[2]*sp2*4, 0.8, 0.42, true); } }
+    // ŒUF DE DRAGON DE CHANDELLE (B359, vidéo 501353000 décomposée) : au sommet, la bille est
+    // CONSOMMÉE d'un coup — un bref flash doré, puis un nuage de micro-grains blanc chaud éjectés
+    // EN UNE FOIS, freinés en ~0,25 s, qui ne bougent plus ensuite (ils ne tombent pas), scintillent
+    // et refroidissent vers l'or. Vies très étagées : 30 % s'éteignent en 0,1 s, quelques-uns tiennent 1,2 s.
+    if (this.cfg.burstCloud){ const bc=this.cfg.burstCloud, hs=apex/22;   // le nuage suit la hauteur du tir (⌀ ≈ 0,27 × montée)
+      spawnPuff(bx,apex,bz, 0,0,0, 0.12, apex*0.05, apex*0.10, 1.60,1.25,0.99, 0.55, 0, 1.0);   // flash doré très bref
+      for (let k=0;k<bc.n;k++){
+        const v=vrand(Math.random), r0=Math.random()*0.5*hs, sp=(7.0+Math.random()*3.5)*hs;
+        const life=(0.06+1.15*Math.pow(Math.random(),2.6))*(bc.lifeMul||1);
+        spawnTrail(bx+v[0]*r0, apex+v[1]*r0, bz+v[2]*r0, bc.color.r,bc.color.g,bc.color.b, bc.size, 0.035,
+                   life/0.26, v[0]*sp*4, v[1]*sp*4, v[2]*sp*4, 0.05, 4.0, true);
+        lastTrail().flick=true; lastTrail().fT=Math.random()*0.08; lastTrail().fA=1;
+      } }
     if (this.head){ scene.remove(this.head); this.headGeo.dispose(); this.headMat.dispose(); this.head=null; }
   }
 
