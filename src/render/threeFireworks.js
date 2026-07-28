@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B357';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B358';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -1330,6 +1330,16 @@ const EFFECTS = {
             noFlash:true, burstSparks:false,
             riseSparks:{ n:3, size:0.55, life:0.09, jit:0.35, color:EMBER },   // -> chapelet de ~2 m en pleine vitesse, réduit à quelques perles près de l'apex
             color:new THREE.Color(1.60,1.42,0.80) },
+  // CHANDELLE ŒUF DE DRAGON (B358) : réfs « botte de 3 / de 7 chandelles 10 mm 20 tirs oeuf de
+  // dragon » (501355000 / 501353000). Même bille, mais elle CRÉPITE en montant au lieu de tenir
+  // une couleur : la tête reste dorée et sème des micro-éclats blanc chaud tout autour.
+  candle10egg: { apex:22, cal:10, heat:false, pureColor:true, gravStar:0.5, dragStar:2.2, lifeBase75:2.0, lifeJitter:0.22, restExtra:0.3,
+            noIgnite:true, onStar:candleFn,
+            stars:1, starSize:1.1, speedMul:0.02, riseTime:3.4, riseLean:0, riseTrail:false, headSize:1.1,
+            riseColor:new THREE.Color(1.55,1.25,0.90), noFlash:true, burstSparks:false,
+            riseSparks:{ n:3, size:0.55, life:0.09, jit:0.35, color:EMBER },
+            riseCrackle:{ from:0.35, n:2, size:0.45, life:0.12, spread:1.2, color:EGGGOLD },
+            color:EGGGOLD },
   // BOMBETTE ROUGE 30 mm (B327) : mini pivoine rouge (pour « pot à feu et bombette rouge »).
   bombRouge: { apex:42, cal:30, heat:false, pureColor:true, color:RED, gravStar:0.7, dragStar:0.70, lifeBase75:2.4, lifeJitter:0.15, restExtra:1,   // B330 (user) : physique pivoine — punch bref puis les étoiles SE FIGENT (elles filaient trop)
             stars:55, starSize:0.85, speedMul:0.82, riseLean:2.5, riseTrail:false, headSize:0.7, riseColor:new THREE.Color(0.55,0.40,0.20),   // B334 (user) : 55 étoiles encore plus petites (0.85)
@@ -1368,7 +1378,8 @@ export const LABELS = { peony:'pivoine', chrysanthemum:'chrysanthème', willow:'
   cascade:'cascade', fish:'poisson', spinner:'tourbillon', saucer:'soucoupe', mosaic:'mosaïque', mosaicMix:'mosaïque assortie',
   mine:'pot à feu', salute:"salut (marron d'air)", saluteMulti:"multi marron d'air",
   zMeduse:'compact 40 tirs z méduse', cPotKamuro:'compact 20 tirs pot à feu + bombette kamuro', cPotRouge:'compact 20 tirs pot à feu + bombette rouge', cAscBleu:'compact 20 tirs kamuro ascension bleue', cTourbRouge:'compact 20 tirs disque de tourbillons asc. rouge',
-  botte3:'botte de 3 chandelles 10 mm 20 tirs', botte7:'botte de 7 chandelles 10 mm 20 tirs' };
+  botte3:'botte de 3 chandelles 10 mm 20 tirs', botte7:'botte de 7 chandelles 10 mm 20 tirs',
+  botte7egg:'botte de 7 chandelles 20 tirs œuf de dragon', botte3egg:'botte de 3 chandelles 20 tirs œuf de dragon' };
 
 // ============================================================================
 // SHELL
@@ -1753,6 +1764,13 @@ class Shell {
                        rs.color.r, rs.color.g, rs.color.b, rs.size, 0.25, (rs.life*(0.7+Math.random()*0.6))/0.26, 0,0,0, rs.jit, 0.5, true); } }
         // B352 : la bille sort DORÉE puis vire à la couleur de SA référence (vert, rose, aqua...).
         if (this.cfg.riseColor2 && !this._riseSw && T>this.cfg.riseSwitch){ this._riseSw=true; this.headMat.color.copy(this.cfg.riseColor2); }
+        // ŒUF DE DRAGON EN CHANDELLE (B358) : passé une fraction de la montée, la bille CRÉPITE —
+        // des micro-éclats blanc chaud projetés autour d'elle, qui se figent et s'éteignent.
+        if (this.cfg.riseCrackle && T>this.cfg.riseCrackle.from){
+          const rk=this.cfg.riseCrackle, kc=rk.color||EGGGOLD;
+          for (let k=0;k<rk.n;k++){ const v=vrand(Math.random), sp=rk.spread*(0.35+Math.random()*0.65);
+            spawnTrail(hx,y,hz, kc.r,kc.g,kc.b, rk.size, 0.10, (rk.life*(0.6+Math.random()*0.8))/0.26,
+                       v[0]*sp*4, v[1]*sp*4, v[2]*sp*4, 0.10, 3.2, true); } }
         // TRONC (B229/B231/B232, zigzag « à tronc ») : QUEUE DE FUSÉE — étincelles FINES (0.65)
         // réparties LE LONG du trajet (plus d'amas « œuf de dragon »), aux vies ÉTAGÉES (B232,
         // user) : GROSSE BANDE DENSE sous le projectile (72 % de grains brefs), milieu
@@ -1933,6 +1951,12 @@ export const COMPACTS = {
                         {n:'bleu', r:'501024000', c:BLU},   {n:'blanc', r:'501026000', c:WHITE},
                         {n:'rouge', r:'501027000', c:RED},  {n:'violet', r:'501030000', c:PURP},
                         {n:'orange', r:'501310000', c:new THREE.Color(1.35,0.55,0.12)} ] },
+  botte7egg: { arch:'candle10egg', tubes:7, shotsPerTube:20, tirs:140, dur:30, pattern:'candle', fanDeg:0,
+             label:'botte de 7 chandelles 10 mm 20 tirs',
+             variants:[ {n:'œuf de dragon', r:'501353000', c:EGGGOLD} ] },
+  botte3egg: { arch:'candle10egg', tubes:3, shotsPerTube:20, tirs:60, dur:30, pattern:'candle', fanDeg:0,
+             label:'botte de 3 chandelles 10 mm 20 tirs',
+             variants:[ {n:'œuf de dragon', r:'501355000', c:EGGGOLD} ] },
 };
 // B242 (user : « il faut quelques défauts — ça reste de la POUDRE ») : chaque intervalle de
 // mèche brûle un peu inégalement (±6 % entre tubes, ±10 % entre rangées), les tubes ont ±1°
