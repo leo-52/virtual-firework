@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B352';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B353';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -1941,10 +1941,13 @@ function buildCompactQueue(def){
   const ang=k=>-half+(2*half)*(def.rowSize>1?k/(def.rowSize-1):0.5)+(Math.random()-0.5)*2*jA;
   if (def.pattern==='candle'){
     // B351 : CHANDELLE ROMAINE (vidéos décomposées). Les tubes d'une botte sont VERTICAUX ET
-    // PARALLÈLES (pas d'éventail : ±1-3° de défaut de fabrication seulement) et tirent EN RELAIS,
-    // jamais deux ensemble. La cadence n'est JAMAIS métronomique : des rafales serrées alternent
-    // avec des trous. Enveloppe = DÉCRESCENDO (creux au début, pic au milieu, fin très lente),
-    // et la chandelle « s'allonge » : les derniers coups montent 40 % plus haut que les premiers.
+    // PARALLÈLES (pas d'éventail : ±1-3° de défaut de fabrication seulement).
+    // B353 (user) : une botte de 3 = 3 chandelles allumées EN MÊME TEMPS, chacune déroulant ses
+    // 20 tirs sur 30 s -> 20 × 3 départs. Elles ne se décalent que par les défauts de poudre :
+    // allumage à quelques dixièmes près, puis chacune dérive à son rythme (deux coups PEUVENT
+    // partir quasi ensemble). La cadence n'est jamais métronomique : rafales serrées et trous.
+    // Enveloppe = DÉCRESCENDO (creux au début, pic au milieu, fin très lente), et la chandelle
+    // « s'allonge » : les derniers coups montent 40 % plus haut que les premiers.
     const n=def.tubes||1, per=def.shotsPerTube||def.tirs, step=def.dur/Math.max(1,per-1);
     const gauss=()=>{ let u=0,v=0; while(!u)u=Math.random(); while(!v)v=Math.random();
                       return Math.sqrt(-2*Math.log(u))*Math.cos(6.283*v); };
@@ -1952,14 +1955,14 @@ function buildCompactQueue(def){
     const cadAt=t=>t<def.dur*0.25 ? 1.15 : t<def.dur*0.72 ? 0.85 : 1.35;        // décrescendo
     for (let i=0;i<n;i++){
       const cad=step*(0.96+Math.random()*0.08);     // chaque tube a SA cadence moyenne (±4 %)
-      let t=(i/n)*step+Math.random()*0.3;           // relais : les tubes démarrent décalés d'un tiers d'intervalle
+      let t=Math.random()*0.35;                     // B353 : toutes allumées ENSEMBLE (aux défauts de mèche près)
       for (let k=0;k<per;k++){ q.push({ t, a:drift+gauss()*0.0113, tube:i });   // ±1,1° d'écart-type par tir (mesuré)
         t+=cad*cadAt(t)*Math.max(0.35, 1+gauss()*0.40); }                        // intervalles très inégaux (CV 0,4)
     }
     q.sort((x,y)=>x.t-y.t);
     const lastC=q[q.length-1].t||1, scC=(def.dur+(Math.random()*2-1)*(def.dur/30))/lastC;   // durée totale ramenée à 29-31 s
     for (const e of q) e.t*=scC;
-    for (let k=1;k<q.length;k++) if (q[k].t-q[k-1].t<0.15) q[k].t=q[k-1].t+0.15;  // jamais deux départs quasi simultanés
+    for (let k=1;k<q.length;k++) if (q[k].t-q[k-1].t<0.03) q[k].t=q[k-1].t+0.03;  // B353 : deux chandelles PEUVENT partir quasi ensemble
     for (const e of q) e.apexMul=0.80+0.60*(e.t/def.dur);                         // la chandelle monte de plus en plus haut
     return q;
   } else if (def.pattern==='droit'){                // B325 : tirs SÉQUENTIELS réguliers, tubes droits (±1°)
