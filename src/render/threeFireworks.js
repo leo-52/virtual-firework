@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B346';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B347';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -926,7 +926,7 @@ function behaveTourb(d,A,dt,ctx){
     d._sa=Math.random()*Math.PI*2;
     // B345 (user) : on pilote le NOMBRE DE TOURS du vol entier, pas une vitesse de rotation figée
     // -> « ça peut faire 1 tour, ou 2 tours, ou presque pas ». Souvent moins d'un tour.
-    d._turns=1.0+2.0*Math.pow(Math.random(),1.2);                  // B346 (user) : en vrai c'est entre 1 et 3 tours
+    d._turns=1.0+1.3*Math.pow(Math.random(),1.2);                  // B347 : 1 à 2,3 ondulations (des S bien lisibles plutôt qu'un ressort serré)
     d._rt=0.55+Math.random()*0.30;                                 // B346 : rayon du TUBE d'étincelles — constant sur tout le trajet
     d._sr=(2*Math.PI*d._turns/Math.max(d.life,0.6))*(Math.random()<0.5?1:-1);
     let W=vrand(Math.random); W=[W[0], W[1]+1.3, W[2]];            // axe : surtout vers le HAUT, parfois côté/bas
@@ -934,7 +934,7 @@ function behaveTourb(d,A,dt,ctx){
     const Lw=Math.hypot(W[0],W[1],W[2])||1; W=[W[0]/Lw, W[1]/Lw, W[2]/Lw];
     let U=cross(W,[0,1,0]); if(len2(U)<0.01)U=cross(W,[1,0,0]); U=norm(U);
     d._U=U; d._V=norm(cross(W,U)); d._W=W;
-    d._R=0.09+Math.random()*0.19;                                  // B346 (user) : DIAMÈTRE de boucle très variable, 20 cm à 70 cm
+    d._R=0.70+Math.random()*0.60;                                  // B347 (user) : amplitude du SERPENTIN — il faut qu'elle dépasse la largeur du tube (1,5 m) pour se voir
     d._va=2.7+Math.random()*1.7;                                   // B345 (user) : ENCORE plus de propulsion — ça part loin (6 à 9 m)
     d._dr=(Math.random()*2-1)*0.18;                                // B346 : dérive de régime réduite — sinon le compte de tours s'emballait (jusqu'à 4,4)
     d._om=[(Math.random()*2-1)*0.10, (Math.random()*2-1)*0.10, (Math.random()*2-1)*0.10];  // B346 : gîte douce — sinon la courbure du trajet gonflait la boucle bien au-delà de 70 cm
@@ -957,21 +957,23 @@ function behaveTourb(d,A,dt,ctx){
   const rN =d._R *(1+0.28*Math.sin(w2+1.3));                       // et le rayon de la boucle respire (⌀ 20 à 70 cm)
   d._sa+=srN*dt;
   const sa=Math.sin(d._sa), ca=Math.cos(d._sa);
-  let k=rN*srN; if (k> 2.6) k= 2.6; else if (k< -2.6) k=-2.6;      // B345 : la vrille peut s'emballer, la VITESSE non (plafond de la composante tangentielle)
-  d.vx=(-U[0]*sa+V[0]*ca)*k + W[0]*d._va;                          // vitesse = tangente de l'hélice (le drag est écrasé chaque frame)
-  d.vy=(-U[1]*sa+V[1]*ca)*k + W[1]*d._va;
-  d.vz=(-U[2]*sa+V[2]*ca)*k + W[2]*d._va;
+  let k=rN*srN; if (k> 4.0) k= 4.0; else if (k< -4.0) k=-4.0;      // B345 : la vrille peut s'emballer, la VITESSE non (plafond de la composante tangentielle)
+  // B347 (user) : SERPENTIN, pas soucoupe — l'ondulation se fait surtout DANS UN PLAN (S qui
+  // serpente), et c'est ce plan qui dérive lentement : ça ondule à droite/gauche en avançant.
+  d.vx=(-U[0]*sa+V[0]*ca*0.22)*k + W[0]*d._va;
+  d.vy=(-U[1]*sa+V[1]*ca*0.22)*k + W[1]*d._va;
+  d.vz=(-U[2]*sa+V[2]*ca*0.22)*k + W[2]*d._va;
   // B343 (photos user) : l'étoile crache des étincelles PAR MILLIERS, toutes fines, doré-argenté
   // -> ça fait une masse lumineuse dense qui suit le trajet, pas un trait dessiné.
   const px=ctx.pos[d._i*3], py=ctx.pos[d._i*3+1], pz=ctx.pos[d._i*3+2];
   // B346 (user) : plus de bulbe à la tête ni de queue qui s'affine — un TUBE d'étincelles de largeur
   // constante : chaque grain naît déjà réparti dans le tube (le long du trajet + dans la section),
   // s'écarte à peine, et vit assez longtemps pour que le bout de la traînée garde sa largeur.
-  for (let k=0;k<105;k++){
+  for (let k=0;k<52;k++){                                          // B347 (user) : MOINS DENSE (on doit distinguer chaque étincelle) — forme et largeur inchangées
     const e=vrand(Math.random), rr=d._rt*Math.cbrt(Math.random()), u=Math.random()*6*dt, gold=Math.random()<0.80;
     const sp=0.25+Math.random()*0.65;
     spawnTrail(px-d.vx*u+e[0]*rr, py-d.vy*u+e[1]*rr, pz-d.vz*u+e[2]*rr,
-               gold?1.28:1.05, gold?0.94:1.00, gold?0.44:0.86, 0.21, 0.16,
+               gold?0.80:0.66, gold?0.59:0.63, gold?0.28:0.54, 0.21, 0.16,   // B347 : nettement moins lumineux (ça cramait en blanc)
                (1.15+Math.random()*0.30)/0.26,
                e[0]*sp, e[1]*sp, e[2]*sp, 0.16, 0.55, true);
   }
@@ -1301,7 +1303,7 @@ const EFFECTS = {
   tourbBomb: { apex:38, cal:30, heat:false, pureColor:true, stars:1, starSize:1.4, lifeBase75:4.4, lifeJitter:0.22, restExtra:1,   // B345 vol long / B346 : tête moins grosse
             color:new THREE.Color(1.5,1.5,1.6), riseLean:2.5, riseTrail:false, headSize:1.6, riseColor:new THREE.Color(2.0,0.35,0.30),
             noFlash:true, burstSparks:false, dist:distTourb, behave:behaveTourb,
-            trailing:{emitUntil:0.97, period:0.004, grain:0.21, gF:0.13, lifeMul:6, color:new THREE.Color(1.25,0.98,0.58), fixedColor:true, spark:true, jit:0.30} },   // B346 : le cœur serré autour de l'étoile est allégé (c'est le tube qui fait la traînée)
+            trailing:{emitUntil:0.97, period:0.006, grain:0.21, gF:0.13, lifeMul:6, color:new THREE.Color(1.25,0.98,0.58), fixedColor:true, spark:true, jit:0.30, bright:0.55} },   // B346 cœur allégé / B347 : moins lumineux
   // POT À FEU 30 mm (B325) : la gerbe du pot à feu validé, réduite à l'échelle du compact.
   mine30: { cal:30, color:DIMGOLD, heat:false, pureColor:true, starSize:1.2, stars:30, gravStar:1.0, dragStar:0.21, shrink:true,
             trailing:{emitUntil:0.95, period:0.008, grain:0.8, gF:0.05, lifeMul:6, color:new THREE.Color(0.30,0.17,0.14), jit:0.15},
