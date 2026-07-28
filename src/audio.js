@@ -143,7 +143,9 @@ export class PyroAudio {
   // lecture un peu plus rapide (tube court) et une queue coupée court.
   candle(dist){
     if (!this._ready()) return;
-    this._shot('launch', 0.075*att(dist), dly(dist), 0.14, 1.30, () => this._launchBuffer(), 0.10, 620);
+    // B357 (user) : « moins grave et plus étouffé » -> lecture encore plus rapide (1,30 -> 1,85 :
+    // ça remonte le son, un petit tube n'a rien de grave) ET coupure abaissée (620 -> 400 Hz).
+    this._shot('launch', 0.085*att(dist), dly(dist), 0.14, 1.85, () => this._launchBuffer(), 0.08, 400);
   }
 
   // EXPLOSION EN L'AIR (toute bombe) = « Bombe 75mm.mp3 » (claquement + boom qui roule + échos,

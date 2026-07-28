@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B356';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B357';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -1003,15 +1003,9 @@ function distTourb(i,n,rnd){ const v=vrand(rnd); return {dx:v[0], dy:Math.abs(v[
 // On annule la montée de luminosité du moteur : la bille est déjà à son éclat, elle ne fait que
 // décroître jusqu'à disparaître.
 function candleFn(d,A){ return { intenMul: 0.30/(0.4+0.6*Math.min(1,d.age/0.25)) }; }   // 0.30 = l'étoile reprend EXACTEMENT l'éclat de la tête de montée (pas de sursaut)
-function behaveCandle(d,A,dt,ctx){
-  if (d._sc===undefined) d._sc=1+Math.floor(Math.random()*3);
-  if (d._sc>0 && A>0.55 && Math.random()<dt*8){
-    d._sc--;
-    const px=ctx.pos[d._i*3], py=ctx.pos[d._i*3+1], pz=ctx.pos[d._i*3+2], drop=0.5+Math.random()*1.5;
-    spawnTrail(px+(Math.random()-0.5)*0.3, py-drop, pz+(Math.random()-0.5)*0.3,
-               EMBER.r, EMBER.g, EMBER.b, 0.6, 0.35, (0.35+Math.random()*0.35)/0.26, 0,0,0, 0.2, 0.5, true);
-  }
-}
+// B357 (user : « pourquoi y'a un clignotement blanc à la fin de l'étoile ? ») : la vidéo montrait
+// 1 à 3 micro-braises se détachant sous la tête en fin de vie, mais elles apparaissaient d'un coup
+// à pleine luminosité -> ça clignotait. Supprimées : l'étoile s'éteint, un point c'est tout.
 function behaveMosaic(d,A,dt,ctx){
   if (d._split) return;                                                 // secondaires : ne re-forkent jamais
   if (d._splitAt===undefined) d._splitAt = 1.5 + Math.random()*0.5;     // DÉLAI burst->division : 1.5..2.0s ALÉATOIRE par comète
@@ -1330,10 +1324,10 @@ const EFFECTS = {
   // La bille sort DORÉE (charge propulsive, ~0,15 s) puis prend LA COULEUR DE SA RÉFÉRENCE pour
   // tout le reste de la montée ; la queue d'étincelles, elle, reste ambrée quoi qu'il arrive.
   candle10: { apex:22, cal:10, heat:false, pureColor:true, gravStar:0.5, dragStar:2.2, lifeBase75:2.0, lifeJitter:0.22, restExtra:0.3,
-            noIgnite:true, onStar:candleFn,   // B355 : extinction en FONDU, sans rallumage ni pic
+            noIgnite:true, onStar:candleFn,   // B355 : extinction en FONDU, sans rallumage ni pic ; B357 : plus de scories en fin de vie
             stars:1, starSize:1.1, speedMul:0.02, riseTime:3.4, riseLean:0, riseTrail:false, headSize:1.1,   // B355 : étoile de MÊME taille que la tête de montée -> aucun « pop » au passage. riseTime 3.4 = les 1,5 s mesurés sur la vidéo
             riseColor:new THREE.Color(1.55,1.20,0.85), riseColorFromStar:true, riseSwitch:0.15,
-            noFlash:true, burstSparks:false, behave:behaveCandle,
+            noFlash:true, burstSparks:false,
             riseSparks:{ n:3, size:0.55, life:0.09, jit:0.35, color:EMBER },   // -> chapelet de ~2 m en pleine vitesse, réduit à quelques perles près de l'apex
             color:new THREE.Color(1.60,1.42,0.80) },
   // BOMBETTE ROUGE 30 mm (B327) : mini pivoine rouge (pour « pot à feu et bombette rouge »).
