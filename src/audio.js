@@ -156,9 +156,12 @@ export class PyroAudio {
   // que le 75 mm ») : le même échantillon d'œuf, mais à ~1/4 du niveau et adouci (2,2 kHz) — on
   // garde la texture crépitante, on enlève l'agressivité. UNE seule couche : le crépitement est
   // terminal et bref (~1,2 s), pas étalé en 3 vagues comme sur une bombe.
+  // B361 (user) : « le crépitement doit s'entendre, lui — genre 3 fois moins que le 75 mm ».
+  // L'œuf de dragon d'une 75 mm joue à 0,90 : on se cale donc pile à 0,30, et on remonte la
+  // coupure à 3,2 kHz pour lui rendre son mordant (2,2 kHz l'écrasait trop).
   candleEgg(dist){
     if (!this._ready()) return;
-    this._shot('dragon', 0.22*att(dist), dly(dist), 0.12, 1.35, () => this._dragonEggBuffer(), 0.30, 2200);
+    this._shot('dragon', 0.30*att(dist), dly(dist), 0.12, 1.35, () => this._dragonEggBuffer(), 0.30, 3200);
   }
 
   // EXPLOSION EN L'AIR (toute bombe) = « Bombe 75mm.mp3 » (claquement + boom qui roule + échos,
