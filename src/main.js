@@ -143,7 +143,10 @@ sndBtn.addEventListener('click', () => {
 document.body.appendChild(sndBtn);
 updateSndBtn();
 
-layer.onLaunch = (arch, cal, dist) => audio.launch(cal, dist);   // B254 : DÉPART calibré. B256 : atténué/retardé par la DISTANCE caméra
+layer.onLaunch = (arch, cal, dist) => {                          // B254 : DÉPART calibré. B256 : atténué/retardé par la DISTANCE caméra
+  if (arch === 'candle10') audio.candle(dist);                   // B356 (user) : une chandelle 10 mm fait un POUF sourd, pas le départ d'une 75 mm
+  else audio.launch(cal, dist);
+};
 layer.onBurst = (arch, cal, dist) => {
   if (arch === 'dragonEgg') audio.dragonEgg(cal, dist);
   else if (arch === 'crackling') audio.crackling(cal, dist);     // B255 : texture étalée (chaque étoile crépite)

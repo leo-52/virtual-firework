@@ -88,7 +88,11 @@ export class PyroAudio {
 
   // fadeOut (B256, user : « ça se coupe net ») : fondu de fin programmé sur le gain — les mp3
   // sont des extraits coupés, sans fondu la dernière couche s'arrête d'un coup.
-  _play(buf, gain, when = 0, rateJit = 0.10, rateMul = 1, fadeOut = 0){
+  // muffle (B356, user : « une chandelle 10 mm et une bombe 75 mm, ce n'est pas du tout le même
+  // bruit — moins fort et plus étouffé ») : passe-bas optionnel, en Hz. Un petit tube ne claque
+  // pas, il fait un « pouf » sourd : c'est le HAUT du spectre qu'il faut enlever, pas seulement
+  // baisser le volume.
+  _play(buf, gain, when = 0, rateJit = 0.10, rateMul = 1, fadeOut = 0, muffle = 0){
     const src = this.ctx.createBufferSource();
     src.buffer = buf;
     const rate = (1 - rateJit/2 + Math.random()*rateJit) * rateMul;
@@ -102,16 +106,21 @@ export class PyroAudio {
       g.gain.setValueAtTime(gain, t0 + Math.max(0.01, dur - fadeOut));
       g.gain.linearRampToValueAtTime(0.0001, t0 + dur);
     }
-    src.connect(g).connect(this.master);
-    src.onended = () => { try { src.disconnect(); g.disconnect(); } catch(e){} };   // pas de nœuds orphelins pour le GC
+    let lp = null;
+    if (muffle > 0){
+      lp = this.ctx.createBiquadFilter(); lp.type = 'lowpass';
+      lp.frequency.value = muffle; lp.Q.value = 0.5;
+      src.connect(lp).connect(g).connect(this.master);
+    } else src.connect(g).connect(this.master);
+    src.onended = () => { try { src.disconnect(); if (lp) lp.disconnect(); g.disconnect(); } catch(e){} };   // pas de nœuds orphelins pour le GC
     src.start(t0);
   }
   // Joue l'échantillon k s'il est chargé ; sinon synthèse de secours SEULEMENT si le
   // chargement a échoué (pendant le chargement : silence, pas de son moche).
-  _shot(k, gain, when, rateJit, rateMul, fallback, fadeOut = 0){
+  _shot(k, gain, when, rateJit, rateMul, fallback, fadeOut = 0, muffle = 0){
     const s = this._smp[k];
-    if (s) return this._play(s.buf, gain * s.trim, when, rateJit, rateMul, fadeOut);
-    if (this._smpFail[k] && fallback) this._play(this._pool(k, fallback), gain, when, rateJit, rateMul, fadeOut);
+    if (s) return this._play(s.buf, gain * s.trim, when, rateJit, rateMul, fadeOut, muffle);
+    if (this._smpFail[k] && fallback) this._play(this._pool(k, fallback), gain, when, rateJit, rateMul, fadeOut, muffle);
   }
   _pool(name, maker){
     const P = this._pools[name] || (this._pools[name] = []);
@@ -126,6 +135,15 @@ export class PyroAudio {
   launch(cal, dist){
     if (!this._ready()) return;
     this._shot('launch', 0.60*vol(cal)*att(dist), dly(dist), 0.08, deep(cal), () => this._launchBuffer(), 0.25);
+  }
+
+  // DÉPART DE CHANDELLE 10 mm (B356, user) : rien à voir avec une 75 mm. Un tube de 10 mm ne
+  // « claque » pas et ne roule pas : c'est un POUF sourd et bref, très en retrait — d'où un gain
+  // 8 fois plus bas, un passe-bas à 620 Hz (on enlève le claquement, pas juste le volume), une
+  // lecture un peu plus rapide (tube court) et une queue coupée court.
+  candle(dist){
+    if (!this._ready()) return;
+    this._shot('launch', 0.075*att(dist), dly(dist), 0.14, 1.30, () => this._launchBuffer(), 0.10, 620);
   }
 
   // EXPLOSION EN L'AIR (toute bombe) = « Bombe 75mm.mp3 » (claquement + boom qui roule + échos,
