@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B362';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B363';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -155,12 +155,12 @@ function updateTrails(dt){
     let fr=t.r, fg=t.g, fb=t.b;
     if (t.flick){
       t.fT-=dt;
-      if (t.fT<=0){ t.fT=0.055+Math.random()*0.05;
+      if (t.fT<=0){ t.fT=0.030+Math.random()*0.035;             // B363 : ça CLAQUE (30-65 ms), sinon ça ronronne comme du kamuro
         const u=Math.random()||1e-6, v=Math.random();
-        t.fA=Math.exp(0.94*Math.sqrt(-2*Math.log(u))*Math.cos(6.283*v)); }
-      a*=Math.min(2.6, t.fA);
-      const cool=Math.min(1, t.age/0.55);                       // blanc chaud -> or en ~0,55 s
-      fg=t.g*(1-0.15*cool); fb=t.b*(1-0.38*cool);
+        t.fA=Math.exp(1.05*Math.sqrt(-2*Math.log(u))*Math.cos(6.283*v)); }
+      a*=Math.min(3.2, t.fA);
+      const cool=Math.max(0, Math.min(1, (t.age-0.45)/0.55));   // B363 : il reste BLANC 0,45 s (phase vive mesurée) avant de virer braise
+      fg=t.g*(1-0.15*cool); fb=t.b*(1-0.42*cool);
     }
     trailPos[i*3]=t.x; trailPos[i*3+1]=t.y; trailPos[i*3+2]=t.z;
     trailCol[i*3]=fr*a*0.85; trailCol[i*3+1]=fg*a*0.85; trailCol[i*3+2]=fb*a*0.85;
@@ -1357,7 +1357,7 @@ const EFFECTS = {
             stars:1, starSize:1.1, speedMul:0.02, riseTime:4.0, riseLean:0, riseTrail:false, headSize:1.1,
             riseColor:new THREE.Color(1.50,1.08,0.62), noFlash:true, burstSparks:false,
             riseSparks:{ n:2, size:0.40, life:0.05, jit:0.06, color:new THREE.Color(1.55,0.59,0.38) },   // traînée FINE et CONTINUE, orange-rouge profond (#FF9660)
-            burstCloud:{ n:230, size:0.45, color:new THREE.Color(1.45,1.36,1.29) },                      // blanc chaud #FFF0E4, refroidit vers l'or
+            burstCloud:{ n:230, size:0.55, color:new THREE.Color(2.10,1.96,1.86) },                      // B363 : blanc chaud #FFF0E4 mais BIEN PLUS VIF (ça doit claquer blanc, pas ronronner doré)
             color:EGGGOLD },
   // BOMBETTE ROUGE 30 mm (B327) : mini pivoine rouge (pour « pot à feu et bombette rouge »).
   bombRouge: { apex:42, cal:30, heat:false, pureColor:true, color:RED, gravStar:0.7, dragStar:0.70, lifeBase75:2.4, lifeJitter:0.15, restExtra:1,   // B330 (user) : physique pivoine — punch bref puis les étoiles SE FIGENT (elles filaient trop)
