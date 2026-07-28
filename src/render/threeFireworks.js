@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B347';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B348';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -927,7 +927,9 @@ function behaveTourb(d,A,dt,ctx){
     // B345 (user) : on pilote le NOMBRE DE TOURS du vol entier, pas une vitesse de rotation figée
     // -> « ça peut faire 1 tour, ou 2 tours, ou presque pas ». Souvent moins d'un tour.
     d._turns=1.0+1.3*Math.pow(Math.random(),1.2);                  // B347 : 1 à 2,3 ondulations (des S bien lisibles plutôt qu'un ressort serré)
-    d._rt=0.55+Math.random()*0.30;                                 // B346 : rayon du TUBE d'étincelles — constant sur tout le trajet
+    d._rt=0.30+Math.random()*0.18;                                 // B348 (user) : tube d'étincelles PLUS ÉTROIT (l'effet doit être moins large)
+    d._hold=0.20+Math.random()*0.12;                               // B348 (user) : elle s'ENFLAMME sur place 0,2-0,3 s avant de partir
+    d._kick=d._hold+0.10;                                          // ...puis elle part n'importe comment (secousses à la « avion en papier »)
     d._sr=(2*Math.PI*d._turns/Math.max(d.life,0.6))*(Math.random()<0.5?1:-1);
     let W=vrand(Math.random); W=[W[0], W[1]+1.3, W[2]];            // axe : surtout vers le HAUT, parfois côté/bas
     if (Math.random()<0.15) W[1]-=2.4;
@@ -935,7 +937,7 @@ function behaveTourb(d,A,dt,ctx){
     let U=cross(W,[0,1,0]); if(len2(U)<0.01)U=cross(W,[1,0,0]); U=norm(U);
     d._U=U; d._V=norm(cross(W,U)); d._W=W;
     d._R=0.70+Math.random()*0.60;                                  // B347 (user) : amplitude du SERPENTIN — il faut qu'elle dépasse la largeur du tube (1,5 m) pour se voir
-    d._va=2.7+Math.random()*1.7;                                   // B345 (user) : ENCORE plus de propulsion — ça part loin (6 à 9 m)
+    d._va=1.7+Math.random()*1.1;                                   // B348 (user) : parcours réduit (4 à 6 m)
     d._dr=(Math.random()*2-1)*0.18;                                // B346 : dérive de régime réduite — sinon le compte de tours s'emballait (jusqu'à 4,4)
     d._om=[(Math.random()*2-1)*0.10, (Math.random()*2-1)*0.10, (Math.random()*2-1)*0.10];  // B346 : gîte douce — sinon la courbure du trajet gonflait la boucle bien au-delà de 70 cm
     // B345 : la vrille est IRRÉGULIÈRE (elle mollit, repart, s'élargit) — jamais une hélice parfaite
@@ -943,7 +945,21 @@ function behaveTourb(d,A,dt,ctx){
     d._p2=Math.random()*6.28; d._f2=1.4+Math.random()*1.6;
     d.gMul=0.02;
   }
+  // B348 (user) : la boule vient d'être projetée ; elle s'ENFLAMME quasiment sur place (0,2-0,3 s)
+  // avant que sa forme ne la fasse partir.
+  if (d.age<d._hold){ const f=Math.pow(0.045,dt); d.vx*=f; d.vy*=f; d.vz*=f; d.gMul=0.02;
+    emitTourbSparks(d,ctx,dt,0.45); return; }
   const O=d._om, U=d._U, V=d._V, W=d._W;
+  // B348 (user) : « comme un avion en papier » — des à-coups francs et imprévisibles : l'axe part
+  // ailleurs, le régime et l'amplitude changent d'un coup. Le trajet n'est jamais régulier.
+  if (d.age>=d._kick){
+    d._kick=d.age+0.10+Math.random()*0.30;
+    const e=vrand(Math.random), s=0.30+Math.random()*0.70;
+    W[0]+=e[0]*s; W[1]+=e[1]*s; W[2]+=e[2]*s;
+    const Lw=Math.hypot(W[0],W[1],W[2])||1; W[0]/=Lw; W[1]/=Lw; W[2]/=Lw;
+    d._sr*=0.55+Math.random()*1.00; d._R*=0.65+Math.random()*0.80; d._va*=0.80+Math.random()*0.50;
+    if (d._va<0.9) d._va=0.9; else if (d._va>3.2) d._va=3.2;
+  }
   const rot=(X)=>{ const x=X[0]+(O[1]*X[2]-O[2]*X[1])*dt, y=X[1]+(O[2]*X[0]-O[0]*X[2])*dt, z=X[2]+(O[0]*X[1]-O[1]*X[0])*dt;
                    const L=Math.hypot(x,y,z)||1; X[0]=x/L; X[1]=y/L; X[2]=z/L; };
   rot(W); rot(U);                                                  // l'axe de vrille dérive doucement
@@ -963,13 +979,15 @@ function behaveTourb(d,A,dt,ctx){
   d.vx=(-U[0]*sa+V[0]*ca*0.22)*k + W[0]*d._va;
   d.vy=(-U[1]*sa+V[1]*ca*0.22)*k + W[1]*d._va;
   d.vz=(-U[2]*sa+V[2]*ca*0.22)*k + W[2]*d._va;
-  // B343 (photos user) : l'étoile crache des étincelles PAR MILLIERS, toutes fines, doré-argenté
-  // -> ça fait une masse lumineuse dense qui suit le trajet, pas un trait dessiné.
-  const px=ctx.pos[d._i*3], py=ctx.pos[d._i*3+1], pz=ctx.pos[d._i*3+2];
-  // B346 (user) : plus de bulbe à la tête ni de queue qui s'affine — un TUBE d'étincelles de largeur
-  // constante : chaque grain naît déjà réparti dans le tube (le long du trajet + dans la section),
-  // s'écarte à peine, et vit assez longtemps pour que le bout de la traînée garde sa largeur.
-  for (let k=0;k<52;k++){                                          // B347 (user) : MOINS DENSE (on doit distinguer chaque étincelle) — forme et largeur inchangées
+  emitTourbSparks(d,ctx,dt,1);
+}
+// B343 (photos user) : l'étoile crache des étincelles par milliers, toutes fines, dorées.
+// B346 (user) : pas de bulbe à la tête ni de queue qui s'affine — un TUBE de largeur constante :
+// chaque grain naît déjà réparti dans le tube (le long du trajet + dans la section), s'écarte à
+// peine, et vit assez longtemps pour que le bout de la traînée garde sa largeur.
+function emitTourbSparks(d,ctx,dt,mul){
+  const px=ctx.pos[d._i*3], py=ctx.pos[d._i*3+1], pz=ctx.pos[d._i*3+2], n=Math.round(52*mul);
+  for (let k=0;k<n;k++){                                           // B347 (user) : MOINS DENSE (on doit distinguer chaque étincelle) — forme et largeur inchangées
     const e=vrand(Math.random), rr=d._rt*Math.cbrt(Math.random()), u=Math.random()*6*dt, gold=Math.random()<0.80;
     const sp=0.25+Math.random()*0.65;
     spawnTrail(px-d.vx*u+e[0]*rr, py-d.vy*u+e[1]*rr, pz-d.vz*u+e[2]*rr,
