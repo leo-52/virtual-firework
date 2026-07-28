@@ -144,7 +144,7 @@ document.body.appendChild(sndBtn);
 updateSndBtn();
 
 layer.onLaunch = (arch, cal, dist) => {                          // B254 : DÉPART calibré. B256 : atténué/retardé par la DISTANCE caméra
-  if (arch === 'candle10') audio.candle(dist);                   // B356 (user) : une chandelle 10 mm fait un POUF sourd, pas le départ d'une 75 mm
+  if (arch === 'candle10' || arch === 'candle10egg') audio.candle(dist);   // B356 (user) : une chandelle 10 mm fait un POUF sourd, pas le départ d'une 75 mm
   else audio.launch(cal, dist);
 };
 layer.onBurst = (arch, cal, dist) => {
@@ -155,6 +155,7 @@ layer.onBurst = (arch, cal, dist) => {
   else if (arch === 'spinner') audio.hibou(0, dist);             // B254 : tourbillon = hululement (réf « Hibou » de l'user)
   else if (arch === 'tourbBomb') {}                              // B338 (user) : quasi SILENCIEUX (« pétard mouillé ») — pas de break
   else if (arch === 'candle10') {}                               // B355 (user) : chandelle — « pas de déto ni de flash à la fin », l'étoile s'éteint, c'est tout
+  else if (arch === 'candle10egg') audio.candleEgg(dist);        // B360 : la bille claque au sommet — crépitement discret, PAS le break d'une 75 mm (bug : elle tombait dans le cas par défaut)
   else if (arch === 'd8'){ audio.breakOpen(cal, dist);           // B262 : D8 = break, puis les étoiles finissent en ŒUF DE DRAGON
     audio.crackle(cal, dist, 4.1); audio.crackle(cal, dist, 4.75, 0.7); }   //        B266 : crépitement visuel ~4,0-5,2 s -> 2 couches calées dessus + trajet
   else audio.breakOpen(cal, dist);                               // = « Bombe 75mm.mp3 »

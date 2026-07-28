@@ -143,9 +143,19 @@ export class PyroAudio {
   // lecture un peu plus rapide (tube court) et une queue coupée court.
   candle(dist){
     if (!this._ready()) return;
-    // B357 (user) : « moins grave et plus étouffé » -> lecture encore plus rapide (1,30 -> 1,85 :
-    // ça remonte le son, un petit tube n'a rien de grave) ET coupure abaissée (620 -> 400 Hz).
-    this._shot('launch', 0.085*att(dist), dly(dist), 0.14, 1.85, () => this._launchBuffer(), 0.08, 400);
+    // B357 (user) : « moins grave et plus étouffé » -> lecture plus rapide (ça remonte le son, un
+    // petit tube n'a rien de grave) et coupure abaissée. B360 : « encore beaucoup moins fort et
+    // plus étouffé » -> gain divisé par 2 (soit ~1/17 d'un départ de 75 mm) et coupure à 260 Hz.
+    this._shot('launch', 0.040*att(dist), dly(dist), 0.14, 1.95, () => this._launchBuffer(), 0.07, 260);
+  }
+
+  // CRÉPITEMENT D'UN ŒUF DE DRAGON DE CHANDELLE 10 mm (B360, user : « ça crépite mais moins fort
+  // que le 75 mm ») : le même échantillon d'œuf, mais à ~1/4 du niveau et adouci (2,2 kHz) — on
+  // garde la texture crépitante, on enlève l'agressivité. UNE seule couche : le crépitement est
+  // terminal et bref (~1,2 s), pas étalé en 3 vagues comme sur une bombe.
+  candleEgg(dist){
+    if (!this._ready()) return;
+    this._shot('dragon', 0.22*att(dist), dly(dist), 0.12, 1.35, () => this._dragonEggBuffer(), 0.30, 2200);
   }
 
   // EXPLOSION EN L'AIR (toute bombe) = « Bombe 75mm.mp3 » (claquement + boom qui roule + échos,
