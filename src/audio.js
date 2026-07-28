@@ -149,9 +149,8 @@ export class PyroAudio {
     // B361 (user) : « on ne doit quasiment pas entendre le départ, à 50 m c'est à peine
     // perceptible » -> niveau divisé encore par 5. À 50 m (att plafonné à 1,8) le pic tombe vers
     // -39 dBFS, soit ~1/85 d'un départ de 75 mm ; la coupure descend à 220 Hz.
-    // B365 (user) : « la sortie du tube, augmente-la un peu par rapport à la version d'avant »
-    // -> un cran AU-DESSUS du B361 (0,008), soit -36 dBFS à 50 m.
-    this._shot('launch', 0.011*att(dist), dly(dist), 0.14, 1.95, () => this._launchBuffer(), 0.06, 220);
+    // B366 : niveau donné par l'user -> 0,03 (soit -27 dBFS à 50 m, ~1/20 du départ d'une 75 mm).
+    this._shot('launch', 0.030*att(dist), dly(dist), 0.14, 1.95, () => this._launchBuffer(), 0.06, 220);
   }
 
   // CRÉPITEMENT D'UN ŒUF DE DRAGON DE CHANDELLE 10 mm (B360, user : « ça crépite mais moins fort
@@ -159,11 +158,11 @@ export class PyroAudio {
   // garde la texture crépitante, on enlève l'agressivité. UNE seule couche : le crépitement est
   // terminal et bref (~1,2 s), pas étalé en 3 vagues comme sur une bombe.
   // B361 (user) : « le crépitement doit s'entendre, lui — genre 3 fois moins que le 75 mm ».
-  // B365 (user) : moitié moins encore -> 0,15 contre 0,90 pour l'œuf d'une 75 mm, soit 1/6.
+  // B366 : niveau donné par l'user -> 0,10 contre 0,90 pour l'œuf d'une 75 mm, soit 1/9.
   // Coupure gardée à 3,2 kHz : c'est le niveau qui baisse, pas le mordant.
   candleEgg(dist){
     if (!this._ready()) return;
-    this._shot('dragon', 0.15*att(dist), dly(dist), 0.12, 1.35, () => this._dragonEggBuffer(), 0.30, 3200);
+    this._shot('dragon', 0.10*att(dist), dly(dist), 0.12, 1.35, () => this._dragonEggBuffer(), 0.30, 3200);
   }
 
   // EXPLOSION EN L'AIR (toute bombe) = « Bombe 75mm.mp3 » (claquement + boom qui roule + échos,
