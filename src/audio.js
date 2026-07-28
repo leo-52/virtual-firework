@@ -149,7 +149,9 @@ export class PyroAudio {
     // B361 (user) : « on ne doit quasiment pas entendre le départ, à 50 m c'est à peine
     // perceptible » -> niveau divisé encore par 5. À 50 m (att plafonné à 1,8) le pic tombe vers
     // -39 dBFS, soit ~1/85 d'un départ de 75 mm ; la coupure descend à 220 Hz.
-    this._shot('launch', 0.008*att(dist), dly(dist), 0.14, 1.95, () => this._launchBuffer(), 0.06, 220);
+    // B364 (user) : encore moitié moins -> à 50 m le pic tombe à -45 dBFS, soit ~1/150 du départ
+    // d'une 75 mm à la même distance.
+    this._shot('launch', 0.004*att(dist), dly(dist), 0.14, 1.95, () => this._launchBuffer(), 0.06, 220);
   }
 
   // CRÉPITEMENT D'UN ŒUF DE DRAGON DE CHANDELLE 10 mm (B360, user : « ça crépite mais moins fort
