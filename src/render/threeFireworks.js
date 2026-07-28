@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B348';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B349';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -936,8 +936,8 @@ function behaveTourb(d,A,dt,ctx){
     const Lw=Math.hypot(W[0],W[1],W[2])||1; W=[W[0]/Lw, W[1]/Lw, W[2]/Lw];
     let U=cross(W,[0,1,0]); if(len2(U)<0.01)U=cross(W,[1,0,0]); U=norm(U);
     d._U=U; d._V=norm(cross(W,U)); d._W=W;
-    d._R=0.70+Math.random()*0.60;                                  // B347 (user) : amplitude du SERPENTIN — il faut qu'elle dépasse la largeur du tube (1,5 m) pour se voir
-    d._va=1.7+Math.random()*1.1;                                   // B348 (user) : parcours réduit (4 à 6 m)
+    d._R=0.85+Math.random()*0.70;                                  // B349 (user) : un poil plus d'envergure au serpentin
+    d._va=1.30+Math.random()*0.85;                                 // B349 (user) : parcours encore réduit (2,5 à 4,5 m)
     d._dr=(Math.random()*2-1)*0.18;                                // B346 : dérive de régime réduite — sinon le compte de tours s'emballait (jusqu'à 4,4)
     d._om=[(Math.random()*2-1)*0.10, (Math.random()*2-1)*0.10, (Math.random()*2-1)*0.10];  // B346 : gîte douce — sinon la courbure du trajet gonflait la boucle bien au-delà de 70 cm
     // B345 : la vrille est IRRÉGULIÈRE (elle mollit, repart, s'élargit) — jamais une hélice parfaite
@@ -986,7 +986,7 @@ function behaveTourb(d,A,dt,ctx){
 // chaque grain naît déjà réparti dans le tube (le long du trajet + dans la section), s'écarte à
 // peine, et vit assez longtemps pour que le bout de la traînée garde sa largeur.
 function emitTourbSparks(d,ctx,dt,mul){
-  const px=ctx.pos[d._i*3], py=ctx.pos[d._i*3+1], pz=ctx.pos[d._i*3+2], n=Math.round(52*mul);
+  const px=ctx.pos[d._i*3], py=ctx.pos[d._i*3+1], pz=ctx.pos[d._i*3+2], n=Math.round(44*mul);   // B349 (user) : un peu moins dense
   for (let k=0;k<n;k++){                                           // B347 (user) : MOINS DENSE (on doit distinguer chaque étincelle) — forme et largeur inchangées
     const e=vrand(Math.random), rr=d._rt*Math.cbrt(Math.random()), u=Math.random()*6*dt, gold=Math.random()<0.80;
     const sp=0.25+Math.random()*0.65;
