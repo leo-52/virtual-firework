@@ -165,6 +165,14 @@ export class PyroAudio {
     this._shot('dragon', 0.10*att(dist), dly(dist), 0.12, 1.35, () => this._dragonEggBuffer(), 0.30, 3200);
   }
 
+  // POINTE EN QUEUE DE CHEVAL (B369, user) : « elle éclate mais d'un bruit SOURD, presque comme
+  // une botte de chandelle à la sortie du tube » -> le son de départ, à peine plus présent et
+  // toujours très étouffé : un « pouf » mat, sans claquement.
+  candleTip(dist){
+    if (!this._ready()) return;
+    this._shot('launch', 0.060*att(dist), dly(dist), 0.12, 1.45, () => this._launchBuffer(), 0.10, 300);
+  }
+
   // EXPLOSION EN L'AIR (toute bombe) = « Bombe 75mm.mp3 » (claquement + boom qui roule + échos,
   // tels quels — le mp3 contient déjà tout).
   breakOpen(cal, dist){

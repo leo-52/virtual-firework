@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B367';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B369';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -234,6 +234,7 @@ const GOLD=new THREE.Color(1.0,0.72,0.32), DIMGOLD=new THREE.Color(0.55,0.40,0.1
   RED=new THREE.Color(1.0,0.14,0.18), PURP=new THREE.Color(0.6,0.35,1.0), WHITE=new THREE.Color(1.0,1.0,1.0),
   BRIGHTGOLD=new THREE.Color(1.4,1.0,0.45),   // or HDR (traînées bien visibles à distance, ex saule kamuro)
   COPPER=new THREE.Color(1.22,0.60,0.16),     // orange CUIVRÉ braise (photos user B136, saule kamuro réel — plus chaud que GOLD, un peu plus doré qu'EMBER)
+  WARMSILVER=new THREE.Color(1.15,1.02,0.86), // « ARGENT » des chandelles (B368, mesuré) : blanc CHAUD type titane/magnalium, surtout pas bleuté
   PALEGOLD=new THREE.Color(1.0,0.88,0.68),    // or PÂLE pour autres usages
   EGGWHITE=new THREE.Color(1.0,0.95,0.92),    // BLANC (ancien œuf de dragon, trop froid)
   EGGGOLD=new THREE.Color(1.4,1.18,0.88),     // BLANC CHAUD / champagne, HDR (œuf de dragon, retour B61 ; réf photo = amas blancs à reflets chauds). MÊME couleur traînée + points + cœur
@@ -1348,16 +1349,32 @@ const EFFECTS = {
   // CHANDELLE 30 mm 8 TIRS POT À FEU + COMÈTE TRAÇANTE (B367) : réfs 501314000 & co (65 m, 25 s).
   // Gros calibre de chandelle : à chaque coup, une GERBE au sol depuis le tube ET une COMÈTE
   // TRAÇANTE qui monte, toutes deux de la couleur de la référence.
-  candle30: { apex:65, cal:30, heat:false, pureColor:true, gravStar:0.5, dragStar:2.0, lifeBase75:1.1, lifeJitter:0.22, restExtra:0.8,
+  // B368 (vidéo 501314000 décomposée) : la fiche annonce 65 m mais la mesure donne 38-40 m —
+  // la décélération près du sommet vaut g, ce qui fixe l'échelle sans ambiguïté. La TRAÎNÉE fait
+  // 85-95 % de la hauteur atteinte (≈ 33 m), la tête s'éteint pile à l'apex, et « argent » est un
+  // BLANC CHAUD (aucun pixel bleu écrêté sur 1690 mesurés), pas un blanc bleuté.
+  candle30: { apex:43, cal:30, heat:false, pureColor:true, gravStar:0.5, dragStar:2.0, lifeBase75:1.1, lifeJitter:0.22, restExtra:1.2,
             noIgnite:true, onStar:candleFn,
-            stars:1, starSize:2.0, speedMul:0.02, riseTime:2.9, riseLean:0, riseTrail:false, headSize:2.0,
+            stars:1, starSize:1.4, speedMul:0.02, riseTime:3.41, riseLean:2, riseTrail:false, headSize:2.2, headShrink:true,
             riseColor:new THREE.Color(1.50,1.15,0.72), riseColorFromStar:true, riseSwitch:0.10,
             noFlash:true, burstSparks:false, riseSparksFromStar:true,
-            riseSparks:{ n:4, size:0.85, life:0.22, jit:0.22, color:SILVER } },
+            riseSparks:{ n:2, size:0.80, life:1.80, jit:0.30, until:0.62, color:WARMSILVER } },   // vie 0,22 -> 1,80 s : c'est ce qui fait la traînée de 33 m ; until 0.62 : elle s'éteint avant l'apex
+  // CHANDELLE 30 mm 8 TIRS COMÈTE TRAÇANTE + QUEUE DE CHEVAL POINTE (B369, photos user, réfs
+  // 501342000 & co, 60 m, 30 s) : même comète traçante, mais au sommet elle éclate d'un BRUIT
+  // SOURD (« presque comme une botte de chandelle à la sortie du tube ») en 4 PETITS BRINS fins
+  // d'environ 1 m — la pointe en queue de cheval.
+  candle30qc: { apex:43, cal:30, heat:false, pureColor:true, gravStar:0.9, dragStar:1.6, lifeBase75:1.5, lifeJitter:0.25, restExtra:1.2,
+            noIgnite:true, stars:4, starSize:0.85, speedMul:0.013, speedJit:0.30, randomAxis:true,   // brins COURTS : ~1 m (user)
+            riseTime:3.41, riseLean:2, riseTrail:false, headSize:2.2, headShrink:true,
+            riseColor:new THREE.Color(1.50,1.15,0.72), riseColorFromStar:true, riseSwitch:0.10,
+            noFlash:true, burstSparks:false, riseSparksFromStar:true,
+            riseSparks:{ n:2, size:0.80, life:1.80, jit:0.30, until:0.62, color:WARMSILVER },
+            trailing:{emitUntil:0.92, period:0.008, grain:0.65, gF:0.30, lifeMul:1.1, color:WARMSILVER, fixedColor:true, spark:true, jit:0.12} },
   // POT À FEU DE CHANDELLE 30 mm (B367) : gerbe de la couleur de la référence, tirée en même
-  // temps que la comète (la couleur arrive par la paire de la séquence).
-  mine30c: { cal:30, color:SILVER, heat:false, pureColor:true, starSize:1.1, stars:34, gravStar:1.0, dragStar:0.21, shrink:true,
-            gerbe:{ dur:0.12, cometRate:130, cone:0.12, speedMul:1.15 } },
+  // temps que la comète. B368 : cône ÉVASÉ (±25° au lieu de ±7°), émission ENTRETENUE 0,6 s au
+  // lieu d'un bouchon instantané, et 200 billes au lieu de 34 ; sommet ≈ 0,27 × apex de la comète.
+  mine30c: { cal:30, color:WARMSILVER, heat:false, pureColor:true, starSize:1.1, stars:200, gravStar:1.0, dragStar:0.21, shrink:true,
+            gerbe:{ dur:0.60, cometRate:150, cone:0.44, speedMul:1.05 } },
   // CHANDELLE ŒUF DE DRAGON (B358) : réfs « botte de 3 / de 7 chandelles 10 mm 20 tirs oeuf de
   // dragon » (501355000 / 501353000). Même bille, mais elle CRÉPITE en montant au lieu de tenir
   // une couleur : la tête reste dorée et sème des micro-éclats blanc chaud tout autour.
@@ -1412,7 +1429,8 @@ export const LABELS = { peony:'pivoine', chrysanthemum:'chrysanthème', willow:'
   zMeduse:'compact 40 tirs z méduse', cPotKamuro:'compact 20 tirs pot à feu + bombette kamuro', cPotRouge:'compact 20 tirs pot à feu + bombette rouge', cAscBleu:'compact 20 tirs kamuro ascension bleue', cTourbRouge:'compact 20 tirs disque de tourbillons asc. rouge',
   botte3:'botte de 3 chandelles 10 mm 20 tirs', botte7:'botte de 7 chandelles 10 mm 20 tirs',
   botte7egg:'botte de 7 chandelles 20 tirs œuf de dragon', botte3egg:'botte de 3 chandelles 20 tirs œuf de dragon',
-  ch30pot:'chandelle 30 mm 8 tirs pot à feu + comète traçante' };
+  ch30pot:'chandelle 30 mm 8 tirs pot à feu + comète traçante',
+  ch30qc:'chandelle 30 mm 8 tirs comète traçante + queue de cheval pointe' };
 
 // ============================================================================
 // SHELL
@@ -1807,12 +1825,20 @@ class Shell {
         // CHANDELLE (B351) : chapelet d'étincelles DISCRÈTES le long de la montée (1,5-2,5 m ;
         // il raccourcit tout seul en haut de course puisque la bille ralentit). B352 : la queue
         // reste AMBRÉE même quand la tête a viré à la couleur de la référence.
-        if (this.cfg.riseSparks){ const rs=this.cfg.riseSparks;
+        // B369 (photos user) : la traînée S'ARRÊTE en cours de montée (le traceur est consommé)
+        // alors que la comète, elle, CONTINUE — d'où le trou noir entre la tête et la traînée.
+        if (this.cfg.riseSparks && T < (this.cfg.riseSparks.until!==undefined ? this.cfg.riseSparks.until : 1.1)){ const rs=this.cfg.riseSparks;
           for (let k=0;k<rs.n;k++){ const fq=Math.random();
             spawnTrail(this.headLastX+(hx-this.headLastX)*fq, this.headLastY+(y-this.headLastY)*fq, this.headLastZ+(hz-this.headLastZ)*fq,
                        rs.color.r, rs.color.g, rs.color.b, rs.size, 0.25, (rs.life*(0.7+Math.random()*0.6))/0.26, 0,0,0, rs.jit, 0.5, true); } }
         // B352 : la bille sort DORÉE puis vire à la couleur de SA référence (vert, rose, aqua...).
         if (this.cfg.riseColor2 && !this._riseSw && T>this.cfg.riseSwitch){ this._riseSw=true; this.headMat.color.copy(this.cfg.riseColor2); }
+        // B368 (mesuré) : la tête FAIBLIT en montant — elle finit ~3 fois plus petite et bien
+        // moins lumineuse qu'à la sortie du tube.
+        if (this.cfg.headShrink){ const f=1-0.68*T;
+          this.headMat.size=this.cfg.headSize*f;
+          const bc=this._riseSw?this.cfg.riseColor2:this.cfg.riseColor;
+          this.headMat.color.setRGB(bc.r*f, bc.g*f, bc.b*f); }
         // ŒUF DE DRAGON EN CHANDELLE (B358) : passé une fraction de la montée, la bille CRÉPITE —
         // des micro-éclats blanc chaud projetés autour d'elle, qui se figent et s'éteignent.
         if (this.cfg.riseCrackle && T>this.cfg.riseCrackle.from){
@@ -2009,10 +2035,16 @@ export const COMPACTS = {
   ch30pot: { arch:'candle30', tubes:1, shotsPerTube:8, tirs:8, dur:25, pattern:'candle', fanDeg:0,
              mine:'mine30c', mineColored:true,
              label:'chandelle 30 mm 8 tirs pot à feu + comète traçante',
-             variants:[ {n:'argent', r:'501314000', c:SILVER},  {n:'rouge', r:'501316000', c:RED},
+             variants:[ {n:'argent', r:'501314000', c:WARMSILVER}, {n:'rouge', r:'501316000', c:RED},
                         {n:'vert', r:'501319000', c:GRN},       {n:'violet', r:'501320000', c:PURP},
                         {n:'aqua', r:'501323000', c:CYAN},      {n:'bleu', r:'501317000', c:BLU},
                         {n:'rose', r:'501318000', c:PINK},      {n:'citron', r:'501321000', c:YEL} ] },
+  ch30qc: { arch:'candle30qc', tubes:1, shotsPerTube:8, tirs:8, dur:30, pattern:'candle', fanDeg:0,
+             label:'chandelle 30 mm 8 tirs comète traçante + queue de cheval pointe',
+             variants:[ {n:'argent', r:'501342000', c:WARMSILVER}, {n:'rouge', r:'501344000', c:RED},
+                        {n:'vert', r:'501345000', c:GRN},       {n:'violet', r:'501346000', c:PURP},
+                        {n:'aqua', r:'501348000', c:CYAN},      {n:'bleu', r:'501350000', c:BLU},
+                        {n:'rose', r:'501351000', c:PINK},      {n:'citron', r:'501352000', c:YEL} ] },
 };
 // B242 (user : « il faut quelques défauts — ça reste de la POUDRE ») : chaque intervalle de
 // mèche brûle un peu inégalement (±6 % entre tubes, ±10 % entre rangées), les tubes ont ±1°

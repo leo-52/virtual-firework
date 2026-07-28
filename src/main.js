@@ -109,14 +109,15 @@ Object.assign(pick.style, { position:'fixed', top:'10px', right:'10px', zIndex:'
 for (const [k, label] of Object.entries(LABELS)){
   const o = document.createElement('option'); o.value = k; o.textContent = label; pick.appendChild(o);
 }
-pick.value = 'ch30pot';
+pick.value = 'ch30qc';
 // changer d'effet dans le menu -> couleur PAR DÉFAUT de l'effet (null annule l'override de la démo)
 pick.addEventListener('change', e => layer.setFocus(e.target.value, null));
 document.body.appendChild(pick);
 
-// DÉMO (réglage en cours) : CHANDELLE 30 mm 8 TIRS POT À FEU + COMÈTE TRAÇANTE (réfs 501314000
-// & co, 65 m, 25 s, B367) : à chaque coup, une gerbe au sol et une comète traçante qui monte.
-layer.setFocus('ch30pot');
+// DÉMO (réglage en cours) : CHANDELLE 30 mm 8 TIRS COMÈTE TRAÇANTE + QUEUE DE CHEVAL POINTE
+// (réfs 501342000 & co, B369, photos user) : la traînée s'éteint en route, la comète continue
+// puis éclate d'un bruit sourd en 4 petits brins.
+layer.setFocus('ch30qc');
 
 // TIMELINE de lecture (barre en bas) + ESPACE = pause/play (fige les feux, caméra libre).
 const timeline = new Timeline(layer, LABELS);
@@ -156,6 +157,8 @@ layer.onBurst = (arch, cal, dist) => {
   else if (arch === 'tourbBomb') {}                              // B338 (user) : quasi SILENCIEUX (« pétard mouillé ») — pas de break
   else if (arch === 'candle10') {}                               // B355 (user) : chandelle — « pas de déto ni de flash à la fin », l'étoile s'éteint, c'est tout
   else if (arch === 'candle10egg') audio.candleEgg(dist);        // B360 : la bille claque au sommet — crépitement discret, PAS le break d'une 75 mm (bug : elle tombait dans le cas par défaut)
+  else if (arch === 'candle30') {}                               // B368 : la comète traçante s'éteint sans bruit
+  else if (arch === 'candle30qc') audio.candleTip(dist);         // B369 (user) : « elle éclate mais d'un bruit sourd, presque comme une botte de chandelle à la sortie du tube »
   else if (arch === 'd8'){ audio.breakOpen(cal, dist);           // B262 : D8 = break, puis les étoiles finissent en ŒUF DE DRAGON
     audio.crackle(cal, dist, 4.1); audio.crackle(cal, dist, 4.75, 0.7); }   //        B266 : crépitement visuel ~4,0-5,2 s -> 2 couches calées dessus + trajet
   else audio.breakOpen(cal, dist);                               // = « Bombe 75mm.mp3 »
