@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B343';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B344';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -933,7 +933,7 @@ function behaveTourb(d,A,dt,ctx){
     const Lw=Math.hypot(W[0],W[1],W[2])||1; W=[W[0]/Lw, W[1]/Lw, W[2]/Lw];
     let U=cross(W,[0,1,0]); if(len2(U)<0.01)U=cross(W,[1,0,0]); U=norm(U);
     d._U=U; d._V=norm(cross(W,U)); d._W=W;
-    d._R=0.14+Math.random()*0.55; d._va=0.50+Math.random()*0.95;   // serrage et avance très variables (1 à 2 m parcourus)
+    d._R=0.14+Math.random()*0.55; d._va=1.15+Math.random()*1.45;   // B344 (user) : PLUS de propulsion — ça file franchement dans sa direction (2 à 4 m)
     d._dr=(Math.random()*2-1)*0.55;                                // le régime de rotation monte ou tombe pendant le vol
     d._om=[(Math.random()*2-1)*0.5, (Math.random()*2-1)*0.5, (Math.random()*2-1)*0.5];  // dérive de l'axe : ça gîte en vol, sans repartir en arrière
     d.gMul=0.02;
@@ -955,10 +955,10 @@ function behaveTourb(d,A,dt,ctx){
   // B343 (photos user) : l'étoile crache des étincelles PAR MILLIERS, toutes fines, doré-argenté
   // -> ça fait une masse lumineuse dense qui suit le trajet, pas un trait dessiné.
   const px=ctx.pos[d._i*3], py=ctx.pos[d._i*3+1], pz=ctx.pos[d._i*3+2];
-  for (let k=0;k<11;k++){
-    const e=vrand(Math.random), sp=0.6+Math.random()*1.7, gold=Math.random()<0.5;
-    spawnTrail(px,py,pz, gold?1.22:0.95, gold?0.98:1.02, gold?0.62:1.12, 0.72, 0.16,
-               (0.28+Math.random()*0.50)/0.26,
+  for (let k=0;k<60;k++){                                          // B344 (user) : BEAUCOUP plus d'étincelles, bien plus FINES, et une envergure plus large
+    const e=vrand(Math.random), sp=1.7+Math.random()*4.0, gold=Math.random()<0.80;   // dominante DORÉE (le reste = champagne clair)
+    spawnTrail(px,py,pz, gold?1.28:1.05, gold?0.94:1.00, gold?0.44:0.86, 0.30, 0.16,
+               (0.30+Math.random()*0.72)/0.26,
                d.vx*0.5+e[0]*sp, d.vy*0.5+e[1]*sp, d.vz*0.5+e[2]*sp, 0.5, 0.34, true);
   }
 }
@@ -1287,7 +1287,7 @@ const EFFECTS = {
   tourbBomb: { apex:38, cal:30, heat:false, pureColor:true, stars:1, starSize:2.2, lifeBase75:2.8, lifeJitter:0.18, restExtra:1,   // B342 : étoile plus GROSSE (l'envergure du tourbillon, elle, ne bouge pas)
             color:new THREE.Color(1.5,1.5,1.6), riseLean:2.5, riseTrail:false, headSize:1.6, riseColor:new THREE.Color(2.0,0.35,0.30),
             noFlash:true, burstSparks:false, dist:distTourb, behave:behaveTourb,
-            trailing:{emitUntil:0.97, period:0.0009, grain:0.55, gF:0.13, lifeMul:6, color:new THREE.Color(1.10,1.05,0.90), fixedColor:true, spark:true, jit:0.30} },   // B343 : des MILLIERS d'étincelles TRÈS FINES (photos user)
+            trailing:{emitUntil:0.97, period:0.0009, grain:0.30, gF:0.13, lifeMul:6, color:new THREE.Color(1.25,0.98,0.58), fixedColor:true, spark:true, jit:0.30} },   // B343 fines / B344 : plus DORÉ et plus fines encore
   // POT À FEU 30 mm (B325) : la gerbe du pot à feu validé, réduite à l'échelle du compact.
   mine30: { cal:30, color:DIMGOLD, heat:false, pureColor:true, starSize:1.2, stars:30, gravStar:1.0, dragStar:0.21, shrink:true,
             trailing:{emitUntil:0.95, period:0.008, grain:0.8, gF:0.05, lifeMul:6, color:new THREE.Color(0.30,0.17,0.14), jit:0.15},
