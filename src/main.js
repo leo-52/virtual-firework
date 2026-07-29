@@ -109,15 +109,15 @@ Object.assign(pick.style, { position:'fixed', top:'10px', right:'10px', zIndex:'
 for (const [k, label] of Object.entries(LABELS)){
   const o = document.createElement('option'); o.value = k; o.textContent = label; pick.appendChild(o);
 }
-pick.value = 'ch30qc';
+pick.value = 'ch30pot';
 // changer d'effet dans le menu -> couleur PAR DÉFAUT de l'effet (null annule l'override de la démo)
 pick.addEventListener('change', e => layer.setFocus(e.target.value, null));
 document.body.appendChild(pick);
 
-// DÉMO (réglage en cours) : CHANDELLE 30 mm 8 TIRS COMÈTE TRAÇANTE + QUEUE DE CHEVAL POINTE
-// (réfs 501342000 & co, B369, photos user) : la traînée s'éteint en route, la comète continue
-// puis éclate d'un bruit sourd en 4 petits brins.
-layer.setFocus('ch30qc');
+// DÉMO (réglage en cours) : CHANDELLE 30 mm 8 TIRS POT À FEU + COMÈTE TRAÇANTE (réfs 501314000
+// & co, B376) : la sœur de la queue de cheval — à chaque coup, une gerbe au sol de la couleur de
+// la référence et une comète traçante qui monte, mais SANS pointe à l'arrivée.
+layer.setFocus('ch30pot');
 
 // TIMELINE de lecture (barre en bas) + ESPACE = pause/play (fige les feux, caméra libre).
 const timeline = new Timeline(layer, LABELS);
