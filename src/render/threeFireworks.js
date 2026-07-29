@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B372';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B373';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -1369,8 +1369,8 @@ const EFFECTS = {
   // 501342000 & co, 60 m, 30 s) : même comète traçante, mais au sommet elle éclate d'un BRUIT
   // SOURD (« presque comme une botte de chandelle à la sortie du tube ») en 4 PETITS BRINS fins
   // d'environ 1 m — la pointe en queue de cheval.
-  candle30qc: { apex:43, cal:30, heat:false, pureColor:true, gravStar:0.30, dragStar:0.9, lifeBase75:1.5, lifeJitter:0.25, restExtra:1.2,
-            noIgnite:true, stars:4, starSize:0.85, speedMul:0.160, speedJit:0.30, dist:distQC,   // B372 (user) : brins de 1 à 2 m
+  candle30qc: { apex:34, cal:30, heat:false, pureColor:true, gravStar:0.30, dragStar:0.9, lifeBase75:1.5, lifeJitter:0.25, restExtra:1.2,   // B373 (user) : ~30 m rendus (38 avant)
+            noIgnite:true, stars:4, starSize:0.85, speedMul:0.265, speedJit:0.30, dist:distQC,   // B373 (photo user) : brins PLUS LONGS — un vrai panache
             riseTime:3.41, riseLean:2, riseTrail:false, headSize:2.2, headShrink:true,
             riseColor:new THREE.Color(1.50,1.15,0.72), riseColorFromStar:true, riseSwitch:0.10,
             noFlash:true, burstSparks:false,
@@ -1468,7 +1468,7 @@ class Shell {
     // quelques grains isolés. En haut, le trou de 3 m sous l'éclatement reste tiré au sort.
     this._rsFrom=0; this._rsUntil=1.1;
     if (this.cfg.riseSparks && this.cfg.riseSparks.gap!==false){
-      this._rsFrom=0.067;
+      this._rsFrom=0.126;                        // B373 (photo user) : la traînée ne démarre qu'à ~9 m du tube (au lieu de 5)
       if (Math.random()<0.5) this._rsUntil=0.72;
     }
     if (this.cfg.trailColorFromStar && this.cfg.trailing && this.cfg.colors)
