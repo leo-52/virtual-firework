@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B374';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B375';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -1016,7 +1016,9 @@ function distTourb(i,n,rnd){ const v=vrand(rnd); return {dx:v[0], dy:Math.abs(v[
 // QUEUE DE CHEVAL POINTE (B370, photo user) : les brins partent VERS LE HAUT en bouquet serré
 // (14-35° de l'axe), pas en étoile — la comète continue sa lancée en se divisant.
 function distQC(i,n,rnd){
-  const a=rnd()*Math.PI*2, tilt=0.18+rnd()*0.26, st=Math.sin(tilt);   // bouquet SERRÉ (10-25°)
+  // B375 : les 4 brins sont RÉPARTIS autour de l'axe (+ défaut de ±20°) — en tirant les azimuts
+  // au hasard, deux brins se superposaient parfois et on n'en voyait plus que 3.
+  const a=(i/n)*Math.PI*2+(rnd()-0.5)*0.7, tilt=0.18+rnd()*0.26, st=Math.sin(tilt);   // bouquet SERRÉ (10-25°)
   return { dx:Math.cos(a)*st, dy:Math.cos(tilt), dz:Math.sin(a)*st, spMul:0.8+rnd()*0.55, comp:0 };
 }
 // CHANDELLE ROMAINE (B351, vidéo décomposée) : dans les 0,3 dernières secondes, 1 à 3 micro-braises
