@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B370';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B371';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -1016,7 +1016,7 @@ function distTourb(i,n,rnd){ const v=vrand(rnd); return {dx:v[0], dy:Math.abs(v[
 // QUEUE DE CHEVAL POINTE (B370, photo user) : les brins partent VERS LE HAUT en bouquet serré
 // (14-35° de l'axe), pas en étoile — la comète continue sa lancée en se divisant.
 function distQC(i,n,rnd){
-  const a=rnd()*Math.PI*2, tilt=0.25+rnd()*0.36, st=Math.sin(tilt);
+  const a=rnd()*Math.PI*2, tilt=0.18+rnd()*0.26, st=Math.sin(tilt);   // bouquet SERRÉ (10-25°)
   return { dx:Math.cos(a)*st, dy:Math.cos(tilt), dz:Math.sin(a)*st, spMul:0.8+rnd()*0.55, comp:0 };
 }
 // CHANDELLE ROMAINE (B351, vidéo décomposée) : dans les 0,3 dernières secondes, 1 à 3 micro-braises
@@ -1363,19 +1363,19 @@ const EFFECTS = {
             noIgnite:true, onStar:candleFn,
             stars:1, starSize:1.4, speedMul:0.02, riseTime:3.41, riseLean:2, riseTrail:false, headSize:2.2, headShrink:true,
             riseColor:new THREE.Color(1.50,1.15,0.72), riseColorFromStar:true, riseSwitch:0.10,
-            noFlash:true, burstSparks:false, riseSparksFromStar:true,
-            riseSparks:{ n:2, size:0.80, life:1.80, jit:0.30, until:0.62, color:WARMSILVER } },   // vie 0,22 -> 1,80 s : c'est ce qui fait la traînée de 33 m ; until 0.62 : elle s'éteint avant l'apex
+            noFlash:true, burstSparks:false,
+            riseSparks:{ n:6, size:0.65, life:1.30, jit:0.40, color:COPPER } },   // B371 (user) : la traînée est DORÉE (recette de référence), jamais de la couleur de la réf
   // CHANDELLE 30 mm 8 TIRS COMÈTE TRAÇANTE + QUEUE DE CHEVAL POINTE (B369, photos user, réfs
   // 501342000 & co, 60 m, 30 s) : même comète traçante, mais au sommet elle éclate d'un BRUIT
   // SOURD (« presque comme une botte de chandelle à la sortie du tube ») en 4 PETITS BRINS fins
   // d'environ 1 m — la pointe en queue de cheval.
-  candle30qc: { apex:43, cal:30, heat:false, pureColor:true, gravStar:0.9, dragStar:1.6, lifeBase75:1.5, lifeJitter:0.25, restExtra:1.2,
-            noIgnite:true, stars:4, starSize:0.85, speedMul:0.075, speedJit:0.30, dist:distQC,   // brins COURTS (~1 m) et EN BOUQUET VERS LE HAUT (user)
+  candle30qc: { apex:43, cal:30, heat:false, pureColor:true, gravStar:0.30, dragStar:0.9, lifeBase75:1.5, lifeJitter:0.25, restExtra:1.2,
+            noIgnite:true, stars:4, starSize:0.85, speedMul:0.135, speedJit:0.30, dist:distQC,   // B371 : ça ÉCLATE vraiment en 4 brins qui montent (~1,3 m)
             riseTime:3.41, riseLean:2, riseTrail:false, headSize:2.2, headShrink:true,
             riseColor:new THREE.Color(1.50,1.15,0.72), riseColorFromStar:true, riseSwitch:0.10,
-            noFlash:true, burstSparks:false, riseSparksFromStar:true,
-            riseSparks:{ n:2, size:0.80, life:1.80, jit:0.30, until:0.62, color:WARMSILVER },
-            trailing:{emitUntil:0.92, period:0.008, grain:0.65, gF:0.30, lifeMul:1.1, color:WARMSILVER, fixedColor:true, spark:true, jit:0.12} },
+            noFlash:true, burstSparks:false,
+            riseSparks:{ n:6, size:0.65, life:1.30, jit:0.40, color:COPPER },   // B371 (user) : vraies étincelles DORÉES (jamais la couleur de la réf), plus fines et plus nombreuses
+            trailing:{emitUntil:0.95, period:0.005, grain:0.7, gF:0.20, lifeMul:2.2, color:COPPER, fixedColor:true, spark:true, jit:0.15} },
   // POT À FEU DE CHANDELLE 30 mm (B367) : gerbe de la couleur de la référence, tirée en même
   // temps que la comète. B368 : cône ÉVASÉ (±25° au lieu de ±7°), émission ENTRETENUE 0,6 s au
   // lieu d'un bouchon instantané, et 200 billes au lieu de 34 ; sommet ≈ 0,27 × apex de la comète.
@@ -1843,11 +1843,19 @@ class Shell {
         // 3 m au-dessus du tube et jusqu'à l'éclatement.
         if (this.cfg.riseSparks && T>this._rsFrom && T<this._rsUntil){ const rs=this.cfg.riseSparks;
           for (let k=0;k<rs.n;k++){ const fq=Math.random();
-            // B370 (user) : quelques étincelles PERSISTANTES -> à l'apogée il reste encore une
-            // mini trace de la traînée dans le ciel.
-            const pers=Math.random()<0.05, lm=(rs.life*(pers?4.5+Math.random()*3:0.7+Math.random()*0.6))/0.26;
-            spawnTrail(this.headLastX+(hx-this.headLastX)*fq, this.headLastY+(y-this.headLastY)*fq, this.headLastZ+(hz-this.headLastZ)*fq,
-                       rs.color.r, rs.color.g, rs.color.b, rs.size*(pers?0.8:1), 0.25, lm, 0,0,0, rs.jit, 0.5, true); } }
+            // B371 (user) : « une traînée comme la référence, avec de VRAIES étincelles dorées,
+            // pas de couleur, plus petites mais plus nombreuses » -> recette du tronc zigzag :
+            // grains fins semés le long du trajet, aux vies ÉTAGÉES (72 % brèves = la bande dense
+            // sous la comète, 22 % moyennes, 6 % longues = les rares qui traînent encore à
+            // l'apogée).
+            const u=Math.random();
+            const lm = rs.life*(u<0.72 ? (0.55+Math.random()*0.35)
+                              : u<0.94 ? (1.6+Math.random()*1.2)
+                                       : (4.5+Math.random()*3.0))/0.26;
+            spawnTrail(this.headLastX+(hx-this.headLastX)*fq+(Math.random()-0.5)*0.4,
+                       this.headLastY+(y-this.headLastY)*fq+(Math.random()-0.5)*0.4,
+                       this.headLastZ+(hz-this.headLastZ)*fq+(Math.random()-0.5)*0.4,
+                       rs.color.r, rs.color.g, rs.color.b, rs.size, 0.13, lm, 0,0,0, rs.jit, 0.42, true); } }
         // B352 : la bille sort DORÉE puis vire à la couleur de SA référence (vert, rose, aqua...).
         if (this.cfg.riseColor2 && !this._riseSw && T>this.cfg.riseSwitch){ this._riseSw=true; this.headMat.color.copy(this.cfg.riseColor2); }
         // B368 (mesuré) : la tête FAIBLIT en montant — elle finit ~3 fois plus petite et bien
