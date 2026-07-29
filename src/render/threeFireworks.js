@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B373';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B374';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -1369,8 +1369,8 @@ const EFFECTS = {
   // 501342000 & co, 60 m, 30 s) : même comète traçante, mais au sommet elle éclate d'un BRUIT
   // SOURD (« presque comme une botte de chandelle à la sortie du tube ») en 4 PETITS BRINS fins
   // d'environ 1 m — la pointe en queue de cheval.
-  candle30qc: { apex:34, cal:30, heat:false, pureColor:true, gravStar:0.30, dragStar:0.9, lifeBase75:1.5, lifeJitter:0.25, restExtra:1.2,   // B373 (user) : ~30 m rendus (38 avant)
-            noIgnite:true, stars:4, starSize:0.85, speedMul:0.265, speedJit:0.30, dist:distQC,   // B373 (photo user) : brins PLUS LONGS — un vrai panache
+  candle30qc: { apex:34, cal:30, heat:false, pureColor:true, gravStar:0.30, dragStar:0.75, lifeBase75:1.9, lifeJitter:0.25, restExtra:1.2,   // B373 : ~30 m rendus. B374 : brins plus longs (vie et freinage revus)
+            noIgnite:true, stars:4, starSize:0.85, speedMul:0.295, speedJit:0.30, dist:distQC,   // B374 (user) : brins encore un poil plus longs (~4,3 m)
             riseTime:3.41, riseLean:2, riseTrail:false, headSize:2.2, headShrink:true,
             riseColor:new THREE.Color(1.50,1.15,0.72), riseColorFromStar:true, riseSwitch:0.10,
             noFlash:true, burstSparks:false,
