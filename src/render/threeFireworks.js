@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B371';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B372';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -1370,7 +1370,7 @@ const EFFECTS = {
   // SOURD (« presque comme une botte de chandelle à la sortie du tube ») en 4 PETITS BRINS fins
   // d'environ 1 m — la pointe en queue de cheval.
   candle30qc: { apex:43, cal:30, heat:false, pureColor:true, gravStar:0.30, dragStar:0.9, lifeBase75:1.5, lifeJitter:0.25, restExtra:1.2,
-            noIgnite:true, stars:4, starSize:0.85, speedMul:0.135, speedJit:0.30, dist:distQC,   // B371 : ça ÉCLATE vraiment en 4 brins qui montent (~1,3 m)
+            noIgnite:true, stars:4, starSize:0.85, speedMul:0.160, speedJit:0.30, dist:distQC,   // B372 (user) : brins de 1 à 2 m
             riseTime:3.41, riseLean:2, riseTrail:false, headSize:2.2, headShrink:true,
             riseColor:new THREE.Color(1.50,1.15,0.72), riseColorFromStar:true, riseSwitch:0.10,
             noFlash:true, burstSparks:false,
@@ -1463,9 +1463,13 @@ class Shell {
     // B370 (user) : le trou de ~3 m est tantôt EN HAUT, tantôt EN BAS — tiré au sort par coup.
     // (T est le temps de montée ; la montée étant freinée, 3 m sur ~38 valent T=0,04 en bas et
     //  T=0,72 en haut.)
+    // B372 (user) : « je ne veux RIEN à 5 m du tube, sauf 5-10 étincelles parasites » -> la
+    // traînée dense ne démarre qu'à ~5 m (T=0,067 vu le freinage), et en dessous il ne tombe que
+    // quelques grains isolés. En haut, le trou de 3 m sous l'éclatement reste tiré au sort.
     this._rsFrom=0; this._rsUntil=1.1;
     if (this.cfg.riseSparks && this.cfg.riseSparks.gap!==false){
-      if (Math.random()<0.5) this._rsUntil=0.72; else this._rsFrom=0.04;
+      this._rsFrom=0.067;
+      if (Math.random()<0.5) this._rsUntil=0.72;
     }
     if (this.cfg.trailColorFromStar && this.cfg.trailing && this.cfg.colors)
       this.cfg.trailing = Object.assign({}, this.cfg.trailing, { color: this.cfg.colors[0], fixedColor:true });
@@ -1841,8 +1845,9 @@ class Shell {
         // B370 (user) : la traînée est COMPLÈTE, avec un trou de ~3 m à UNE des deux extrémités,
         // tiré au sort par coup : soit du tube jusqu'à 3 m sous l'éclatement, soit à partir de
         // 3 m au-dessus du tube et jusqu'à l'éclatement.
-        if (this.cfg.riseSparks && T>this._rsFrom && T<this._rsUntil){ const rs=this.cfg.riseSparks;
-          for (let k=0;k<rs.n;k++){ const fq=Math.random();
+        if (this.cfg.riseSparks && T<this._rsUntil){ const rs=this.cfg.riseSparks;
+          const bas=T<this._rsFrom, nEmit=bas ? (Math.random()<0.16?1:0) : rs.n;   // près du tube : rien, sauf quelques parasites
+          for (let k=0;k<nEmit;k++){ const fq=Math.random();
             // B371 (user) : « une traînée comme la référence, avec de VRAIES étincelles dorées,
             // pas de couleur, plus petites mais plus nombreuses » -> recette du tronc zigzag :
             // grains fins semés le long du trajet, aux vies ÉTAGÉES (72 % brèves = la bande dense
