@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B377';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B378';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -1363,7 +1363,7 @@ const EFFECTS = {
   // BLANC CHAUD (aucun pixel bleu écrêté sur 1690 mesurés), pas un blanc bleuté.
   candle30: { apex:43, cal:30, heat:false, pureColor:true, gravStar:0.5, dragStar:2.0, lifeBase75:1.1, lifeJitter:0.22, restExtra:1.2,
             noIgnite:true, onStar:candleFn,
-            stars:1, starSize:1.4, speedMul:0.02, riseTime:3.41, riseLean:2, riseTrail:false, headSize:2.2, headShrink:true,
+            stars:1, starSize:1.6, speedMul:0.02, riseTime:3.41, riseLean:2, riseTrail:false, headSize:2.4, headShrink:true,   // B378 (user) : l'étoile de la comète +0,2
             riseColor:new THREE.Color(1.50,1.15,0.72), riseColorFromStar:true, riseSwitch:0.10,
             noFlash:true, burstSparks:false,
             riseSparks:{ n:6, size:0.65, life:1.30, jit:0.40, color:COPPER } },   // B371 (user) : la traînée est DORÉE (recette de référence), jamais de la couleur de la réf
@@ -1373,7 +1373,7 @@ const EFFECTS = {
   // d'environ 1 m — la pointe en queue de cheval.
   candle30qc: { apex:34, cal:30, heat:false, pureColor:true, gravStar:0.30, dragStar:0.75, lifeBase75:1.9, lifeJitter:0.25, restExtra:1.2,   // B373 : ~30 m rendus. B374 : brins plus longs (vie et freinage revus)
             noIgnite:true, stars:4, starSize:0.85, speedMul:0.295, speedJit:0.30, dist:distQC,   // B374 (user) : brins encore un poil plus longs (~4,3 m)
-            riseTime:3.41, riseLean:2, riseTrail:false, headSize:2.2, headShrink:true,
+            riseTime:3.41, riseLean:2, riseTrail:false, headSize:2.4, headShrink:true,   // B378 (user) : l'étoile de la comète +0,2
             riseColor:new THREE.Color(1.50,1.15,0.72), riseColorFromStar:true, riseSwitch:0.10,
             noFlash:true, burstSparks:false,
             riseSparks:{ n:6, size:0.65, life:1.30, jit:0.40, color:COPPER },   // B371 (user) : vraies étincelles DORÉES (jamais la couleur de la réf), plus fines et plus nombreuses
