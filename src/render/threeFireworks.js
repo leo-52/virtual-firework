@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B376';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B377';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -1378,11 +1378,13 @@ const EFFECTS = {
             noFlash:true, burstSparks:false,
             riseSparks:{ n:6, size:0.65, life:1.30, jit:0.40, color:COPPER },   // B371 (user) : vraies étincelles DORÉES (jamais la couleur de la réf), plus fines et plus nombreuses
             trailing:{emitUntil:0.95, period:0.005, grain:0.7, gF:0.20, lifeMul:2.2, color:COPPER, fixedColor:true, spark:true, jit:0.15} },
-  // POT À FEU DE CHANDELLE 30 mm (B367) : gerbe de la couleur de la référence, tirée en même
-  // temps que la comète. B368 : cône ÉVASÉ (±25° au lieu de ±7°), émission ENTRETENUE 0,6 s au
-  // lieu d'un bouchon instantané, et 200 billes au lieu de 34 ; sommet ≈ 0,27 × apex de la comète.
-  mine30c: { cal:30, color:WARMSILVER, heat:false, pureColor:true, starSize:1.1, stars:200, gravStar:1.0, dragStar:0.21, shrink:true,
-            gerbe:{ dur:0.60, cometRate:150, cone:0.36, speedMul:0.92 } },   // B376 : recalé sur les ratios vidéo — sommet ≈ 0,27 × apex, demi-angle ~21°
+  // POT À FEU DE CHANDELLE 30 mm : B377 (user) « le pot à feu ça doit être comme celle d'avant »
+  // -> c'est le MÊME OBJET que le pot à feu des compacts validé aux B325-B334 (même calibre 30 mm) :
+  // petites étoiles nettes, pas de traînée de fumée, gerbe basse et peu chargée. La couleur vient
+  // de la séquence. (Ma version « mesurée sur vidéo » — cône évasé, 200 billes, 0,6 s — est
+  // abandonnée : elle faisait une gerbe deux fois trop grosse.)
+  mine30c: { cal:30, color:WARMSILVER, heat:false, pureColor:true, starSize:1.05, stars:30, gravStar:1.0, dragStar:0.21, shrink:true,
+            gerbe:{ dur:0.1, cometRate:110, cone:0.11, speedMul:0.9 } },
   // CHANDELLE ŒUF DE DRAGON (B358) : réfs « botte de 3 / de 7 chandelles 10 mm 20 tirs oeuf de
   // dragon » (501355000 / 501353000). Même bille, mais elle CRÉPITE en montant au lieu de tenir
   // une couleur : la tête reste dorée et sème des micro-éclats blanc chaud tout autour.
