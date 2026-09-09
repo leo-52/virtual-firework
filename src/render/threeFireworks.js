@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B378';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B379';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -1378,6 +1378,22 @@ const EFFECTS = {
             noFlash:true, burstSparks:false,
             riseSparks:{ n:6, size:0.65, life:1.30, jit:0.40, color:COPPER },   // B371 (user) : vraies étincelles DORÉES (jamais la couleur de la réf), plus fines et plus nombreuses
             trailing:{emitUntil:0.95, period:0.005, grain:0.7, gF:0.20, lifeMul:2.2, color:COPPER, fixedColor:true, spark:true, jit:0.15} },
+  // CHANDELLE 30 mm 8 TIRS POT À FEU KAMURO + COMÈTE TRAÇANTE KAMURO (B379, vidéo 501315000
+  // décomposée) : la même comète que candle30, mais TOUT EN OR. La traînée n'est plus une queue
+  // qui suit la tête : c'est un DÉPÔT continu du tube à l'apex, SANS trou (gap:false), en perles
+  // plus grosses et plus « grasses » que la poussière fine des coloris. Vies étagées par
+  // l'ALTITUDE (lifeRise) -> le rideau (~30 m × 3 m) reste suspendu et s'éteint PAR LE BAS,
+  // encore visible au départ du tir suivant (cadence ~3,9 s < vie ~5 s : jamais de ciel vide).
+  // Tête du MÊME or que la traînée (aucune bascule couleur), morte SANS break ~0,5 s après
+  // l'apex. Aucun break mesuré, apex identique aux coloris (les 65 m du catalogue sont infirmés
+  // par la vidéo : montée 2,0-2,3 s). Pot à feu = mine30, le pot kamuro des compacts (même
+  // objet 30 mm, leçon du B377).
+  candle30k: { apex:43, cal:30, heat:false, pureColor:true, gravStar:0.5, dragStar:2.0, lifeBase75:0.85, lifeJitter:0.22, restExtra:2.4,
+            noIgnite:true, onStar:candleFn,
+            stars:1, starSize:1.6, speedMul:0.02, riseTime:3.41, riseLean:2, riseTrail:false, headSize:2.4, headShrink:true,
+            riseColor:new THREE.Color(1.50,1.15,0.72),
+            noFlash:true, burstSparks:false,
+            riseSparks:{ n:8, size:0.95, jit:0.40, color:COPPER, gap:false, lifeRise:[1.4,1.9,0.10] } },
   // POT À FEU DE CHANDELLE 30 mm : B377 (user) « le pot à feu ça doit être comme celle d'avant »
   // -> c'est le MÊME OBJET que le pot à feu des compacts validé aux B325-B334 (même calibre 30 mm) :
   // petites étoiles nettes, pas de traînée de fumée, gerbe basse et peu chargée. La couleur vient
@@ -1440,6 +1456,7 @@ export const LABELS = { peony:'pivoine', chrysanthemum:'chrysanthème', willow:'
   botte3:'botte de 3 chandelles 10 mm 20 tirs', botte7:'botte de 7 chandelles 10 mm 20 tirs',
   botte7egg:'botte de 7 chandelles 20 tirs œuf de dragon', botte3egg:'botte de 3 chandelles 20 tirs œuf de dragon',
   ch30pot:'chandelle 30 mm 8 tirs pot à feu + comète traçante',
+  ch30potk:'chandelle 30 mm 8 tirs pot à feu kamuro + comète traçante kamuro',
   ch30qc:'chandelle 30 mm 8 tirs comète traçante + queue de cheval pointe' };
 
 // ============================================================================
@@ -1858,7 +1875,12 @@ class Shell {
             // sous la comète, 22 % moyennes, 6 % longues = les rares qui traînent encore à
             // l'apogée).
             const u=Math.random();
-            const lm = rs.life*(u<0.72 ? (0.55+Math.random()*0.35)
+            // KAMURO (B379, vidéo 501315000) : la traînée est un DÉPÔT — la vie de chaque perle
+            // dépend de l'ALTITUDE où elle est semée : ~1,4 s au ras du tube, ~3,0 s dès 12 m
+            // (mesures par ligne fixe : 2,7-3,1 s de 12 à 27 m), rampe courte entre les deux
+            // (lifeRise=[base, gain, rampe en T]) : le rideau s'éteint PAR LE BAS, le haut reste.
+            const lm = rs.lifeRise ? (rs.lifeRise[0]+rs.lifeRise[1]*Math.min(1,T/rs.lifeRise[2]))*(0.85+Math.random()*0.30)/0.26
+                     : rs.life*(u<0.72 ? (0.55+Math.random()*0.35)
                               : u<0.94 ? (1.6+Math.random()*1.2)
                                        : (4.5+Math.random()*3.0))/0.26;
             spawnTrail(this.headLastX+(hx-this.headLastX)*fq+(Math.random()-0.5)*0.4,
@@ -2073,6 +2095,13 @@ export const COMPACTS = {
                         {n:'vert', r:'501319000', c:GRN},       {n:'violet', r:'501320000', c:PURP},
                         {n:'aqua', r:'501323000', c:CYAN},      {n:'bleu', r:'501317000', c:BLU},
                         {n:'rose', r:'501318000', c:PINK},      {n:'citron', r:'501321000', c:YEL} ] },
+  // B379 : la version KAMURO (501315000, 30 s) — pot à feu = mine30 (le pot kamuro des compacts,
+  // couleur propre : PAS de mineColored), comète = candle30k. La couleur de séquence (GOLD) ne
+  // sert qu'à l'étoile terminale — tête et traînée sont déjà or par construction.
+  ch30potk: { arch:'candle30k', tubes:1, shotsPerTube:8, tirs:8, dur:30, pattern:'candle', fanDeg:0,
+             mine:'mine30',
+             label:'chandelle 30 mm 8 tirs pot à feu + comète traçante',
+             variants:[ {n:'kamuro', r:'501315000', c:GOLD} ] },
   ch30qc: { arch:'candle30qc', tubes:1, shotsPerTube:8, tirs:8, dur:30, pattern:'candle', fanDeg:0,
              label:'chandelle 30 mm 8 tirs comète traçante + queue de cheval pointe',
              variants:[ {n:'argent', r:'501342000', c:WARMSILVER}, {n:'rouge', r:'501344000', c:RED},
