@@ -127,6 +127,18 @@ sur captures mélangées avec celles de FWsim) — toujours sans toucher à la p
 - **Lueur de l'air** retirée par défaut (« cercle de brouillard ») — `?air=1` pour la revoir.
 - **Réglages par l'adresse** (banc d'essai) : `?halo=px,I &halo2=px,I &thalo2=px,I &white= &expo= &var=
   &sspark= &minpx= &soft= &bloom=f,r,s &bloomf=5 poids &bloomk= &air= &sol=K,amb &fumee=0 &ciel=`.
+- **Mesure à l'aveugle (2026-10-22)** — 13 images PrevoFX choisies par règle fixe (4+3 instants de 2
+  spectacles + 6 bombes isolées), mélangées avec 10 captures FWsim publiques, notées par des relecteurs
+  indépendants ; note équivalente = 9 × (moyenne PrevoFX / moyenne FWsim) :
+  | | spectacle | bombes isolées | global |
+  |---|---|---|---|
+  | B379 (même relecteur que la ligne B381 c) | 7,3 | 5,2 | 6,3 |
+  | B381 relecteur a | 7,6 | 5,4 | 6,6 |
+  | B381 relecteur b | 7,8 | 5,2 | 6,6 |
+  | B381 relecteur c (lot avec B379) | 9,25 | 6,6 | 8,0 |
+  Ce qui reste bas : les effets « à points » vus seuls (pivoine, chrysanthème 50, dahlia, crépitement)
+  — tous les relecteurs veulent des FILÉS sur les étoiles, ce qui toucherait la pivoine validée (sans
+  traînée, boule quasi figée). Option non activée : `?expo=0.35` (pose plus longue du flou de mouvement).
 - ⚠️ **Banc d'essai** : entre deux captures sur la même page, il FAUT laisser s'éteindre traînées et
   fumée (≥ 25 s de simulation), sinon la fumée de l'effet précédent, éclairée par le suivant, pollue
   l'image (des tours de relecture ont été faussés ainsi).
