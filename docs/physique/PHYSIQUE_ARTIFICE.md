@@ -2,7 +2,7 @@
 
 Synthèse (2026-10-22) de 5 recherches documentaires, détaillées dans ce dossier :
 `01_bombe_balistique.md`, `02_etoiles_combustion.md`, `03_couleurs.md`,
-`04_etincelles_effets.md`, `05_fumee_atmosphere.md`.
+`04_etincelles_effets.md`, `05_fumee_atmosphere.md`, `06_artifices_chinois.md` (fournisseurs standard).
 Sources principales : Shimizu (*Fireworks: The Art, Science and Technique*), articles japonais
 mesurés (*Sci. Tech. Energetic Materials* : Ooki 2006, Ding 2007-2008, Wakabayashi 2006,
 Sashimura 2007, Inoue 2017-2022), Kosanke (*Journal of Pyrotechnics*), Juknelevičius/Klapötke
@@ -134,6 +134,38 @@ globalement sphérique. Visuel : flash central bref (< ~50 ms ⚠️), petit nua
   13-58 % sous incidence rasante 🧮. Son : 343 m/s (0,44 s à 150 m).
 
 ---
+
+## 6 bis. Fournisseurs standard (Chine : Liuyang / Liling) — ce que l'on tire réellement en Europe
+
+Chaque fabricant a ses recettes (c'est de l'artisanat, même à l'échelle industrielle), et la charge
+d'éclatement est adaptée à chaque effet. Ce qui est normé et mesuré (normes GB 19594-2015, GB 24284) :
+
+| Calibre (mortier) | Hauteur nominale | Plage admise | Ø de fleur (pivoine) |
+|---|---|---|---|
+| 75 mm (bombe 72 mm) | ~95 m | 50–120 m | 50–60 m |
+| 100 mm | ~115 m | 60–140 m | 70–80 m |
+| 125 mm | ~135 m | 80–190 m | 90–110 m |
+| 150 mm | ~155 m | 100–220 m | 110–130 m |
+| 200 mm | ~195 m | 130–260 m | 150–170 m |
+
+- Par rapport aux tables japonaises : hauteur −15 à −25 %, diamètre −25 à −35 % à mortier égal
+  (un « 6# » chinois = un 5 gō japonais). La norme impose Ø fleur ≤ hauteur.
+- **Le moteur est calé sur ce standard** (pivoine 75 mm ≈ 80 m, envergure ≈ 50-60 m) ✅.
+- Dispersion : hauteur σ ≈ 12 % (pro) à 18 % (économique), mesuré (Wharton 1995) ; ≥ 98 % d'étoiles
+  allumées exigé (donc 0-2 % d'aveugles) ; durée d'effet catalogue 2 s ±20 % (4"), 2,5 s ±20 % (5").
+- Symétrie (estimations) : direction de chaque étoile ±5-8° (sphérique chinoise) contre ±2-4°
+  (japonaise) ; bombe CYLINDRIQUE : fleur aplatie (rapport d'axes 1,3-1,6), plus brouillonne.
+- Puissance d'éclatement par effet : pivoine/chrysanthème FORTE ; couronne/saule/kamuro plus DOUCE
+  (~0,6-0,8× la vitesse d'éjection, chute longue) ; feuilles mortes TRÈS douce (fragments plats,
+  1-3 m/s, dérivent au vent) ; motifs : assez douce pour garder la forme.
+- **Motifs plans** : la bombe culbute (brevets chinois : présentation au public impossible à garantir).
+  Orientation uniforme -> **29 % des tirs à moins de 45° de la face**, ~7 % de cœurs lisibles ET à
+  l'endroit -> on les tire par 3 à 5.
+- Couleurs : aucune mesure comparative publiée ; défauts typiques cités par les fabricants eux-mêmes :
+  rouges rosâtres, bleus qui blanchissent ; changements de couleur moins synchrones (σ ~0,15 s contre
+  ~0,05 s en japonais).
+- Grammaire des catalogues : « effet A **to** effet B **with** pistil / traînée / crépitement »,
+  souvent avec un effet de MONTÉE (rising tail, rising flowers, whistle).
 
 ## 7. Comparaison avec le moteur PrevoFX (B382)
 
