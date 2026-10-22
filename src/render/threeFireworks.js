@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B381';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B382';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 // RENDU « VU À TRAVERS UNE CAMÉRA » (B380, user : « ça fait fade, faux, générique » face à FWsim).
 // La PHYSIQUE et les réglages d'effets ne bougent pas : seul l'ASPECT de chaque étoile change.
@@ -30,7 +30,7 @@ const _airQ = _qnum('air'); const AIR_ON = !LOOK_OLD && !!(_airQ && _airQ[0] > 0
 // haloPx = diamètre du halo À L'ÉCRAN (le halo d'une optique a une taille ~fixe en pixels : il
 // habille les petites étoiles lointaines, pas les grosses têtes — sinon celles-ci viraient au blanc) ;
 // haloMin = halo minimal en multiples de la boule (les grosses étoiles gardent un léger rayonnement).
-const STAR_LOOK  = LOOK_OLD ? { haloPx:0, haloMin:1, haloI:0, minPx:0, white:0, crisp:1 } : { haloPx:8, haloMin:1.3, haloI:0.13, halo2Px:20, halo2I:0.03, minPx:3.5, white:0.55, crisp:1.0, soft:1, spark:0.2, var:0.4 }   // spark/var (B381, user : « ça ne vit pas ») : léger vacillement de combustion + étoiles inégales;
+const STAR_LOOK  = LOOK_OLD ? { haloPx:0, haloMin:1, haloI:0, minPx:0, white:0, crisp:1 } : { haloPx:8, haloMin:1.3, haloI:0.13, halo2Px:20, halo2I:0.03, minPx:3.5, white:0.55, crisp:1.0, soft:1, spark:0.2, var:0.25 }   // spark/var (B381, user : « ça ne vit pas ») : léger vacillement de combustion + étoiles inégales;
 const TRAIL_LOOK = LOOK_OLD ? { haloPx:0, haloMin:1, haloI:0, minPx:0, white:0, crisp:1 } : { haloPx:4, haloMin:1.0, haloI:0.06, halo2Px:16, halo2I:0.02, minPx:0, spark:0.85, white:0.12, crisp:1 };   // spark (B381) : grains pailletés
 const BLOOM_FACTORS = [1.0, 0.8, 0.45, 0.12, 0.0];   // poids des 5 niveaux du bloom (Three.js : 1, 0.8, 0.6, 0.4, 0.2). B381 : les 2 plus larges coupés = plus de voile brun autour des saules (relecture à l'aveugle), lueur serrée gardée
 const BLOOM_DEF = LOOK_OLD ? [0.3, 0.22, 0.55] : [0.8, 0.0, 0.55];   // B381 : bloom ROND (cf noyau corrigé plus bas) -> on peut le pousser sans carrés ; SEUIL B106 (0.55) gardé = la masse faible ne fait toujours pas de brouillard.   // force, rayon, seuil — ceux de B106 (anti-brouillard). B381 : un bloom fort faisait des « étoiles carrées » sur certains GPU -> la lueur large est calculée par étoile (halo2)
@@ -184,8 +184,8 @@ const STAR_FS = `
 // pas l'objectif. Objectif plus large (B381 : 76°) ou écran en PORTRAIT (téléphone : le champ devient
 // vertical, 76° au lieu de ~47°) -> la bombe rapetisse à l'écran mais PAS ses étoiles -> elles se
 // chevauchent, s'additionnent et virent au blanc. Désormais la taille suit la focale : P11_REF = celle
-// de la B379 sur écran 16:9 (60° horizontal), là où les tailles (STAR_SCALE) ont été validées.
-const P11_REF = (LOOK_OLD || /[?&]angul=0\b/.test(_QS)) ? 0 : (16/9) / Math.tan(Math.PI/6);   // = 1/tan(demi-champ vertical) ≈ 3,08
+// du rendu sur écran 16:9 (ordinateur), là où les tailles ont été validées.
+const P11_REF = (LOOK_OLD || /[?&]angul=0\b/.test(_QS)) ? 0 : (16/9) / Math.tan(38*Math.PI/180);   // ≈ 2,28 = focale du rendu B381 sur écran 16:9 (objectif 76°) : sur ordinateur RIEN ne change (rendu validé à l'aveugle) ; en portrait (téléphone) étoiles et halos suivent la bombe
 const SPARK_CLOCK = { value:0 };   // B381 : horloge commune du scintillement (étoiles ET traînées)
 function makeStarMat(tex, look){
   const k=Math.min(devicePixelRatio,2), L=look||STAR_LOOK;

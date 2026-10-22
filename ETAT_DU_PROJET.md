@@ -2,7 +2,7 @@
 
 > Document vivant : où on en est, ce qui est fait, ce qui reste, la ligne directrice,
 > les effets et leurs caractéristiques. Tenu à jour au fil des sessions.
-> **Dernière mise à jour : 2026-10-22 (B381 : décor éclairé, ciel, fumée, bloom rond — notation à l'aveugle face à FWsim).**
+> **Dernière mise à jour : 2026-10-22 (B382 : tailles angulaires, iPhone non cramé ; B381 : décor éclairé, ciel, fumée, bloom rond — notation à l'aveugle face à FWsim).**
 >
 > 📌 **VERSION DE BASE = B379** (choix user, 2026-10-22) : commit `9060f65`, branche figée
 > **`base-B379`**, état AVANT les modifications de rendu B380. C'est la référence de retour :
@@ -139,6 +139,14 @@ sur captures mélangées avec celles de FWsim) — toujours sans toucher à la p
   Ce qui reste bas : les effets « à points » vus seuls (pivoine, chrysanthème 50, dahlia, crépitement)
   — tous les relecteurs veulent des FILÉS sur les étoiles, ce qui toucherait la pivoine validée (sans
   traînée, boule quasi figée). Option non activée : `?expo=0.35` (pose plus longue du flou de mouvement).
+- **B382 (user sur iPhone : « c'est cramé », « ça ne vit pas »)** : la taille des étoiles en px ne suivait
+  pas l'objectif. En PORTRAIT (téléphone) le champ de 76° devient vertical -> la bombe rapetisse à
+  l'écran mais pas ses étoiles/halos -> chevauchement, addition, blanc. Désormais étoiles, traînées,
+  halos et fumée ont une taille ANGULAIRE, référence = écran 16:9 (sur ordinateur rien ne change, rendu
+  validé à l'aveugle ; une référence B379 plus petite avait fait perdre ~0,5 point à l'aveugle).
+  `?angul=0` = ancien calcul. + léger vacillement de combustion des étoiles (`spark 0.2`) et éclats
+  inégaux (`var 0.25`), pour la vie en mouvement. Note : le calque des feux est rendu à 2× au plus
+  (`setPixelRatio`), un iPhone 3× l'agrandit de 1,5 (léger flou) — passer à 3 coûterait ~2,3× en pixels.
 - ⚠️ **Banc d'essai** : entre deux captures sur la même page, il FAUT laisser s'éteindre traînées et
   fumée (≥ 25 s de simulation), sinon la fumée de l'effet précédent, éclairée par le suivant, pollue
   l'image (des tours de relecture ont été faussés ainsi).
