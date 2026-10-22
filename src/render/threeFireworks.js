@@ -11,7 +11,26 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B379';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B380';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+
+// RENDU « VU À TRAVERS UNE CAMÉRA » (B380, user : « ça fait fade, faux, générique » face à FWsim).
+// La PHYSIQUE et les réglages d'effets ne bougent pas : seul l'ASPECT de chaque étoile change.
+//  - HALO : chaque étoile garde son noyau d'avant, entouré d'un halo de SA PROPRE couleur
+//    (la texture étoile teinte le bord en orange -> les verts/bleus paraissaient ternes).
+//  - TAILLE MINI : au loin une étoile ne descend plus sous ~1,6 px (avant : sous-pixel, elle
+//    disparaissait ou clignotait) ; son éclat est réduit en proportion pour ne pas l'exagérer.
+//  - LUEUR DE L'AIR : l'air autour de la bombe s'éclaire de sa couleur, ∝ la lumière émise.
+// Comparaison : ajouter ?look=b379 à l'adresse = rendu d'avant ; ?air=0 = sans lueur d'air.
+const _QS = (typeof location !== 'undefined') ? location.search : '';
+const LOOK_OLD = /[?&]look=b379\b/.test(_QS);
+const AIR_ON = !LOOK_OLD && !/[?&]air=0\b/.test(_QS);
+// haloPx = diamètre du halo À L'ÉCRAN (le halo d'une optique a une taille ~fixe en pixels : il
+// habille les petites étoiles lointaines, pas les grosses têtes — sinon celles-ci viraient au blanc) ;
+// haloMin = halo minimal en multiples de la boule (les grosses étoiles gardent un léger rayonnement).
+const STAR_LOOK  = LOOK_OLD ? { haloPx:0, haloMin:1, haloI:0, minPx:0 } : { haloPx:13, haloMin:1.35, haloI:0.18, minPx:1.6 };
+const TRAIL_LOOK = LOOK_OLD ? { haloPx:0, haloMin:1, haloI:0, minPx:0 } : { haloPx:4, haloMin:1.0, haloI:0.06, minPx:0 };
+const AIR_K = 0.085 / 350;  // opacité de la lueur d'air par unité de lumière émise (pivoine 75 mm pleine ≈ 350 -> 0,085)
+const AIR_MAX = 0.12;       // plafond : une lueur, jamais un brouillard (cf B106 anti-brouillard)
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -46,31 +65,45 @@ const STAR_VS = `
   attribute vec3 aVel;
   uniform float uH;
   uniform vec2 uVp;
+  uniform float uHaloPx;    // B380 : diamètre du halo à l'écran (px)
+  uniform float uHaloMin;   // B380 : halo minimal en rayons de boule (1 = aucun)
+  uniform float uMinPx;     // B380 : taille mini à l'écran (0 = comme avant)
   varying vec3 vCol;
   varying vec2 vDir;
   varying float vStretch;
+  varying float vE;         // B380 : agrandissement du sprite pour contenir le halo
+  varying float vGain;      // B380 : atténuation des étoiles agrandies jusqu'à la taille mini
+  varying float vHR;        // B380 : rayon du halo en rayons de boule
   void main(){
     vCol = aColor;
     vec4 mv = modelViewMatrix * vec4(position, 1.0);
     vec4 p1 = projectionMatrix * mv;
     float basePx = size * (uH / -mv.z);
+    float px = max(basePx, uMinPx);
+    vGain = basePx > 0.0 ? mix(1.0, basePx/px, 0.6) : 0.0;          // 1 si pas agrandie ; sinon éclat réduit (un peu moins que la surface)
     vec4 mv2 = modelViewMatrix * vec4(position - aVel*0.07, 1.0);   // où était l'étoile il y a ~70ms
     vec4 p2 = projectionMatrix * mv2;
     vec2 dpx = (p1.xy/p1.w - p2.xy/p2.w) * uVp;                     // déplacement écran en px
     float lenPx = length(dpx);
-    float st = 1.0 + 1.1 * lenPx / max(basePx, 0.001);   // ×1.1 : goutte ~10% plus étirée (user B84)
+    float st = 1.0 + 1.1 * lenPx / max(px, 0.001);   // ×1.1 : goutte ~10% plus étirée (user B84)
     vStretch = min(st, 3.3);
     vDir = lenPx > 0.0001 ? dpx/lenPx : vec2(1.0, 0.0);
-    gl_PointSize = basePx * vStretch;                               // le sprite s'agrandit pour contenir l'ovale
+    vHR = max(uHaloPx / max(px, 0.001), uHaloMin);                  // petite étoile -> grand halo relatif ; grosse tête -> halo minimal
+    vE = 1.0 + max(vHR - 1.0, 0.0) / vStretch;                      // le halo (autour de la tête) dépasse l'ovale
+    gl_PointSize = px * vStretch * vE;                              // le sprite s'agrandit pour contenir l'ovale ET le halo
     gl_Position = p1;
   }`;
 const STAR_FS = `
   uniform sampler2D uTex;
+  uniform float uHaloI;
   varying vec3 vCol;
   varying vec2 vDir;
   varying float vStretch;
+  varying float vE;
+  varying float vGain;
+  varying float vHR;
   void main(){
-    vec2 pc = vec2(gl_PointCoord.x, 1.0-gl_PointCoord.y)*2.0 - 1.0;  // y remis vers le HAUT (même repère que la vitesse écran)
+    vec2 pc = (vec2(gl_PointCoord.x, 1.0-gl_PointCoord.y)*2.0 - 1.0) * vE;  // y remis vers le HAUT ; ×vE : le dessin d'avant occupe le centre du sprite agrandi
     vec2 q = vec2(dot(pc, vDir), pc.x*(-vDir.y) + pc.y*vDir.x);      // repère aligné sur la vitesse (x+ = sens du mouvement)
     float m = 1.0 - 1.0/vStretch;                                    // position de la TÊTE vers l'avant (0 si à l'arrêt)
     // TÊTE : boule RONDE à pleine taille (croquis user : le rond)
@@ -83,13 +116,23 @@ const STAR_FS = `
     vec4 tT = texture2D(uTex, vec2(0.5, 0.5 + dy*0.5)) * step(dy, 1.0);    // step : ZÉRO hors du cône (même piège de clamp)
     float tailMask = (q.x < m ? 1.0 : 0.0) * f * f * 0.85;           // fondu vers la pointe, un peu plus faible que la tête
     vec4 t = max(tH, tT * tailMask);                                  // rond seul à l'arrêt (la queue rentre dans la boule)
-    gl_FragColor = vec4(vCol * t.rgb, t.a);                          // additif : couleur HDR × alpha du sprite
+    vec3 c = vCol * t.rgb * t.a;                                      // noyau : EXACTEMENT l'apport d'avant (additif couleur × alpha)
+    // HALO (B380) : lueur de la couleur PURE de l'étoile autour de la tête, gaussienne qui s'éteint
+    // avant le bord du sprite (pas de carré visible). C'est le « glow » des étoiles de FWsim.
+    if (uHaloI > 0.0 && vHR > 1.0){
+      float x = length(relH) / vHR;
+      c += vCol * uHaloI * exp(-5.5*x*x) * (1.0 - smoothstep(0.85, 1.0, x));
+    }
+    c *= vGain;
+    if (max(c.r, max(c.g, c.b)) < 0.0004) discard;
+    gl_FragColor = vec4(c, 1.0);                                      // alpha 1 : l'apport additif est la couleur elle-même
   }`;
-function makeStarMat(tex){
-  const k=Math.min(devicePixelRatio,2);
+function makeStarMat(tex, look){
+  const k=Math.min(devicePixelRatio,2), L=look||STAR_LOOK;
   return new THREE.ShaderMaterial({
     uniforms:{ uTex:{value:tex||starTex}, uH:{value:0.5*(innerHeight||800)*k},
-               uVp:{value:new THREE.Vector2(0.5*(innerWidth||1280)*k, 0.5*(innerHeight||800)*k)} },
+               uVp:{value:new THREE.Vector2(0.5*(innerWidth||1280)*k, 0.5*(innerHeight||800)*k)},
+               uHaloPx:{value:L.haloPx*k}, uHaloMin:{value:L.haloMin}, uHaloI:{value:L.haloI}, uMinPx:{value:L.minPx*k} },
     vertexShader:STAR_VS, fragmentShader:STAR_FS,
     transparent:true, blending:THREE.AdditiveBlending, depthWrite:false });
 }
@@ -113,7 +156,7 @@ trailGeo.setAttribute('aVel',     new THREE.BufferAttribute(new Float32Array(TRA
 // TAILLE PAR GRAIN (ShaderMaterial) : avant, PointsMaterial forçait 0.8 px pour TOUS -> à la
 // distance de la vue public les traînées étaient sous-pixel (invisibles). Maintenant chaque grain
 // a sa taille (grosses frondes/traînées visibles, muzzle fin).
-const trailMat = makeStarMat(neutralTex);   // traînées/points : texture NEUTRE -> la couleur du grain décide (blanc reste blanc, or reste or)
+const trailMat = makeStarMat(neutralTex, TRAIL_LOOK);   // traînées/points (B380 : halo léger, pas de taille mini — milliers de grains) : texture NEUTRE -> la couleur du grain décide (blanc reste blanc, or reste or)
 const trailPoints = new THREE.Points(trailGeo, trailMat);
 trailPoints.frustumCulled = false;   // CRITIQUE : sa bounding sphere reste à l'origine (grains nés à 0,0,0) ->
 scene.add(trailPoints);              // sinon Three.js CULL tout le pool quand la caméra vise le burst (origine hors champ) = "pas de traînées"
@@ -186,6 +229,20 @@ function makeSmokeTexture(){
   const t=new THREE.CanvasTexture(c); t.needsUpdate=true; return t;
 }
 const smokeTex = makeSmokeTexture();
+// LUEUR DE L'AIR (B380) : dégradé très doux, sans bord — la lumière d'une bombe diffusée dans l'air.
+function makeAirTexture(){
+  const c=document.createElement('canvas'); c.width=c.height=128;
+  const x=c.getContext('2d');
+  const g=x.createRadialGradient(64,64,0, 64,64,64);
+  g.addColorStop(0.0,'rgba(255,255,255,1)');
+  g.addColorStop(0.25,'rgba(255,255,255,0.55)');
+  g.addColorStop(0.55,'rgba(255,255,255,0.16)');
+  g.addColorStop(0.8,'rgba(255,255,255,0.04)');
+  g.addColorStop(1.0,'rgba(255,255,255,0)');
+  x.fillStyle=g; x.fillRect(0,0,128,128);
+  const t=new THREE.CanvasTexture(c); t.needsUpdate=true; return t;
+}
+const airTex = makeAirTexture();
 const PUFF_MAX = 512;   // B126 : le trio de formes tire 3 bombes la MÊME frame -> ~330 bouffées de gueule
                         // simultanées ; à 320 le ring buffer recyclait des flammes encore vivantes
 const puffs = [];
@@ -1736,7 +1793,15 @@ class Shell {
         lastTrail().flick=true; lastTrail().fT=Math.random()*0.08; lastTrail().fA=1;
       } }
     if (this.head){ scene.remove(this.head); this.headGeo.dispose(); this.headMat.dispose(); this.head=null; }
+    // LUEUR DE L'AIR (B380) : sprite doux, piloté chaque frame par la lumière réellement émise
+    // par les étoiles (cf fin de update) — elle naît, grandit et s'éteint AVEC la bombe.
+    if (AIR_ON && !this.air){
+      this.air=new THREE.Sprite(new THREE.SpriteMaterial({ map:airTex, transparent:true,
+        blending:THREE.AdditiveBlending, depthWrite:false, opacity:0 }));
+      this.air.frustumCulled=false; this.air.visible=false; scene.add(this.air);
+    }
   }
+  _dropAir(){ if (this.air){ scene.remove(this.air); this.air.material.dispose(); this.air=null; } }
 
   // MICRO-BILLE de pot à feu (B145, définition user) : expulsée du TUBE (base = 75 mm) à une
   // vitesse ASSEZ CONSÉQUENTE même pour les plus lentes -> le BAS DE LA COLONNE EST VIDE
@@ -1805,6 +1870,7 @@ class Shell {
   // dans le ciel + fuite GPU (la libération normale n'existe que dans update() quand tout est mort).
   destroy(){
     if (this.dead) return; this.dead=true;
+    this._dropAir();
     if (this.head){ scene.remove(this.head); this.headGeo.dispose(); this.headMat.dispose(); this.head=null; }
     scene.remove(this.points); scene.remove(this.lines);
     this.geo.dispose(); this.mat.dispose(); this.lgeo.dispose(); this.lmat.dispose();
@@ -1929,6 +1995,7 @@ class Shell {
       else { scene.remove(this.flash); this.flash.geometry.dispose(); this.flash.material.dispose(); this.flash=null; } }
 
     let alive=0; const tr=this.cfg.trailing, sway=this.cfg.sway, behave=this.cfg.behave;
+    let aR=0, aG=0, aB=0, aX=0, aY=0, aZ=0, aN=0;   // B380 : lumière émise + barycentre, pour la lueur de l'air (lecture seule)
     for (let i=0;i<this.nAlive;i++){
       const d=this.data[i], li=i*6;
       if (!d || d.age>=d.life){ this.col[i*3]=this.col[i*3+1]=this.col[i*3+2]=0;
@@ -1976,6 +2043,7 @@ class Shell {
         else if (this.cfg.hideStars){ inten = 0; }                 // cascade : l'étoile-goutte est INVISIBLE — on ne voit que la POINTE du sillage (étincelles fraîches)
         else if (this.cfg.arrow){ inten *= 0.45; }                 // œuf de dragon : étoile TRÈS DISCRÈTE avant de claquer (à peine une boule, la traînée domine)
       this.col[i*3]=r*inten; this.col[i*3+1]=g*inten; this.col[i*3+2]=b*inten;
+      if (this.air && inten>0){ aR+=r*inten; aG+=g*inten; aB+=b*inten; aX+=px; aY+=py; aZ+=pz; aN++; }
 
       // FLOU DE MOUVEMENT (B82, croquis user) : ROND + QUEUE EN CÔNE au shader — tête ronde pleine
       // taille + cône effilé derrière (part large comme la boule, finit en pointe), rond à l'arrêt.
@@ -2035,7 +2103,29 @@ class Shell {
     this.geo.attributes.aVel.needsUpdate=true;
     if (this.cfg.shrink) this.geo.attributes.size.needsUpdate=true;
 
+    // LUEUR DE L'AIR (B380) : intensité ∝ lumière émise, teinte = couleur moyenne (légèrement
+    // désaturée, comme une diffusion), centrée sur le barycentre, taille = étalement des étoiles.
+    if (this.air){
+      const L=aR+aG+aB;
+      if (aN>0 && L>0){
+        const cx=aX/aN, cy=aY/aN, cz=aZ/aN; let spread=0;
+        for (let i=0;i<this.nAlive;i++){ const d=this.data[i]; if (!d || d.age>=d.life) continue;
+          spread+=Math.hypot(this.pos[i*3]-cx, this.pos[i*3+1]-cy, this.pos[i*3+2]-cz); }
+        spread/=Math.max(1, alive);
+        const mx=Math.max(aR,aG,aB), sat=0.8;
+        const cr=aR/mx, cg=aG/mx, cb=aB/mx;
+        // ×(1, 0.86, 0.70) : la lumière diffusée par la fumée est CHAUDE — sans ça une bombe blanche/or
+        // faisait un voile GRIS (lu comme du brouillard), alors que sur vidéo c'est une lueur ambrée.
+        this.air.material.color.setRGB(1-sat+sat*cr, (1-sat+sat*cg)*0.86, (1-sat+sat*cb)*0.70);
+        this.air.material.opacity=Math.min(AIR_MAX, AIR_K*L);
+        this.air.position.set(cx, cy, cz);
+        this.air.scale.setScalar(Math.max(10, spread*4.5));
+        this.air.visible=true;
+      } else this.air.visible=false;
+    }
+
     if ((this.phase==='burst' || (this.phase==='gerbe' && this.gerbeLeft<=0)) && alive===0){
+      this._dropAir();
       this.dead=true; scene.remove(this.points); scene.remove(this.lines);
       this.geo.dispose(); this.mat.dispose(); this.lgeo.dispose(); this.lmat.dispose();
       if (this.flash){ scene.remove(this.flash); this.flash.geometry.dispose(); this.flash.material.dispose(); }

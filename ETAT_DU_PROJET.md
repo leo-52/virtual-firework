@@ -2,7 +2,7 @@
 
 > Document vivant : où on en est, ce qui est fait, ce qui reste, la ligne directrice,
 > les effets et leurs caractéristiques. Tenu à jour au fil des sessions.
-> **Dernière mise à jour : 2026-06-25.**
+> **Dernière mise à jour : 2026-10-22 (B380 : rendu des étoiles « vu à travers une caméra »).**
 
 ---
 
@@ -82,6 +82,20 @@ flash d'allumage est OK). Brillance de référence : `3.4 · (1-A²·0.85) · di
 (punch HDR : les cœurs saturent en blanc-chaud, halo coloré au bloom = effet « ça brûle »).
 Chaque étoile a un **cœur d'ignition** blanc-jaune sur les premiers 15 % de sa vie (réaliste :
 incandescent → couleur tenue), ce qui donne le grain « feu / comète ».
+
+**Rendu des étoiles B380** (user : « ça fait fade, faux, générique » face à FWsim) — l'ASPECT
+seul change, la physique et les réglages d'effets sont intacts :
+- **Halo** de la couleur PURE de l'étoile autour de sa tête, de taille ~fixe À L'ÉCRAN
+  (`STAR_LOOK.haloPx = 13 px`, `haloI = 0.18`) : il habille les petites étoiles lointaines, les grosses
+  têtes (palme) ne gagnent qu'un léger rayonnement (`haloMin = 1.35`) et gardent leur or. Le noyau
+  d'avant est dessiné à l'identique au centre du sprite. Traînées : halo léger (`TRAIL_LOOK`).
+- **Taille mini** 1,6 px à l'écran (avant : sous-pixel au loin -> étoile qui disparaît / clignote),
+  éclat réduit en proportion.
+- **Lueur de l'air** par bombe : sprite très doux, opacité ∝ lumière réellement émise par les
+  étoiles (`AIR_K`, plafond `AIR_MAX = 0.12` — une lueur, jamais un brouillard, cf B106), teinte
+  = couleur moyenne réchauffée (sinon une bombe blanche/or faisait un voile gris), centrée sur le
+  barycentre, taille = étalement des étoiles. Elle naît, grandit et s'éteint avec la bombe.
+- **Comparer** : `…/virtual-firework/?look=b379` = rendu d'avant à l'identique ; `?air=0` = sans lueur d'air.
 
 **Calibrage (données catalogue « donnée A » + métier user)** :
 | Calibre | Donnée A catalogue (m) | Hauteur RENDUE (×0,89, m) | Nb étoiles pivoine | Envergure (diam., m) |
