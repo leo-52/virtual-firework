@@ -3,6 +3,10 @@
 > Document vivant : où on en est, ce qui est fait, ce qui reste, la ligne directrice,
 > les effets et leurs caractéristiques. Tenu à jour au fil des sessions.
 > **Dernière mise à jour : 2026-10-22 (B380 : rendu des étoiles « vu à travers une caméra »).**
+>
+> 📌 **VERSION DE BASE = B379** (choix user, 2026-10-22) : commit `9060f65`, branche figée
+> **`base-B379`**, état AVANT les modifications de rendu B380. C'est la référence de retour :
+> `git checkout base-B379`, ou en ligne `?look=b379` (rendu B379 à l'identique dans la B380).
 
 ---
 
