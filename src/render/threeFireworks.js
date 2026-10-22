@@ -28,9 +28,10 @@ const AIR_ON = !LOOK_OLD && !/[?&]air=0\b/.test(_QS);
 // habille les petites étoiles lointaines, pas les grosses têtes — sinon celles-ci viraient au blanc) ;
 // haloMin = halo minimal en multiples de la boule (les grosses étoiles gardent un léger rayonnement).
 const STAR_LOOK  = LOOK_OLD ? { haloPx:0, haloMin:1, haloI:0, minPx:0 } : { haloPx:13, haloMin:1.35, haloI:0.18, minPx:1.6 };
-const TRAIL_LOOK = LOOK_OLD ? { haloPx:0, haloMin:1, haloI:0, minPx:0 } : { haloPx:4, haloMin:1.0, haloI:0.06, minPx:0 };
+const TRAIL_LOOK = LOOK_OLD ? { haloPx:0, haloMin:1, haloI:0, minPx:0 } : { haloPx:4, haloMin:1.0, haloI:0.06, minPx:0, spark:0.85 };   // spark (B381) : grains pailletés
 const AIR_K = 0.085 / 350;  // opacité de la lueur d'air par unité de lumière émise (pivoine 75 mm pleine ≈ 350 -> 0,085)
 const AIR_MAX = 0.12;       // plafond : une lueur, jamais un brouillard (cf B106 anti-brouillard)
+const TRAIL_LIGHT_K = 0.05; // B381 : poids des traînées dans l'éclairage du décor (grains = éclat × taille²)
 
 function makeStarTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -63,6 +64,10 @@ const STAR_VS = `
   attribute float size;
   attribute vec3 aColor;
   attribute vec3 aVel;
+  attribute float aSeed;    // B381 : graine de scintillement (traînées ; 0 = pas de scintillement)
+  uniform float uTime;
+  uniform float uSpark;     // B381 : force du scintillement des grains (0 = lisse comme avant)
+  varying float vSpark;
   uniform float uH;
   uniform vec2 uVp;
   uniform float uHaloPx;    // B380 : diamètre du halo à l'écran (px)
@@ -81,6 +86,17 @@ const STAR_VS = `
     float basePx = size * (uH / -mv.z);
     float px = max(basePx, uMinPx);
     vGain = basePx > 0.0 ? mix(1.0, basePx/px, 0.6) : 0.0;          // 1 si pas agrandie ; sinon éclat réduit (un peu moins que la surface)
+    // SCINTILLEMENT DES GRAINS (B381) : l'éclat de chaque grain saute ~14 fois/s autour de sa moyenne
+    // (loi en h³ : souvent moyen, parfois un éclair) -> traînée PAILLETÉE comme le charbon qui brûle.
+    // Moyenne = 1 : la luminosité globale d'une traînée ne change pas.
+    vSpark = 1.0;
+    if (uSpark > 0.0 && aSeed > 0.0){
+      float tt = uTime * 14.0 + aSeed * 37.0, fl = floor(tt);
+      float ha = fract(sin(fl * 12.9898 + aSeed * 78.233) * 43758.5453);
+      float hb = fract(sin((fl + 1.0) * 12.9898 + aSeed * 78.233) * 43758.5453);
+      float h = mix(ha, hb, smoothstep(0.0, 1.0, fract(tt)));
+      vSpark = mix(1.0, (0.55 + 1.8 * h * h * h) / 1.0, uSpark);
+    }
     vec4 mv2 = modelViewMatrix * vec4(position - aVel*0.07, 1.0);   // où était l'étoile il y a ~70ms
     vec4 p2 = projectionMatrix * mv2;
     vec2 dpx = (p1.xy/p1.w - p2.xy/p2.w) * uVp;                     // déplacement écran en px
@@ -96,6 +112,7 @@ const STAR_VS = `
 const STAR_FS = `
   uniform sampler2D uTex;
   uniform float uHaloI;
+  varying float vSpark;
   varying vec3 vCol;
   varying vec2 vDir;
   varying float vStretch;
@@ -123,7 +140,7 @@ const STAR_FS = `
       float x = length(relH) / vHR;
       c += vCol * uHaloI * exp(-5.5*x*x) * (1.0 - smoothstep(0.85, 1.0, x));
     }
-    c *= vGain;
+    c *= vGain * vSpark;
     if (max(c.r, max(c.g, c.b)) < 0.0004) discard;
     gl_FragColor = vec4(c, 1.0);                                      // alpha 1 : l'apport additif est la couleur elle-même
   }`;
@@ -132,7 +149,8 @@ function makeStarMat(tex, look){
   return new THREE.ShaderMaterial({
     uniforms:{ uTex:{value:tex||starTex}, uH:{value:0.5*(innerHeight||800)*k},
                uVp:{value:new THREE.Vector2(0.5*(innerWidth||1280)*k, 0.5*(innerHeight||800)*k)},
-               uHaloPx:{value:L.haloPx*k}, uHaloMin:{value:L.haloMin}, uHaloI:{value:L.haloI}, uMinPx:{value:L.minPx*k} },
+               uHaloPx:{value:L.haloPx*k}, uHaloMin:{value:L.haloMin}, uHaloI:{value:L.haloI}, uMinPx:{value:L.minPx*k},
+               uTime:{value:0}, uSpark:{value:L.spark||0} },
     vertexShader:STAR_VS, fragmentShader:STAR_FS,
     transparent:true, blending:THREE.AdditiveBlending, depthWrite:false });
 }
@@ -153,6 +171,8 @@ trailGeo.setAttribute('position', new THREE.BufferAttribute(trailPos, 3));
 trailGeo.setAttribute('aColor',   new THREE.BufferAttribute(trailCol, 3));
 trailGeo.setAttribute('size',     new THREE.BufferAttribute(trailSize, 1));
 trailGeo.setAttribute('aVel',     new THREE.BufferAttribute(new Float32Array(TRAIL_MAX*3), 3));   // zéro = grains RONDS (pas d'étirement sur les traînées)
+{ const sd=new Float32Array(TRAIL_MAX); for (let i=0;i<TRAIL_MAX;i++) sd[i]=0.01+Math.random()*0.99;   // B381 : graine de scintillement par grain
+  trailGeo.setAttribute('aSeed', new THREE.BufferAttribute(sd, 1)); }
 // TAILLE PAR GRAIN (ShaderMaterial) : avant, PointsMaterial forçait 0.8 px pour TOUS -> à la
 // distance de la vue public les traînées étaient sous-pixel (invisibles). Maintenant chaque grain
 // a sa taille (grosses frondes/traînées visibles, muzzle fin).
@@ -176,7 +196,13 @@ function spawnTrail(x,y,z, r,g,b, size, gF=0.4, lifeMul=1, vx0=0, vy0=0, vz0=0, 
 // toutes en même temps ») : brise COMMUNE (posée par le burst des effets à cfg.wind) qui dérive
 // tout le pool ensemble — c'est ce qui rend la nappe VIVANTE au lieu de figée.
 let trailWindX = 0, trailWindZ = 0;
+// LUMIÈRE DES TRAÎNÉES (B381) : somme pondérée (éclat × surface du grain) + barycentre, pour
+// éclairer le décor (un saule / kamuro éclaire surtout par ses traînées).
+const trailLight = { x:0, y:0, z:0, r:0, g:0, b:0 };
+let sparkT = 0;   // B381 : horloge du scintillement (avance avec la sim -> figée en pause, reproductible)
 function updateTrails(dt){
+  sparkT += dt; trailMat.uniforms.uTime.value = sparkT;
+  let tR=0, tG=0, tB=0, tX=0, tY=0, tZ=0, tW=0;
   for (let i = 0; i < TRAIL_MAX; i++){
     const t = trail[i];
     // BUG "la sortie du tube ne disparaît jamais" : PointsMaterial IGNORE l'attribut `size`
@@ -208,7 +234,12 @@ function updateTrails(dt){
     trailPos[i*3]=t.x; trailPos[i*3+1]=t.y; trailPos[i*3+2]=t.z;
     trailCol[i*3]=fr*a*0.85; trailCol[i*3+1]=fg*a*0.85; trailCol[i*3+2]=fb*a*0.85;
     trailSize[i]=t.flick ? t.size : t.size*a;                   // grains d'œuf de dragon : taille CONSTANTE, seul l'éclat varie
+    const w=trailSize[i]*trailSize[i];
+    if (w>0){ const lr=trailCol[i*3]*w, lg=trailCol[i*3+1]*w, lb=trailCol[i*3+2]*w, s=lr+lg+lb;
+      tR+=lr; tG+=lg; tB+=lb; tX+=t.x*s; tY+=t.y*s; tZ+=t.z*s; tW+=s; }
   }
+  if (tW>0){ trailLight.x=tX/tW; trailLight.y=tY/tW; trailLight.z=tZ/tW; trailLight.r=tR; trailLight.g=tG; trailLight.b=tB; }
+  else { trailLight.r=trailLight.g=trailLight.b=0; }
   trailGeo.attributes.position.needsUpdate = true;
   trailGeo.attributes.aColor.needsUpdate = true;
   trailGeo.attributes.size.needsUpdate = true;
@@ -243,6 +274,86 @@ function makeAirTexture(){
   const t=new THREE.CanvasTexture(c); t.needsUpdate=true; return t;
 }
 const airTex = makeAirTexture();
+
+// FUMÉE D'ÉCLATEMENT (B381) — chaque bombe laisse un nuage qui dérive avec le vent et se dissipe
+// lentement (~20 s). De nuit, la fumée ne se voit QUE là où une lumière l'éclaire : sa couleur est
+// recalculée à chaque image à partir des sources de lumière (sa bombe, puis les suivantes), en 1/d².
+// Additif (overlay « screen ») = lumière diffusée, jamais un voile gris. ?fumee=0 -> sans fumée.
+const SMOKE_ON = !LOOK_OLD && !/[?&]fumee=0\b/.test(_QS);
+const SMOKE_MAX = 220;
+const SMOKE_K = 0.030;                     // lumière reçue -> éclat de la fumée
+const smokeWind = { x:(Math.random()-0.5)*2.4, z:(Math.random()-0.5)*2.4 };   // brise commune de la soirée (m/s)
+const smoke = [];
+let smokeHead = 0;
+if (SMOKE_ON){
+  for (let i=0;i<SMOKE_MAX;i++){
+    const m=new THREE.SpriteMaterial({ map:smokeTex, transparent:true, blending:THREE.AdditiveBlending, depthWrite:false, opacity:1 });
+    const s=new THREE.Sprite(m); s.visible=false; s.frustumCulled=false; scene.add(s);
+    smoke.push({ spr:s, x:0,y:0,z:0, vx:0,vy:0,vz:0, age:0, life:1, s0:1, s1:1, dens:0, alive:false });
+  }
+}
+function spawnSmoke(x,y,z, r0, cal){
+  if (!SMOKE_ON) return;
+  const k=cal/75, n=Math.round(6+6*k);
+  for (let i=0;i<n;i++){
+    const p=smoke[smokeHead]; smokeHead=(smokeHead+1)%SMOKE_MAX;
+    const u=vrand(Math.random), rr=r0*Math.cbrt(Math.random());
+    p.x=x+u[0]*rr; p.y=y+u[1]*rr*0.8; p.z=z+u[2]*rr;
+    p.vx=smokeWind.x+(Math.random()-0.5)*0.6; p.vy=0.15+Math.random()*0.35; p.vz=smokeWind.z+(Math.random()-0.5)*0.6;
+    p.age=0; p.life=16+Math.random()*10; p.s0=(5+Math.random()*4)*k; p.s1=(16+Math.random()*10)*k;
+    p.dens=0.55+Math.random()*0.45; p.alive=true;
+  }
+}
+function updateSmoke(dt, lights){
+  if (!SMOKE_ON) return;
+  for (const p of smoke){
+    if (!p.alive) continue;
+    p.age+=dt; if (p.age>=p.life){ p.alive=false; p.spr.visible=false; continue; }
+    p.x+=p.vx*dt; p.y+=p.vy*dt; p.z+=p.vz*dt; p.vy*=Math.max(0,1-0.05*dt);
+    const t=p.age/p.life, size=p.s0+(p.s1-p.s0)*Math.sqrt(t);
+    const env=Math.min(1,p.age/0.6)*(t<0.55?1:Math.max(0,1-(t-0.55)/0.45));   // se forme en ~0,6 s, s'efface sur la fin
+    let r=0.0015, g=0.0018, b=0.0030;                                            // lune : à peine visible sans feux
+    for (const l of lights){
+      const dx=l.x-p.x, dy=l.y-p.y, dz=l.z-p.z, f=SMOKE_K/(dx*dx+dy*dy+dz*dz+size*size);
+      r+=l.r*f; g+=l.g*f; b+=l.b*f; }
+    const a=p.dens*env;
+    p.spr.material.color.setRGB(Math.min(r,1.5)*a, Math.min(g,1.5)*a, Math.min(b,1.5)*a);
+    p.spr.position.set(p.x,p.y,p.z); p.spr.scale.setScalar(size);
+    p.spr.visible=a>0.001;
+  }
+}
+
+// DÔME DE CIEL NOCTURNE (B381) — additif (overlay « screen ») : n'ajoute de la lumière QUE
+// au-dessus de l'horizon. Étoiles procédurales (grille 3D sur la direction) : peu nombreuses,
+// magnitudes très inégales, scintillement lent ; elles s'effacent près de l'horizon (brume).
+function makeSkyDome(){
+  const mat = new THREE.ShaderMaterial({
+    uniforms: { uTime:{ value:0 } },
+    vertexShader: `varying vec3 vDir;
+      void main(){ vDir = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+    fragmentShader: `varying vec3 vDir; uniform float uTime;
+      float h1(vec3 p){ return fract(sin(dot(p, vec3(12.9898, 78.233, 37.719))) * 43758.5453); }
+      void main(){
+        vec3 d = normalize(vDir); float el = d.y;
+        float up = smoothstep(-0.005, 0.03, el);                               // rien sous l'horizon
+        vec3 hor = vec3(0.0105, 0.0125, 0.024), zen = vec3(0.0010, 0.0012, 0.0030);   // très sombre : l ACES (×1,3) remonte fort les bas niveaux
+        vec3 c = mix(hor, zen, pow(clamp(el, 0.0, 1.0), 0.42)) * up;
+        vec3 q = d * 760.0, g = floor(q); float r = h1(g);
+        if (r > 0.99935){
+          vec3 f = fract(q) - 0.5; float s = exp(-dot(f, f) * 16.0);
+          float mag = pow(h1(g + 7.1), 4.0);                                     // la plupart faibles, quelques brillantes
+          float tw = 0.85 + 0.15 * sin(uTime * (1.5 + 3.0 * h1(g + 3.3)) + 6.28 * r);
+          c += vec3(0.80, 0.86, 1.0) * s * (0.10 + 0.90 * mag) * 0.75 * tw * smoothstep(0.04, 0.16, el);
+        }
+        gl_FragColor = vec4(c, 1.0);
+      }`,
+    side: THREE.BackSide, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, depthTest: false,
+  });
+  const m = new THREE.Mesh(new THREE.SphereGeometry(30000, 48, 24), mat);
+  m.frustumCulled = false; m.renderOrder = -10;
+  m.onBeforeRender = () => { mat.uniforms.uTime.value = performance.now() / 1000; };
+  return m;
+}
 const PUFF_MAX = 512;   // B126 : le trio de formes tire 3 bombes la MÊME frame -> ~330 bouffées de gueule
                         // simultanées ; à 320 le ring buffer recyclait des flammes encore vivantes
 const puffs = [];
@@ -1768,6 +1879,11 @@ class Shell {
       const fr=big?1.6:1.5, fg2=big?1.62:1.15, fb=big?1.72:0.70;   // salut = blanc argenté ; bombes = blanc chaud
       spawnPuff(bx,apex,bz, 0,0,0, dur, sc*0.8, sc*1.35, fr,fg2,fb, op, 0, 1.0);
     }
+    // FLASH D'OUVERTURE comme source de lumière (B381) : le décor « pulse » à chaque explosion
+    // (~0,15 s), comme sur les vidéos de spectacle. Pas de flash pour les effets sans ouverture.
+    this.breakLight = this.cfg.noFlash ? 0 : (this.cfg.flashBig ? 2600 : 1100) * (this.cal/75);
+    // FUMÉE D'ÉCLATEMENT (B381) : le nuage reste là où la bombe a éclaté, puis dérive.
+    spawnSmoke(bx, apex, bz, this.cfg.burstRadius*0.8, this.cal);
     // afterGlow (B191, atome) : RÉSIDU chaud qui TRAÎNE au centre après le break (le point orange
     // des étapes 2-3 de la vidéo — le cœur qui finit de se consumer). Échelle ∝ calibre.
     if (this.cfg.afterGlow){ const ag=this.cfg.afterGlow, cm=this.cal/75;
@@ -1912,6 +2028,8 @@ class Shell {
       if (this.muAge < this.muSmokeWin){ this.muSmokeAcc += 30*dt;      // FUMÉE : moins dense (rate bas)
         while(this.muSmokeAcc>=1){ this.muSmokeAcc-=1; this._emitMuzzleSmoke(); } }
     }
+    // FLASH DE GUEULE comme source de lumière (B381) : très vif, très bref (~0,12 s), au ras du tube.
+    this.muLight = (this.hasMuzzle && this.muAge < 0.6) ? 60*this.muzzleScale*Math.exp(-this.muAge/0.12) : 0;
 
     if (this.phase==='rise'){
       const T=Math.min(1,this.age/this.riseTime), te=1-(1-T)*(1-T);
@@ -2043,7 +2161,7 @@ class Shell {
         else if (this.cfg.hideStars){ inten = 0; }                 // cascade : l'étoile-goutte est INVISIBLE — on ne voit que la POINTE du sillage (étincelles fraîches)
         else if (this.cfg.arrow){ inten *= 0.45; }                 // œuf de dragon : étoile TRÈS DISCRÈTE avant de claquer (à peine une boule, la traînée domine)
       this.col[i*3]=r*inten; this.col[i*3+1]=g*inten; this.col[i*3+2]=b*inten;
-      if (this.air && inten>0){ aR+=r*inten; aG+=g*inten; aB+=b*inten; aX+=px; aY+=py; aZ+=pz; aN++; }
+      if (inten>0){ aR+=r*inten; aG+=g*inten; aB+=b*inten; aX+=px; aY+=py; aZ+=pz; aN++; }   // B380/B381 : lumière émise (lueur d'air + éclairage du décor)
 
       // FLOU DE MOUVEMENT (B82, croquis user) : ROND + QUEUE EN CÔNE au shader — tête ronde pleine
       // taille + cône effilé derrière (part large comme la boule, finit en pointe), rond à l'arrêt.
@@ -2102,6 +2220,10 @@ class Shell {
     this.geo.attributes.position.needsUpdate=true; this.geo.attributes.aColor.needsUpdate=true;
     this.geo.attributes.aVel.needsUpdate=true;
     if (this.cfg.shrink) this.geo.attributes.size.needsUpdate=true;
+
+    if (this.breakLight>0) this.breakLight *= Math.exp(-dt/0.06);   // flash d'ouverture : décroît en ~0,15 s
+    // SOURCE DE LUMIÈRE pour le décor (B381) : barycentre des étoiles allumées + lumière totale émise.
+    this.light = (aN>0 && aR+aG+aB>0) ? { x:aX/aN, y:aY/aN, z:aZ/aN, r:aR, g:aG, b:aB } : null;
 
     // LUEUR DE L'AIR (B380) : intensité ∝ lumière émise, teinte = couleur moyenne (légèrement
     // désaturée, comme une diffusion), centrée sur le barycentre, taille = étalement des étoiles.
@@ -2295,6 +2417,11 @@ export class ThreeFireworks {
     this.composer.addPass(new RenderPass(scene, this.camera));
     this.composer.addPass(new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), 0.3, 0.22, 0.55)); // B106 anti-BROUILLARD : seuil 0.12->0.55 = seuls les CŒURS brillants blooment (la masse faible ne fait plus de halo), rayon resserré
     this.composer.addPass(new OutputPass());
+    // CIEL DE NUIT (B381) : le fond d'étoiles de Cesium faisait du « grain » sur toute l'image.
+    // Remplacé (main.js le masque) par un dôme qui suit la caméra : dégradé horizon bleu sombre ->
+    // zénith presque noir, étoiles clairsemées, RIEN sous l'horizon (le décor n'est pas voilé).
+    this.sky = LOOK_OLD ? null : makeSkyDome();
+    if (this.sky) scene.add(this.sky);
     this._pe=new Cesium.Cartesian3(); this._de=new Cesium.Cartesian3(); this._ue=new Cesium.Cartesian3();
     this.setOrigin(origin);
     this.shells=[]; this.restDelay=0; this.focus='peony'; this.current='peony'; this.focusColor=null; this.onBurst=null; this.onLaunch=null;
@@ -2391,9 +2518,28 @@ export class ThreeFireworks {
       if (ph!=='burst' && s.phase==='burst' && this.onBurst) this.onBurst(s.arch, s.cal, this.distTo(s.bx, s.cfg.apex, s.bz)); }  // hook son à CHAQUE éclatement (B254 : + calibre, B256 : + distance)
     updateTrails(dt);
     updatePuffs(dt);
+    updateSmoke(dt, this.lights(8));   // B381 : fumée éclairée par les feux
   }
-  render(){ this.syncCamera(); this.composer.render(); }
+  render(){ this.syncCamera(); if (this.sky) this.sky.position.copy(this.camera.position); this.composer.render(); }
+  // SOURCES DE LUMIÈRE pour éclairer le décor (B381) : étoiles de chaque bombe, flash de gueule,
+  // traînées. Coordonnées scène Three (x, y=haut, z) ; r,g,b = lumière émise (unités moteur).
+  // Les MAX plus fortes seulement (le shader du décor a un nombre fixe de lumières).
+  lights(max=8){
+    const out=[];
+    for (const s of this.shells){ if (s.dead) continue;
+      if (s.light) out.push({ x:s.light.x, y:s.light.y, z:s.light.z, r:s.light.r, g:s.light.g, b:s.light.b });
+      if (s.muLight>0.5) out.push({ x:s.ox, y:1.2*(s.muzzleScale||1), z:s.oz, r:s.muLight*0.53, g:s.muLight*0.33, b:s.muLight*0.14 });
+      if (s.breakLight>5) out.push({ x:s.bx, y:s.cfg.apex, z:s.bz, r:s.breakLight*0.40, g:s.breakLight*0.34, b:s.breakLight*0.26 }); }
+    const k=TRAIL_LIGHT_K;
+    if (trailLight.r+trailLight.g+trailLight.b>0) out.push({ x:trailLight.x, y:trailLight.y, z:trailLight.z, r:trailLight.r*k, g:trailLight.g*k, b:trailLight.b*k });
+    out.sort((a,b)=>(b.r+b.g+b.b)-(a.r+a.g+a.b));
+    return out.slice(0,max);
+  }
+  // scène Three -> repère ENU du tir -> ECEF (Cesium)
+  sceneToWorld(x,y,z, out){ return Cesium.Matrix4.multiplyByPoint(this.enuToFixed, new Cesium.Cartesian3(x, -z, y), out||new Cesium.Cartesian3()); }
 }
+// Réglages d'aspect lus par main.js (éclairage du décor) — B381
+export const LOOK = { old: LOOK_OLD, groundLight: !LOOK_OLD && !/[?&]sol=0\b/.test(_QS) };
 
 // Exports internes pour le BANC D'APERÇU hors-Cesium (_preview.html) — rendu réel d'un effet
 // pour capture d'écran. N'affecte pas l'app (rien ne les importe en prod).

@@ -4,7 +4,7 @@
 // Imports DYNAMIQUES avec propagation du ?v=... (horodatage anti-cache d'index.html) : sinon
 // le navigateur garderait l'ANCIEN threeFireworks.js en cache malgré un nouveau déploiement.
 const _v = new URL(import.meta.url).search;   // ex "?v=1719..." (vide si chargé sans query)
-const { ThreeFireworks, LABELS, __setMarronPop } = await import('./render/threeFireworks.js' + _v);
+const { ThreeFireworks, LABELS, __setMarronPop, LOOK } = await import('./render/threeFireworks.js' + _v);
 const { FpsCameraController } = await import('./cameraController.js' + _v);
 const { Timeline } = await import('./timeline.js' + _v);
 const { PyroAudio } = await import('./audio.js' + _v);
@@ -23,6 +23,56 @@ const HAS_ION = ION_TOKEN && !ION_TOKEN.startsWith('METTRE'); // token ion rense
 const FIRE = { lon: 5.419384258257399, lat: 48.012806134659186, height: HAS_ION ? 350 : 0 };
 
 if (HAS_ION) Cesium.Ion.defaultAccessToken = ION_TOKEN;
+
+// ÉCLAIRAGE DU DÉCOR PAR LES FEUX (B381, objectif « comme FWsim ») — CustomShader Cesium sur les
+// Google 3D Tiles. Les tuiles sont des photos de JOUR : on les ramène à une nuit bleutée (ambiance
+// lune), puis on AJOUTE la lumière des sources du moteur de feux (étoiles de chaque bombe, flash de
+// gueule des mortiers, traînées) : couleur réelle de la bombe, atténuation en 1/d², orientation des
+// surfaces (normales calculées à l'écran). Les positions passent en repère CAMÉRA (précision float).
+const GROUND_NL = 8;                     // nb de lumières simultanées (les plus fortes)
+const GROUND_K = 5.5;                    // lumière émise (unités moteur) -> éclairement du sol (linéaire : pivoine 75 à 80 m ≈ 0,25)
+const GROUND_AMB = [0.030, 0.036, 0.055]; // ambiance nuit LINÉAIRE (lune, ciel bleuté) : décor à peine lisible sans feux
+function makeGroundShader(){
+  const U = Cesium.UniformType, uniforms = { u_amb:{ type:U.VEC3, value:new Cesium.Cartesian3(...GROUND_AMB) } };
+  let somme = '';
+  for (let i=0;i<GROUND_NL;i++){
+    uniforms['u_p'+i] = { type:U.VEC3, value:new Cesium.Cartesian3(0,0,0) };
+    uniforms['u_c'+i] = { type:U.VEC3, value:new Cesium.Cartesian3(0,0,0) };
+    somme += `L += fwLight(p, n, u_p${i}, u_c${i});\n`;
+  }
+  return new Cesium.CustomShader({
+    lightingModel: Cesium.LightingModel.UNLIT, uniforms,
+    fragmentShaderText: `
+      vec3 fwLight(vec3 p, vec3 n, vec3 lp, vec3 lc){
+        vec3 d = lp - p; float d2 = dot(d, d);
+        float ndl = clamp(dot(n, d * inversesqrt(d2 + 1e-6)) * 0.7 + 0.3, 0.0, 1.0);   // « wrap » : pas d'arête dure sur les facettes
+        return lc * (ndl / (d2 + 25.0));                                                  // 1/d², adouci sous 5 m
+      }
+      void fragmentMain(FragmentInput fsInput, inout czm_modelMaterial material){
+        vec3 p = fsInput.attributes.positionEC;
+        vec3 n = normalize(cross(dFdx(p), dFdy(p)));
+        if (dot(n, -p) < 0.0) n = -n;
+        vec3 L = u_amb;
+        ${somme}
+        material.diffuse *= L;
+      }`
+  });
+}
+const groundShader = (LOOK && LOOK.groundLight && HAS_ION) ? makeGroundShader() : null;
+const _gW = new Cesium.Cartesian3(), _gE = new Cesium.Cartesian3();
+function updateGroundLights(){
+  if (!groundShader) return;
+  const ls = layer.lights(GROUND_NL), vm = viewer.camera.viewMatrix;
+  for (let i=0;i<GROUND_NL;i++){
+    const l = ls[i];
+    if (l){
+      layer.sceneToWorld(l.x, l.y, l.z, _gW);
+      Cesium.Matrix4.multiplyByPoint(vm, _gW, _gE);
+      groundShader.setUniform('u_p'+i, Cesium.Cartesian3.clone(_gE));
+      groundShader.setUniform('u_c'+i, new Cesium.Cartesian3(l.r*GROUND_K, l.g*GROUND_K, l.b*GROUND_K));
+    } else groundShader.setUniform('u_c'+i, new Cesium.Cartesian3(0,0,0));
+  }
+}
 
 // DÉCOR :
 //  - SANS token (test immédiat) -> carte OpenStreetMap drapée sur le globe (GRATUIT, sans clé).
@@ -43,6 +93,14 @@ viewer.scene.debugShowFramesPerSecond = false;
 viewer.scene.globe.show = !HAS_ION;        // OSM sur le globe (sans ion) ; caché si Google 3D Tiles
 viewer.scene.skyAtmosphere.show = false;   // pas de voile bleu : ciel sombre -> les feux ressortent
 viewer.scene.globe.enableLighting = false; // décor à pleine luminosité (réalisme nuit -> plus tard)
+// B381 : CIEL de nuit fait par le dôme de l'overlay (dégradé + étoiles clairsemées) -> on masque
+// le fond d'étoiles Cesium (grain sur toute l'image), le soleil et la lune (position = horloge réelle).
+// OBJECTIF plus large (85° horizontal, ~51° vertical en 16:9) : l'HORIZON et le décor entrent dans
+// le cadre, les bombes au-dessus — c'est le cadrage de FWsim. ?look=b379 -> ciel et objectif d'avant.
+if (LOOK && !LOOK.old){
+  viewer.scene.skyBox.show = false; viewer.scene.sun.show = false; viewer.scene.moon.show = false;
+  viewer.camera.frustum.fov = Cesium.Math.toRadians(85);
+}
 
 // Terrain photoréaliste (Google 3D Tiles via Cesium ion) — uniquement si token ion.
 if (HAS_ION) {
@@ -52,7 +110,10 @@ if (HAS_ION) {
       viewer.scene.primitives.add(tileset);
       // AMBIANCE NUIT : assombrit le terrain. + ALLÈGE la charge (anti-freeze) : tuiles plus
       // grossières (mSSE haut) = bien moins de tuiles à charger/afficher, et moins de 503.
-      tileset.style = new Cesium.Cesium3DTileStyle({ color: "color('#4f4f5e')" });
+      // B381 : la NUIT et la LUMIÈRE DES FEUX sont faites par un shader sur les tuiles (le décor
+      // s'éclaire là où tirent les bombes). ?look=b379 ou ?sol=0 -> l'ancien assombrissement uniforme.
+      if (groundShader) tileset.customShader = groundShader;
+      else tileset.style = new Cesium.Cesium3DTileStyle({ color: "color('#4f4f5e')" });
       tileset.maximumScreenSpaceError = 24;     // (défaut 16) -> beaucoup moins de tuiles
       tileset.cacheBytes = 256 * 1024 * 1024;   // cache plus petit -> moins de mémoire
       // CALER LE SOL de façon ROBUSTE (sinon la vue par défaut marchait "pas tout le temps") :
@@ -98,7 +159,9 @@ const layer = new ThreeFireworks(viewer, FIRE);
 // Contrôles : QZSD (déplacement), clic gauche + glisser (rotation), pas de molette, sol dur.
 const cam = new FpsCameraController(viewer, layer);
 const CAM_LOCAL = [0, -150, 1.75];   // 150 m derrière (axe de tir), hauteur d'homme
-const CAM_TARGET = [0, 0, 60];       // vise vers le burst (apex ~90 m)
+// vise vers le burst (apex ~90 m). B381 : avec l'objectif 85°, on vise un peu plus bas (48 m) -> regard
+// ~+17°, l'horizon tombe à ~1/5 du bas de l'image, une 75 mm et une 100 mm entières dans le cadre.
+const CAM_TARGET = (LOOK && !LOOK.old) ? [0, 0, 48] : [0, 0, 60];
 cam.setFromLocal(CAM_LOCAL, CAM_TARGET);
 
 // DÉMO : l'effet choisi tourne EN BOUCLE (focus). Sélecteur d'effet en haut à droite pour réviser.
@@ -183,6 +246,7 @@ function frame(){
     cam.update(dt);                          // caméra TOUJOURS active (même en pause → inspecter)
     layer.update(timeline.paused ? 0 : dt);  // sim des feux FIGÉE en pause (artifices suspendus)
     timeline.update(dt);                     // barre/horloge (n'avance que si lecture)
+    updateGroundLights();                    // B381 : les feux éclairent le décor
     viewer.scene.render();                   // décor Cesium
     layer.render();                          // overlay feux (caméra synchronisée, par-dessus)
   } catch (e) { console.warn('[PrevoFX] frame error (loop continue)', e); }
@@ -190,4 +254,5 @@ function frame(){
 requestAnimationFrame(frame);
 
 // debug console : PrevoFX.focus('willow') change l'effet joué en boucle ; PrevoFX.fire('peony') tire une fois.
-window.PrevoFX = { viewer, layer, cam, timeline, audio, fire: (a) => layer.fire(a), focus: (a) => layer.setFocus(a) };
+window.PrevoFX = { viewer, layer, cam, timeline, audio, fire: (a) => layer.fire(a), focus: (a) => layer.setFocus(a),
+  groundShader, updateGroundLights };
