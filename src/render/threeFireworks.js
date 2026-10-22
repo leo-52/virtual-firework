@@ -30,12 +30,13 @@ const _airQ = _qnum('air'); const AIR_ON = !LOOK_OLD && !!(_airQ && _airQ[0] > 0
 // haloPx = diamètre du halo À L'ÉCRAN (le halo d'une optique a une taille ~fixe en pixels : il
 // habille les petites étoiles lointaines, pas les grosses têtes — sinon celles-ci viraient au blanc) ;
 // haloMin = halo minimal en multiples de la boule (les grosses étoiles gardent un léger rayonnement).
-const STAR_LOOK  = LOOK_OLD ? { haloPx:0, haloMin:1, haloI:0, minPx:0, white:0, crisp:1 } : { haloPx:8, haloMin:1.3, haloI:0.13, minPx:3.5, white:0.55, crisp:1.0, soft:1 };
-const TRAIL_LOOK = LOOK_OLD ? { haloPx:0, haloMin:1, haloI:0, minPx:0, white:0, crisp:1 } : { haloPx:4, haloMin:1.0, haloI:0.06, minPx:0, spark:0.85, white:0.12, crisp:1 };   // spark (B381) : grains pailletés
-const BLOOM_DEF = LOOK_OLD ? [0.3, 0.22, 0.55] : [0.9, 0.55, 0.6];   // B381 (ablation à l'aveugle) : bloom fort et large, seuil HAUT -> halo doux sur les cœurs, pas de brouillard   // force, rayon, seuil (B106 : 0.3 / 0.22 / 0.55)
-{ const h=_qnum('halo'), w=_qnum('white'), e=_qnum('expo'), v=_qnum('var'), mp=_qnum('minpx'), so=_qnum('soft');
+const STAR_LOOK  = LOOK_OLD ? { haloPx:0, haloMin:1, haloI:0, minPx:0, white:0, crisp:1 } : { haloPx:8, haloMin:1.3, haloI:0.13, halo2Px:24, halo2I:0.035, minPx:3.5, white:0.55, crisp:1.0, soft:1 };
+const TRAIL_LOOK = LOOK_OLD ? { haloPx:0, haloMin:1, haloI:0, minPx:0, white:0, crisp:1 } : { haloPx:4, haloMin:1.0, haloI:0.06, halo2Px:12, halo2I:0.012, minPx:0, spark:0.85, white:0.12, crisp:1 };   // spark (B381) : grains pailletés
+const BLOOM_DEF = [0.3, 0.22, 0.55];   // force, rayon, seuil — ceux de B106 (anti-brouillard). B381 : un bloom fort faisait des « étoiles carrées » sur certains GPU -> la lueur large est calculée par étoile (halo2)
+{ const h=_qnum('halo'), w=_qnum('white'), e=_qnum('expo'), v=_qnum('var'), mp=_qnum('minpx'), so=_qnum('soft'), h2=_qnum('halo2'), th2=_qnum('thalo2');
   if (!LOOK_OLD){ if (h){ STAR_LOOK.haloPx=h[0]; if (h.length>1) STAR_LOOK.haloI=h[1]; }
-    if (w) STAR_LOOK.white=w[0]; if (e) STAR_LOOK.expo=e[0]; if (v) STAR_LOOK.var=v[0]; if (mp) STAR_LOOK.minPx=mp[0]; if (so) STAR_LOOK.soft=so[0]; } }
+    if (w) STAR_LOOK.white=w[0]; if (e) STAR_LOOK.expo=e[0]; if (v) STAR_LOOK.var=v[0]; if (mp) STAR_LOOK.minPx=mp[0]; if (so) STAR_LOOK.soft=so[0];
+    if (h2){ STAR_LOOK.halo2Px=h2[0]; STAR_LOOK.halo2I=h2[1]; } if (th2){ TRAIL_LOOK.halo2Px=th2[0]; TRAIL_LOOK.halo2I=th2[1]; } } }
 const AIR_K = 0.055 / 350;  // opacité de la lueur d'air par unité de lumière émise (pivoine 75 mm pleine ≈ 350 -> 0,055 ; relecture à l'aveugle : « tache floue » -> plus faible et plus large)
 const AIR_MAX = 0.12;       // plafond : une lueur, jamais un brouillard (cf B106 anti-brouillard)
 const TRAIL_LIGHT_K = 0.05; // B381 : poids des traînées dans l'éclairage du décor (grains = éclat × taille²)
@@ -81,6 +82,7 @@ const STAR_VS = `
   uniform vec2 uVp;
   uniform float uHaloPx;    // B380 : diamètre du halo à l'écran (px)
   uniform float uHaloMin;   // B380 : halo minimal en rayons de boule (1 = aucun)
+  uniform float uHalo2Px;   // B381 : 2e halo, LARGE et doux (lueur « multi-échelle », comme un bloom calculé)
   uniform float uMinPx;     // B380 : taille mini à l'écran (0 = comme avant)
   varying vec3 vCol;
   varying vec2 vDir;
@@ -88,6 +90,7 @@ const STAR_VS = `
   varying float vE;         // B380 : agrandissement du sprite pour contenir le halo
   varying float vGain;      // B380 : atténuation des étoiles agrandies jusqu'à la taille mini
   varying float vHR;        // B380 : rayon du halo en rayons de boule
+  varying float vHR2;       // B381 : rayon du 2e halo en rayons de boule
   void main(){
     vCol = aColor;
     vec4 mv = modelViewMatrix * vec4(position, 1.0);
@@ -116,7 +119,8 @@ const STAR_VS = `
     vStretch = min(st, 3.3);
     vDir = lenPx > 0.0001 ? dpx/lenPx : vec2(1.0, 0.0);
     vHR = max(uHaloPx / max(px, 0.001), uHaloMin);                  // petite étoile -> grand halo relatif ; grosse tête -> halo minimal
-    vE = 1.0 + max(vHR - 1.0, 0.0) / vStretch;                      // le halo (autour de la tête) dépasse l'ovale
+    vHR2 = uHalo2Px / max(px, 0.001);
+    vE = 1.0 + max(max(vHR, vHR2) - 1.0, 0.0) / vStretch;                      // le halo (autour de la tête) dépasse l'ovale
     gl_PointSize = px * vStretch * vE;                              // le sprite s'agrandit pour contenir l'ovale ET le halo
     if (uVar > 0.0 && aSeed > 0.0) vGain *= mix(1.0, 0.65 + 0.70 * vv, uVar);                      // B381 : éclats inégaux
     gl_Position = p1;
@@ -124,6 +128,8 @@ const STAR_VS = `
 const STAR_FS = `
   uniform sampler2D uTex;
   uniform float uHaloI;
+  uniform float uHalo2I;
+  varying float vHR2;
   uniform float uWhite;     // B381 : cœur blanc-chaud (saturation du capteur sur les étoiles vives)
   uniform float uCrisp;     // B381 : netteté du bord de l'étoile
   uniform float uSoft;      // B381 : bord doux de la boule (0 = net comme avant)
@@ -159,6 +165,10 @@ const STAR_FS = `
       float x = length(relH) / vHR;
       c += vCol * uHaloI * exp(-5.5*x*x) * (1.0 - smoothstep(0.85, 1.0, x));
     }
+    if (uHalo2I > 0.0 && vHR2 > 1.0){                                // lueur large et douce (analytique : lisse sur TOUS les GPU)
+      float x2 = length(relH) / vHR2;
+      c += vCol * uHalo2I * exp(-4.0*x2*x2) * (1.0 - smoothstep(0.8, 1.0, x2));
+    }
     c *= vGain * vSpark;
     if (max(c.r, max(c.g, c.b)) < 0.0004) discard;
     gl_FragColor = vec4(c, 1.0);                                      // alpha 1 : l'apport additif est la couleur elle-même
@@ -168,7 +178,7 @@ function makeStarMat(tex, look){
   return new THREE.ShaderMaterial({
     uniforms:{ uTex:{value:tex||starTex}, uH:{value:0.5*(innerHeight||800)*k},
                uVp:{value:new THREE.Vector2(0.5*(innerWidth||1280)*k, 0.5*(innerHeight||800)*k)},
-               uHaloPx:{value:L.haloPx*k}, uHaloMin:{value:L.haloMin}, uHaloI:{value:L.haloI}, uMinPx:{value:L.minPx*k},
+               uHaloPx:{value:L.haloPx*k}, uHaloMin:{value:L.haloMin}, uHaloI:{value:L.haloI}, uHalo2Px:{value:(L.halo2Px||0)*k}, uHalo2I:{value:L.halo2I||0}, uMinPx:{value:L.minPx*k},
                uTime:{value:0}, uSpark:{value:L.spark||0}, uWhite:{value:L.white||0}, uCrisp:{value:L.crisp||1},
                uExpo:{value:L.expo||0.07}, uVar:{value:L.var||0}, uSoft:{value:L.soft||0} },
     vertexShader:STAR_VS, fragmentShader:STAR_FS,
@@ -2454,7 +2464,16 @@ export class ThreeFireworks {
     this.composer = new EffectComposer(this.renderer);
     this.composer.addPass(new RenderPass(scene, this.camera));
     const BL = (!LOOK_OLD && _qnum('bloom')) || [BLOOM_DEF[0], BLOOM_DEF[1], BLOOM_DEF[2]];
-    this.composer.addPass(new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), BL[0], BL[1], BL[2])); // B106 anti-BROUILLARD : seuil 0.12->0.55 = seuls les CŒURS brillants blooment (la masse faible ne fait plus de halo), rayon resserré
+    const bloomPass = new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), BL[0], BL[1], BL[2]);
+    // B381 : le bloom réduit puis agrandit l'image (mips). Si le matériel ne filtre pas linéairement
+    // les textures demi-flottantes, ces agrandissements se font « en escalier » -> une BOÎTE carrée
+    // autour de chaque étoile (vu à l'aveugle : « étoiles carrées »). Quand les flottants 32 bits sont
+    // filtrables, on les utilise pour les cibles du bloom : flou lisse partout.
+    { const gl=this.renderer.getContext();
+      if (gl.getExtension('OES_texture_float_linear') && gl.getExtension('EXT_color_buffer_float'))
+        for (const rt of [...bloomPass.renderTargetsHorizontal, ...bloomPass.renderTargetsVertical, bloomPass.renderTargetBright]){
+          rt.texture.type = THREE.FloatType; rt.dispose(); } }
+    this.composer.addPass(bloomPass); // B106 anti-BROUILLARD : seuil 0.12->0.55 = seuls les CŒURS brillants blooment (la masse faible ne fait plus de halo), rayon resserré
     this.composer.addPass(new OutputPass());
     // CIEL DE NUIT (B381) : le fond d'étoiles de Cesium faisait du « grain » sur toute l'image.
     // Remplacé (main.js le masque) par un dôme qui suit la caméra : dégradé horizon bleu sombre ->
