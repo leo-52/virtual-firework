@@ -27,7 +27,7 @@ const AIR_ON = !LOOK_OLD && /[?&]air=1\b/.test(_QS);   // B381 : retirée par d�
 // haloPx = diamètre du halo À L'ÉCRAN (le halo d'une optique a une taille ~fixe en pixels : il
 // habille les petites étoiles lointaines, pas les grosses têtes — sinon celles-ci viraient au blanc) ;
 // haloMin = halo minimal en multiples de la boule (les grosses étoiles gardent un léger rayonnement).
-const STAR_LOOK  = LOOK_OLD ? { haloPx:0, haloMin:1, haloI:0, minPx:0, white:0, crisp:1 } : { haloPx:8, haloMin:1.3, haloI:0.13, minPx:1.6, white:0.55, crisp:1.6 };
+const STAR_LOOK  = LOOK_OLD ? { haloPx:0, haloMin:1, haloI:0, minPx:0, white:0, crisp:1 } : { haloPx:8, haloMin:1.3, haloI:0.13, minPx:1.6, white:0.55, crisp:1.0 };
 const TRAIL_LOOK = LOOK_OLD ? { haloPx:0, haloMin:1, haloI:0, minPx:0, white:0, crisp:1 } : { haloPx:4, haloMin:1.0, haloI:0.06, minPx:0, spark:0.85, white:0.12, crisp:1 };   // spark (B381) : grains pailletés
 const AIR_K = 0.055 / 350;  // opacité de la lueur d'air par unité de lumière émise (pivoine 75 mm pleine ≈ 350 -> 0,055 ; relecture à l'aveugle : « tache floue » -> plus faible et plus large)
 const AIR_MAX = 0.12;       // plafond : une lueur, jamais un brouillard (cf B106 anti-brouillard)
@@ -328,18 +328,19 @@ if (SMOKE_ON){
     transparent:true, blending:THREE.AdditiveBlending, depthWrite:false });
   smokePoints=new THREE.Points(g,m); smokePoints.frustumCulled=false; scene.add(smokePoints);
 }
-function spawnSmokePuff(x,y,z, s0, s1, life, dens){
+let SHELL_SEQ = 0;   // B381 : identifiant de bombe (sa fumée n'est pas éclairée par ses PROPRES étoiles)
+function spawnSmokePuff(x,y,z, s0, s1, life, dens, own){
   if (!SMOKE_ON) return;
   const p=smoke[smokeHead]; smokeHead=(smokeHead+1)%SMOKE_MAX;
   p.x=x; p.y=y; p.z=z;
   p.vx=smokeWind.x+(Math.random()-0.5)*0.5; p.vy=0.10+Math.random()*0.30; p.vz=smokeWind.z+(Math.random()-0.5)*0.5;
-  p.age=0; p.life=life; p.s0=s0; p.s1=s1; p.dens=dens; p.rot=Math.random()*6.283; p.vr=(Math.random()-0.5)*0.15; p.alive=true;
+  p.age=0; p.life=life; p.s0=s0; p.s1=s1; p.dens=dens; p.rot=Math.random()*6.283; p.vr=(Math.random()-0.5)*0.15; p.alive=true; p.own=own||0;
 }
-function spawnSmoke(x,y,z, r0, cal){             // le cœur de l'ouverture : quelques bouffées au centre
+function spawnSmoke(x,y,z, r0, cal, own){        // le cœur de l'ouverture : quelques bouffées au centre
   if (!SMOKE_ON) return;
   const k=cal/75;
   for (let i=0;i<Math.round(3+3*k);i++){ const u=vrand(Math.random), rr=r0*0.3*Math.random();
-    spawnSmokePuff(x+u[0]*rr, y+u[1]*rr, z+u[2]*rr, 4*k, 12*k, 14+Math.random()*8, 0.8); }
+    spawnSmokePuff(x+u[0]*rr, y+u[1]*rr, z+u[2]*rr, 4*k, 12*k, 14+Math.random()*8, 0.8, own); }
 }
 function updateSmoke(dt, lights){
   if (!SMOKE_ON) return;
@@ -352,7 +353,11 @@ function updateSmoke(dt, lights){
     const env=Math.min(1,p.age/0.5)*(t<0.5?1:Math.max(0,1-(t-0.5)/0.5)) / (1+0.6*t);   // se forme, s'étale (dilution), s'efface
     let r=0.0006, g=0.0007, b=0.0012;                                                   // lune : à peine visible sans feux
     for (const l of lights){
-      const dx=l.x-p.x, dy=l.y-p.y, dz=l.z-p.z, f=SMOKE_K/(dx*dx+dy*dy+dz*dz+size*size);
+      // Relectures à l'aveugle : une bombe qui éclaire SA fumée pendant qu'elle brûle = « flou », « blob ».
+      // Sur les photos, la fumée d'une bombe se lit quand les SUIVANTES l'éclairent (et au flash).
+      if (l.noSmoke) continue;
+      const w = (l.own && l.own===p.own) ? (l.selfW||0) : 1; if (w<=0) continue;
+      const dx=l.x-p.x, dy=l.y-p.y, dz=l.z-p.z, f=w*SMOKE_K/(dx*dx+dy*dy+dz*dz+size*size);
       r+=l.r*f; g+=l.g*f; b+=l.b*f; }
     const a=p.dens*env;
     smokePos[i*3]=p.x; smokePos[i*3+1]=p.y; smokePos[i*3+2]=p.z;
@@ -363,37 +368,6 @@ function updateSmoke(dt, lights){
   g.attributes.position.needsUpdate=true; g.attributes.aColor.needsUpdate=true; g.attributes.size.needsUpdate=true; g.attributes.aRot.needsUpdate=true;
 }
 
-// DÔME DE CIEL NOCTURNE (B381) — additif (overlay « screen ») : n'ajoute de la lumière QUE
-// au-dessus de l'horizon. Étoiles procédurales (grille 3D sur la direction) : peu nombreuses,
-// magnitudes très inégales, scintillement lent ; elles s'effacent près de l'horizon (brume).
-function makeSkyDome(){
-  const mat = new THREE.ShaderMaterial({
-    uniforms: { uTime:{ value:0 } },
-    vertexShader: `varying vec3 vDir;
-      void main(){ vDir = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
-    fragmentShader: `varying vec3 vDir; uniform float uTime;
-      float h1(vec3 p){ return fract(sin(dot(p, vec3(12.9898, 78.233, 37.719))) * 43758.5453); }
-      void main(){
-        vec3 d = normalize(vDir); float el = d.y;
-        float up = smoothstep(0.012, 0.075, el);                               // rien sous l'horizon NI sur les collines lointaines (bande pâle sinon)
-        vec3 hor = vec3(0.0105, 0.0125, 0.024), zen = vec3(0.0010, 0.0012, 0.0030);   // très sombre : l ACES (×1,3) remonte fort les bas niveaux
-        vec3 c = mix(hor, zen, pow(clamp(el, 0.0, 1.0), 0.42)) * up;
-        vec3 q = d * 760.0, g = floor(q); float r = h1(g);
-        if (r > 0.99935){
-          vec3 f = fract(q) - 0.5; float s = exp(-dot(f, f) * 16.0);
-          float mag = pow(h1(g + 7.1), 4.0);                                     // la plupart faibles, quelques brillantes
-          float tw = 0.85 + 0.15 * sin(uTime * (1.5 + 3.0 * h1(g + 3.3)) + 6.28 * r);
-          c += vec3(0.80, 0.86, 1.0) * s * (0.10 + 0.90 * mag) * 0.75 * tw * smoothstep(0.04, 0.16, el);
-        }
-        gl_FragColor = vec4(c, 1.0);
-      }`,
-    side: THREE.BackSide, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, depthTest: false,
-  });
-  const m = new THREE.Mesh(new THREE.SphereGeometry(30000, 48, 24), mat);
-  m.frustumCulled = false; m.renderOrder = -10;
-  m.onBeforeRender = () => { mat.uniforms.uTime.value = performance.now() / 1000; };
-  return m;
-}
 const PUFF_MAX = 512;   // B126 : le trio de formes tire 3 bombes la MÊME frame -> ~330 bouffées de gueule
                         // simultanées ; à 320 le ring buffer recyclait des flammes encore vivantes
 const puffs = [];
@@ -1923,7 +1897,8 @@ class Shell {
     // (~0,15 s), comme sur les vidéos de spectacle. Pas de flash pour les effets sans ouverture.
     this.breakLight = this.cfg.noFlash ? 0 : (this.cfg.flashBig ? 2600 : 1100) * (this.cal/75);
     // FUMÉE D'ÉCLATEMENT (B381) : le nuage reste là où la bombe a éclaté, puis dérive.
-    spawnSmoke(bx, apex, bz, this.cfg.burstRadius*0.8, this.cal);
+    if (!this._sid) this._sid=++SHELL_SEQ;
+    spawnSmoke(bx, apex, bz, this.cfg.burstRadius*0.8, this.cal, this._sid);
     // afterGlow (B191, atome) : RÉSIDU chaud qui TRAÎNE au centre après le break (le point orange
     // des étapes 2-3 de la vidéo — le cœur qui finit de se consumer). Échelle ∝ calibre.
     if (this.cfg.afterGlow){ const ag=this.cfg.afterGlow, cm=this.cal/75;
@@ -2205,7 +2180,7 @@ class Shell {
       // FUMÉE LE LONG DU TRAJET (B381) : l'étoile qui brûle laisse une bouffée toutes les ~0,3 s.
       if (SMOKE_ON && inten>0 && A<0.85){ d.smk=(d.smk===undefined ? Math.random()*SMOKE_EVERY : d.smk)-dt;
         if (d.smk<=0){ d.smk=SMOKE_EVERY*(0.8+Math.random()*0.4); const k2=this.cal/75;
-          spawnSmokePuff(px,py,pz, 1.8*k2, (6+Math.random()*4)*k2, 12+Math.random()*9, 0.45+Math.random()*0.35); } }
+          spawnSmokePuff(px,py,pz, 1.8*k2, (6+Math.random()*4)*k2, 12+Math.random()*9, 0.45+Math.random()*0.35, this._sid||(this._sid=++SHELL_SEQ)); } }
 
       // FLOU DE MOUVEMENT (B82, croquis user) : ROND + QUEUE EN CÔNE au shader — tête ronde pleine
       // taille + cône effilé derrière (part large comme la boule, finit en pointe), rond à l'arrêt.
@@ -2464,7 +2439,7 @@ export class ThreeFireworks {
     // CIEL DE NUIT (B381) : le fond d'étoiles de Cesium faisait du « grain » sur toute l'image.
     // Remplacé (main.js le masque) par un dôme qui suit la caméra : dégradé horizon bleu sombre ->
     // zénith presque noir, étoiles clairsemées, RIEN sous l'horizon (le décor n'est pas voilé).
-    this.sky = LOOK_OLD ? null : makeSkyDome();
+    this.sky = null;   // B381 : le ciel est désormais un post-traitement Cesium (main.js), masqué correctement par le relief
     if (this.sky) scene.add(this.sky);
     this._pe=new Cesium.Cartesian3(); this._de=new Cesium.Cartesian3(); this._ue=new Cesium.Cartesian3();
     this.setOrigin(origin);
@@ -2571,11 +2546,11 @@ export class ThreeFireworks {
   lights(max=8){
     const out=[];
     for (const s of this.shells){ if (s.dead) continue;
-      if (s.light) out.push({ x:s.light.x, y:s.light.y, z:s.light.z, r:s.light.r, g:s.light.g, b:s.light.b });
+      if (s.light) out.push({ x:s.light.x, y:s.light.y, z:s.light.z, r:s.light.r, g:s.light.g, b:s.light.b, own:s._sid, selfW:0 });
       if (s.muLight>0.5) out.push({ x:s.ox, y:1.2*(s.muzzleScale||1), z:s.oz, r:s.muLight*0.53, g:s.muLight*0.33, b:s.muLight*0.14 });
-      if (s.breakLight>5) out.push({ x:s.bx, y:s.cfg.apex, z:s.bz, r:s.breakLight*0.40, g:s.breakLight*0.34, b:s.breakLight*0.26 }); }
+      if (s.breakLight>5) out.push({ x:s.bx, y:s.cfg.apex, z:s.bz, r:s.breakLight*0.40, g:s.breakLight*0.34, b:s.breakLight*0.26, own:s._sid, selfW:0.3 }); }
     const k=TRAIL_LIGHT_K;
-    if (trailLight.r+trailLight.g+trailLight.b>0) out.push({ x:trailLight.x, y:trailLight.y, z:trailLight.z, r:trailLight.r*k, g:trailLight.g*k, b:trailLight.b*k });
+    if (trailLight.r+trailLight.g+trailLight.b>0) out.push({ x:trailLight.x, y:trailLight.y, z:trailLight.z, r:trailLight.r*k, g:trailLight.g*k, b:trailLight.b*k, noSmoke:true });   // traînées : éclairent le décor, pas la fumée (lumière globale, toutes bombes confondues)
     out.sort((a,b)=>(b.r+b.g+b.b)-(a.r+a.g+a.b));
     return out.slice(0,max);
   }

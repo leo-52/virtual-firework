@@ -30,8 +30,8 @@ if (HAS_ION) Cesium.Ion.defaultAccessToken = ION_TOKEN;
 // gueule des mortiers, traînées) : couleur réelle de la bombe, atténuation en 1/d², orientation des
 // surfaces (normales calculées à l'écran). Les positions passent en repère CAMÉRA (précision float).
 const GROUND_NL = 8;                     // nb de lumières simultanées (les plus fortes)
-const GROUND_K = 13.0;                   // lumière émise -> éclairement du sol (relectures à l aveugle : l éclairage ne se remarquait pas)
-const GROUND_AMB = [0.012, 0.015, 0.026]; // ambiance nuit LINÉAIRE : décor quasi noir sans feux (relecture : « éclairé à plat comme un crépuscule »)
+const GROUND_K = 18.0;                   // lumière émise -> éclairement du sol (relectures à l aveugle : l éclairage ne se remarquait pas)
+const GROUND_AMB = [0.007, 0.009, 0.016]; // ambiance nuit LINÉAIRE : décor quasi noir sans feux -> les feux deviennent LA lumière de la scène
 function makeGroundShader(){
   const U = Cesium.UniformType, uniforms = { u_amb:{ type:U.VEC3, value:new Cesium.Cartesian3(...GROUND_AMB) } };
   let somme = '';
@@ -93,13 +93,57 @@ viewer.scene.debugShowFramesPerSecond = false;
 viewer.scene.globe.show = !HAS_ION;        // OSM sur le globe (sans ion) ; caché si Google 3D Tiles
 viewer.scene.skyAtmosphere.show = false;   // pas de voile bleu : ciel sombre -> les feux ressortent
 viewer.scene.globe.enableLighting = false; // décor à pleine luminosité (réalisme nuit -> plus tard)
-// B381 : CIEL de nuit fait par le dôme de l'overlay (dégradé + étoiles clairsemées) -> on masque
-// le fond d'étoiles Cesium (grain sur toute l'image), le soleil et la lune (position = horloge réelle).
+// B381 : CIEL « HEURE BLEUE » (relectures à l'aveugle : le dégradé bleu profond est ce qui rend les
+// images FWsim photographiques). Post-traitement Cesium : peint UNIQUEMENT les pixels sans décor
+// (profondeur = fond), donc les collines masquent le ciel. Dégradé selon l'élévation du regard
+// (horizon bleu, zénith presque noir) + étoiles clairsemées fixes dans le ciel. On masque le fond
+// d'étoiles Cesium (grain sur toute l'image), le soleil et la lune (position = horloge réelle).
 // OBJECTIF plus large (76° horizontal, ~47° vertical en 16:9) : l'HORIZON et le décor entrent dans
 // le cadre, les bombes au-dessus — c'est le cadrage de FWsim. ?look=b379 -> ciel et objectif d'avant.
+const _upW = new Cesium.Cartesian3();
 if (LOOK && !LOOK.old){
   viewer.scene.skyBox.show = false; viewer.scene.sun.show = false; viewer.scene.moon.show = false;
   viewer.camera.frustum.fov = Cesium.Math.toRadians(76);
+  Cesium.Ellipsoid.WGS84.geodeticSurfaceNormal(Cesium.Cartesian3.fromDegrees(FIRE.lon, FIRE.lat, 0), _upW);   // « haut » local du site
+  viewer.scene.postProcessStages.add(new Cesium.PostProcessStage({
+    name: 'prevofx_ciel',
+    uniforms: {   // rayon de chaque pixel reconstruit à partir de la caméra (repère monde)
+      u_upW: () => _upW,
+      u_fwd: () => viewer.camera.directionWC,
+      u_right: () => viewer.camera.rightWC,
+      u_camUp: () => viewer.camera.upWC,
+      u_tan: () => { const f = viewer.camera.frustum, ty = Math.tan(f.fovy / 2); return new Cesium.Cartesian2(ty * f.aspectRatio, ty); },
+      u_t: () => performance.now() / 1000,
+    },
+    fragmentShader: `
+      uniform sampler2D colorTexture;
+      uniform sampler2D depthTexture;
+      uniform vec3 u_upW, u_fwd, u_right, u_camUp;
+      uniform vec2 u_tan;
+      uniform float u_t;
+      in vec2 v_textureCoordinates;
+      float h1(vec3 p){ return fract(sin(dot(p, vec3(12.9898, 78.233, 37.719))) * 43758.5453); }
+      void main(){
+        vec4 col = texture(colorTexture, v_textureCoordinates);
+        float depth = czm_readDepth(depthTexture, v_textureCoordinates);
+        if (depth < 1.0) { out_FragColor = col; return; }          // du décor : on n'y touche pas
+        vec2 nd = v_textureCoordinates * 2.0 - 1.0;
+        vec3 dW = normalize(u_fwd + nd.x * u_tan.x * u_right + nd.y * u_tan.y * u_camUp);   // rayon du pixel (monde)
+        float el = dot(dW, normalize(u_upW));                        // sinus de l'élévation du regard
+        vec3 hor = vec3(0.070, 0.105, 0.215), mid = vec3(0.022, 0.035, 0.085), zen = vec3(0.006, 0.009, 0.024);
+        float a = clamp(el, 0.0, 1.0);
+        vec3 c = mix(hor, mid, smoothstep(0.0, 0.18, a));
+        c = mix(c, zen, smoothstep(0.18, 0.75, a));
+        vec3 q = dW * 760.0, g = floor(q); float r = h1(g);
+        if (r > 0.99945){
+          vec3 f = fract(q) - 0.5; float s = exp(-dot(f, f) * 16.0);
+          float mag = pow(h1(g + 7.1), 4.0);
+          float tw = 0.85 + 0.15 * sin(u_t * (1.5 + 3.0 * h1(g + 3.3)) + 6.28 * r);
+          c += vec3(0.80, 0.86, 1.0) * s * (0.10 + 0.90 * mag) * 0.55 * tw * smoothstep(0.06, 0.25, a);
+        }
+        out_FragColor = vec4(col.rgb + c, 1.0);
+      }`
+  }));
 }
 
 // Terrain photoréaliste (Google 3D Tiles via Cesium ion) — uniquement si token ion.
