@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B383';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B384';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 // RENDU « VU À TRAVERS UNE CAMÉRA » (B380, user : « ça fait fade, faux, générique » face à FWsim).
 // La PHYSIQUE et les réglages d'effets ne bougent pas : seul l'ASPECT de chaque étoile change.
@@ -186,6 +186,9 @@ const STAR_FS = `
 // chevauchent, s'additionnent et virent au blanc. Désormais la taille suit la focale : P11_REF = celle
 // du rendu sur écran 16:9 (ordinateur), là où les tailles ont été validées.
 const P11_REF = (LOOK_OLD || /[?&]angul=0\b/.test(_QS)) ? 0 : (16/9) / Math.tan(38*Math.PI/180);   // ≈ 2,28 = focale du rendu B381 sur écran 16:9 (objectif 76°) : sur ordinateur RIEN ne change (rendu validé à l'aveugle) ; en portrait (téléphone) étoiles et halos suivent la bombe
+const _oeufQ = _qnum('oeuf');   // B384 : éclat du nuage « œuf de dragon » des chandelles (1 = B363)
+const EGG_K = _oeufQ ? _oeufQ[0] : (LOOK_OLD ? 1 : 0.45);   // 0,45 : avec le bloom rond plus fort (B381), les 230 grains à 2,0 faisaient une BOULE blanche floue ; ainsi on voit la grappe crépitante, l'éclair reste blanc
+const HEAD_OLD = /[?&]tete=0\b/.test(_QS);   // B384 : ?tete=0 = tête de montée dessinée comme avant
 const SPARK_CLOCK = { value:0 };   // B381 : horloge commune du scintillement (étoiles ET traînées)
 function makeStarMat(tex, look){
   const k=Math.min(devicePixelRatio,2), L=look||STAR_LOOK;
@@ -1761,8 +1764,26 @@ class Shell {
       this.muFlameAcc=0; this.muSmokeAcc=0; this.muDebrisDone=false; this.hasMuzzle=true;
       this.headGeo=new THREE.BufferGeometry();
       this.headGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array([this.ox,0,this.oz]),3));
-      this.headMat=new THREE.PointsMaterial({ size:this.cfg.headSize, map:starTex, color:this.cfg.riseColor,
-        transparent:true, blending:THREE.AdditiveBlending, depthWrite:false, sizeAttenuation:true });
+      if (LOOK_OLD || HEAD_OLD){
+        this.headMat=new THREE.PointsMaterial({ size:this.cfg.headSize, map:starTex, color:this.cfg.riseColor,
+          transparent:true, blending:THREE.AdditiveBlending, depthWrite:false, sizeAttenuation:true });
+      } else {
+        // TÊTE DE MONTÉE (B384, user : « fais les chandelles ») : même rendu que les étoiles (halo,
+        // cœur blanc, flou de mouvement, taille angulaire). Même texture, même taille, même couleur
+        // qu'avant -> le noyau est identique et le passage tête -> étoile reste sans saut (B355).
+        const rc=this.cfg.riseColor;
+        this.headGeo.setAttribute('size',  new THREE.BufferAttribute(new Float32Array([this.cfg.headSize]),1));
+        this.headGeo.setAttribute('aColor',new THREE.BufferAttribute(new Float32Array([rc.r,rc.g,rc.b]),3));
+        this.headGeo.setAttribute('aVel',  new THREE.BufferAttribute(new Float32Array(3),3));
+        this.headGeo.setAttribute('aSeed', new THREE.BufferAttribute(new Float32Array([0.01+Math.random()*0.99]),1));
+        this.headMat=makeStarMat(starTex);
+        // petite API compatible avec PointsMaterial (size, color) : le code de montée n'a pas à changer
+        const G=this.headGeo, hm=this.headMat;
+        Object.defineProperty(hm,'size',{ get:()=>G.attributes.size.array[0],
+          set:(v)=>{ G.attributes.size.array[0]=v; G.attributes.size.needsUpdate=true; } });
+        hm.color={ copy:(c)=>hm.color.setRGB(c.r,c.g,c.b),
+          setRGB:(r,g,b)=>{ const A=G.attributes.aColor; A.array[0]=r; A.array[1]=g; A.array[2]=b; A.needsUpdate=true; } };
+      }
       this.head=new THREE.Points(this.headGeo,this.headMat); this.head.frustumCulled=false; scene.add(this.head);
     }
 
@@ -1970,7 +1991,7 @@ class Shell {
       for (let k=0;k<bc.n;k++){
         const v=vrand(Math.random), r0=Math.random()*0.5*hs, sp=(7.0+Math.random()*3.5)*hs;
         const life=(0.06+1.15*Math.pow(Math.random(),2.6))*(bc.lifeMul||1);
-        spawnTrail(bx+v[0]*r0, apex+v[1]*r0, bz+v[2]*r0, bc.color.r,bc.color.g,bc.color.b, bc.size, 0.035,
+        spawnTrail(bx+v[0]*r0, apex+v[1]*r0, bz+v[2]*r0, bc.color.r*EGG_K,bc.color.g*EGG_K,bc.color.b*EGG_K, bc.size, 0.035,
                    life/0.26, v[0]*sp*4, v[1]*sp*4, v[2]*sp*4, 0.05, 4.0, true);
         lastTrail().flick=true; lastTrail().fT=Math.random()*0.08; lastTrail().fA=1;
       } }
@@ -2100,7 +2121,9 @@ class Shell {
     if (this.phase==='rise'){
       const T=Math.min(1,this.age/this.riseTime), te=1-(1-T)*(1-T);
       const y=this.cfg.apex*te, hx=this.ox+(this.bx-this.ox)*te, hz=this.oz+(this.bz-this.oz)*te;
-      const a=this.headGeo.attributes.position.array; a[0]=hx; a[1]=y; a[2]=hz;
+      const a=this.headGeo.attributes.position.array;
+      const hv=this.headGeo.attributes.aVel; if (hv && dt>0){ hv.array[0]=(hx-a[0])/dt; hv.array[1]=(y-a[1])/dt; hv.array[2]=(hz-a[2])/dt; hv.needsUpdate=true; }   // B384 : flou de mouvement de la tête
+      a[0]=hx; a[1]=y; a[2]=hz;
       this.headGeo.attributes.position.needsUpdate=true;
       this.headTimer-=dt;
       const dmoved=Math.hypot(hx-this.headLastX, y-this.headLastY, hz-this.headLastZ);

@@ -2,7 +2,7 @@
 
 > Document vivant : où on en est, ce qui est fait, ce qui reste, la ligne directrice,
 > les effets et leurs caractéristiques. Tenu à jour au fil des sessions.
-> **Dernière mise à jour : 2026-10-22 (B383 : chute réaliste, dispersion 10 % ; B382 : tailles angulaires, iPhone non cramé ; B381 : décor éclairé, ciel, fumée, bloom rond — notation à l'aveugle face à FWsim).**
+> **Dernière mise à jour : 2026-10-22 (B384 : chandelles ; B383 : chute réaliste, dispersion 10 % ; B382 : tailles angulaires, iPhone non cramé ; B381 : décor éclairé, ciel, fumée, bloom rond — notation à l'aveugle face à FWsim).**
 >
 > 📌 **VERSION DE BASE = B379** (choix user, 2026-10-22) : commit `9060f65`, branche figée
 > **`base-B379`**, état AVANT les modifications de rendu B380. C'est la référence de retour :
@@ -153,6 +153,11 @@ sur captures mélangées avec celles de FWsim) — toujours sans toucher à la p
   lieu de ~4,5 m. Saules, feuilles mortes, effets légers inchangés. `?chute=0` = avant. Dispersion des
   durées d'étoiles (BASE.lifeJitter) 13 % -> 10 % (user : « les japonais c'est de l'art », 10 % =
   fournisseur standard).
+- **B384 (user : « fais les chandelles »)** : la TÊTE DE MONTÉE (bille de chandelle, tête de toute bombe qui
+  monte) passe au rendu des étoiles (halo, cœur blanc, flou de mouvement, taille angulaire), même
+  texture/taille/couleur qu'avant -> passage tête -> étoile toujours sans saut (B355). `?tete=0` = avant.
+  Chandelles « œuf de dragon » : le nuage de 230 grains (B363) faisait une boule blanche floue avec le bloom
+  B381 -> éclat ×0,45 (`?oeuf=1` = avant) : grappe crépitante visible, éclair blanc conservé.
 - ⚠️ **Banc d'essai** : entre deux captures sur la même page, il FAUT laisser s'éteindre traînées et
   fumée (≥ 25 s de simulation), sinon la fumée de l'effet précédent, éclairée par le suivant, pollue
   l'image (des tours de relecture ont été faussés ainsi).
