@@ -30,8 +30,8 @@ const _airQ = _qnum('air'); const AIR_ON = !LOOK_OLD && !!(_airQ && _airQ[0] > 0
 // haloPx = diamètre du halo À L'ÉCRAN (le halo d'une optique a une taille ~fixe en pixels : il
 // habille les petites étoiles lointaines, pas les grosses têtes — sinon celles-ci viraient au blanc) ;
 // haloMin = halo minimal en multiples de la boule (les grosses étoiles gardent un léger rayonnement).
-const STAR_LOOK  = LOOK_OLD ? { haloPx:0, haloMin:1, haloI:0, minPx:0, white:0, crisp:1 } : { haloPx:8, haloMin:1.3, haloI:0.13, halo2Px:24, halo2I:0.035, minPx:3.5, white:0.55, crisp:1.0, soft:1 };
-const TRAIL_LOOK = LOOK_OLD ? { haloPx:0, haloMin:1, haloI:0, minPx:0, white:0, crisp:1 } : { haloPx:4, haloMin:1.0, haloI:0.06, halo2Px:12, halo2I:0.012, minPx:0, spark:0.85, white:0.12, crisp:1 };   // spark (B381) : grains pailletés
+const STAR_LOOK  = LOOK_OLD ? { haloPx:0, haloMin:1, haloI:0, minPx:0, white:0, crisp:1 } : { haloPx:8, haloMin:1.3, haloI:0.13, halo2Px:30, halo2I:0.05, minPx:3.5, white:0.55, crisp:1.0, soft:1 };
+const TRAIL_LOOK = LOOK_OLD ? { haloPx:0, haloMin:1, haloI:0, minPx:0, white:0, crisp:1 } : { haloPx:4, haloMin:1.0, haloI:0.06, halo2Px:16, halo2I:0.02, minPx:0, spark:0.85, white:0.12, crisp:1 };   // spark (B381) : grains pailletés
 const BLOOM_DEF = [0.3, 0.22, 0.55];   // force, rayon, seuil — ceux de B106 (anti-brouillard). B381 : un bloom fort faisait des « étoiles carrées » sur certains GPU -> la lueur large est calculée par étoile (halo2)
 { const h=_qnum('halo'), w=_qnum('white'), e=_qnum('expo'), v=_qnum('var'), mp=_qnum('minpx'), so=_qnum('soft'), h2=_qnum('halo2'), th2=_qnum('thalo2');
   if (!LOOK_OLD){ if (h){ STAR_LOOK.haloPx=h[0]; if (h.length>1) STAR_LOOK.haloI=h[1]; }
@@ -158,7 +158,7 @@ const STAR_FS = `
     vec3 c = vCol * t.rgb * pow(t.a, uCrisp);                         // noyau (uCrisp=1 : EXACTEMENT l'apport d'avant ; >1 : bord plus net, moins « blob »)
     // CŒUR BLANC-CHAUD (B381, relecture à l'aveugle : « étoiles = points de couleur uniformes, sans cœur ») :
     // au centre d'une étoile vive, la caméra sature -> blanc, la couleur reste au bord. ∝ éclat de l'étoile.
-    c += vec3(1.0) * pow(t.a, 4.0) * min(dot(vCol, vec3(0.30, 0.50, 0.20)), 2.5) * uWhite;
+    c += vec3(1.0) * pow(tH.a, 4.0) * min(dot(vCol, vec3(0.30, 0.50, 0.20)), 2.5) * uWhite;   // sur la BOULE seulement (sur la queue : « paires d'étoiles »)
     // HALO (B380) : lueur de la couleur PURE de l'étoile autour de la tête, gaussienne qui s'éteint
     // avant le bord du sprite (pas de carré visible). C'est le « glow » des étoiles de FWsim.
     if (uHaloI > 0.0 && vHR > 1.0){
