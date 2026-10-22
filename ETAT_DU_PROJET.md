@@ -2,7 +2,7 @@
 
 > Document vivant : où on en est, ce qui est fait, ce qui reste, la ligne directrice,
 > les effets et leurs caractéristiques. Tenu à jour au fil des sessions.
-> **Dernière mise à jour : 2026-10-22 (B380 : rendu des étoiles « vu à travers une caméra »).**
+> **Dernière mise à jour : 2026-10-22 (B381 : décor éclairé, ciel, fumée, bloom rond — notation à l'aveugle face à FWsim).**
 >
 > 📌 **VERSION DE BASE = B379** (choix user, 2026-10-22) : commit `9060f65`, branche figée
 > **`base-B379`**, état AVANT les modifications de rendu B380. C'est la référence de retour :
@@ -116,7 +116,17 @@ sur captures mélangées avec celles de FWsim) — toujours sans toucher à la p
   dessin) qui dérivent ~20 s ; éclairée par les bombes SUIVANTES et par le flash, pas par ses propres
   étoiles (sinon : « flou », « tache »). `?fumee=0` pour couper.
 - **Traînées pailletées** (`TRAIL_LOOK.spark`) : l'éclat de chaque grain saute ~14×/s, moyenne inchangée.
-- **Réglages par l'adresse** (banc d'essai) : `?halo=px,I &white= &expo= &var= &bloom=f,r,s &air= &sol=K,amb`.
+- **Étoiles** : petite taille mini (3,5 px, bord doux = rondes), cœur blanc-chaud sur la TÊTE seulement
+  (sur la queue : « paires d'étoiles »), 2 halos calculés par étoile (serré 8 px + large 20 px).
+- **BLOOM ROND** : le flou du bloom de Three.js r160 coupe sa gaussienne à 1 sigma -> noyau presque
+  CARRÉ : tout point très vif (éclair de crackling, tête) avait une lueur carrée, sur TOUS les GPU.
+  Corrigé : même largeur, noyau prolongé à 2,5 sigma (`?bloomk=0` = noyau d'origine). Du coup le bloom
+  peut être plus fort : `BLOOM_DEF = [0.8, 0, 0.55]` (seuil B106 GARDÉ : la masse faible ne bloome pas)
+  et les 2 niveaux les plus larges coupés (`BLOOM_FACTORS`, `?bloomf=`) -> pas de voile brun autour
+  des saules. Coût : ~2,5× plus d'échantillons dans le flou du bloom (images réduites, faible).
+- **Lueur de l'air** retirée par défaut (« cercle de brouillard ») — `?air=1` pour la revoir.
+- **Réglages par l'adresse** (banc d'essai) : `?halo=px,I &halo2=px,I &thalo2=px,I &white= &expo= &var=
+  &sspark= &minpx= &soft= &bloom=f,r,s &bloomf=5 poids &bloomk= &air= &sol=K,amb &fumee=0 &ciel=`.
 - ⚠️ **Banc d'essai** : entre deux captures sur la même page, il FAUT laisser s'éteindre traînées et
   fumée (≥ 25 s de simulation), sinon la fumée de l'effet précédent, éclairée par le suivant, pollue
   l'image (des tours de relecture ont été faussés ainsi).

@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B380';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B381';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 // RENDU « VU À TRAVERS UNE CAMÉRA » (B380, user : « ça fait fade, faux, générique » face à FWsim).
 // La PHYSIQUE et les réglages d'effets ne bougent pas : seul l'ASPECT de chaque étoile change.
@@ -32,10 +32,11 @@ const _airQ = _qnum('air'); const AIR_ON = !LOOK_OLD && !!(_airQ && _airQ[0] > 0
 // haloMin = halo minimal en multiples de la boule (les grosses étoiles gardent un léger rayonnement).
 const STAR_LOOK  = LOOK_OLD ? { haloPx:0, haloMin:1, haloI:0, minPx:0, white:0, crisp:1 } : { haloPx:8, haloMin:1.3, haloI:0.13, halo2Px:20, halo2I:0.03, minPx:3.5, white:0.55, crisp:1.0, soft:1 };
 const TRAIL_LOOK = LOOK_OLD ? { haloPx:0, haloMin:1, haloI:0, minPx:0, white:0, crisp:1 } : { haloPx:4, haloMin:1.0, haloI:0.06, halo2Px:16, halo2I:0.02, minPx:0, spark:0.85, white:0.12, crisp:1 };   // spark (B381) : grains pailletés
-const BLOOM_DEF = LOOK_OLD ? [0.3, 0.22, 0.55] : [0.7, 0.3, 0.55];   // B381 : bloom ROND (cf noyau corrigé plus bas) -> on peut le pousser sans carrés ; SEUIL B106 (0.55) gardé = la masse faible ne fait toujours pas de brouillard.   // force, rayon, seuil — ceux de B106 (anti-brouillard). B381 : un bloom fort faisait des « étoiles carrées » sur certains GPU -> la lueur large est calculée par étoile (halo2)
+const BLOOM_FACTORS = [1.0, 0.8, 0.45, 0.12, 0.0];   // poids des 5 niveaux du bloom (Three.js : 1, 0.8, 0.6, 0.4, 0.2). B381 : les 2 plus larges coupés = plus de voile brun autour des saules (relecture à l'aveugle), lueur serrée gardée
+const BLOOM_DEF = LOOK_OLD ? [0.3, 0.22, 0.55] : [0.8, 0.0, 0.55];   // B381 : bloom ROND (cf noyau corrigé plus bas) -> on peut le pousser sans carrés ; SEUIL B106 (0.55) gardé = la masse faible ne fait toujours pas de brouillard.   // force, rayon, seuil — ceux de B106 (anti-brouillard). B381 : un bloom fort faisait des « étoiles carrées » sur certains GPU -> la lueur large est calculée par étoile (halo2)
 { const sk=_qnum('sspark'), h=_qnum('halo'), w=_qnum('white'), e=_qnum('expo'), v=_qnum('var'), mp=_qnum('minpx'), so=_qnum('soft'), h2=_qnum('halo2'), th2=_qnum('thalo2');
   if (!LOOK_OLD){ if (h){ STAR_LOOK.haloPx=h[0]; if (h.length>1) STAR_LOOK.haloI=h[1]; }
-    if (sk) STAR_LOOK.spark=sk[0]; if (w) STAR_LOOK.white=w[0]; if (e) STAR_LOOK.expo=e[0]; if (v) STAR_LOOK.var=v[0]; if (mp) STAR_LOOK.minPx=mp[0]; if (so) STAR_LOOK.soft=so[0];
+    if (sk) STAR_LOOK.spark=sk[0]; { const hs=_qnum('hsat'); if (hs){ STAR_LOOK.hsat=hs[0]; TRAIL_LOOK.hsat=hs[0]; } } if (w) STAR_LOOK.white=w[0]; if (e) STAR_LOOK.expo=e[0]; if (v) STAR_LOOK.var=v[0]; if (mp) STAR_LOOK.minPx=mp[0]; if (so) STAR_LOOK.soft=so[0];
     if (h2){ STAR_LOOK.halo2Px=h2[0]; STAR_LOOK.halo2I=h2[1]; } if (th2){ TRAIL_LOOK.halo2Px=th2[0]; TRAIL_LOOK.halo2I=th2[1]; } } }
 const AIR_K = 0.055 / 350;  // opacité de la lueur d'air par unité de lumière émise (pivoine 75 mm pleine ≈ 350 -> 0,055 ; relecture à l'aveugle : « tache floue » -> plus faible et plus large)
 const AIR_MAX = 0.12;       // plafond : une lueur, jamais un brouillard (cf B106 anti-brouillard)
@@ -130,6 +131,7 @@ const STAR_FS = `
   uniform float uHaloI;
   uniform float uHalo2I;
   varying float vHR2;
+  uniform float uHaloSat;   // B381 : saturation de la couleur des halos (0 = couleur de l'étoile ; 1 = bord plus saturé, comme une photo : cœur blanc, frange colorée)
   uniform float uWhite;     // B381 : cœur blanc-chaud (saturation du capteur sur les étoiles vives)
   uniform float uCrisp;     // B381 : netteté du bord de l'étoile
   uniform float uSoft;      // B381 : bord doux de la boule (0 = net comme avant)
@@ -161,13 +163,15 @@ const STAR_FS = `
     c += vec3(1.0) * pow(tH.a, 4.0) * min(dot(vCol, vec3(0.30, 0.50, 0.20)), 2.5) * uWhite;   // sur la BOULE seulement (sur la queue : « paires d'étoiles »)
     // HALO (B380) : lueur de la couleur PURE de l'étoile autour de la tête, gaussienne qui s'éteint
     // avant le bord du sprite (pas de carré visible). C'est le « glow » des étoiles de FWsim.
+    float mxc = max(vCol.r, max(vCol.g, vCol.b));
+    vec3 hCol = mix(vCol, vCol * vCol / max(mxc, 0.001), uHaloSat);   // même éclat max, teinte plus franche
     if (uHaloI > 0.0 && vHR > 1.0){
       float x = length(relH) / vHR;
-      c += vCol * uHaloI * exp(-5.5*x*x) * (1.0 - smoothstep(0.85, 1.0, x));
+      c += hCol * uHaloI * exp(-5.5*x*x) * (1.0 - smoothstep(0.85, 1.0, x));
     }
     if (uHalo2I > 0.0 && vHR2 > 1.0){                                // lueur large et douce (analytique : lisse sur TOUS les GPU)
       float x2 = length(relH) / vHR2;
-      c += vCol * uHalo2I * exp(-4.0*x2*x2) * (1.0 - smoothstep(0.8, 1.0, x2));
+      c += hCol * uHalo2I * exp(-4.0*x2*x2) * (1.0 - smoothstep(0.8, 1.0, x2));
     }
     c *= vGain * vSpark;
     if (max(c.r, max(c.g, c.b)) < 0.0004) discard;
@@ -180,7 +184,7 @@ function makeStarMat(tex, look){
     uniforms:{ uTex:{value:tex||starTex}, uH:{value:0.5*(innerHeight||800)*k},
                uVp:{value:new THREE.Vector2(0.5*(innerWidth||1280)*k, 0.5*(innerHeight||800)*k)},
                uHaloPx:{value:L.haloPx*k}, uHaloMin:{value:L.haloMin}, uHaloI:{value:L.haloI}, uHalo2Px:{value:(L.halo2Px||0)*k}, uHalo2I:{value:L.halo2I||0}, uMinPx:{value:L.minPx*k},
-               uTime:SPARK_CLOCK, uSpark:{value:L.spark||0}, uWhite:{value:L.white||0}, uCrisp:{value:L.crisp||1},
+               uTime:SPARK_CLOCK, uSpark:{value:L.spark||0}, uWhite:{value:L.white||0}, uHaloSat:{value:L.hsat||0}, uCrisp:{value:L.crisp||1},
                uExpo:{value:L.expo||0.07}, uVar:{value:L.var||0}, uSoft:{value:L.soft||0} },
     vertexShader:STAR_VS, fragmentShader:STAR_FS,
     transparent:true, blending:THREE.AdditiveBlending, depthWrite:false });
@@ -2475,6 +2479,10 @@ export class ThreeFireworks {
         const sig = m.defines.KERNEL_RADIUS, R = Math.round(sig * kTr), co = [];
         for (let i = 0; i < R; i++) co.push(Math.exp(-0.5 * i * i / (sig * sig)));
         m.defines.KERNEL_RADIUS = R; m.uniforms.gaussianCoefficients.value = co; m.needsUpdate = true; } }
+    // Poids des 5 niveaux du bloom (du plus serré au plus large). Les 2 plus larges font un VOILE de
+    // plusieurs centaines de px autour des grosses masses (saule) : atténués (anti-brouillard B106).
+    { const bf=_qnum('bloomf'), W = LOOK_OLD ? null : (bf && bf.length===5 ? bf : BLOOM_FACTORS);
+      if (W) bloomPass.compositeMaterial.uniforms.bloomFactors.value = W.slice(); }
     // Cibles du bloom en flottant 32 bits quand le matériel sait les filtrer (agrandissements lisses).
     { const gl=this.renderer.getContext();
       if (gl.getExtension('OES_texture_float_linear') && gl.getExtension('EXT_color_buffer_float'))
