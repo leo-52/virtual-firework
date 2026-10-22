@@ -23,13 +23,13 @@ const BUILD = 'B380';  // tampon de version affiché dans le HUD -> permet de vo
 // Comparaison : ajouter ?look=b379 à l'adresse = rendu d'avant ; ?air=0 = sans lueur d'air.
 const _QS = (typeof location !== 'undefined') ? location.search : '';
 const LOOK_OLD = /[?&]look=b379\b/.test(_QS);
-const AIR_ON = !LOOK_OLD && !/[?&]air=0\b/.test(_QS);
+const AIR_ON = !LOOK_OLD && /[?&]air=1\b/.test(_QS);   // B381 : retirée par défaut (relecture à l'aveugle : « brouillard en cercle parfait ») — ?air=1 pour la revoir
 // haloPx = diamètre du halo À L'ÉCRAN (le halo d'une optique a une taille ~fixe en pixels : il
 // habille les petites étoiles lointaines, pas les grosses têtes — sinon celles-ci viraient au blanc) ;
 // haloMin = halo minimal en multiples de la boule (les grosses étoiles gardent un léger rayonnement).
-const STAR_LOOK  = LOOK_OLD ? { haloPx:0, haloMin:1, haloI:0, minPx:0 } : { haloPx:13, haloMin:1.35, haloI:0.18, minPx:1.6 };
-const TRAIL_LOOK = LOOK_OLD ? { haloPx:0, haloMin:1, haloI:0, minPx:0 } : { haloPx:4, haloMin:1.0, haloI:0.06, minPx:0, spark:0.85 };   // spark (B381) : grains pailletés
-const AIR_K = 0.085 / 350;  // opacité de la lueur d'air par unité de lumière émise (pivoine 75 mm pleine ≈ 350 -> 0,085)
+const STAR_LOOK  = LOOK_OLD ? { haloPx:0, haloMin:1, haloI:0, minPx:0, white:0, crisp:1 } : { haloPx:8, haloMin:1.3, haloI:0.13, minPx:1.6, white:0.55, crisp:1.6 };
+const TRAIL_LOOK = LOOK_OLD ? { haloPx:0, haloMin:1, haloI:0, minPx:0, white:0, crisp:1 } : { haloPx:4, haloMin:1.0, haloI:0.06, minPx:0, spark:0.85, white:0.12, crisp:1 };   // spark (B381) : grains pailletés
+const AIR_K = 0.055 / 350;  // opacité de la lueur d'air par unité de lumière émise (pivoine 75 mm pleine ≈ 350 -> 0,055 ; relecture à l'aveugle : « tache floue » -> plus faible et plus large)
 const AIR_MAX = 0.12;       // plafond : une lueur, jamais un brouillard (cf B106 anti-brouillard)
 const TRAIL_LIGHT_K = 0.05; // B381 : poids des traînées dans l'éclairage du décor (grains = éclat × taille²)
 
@@ -112,6 +112,8 @@ const STAR_VS = `
 const STAR_FS = `
   uniform sampler2D uTex;
   uniform float uHaloI;
+  uniform float uWhite;     // B381 : cœur blanc-chaud (saturation du capteur sur les étoiles vives)
+  uniform float uCrisp;     // B381 : netteté du bord de l'étoile
   varying float vSpark;
   varying vec3 vCol;
   varying vec2 vDir;
@@ -133,7 +135,10 @@ const STAR_FS = `
     vec4 tT = texture2D(uTex, vec2(0.5, 0.5 + dy*0.5)) * step(dy, 1.0);    // step : ZÉRO hors du cône (même piège de clamp)
     float tailMask = (q.x < m ? 1.0 : 0.0) * f * f * 0.85;           // fondu vers la pointe, un peu plus faible que la tête
     vec4 t = max(tH, tT * tailMask);                                  // rond seul à l'arrêt (la queue rentre dans la boule)
-    vec3 c = vCol * t.rgb * t.a;                                      // noyau : EXACTEMENT l'apport d'avant (additif couleur × alpha)
+    vec3 c = vCol * t.rgb * pow(t.a, uCrisp);                         // noyau (uCrisp=1 : EXACTEMENT l'apport d'avant ; >1 : bord plus net, moins « blob »)
+    // CŒUR BLANC-CHAUD (B381, relecture à l'aveugle : « étoiles = points de couleur uniformes, sans cœur ») :
+    // au centre d'une étoile vive, la caméra sature -> blanc, la couleur reste au bord. ∝ éclat de l'étoile.
+    c += vec3(1.0) * pow(t.a, 4.0) * min(dot(vCol, vec3(0.30, 0.50, 0.20)), 2.5) * uWhite;
     // HALO (B380) : lueur de la couleur PURE de l'étoile autour de la tête, gaussienne qui s'éteint
     // avant le bord du sprite (pas de carré visible). C'est le « glow » des étoiles de FWsim.
     if (uHaloI > 0.0 && vHR > 1.0){
@@ -150,7 +155,7 @@ function makeStarMat(tex, look){
     uniforms:{ uTex:{value:tex||starTex}, uH:{value:0.5*(innerHeight||800)*k},
                uVp:{value:new THREE.Vector2(0.5*(innerWidth||1280)*k, 0.5*(innerHeight||800)*k)},
                uHaloPx:{value:L.haloPx*k}, uHaloMin:{value:L.haloMin}, uHaloI:{value:L.haloI}, uMinPx:{value:L.minPx*k},
-               uTime:{value:0}, uSpark:{value:L.spark||0} },
+               uTime:{value:0}, uSpark:{value:L.spark||0}, uWhite:{value:L.white||0}, uCrisp:{value:L.crisp||1} },
     vertexShader:STAR_VS, fragmentShader:STAR_FS,
     transparent:true, blending:THREE.AdditiveBlending, depthWrite:false });
 }
@@ -275,52 +280,87 @@ function makeAirTexture(){
 }
 const airTex = makeAirTexture();
 
-// FUMÉE D'ÉCLATEMENT (B381) — chaque bombe laisse un nuage qui dérive avec le vent et se dissipe
-// lentement (~20 s). De nuit, la fumée ne se voit QUE là où une lumière l'éclaire : sa couleur est
-// recalculée à chaque image à partir des sources de lumière (sa bombe, puis les suivantes), en 1/d².
+// FUMÉE (B381 — refaite après relecture à l'aveugle : un nuage isolé passait pour « une tache »).
+// Comme en vrai, chaque étoile LAISSE DE LA FUMÉE sur son trajet : après l'explosion il reste le
+// « fantôme » de la bombe, aux contours irréguliers, qui dérive avec la brise et se dissipe (~20 s).
+// De nuit la fumée ne se voit que là où une lumière l'éclaire : sa couleur est recalculée à chaque
+// image depuis les sources de lumière (étoiles, flash d'ouverture, bombes suivantes), en 1/d².
+// Un seul système de points (1 appel de dessin), texture de nuage bruitée, tournée par bouffée.
 // Additif (overlay « screen ») = lumière diffusée, jamais un voile gris. ?fumee=0 -> sans fumée.
 const SMOKE_ON = !LOOK_OLD && !/[?&]fumee=0\b/.test(_QS);
-const SMOKE_MAX = 220;
-const SMOKE_K = 0.030;                     // lumière reçue -> éclat de la fumée
-const smokeWind = { x:(Math.random()-0.5)*2.4, z:(Math.random()-0.5)*2.4 };   // brise commune de la soirée (m/s)
-const smoke = [];
-let smokeHead = 0;
-if (SMOKE_ON){
-  for (let i=0;i<SMOKE_MAX;i++){
-    const m=new THREE.SpriteMaterial({ map:smokeTex, transparent:true, blending:THREE.AdditiveBlending, depthWrite:false, opacity:1 });
-    const s=new THREE.Sprite(m); s.visible=false; s.frustumCulled=false; scene.add(s);
-    smoke.push({ spr:s, x:0,y:0,z:0, vx:0,vy:0,vz:0, age:0, life:1, s0:1, s1:1, dens:0, alive:false });
-  }
+const SMOKE_MAX = 2400;
+const SMOKE_K = 0.040;                     // lumière reçue -> éclat d une bouffée (des centaines se superposent dans le fantôme)
+const SMOKE_EVERY = 0.22;                  // une bouffée toutes les ~0,22 s par étoile qui brûle
+const smokeWind = { x:(Math.random()-0.5)*2.0, z:(Math.random()-0.5)*2.0 };   // brise commune de la soirée (m/s)
+function makeCloudTexture(){
+  const c=document.createElement('canvas'); c.width=c.height=128; const x=c.getContext('2d');
+  for (let k=0;k<70;k++){                                    // amas de taches douces = bord irrégulier, intérieur grumeleux
+    const a=Math.random()*Math.PI*2, r=Math.pow(Math.random(),0.7)*38, cx=64+Math.cos(a)*r, cy=64+Math.sin(a)*r;
+    const rad=10+Math.random()*24, g=x.createRadialGradient(cx,cy,0, cx,cy,rad);
+    g.addColorStop(0,'rgba(255,255,255,'+(0.05+Math.random()*0.10)+')'); g.addColorStop(1,'rgba(255,255,255,0)');
+    x.fillStyle=g; x.fillRect(0,0,128,128); }
+  const im=x.getImageData(0,0,128,128), d=im.data;           // fondu doux vers le bord du carré (aucune arête visible)
+  for (let y=0;y<128;y++) for (let xx=0;xx<128;xx++){ const r=Math.hypot(xx-63.5,y-63.5)/64, f=Math.max(0,1-r*r);
+    d[(y*128+xx)*4+3]=Math.min(255, d[(y*128+xx)*4+3]*f*1.6); }
+  x.putImageData(im,0,0);
+  const t=new THREE.CanvasTexture(c); t.needsUpdate=true; return t;
 }
-function spawnSmoke(x,y,z, r0, cal){
+const smoke=[]; let smokeHead=0, smokePoints=null;
+const smokePos=new Float32Array(SMOKE_MAX*3), smokeCol=new Float32Array(SMOKE_MAX*3), smokeSize=new Float32Array(SMOKE_MAX), smokeRot=new Float32Array(SMOKE_MAX);
+if (SMOKE_ON){
+  for (let i=0;i<SMOKE_MAX;i++) smoke.push({ x:0,y:0,z:0, vx:0,vy:0,vz:0, age:0, life:1, s0:1, s1:1, dens:0, rot:0, vr:0, alive:false });
+  const g=new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.BufferAttribute(smokePos,3));
+  g.setAttribute('aColor',   new THREE.BufferAttribute(smokeCol,3));
+  g.setAttribute('size',     new THREE.BufferAttribute(smokeSize,1));
+  g.setAttribute('aRot',     new THREE.BufferAttribute(smokeRot,1));
+  const k=Math.min(devicePixelRatio,2);
+  const m=new THREE.ShaderMaterial({
+    uniforms:{ uTex:{value:makeCloudTexture()}, uH:{value:0.5*(innerHeight||800)*k} },
+    vertexShader:`attribute float size; attribute vec3 aColor; attribute float aRot; uniform float uH;
+      varying vec3 vC; varying float vR;
+      void main(){ vec4 mv=modelViewMatrix*vec4(position,1.0); vC=aColor; vR=aRot;
+        gl_PointSize=min(size*(uH/-mv.z), 900.0); gl_Position=projectionMatrix*mv; }`,
+    fragmentShader:`uniform sampler2D uTex; varying vec3 vC; varying float vR;
+      void main(){ vec2 p=gl_PointCoord-0.5; float cs=cos(vR), sn=sin(vR);
+        vec2 q=vec2(cs*p.x-sn*p.y, sn*p.x+cs*p.y)+0.5; float a=texture2D(uTex,q).a;
+        if (a<0.004) discard; gl_FragColor=vec4(vC*a,1.0); }`,
+    transparent:true, blending:THREE.AdditiveBlending, depthWrite:false });
+  smokePoints=new THREE.Points(g,m); smokePoints.frustumCulled=false; scene.add(smokePoints);
+}
+function spawnSmokePuff(x,y,z, s0, s1, life, dens){
   if (!SMOKE_ON) return;
-  const k=cal/75, n=Math.round(6+6*k);
-  for (let i=0;i<n;i++){
-    const p=smoke[smokeHead]; smokeHead=(smokeHead+1)%SMOKE_MAX;
-    const u=vrand(Math.random), rr=r0*Math.cbrt(Math.random());
-    p.x=x+u[0]*rr; p.y=y+u[1]*rr*0.8; p.z=z+u[2]*rr;
-    p.vx=smokeWind.x+(Math.random()-0.5)*0.6; p.vy=0.15+Math.random()*0.35; p.vz=smokeWind.z+(Math.random()-0.5)*0.6;
-    p.age=0; p.life=16+Math.random()*10; p.s0=(5+Math.random()*4)*k; p.s1=(16+Math.random()*10)*k;
-    p.dens=0.55+Math.random()*0.45; p.alive=true;
-  }
+  const p=smoke[smokeHead]; smokeHead=(smokeHead+1)%SMOKE_MAX;
+  p.x=x; p.y=y; p.z=z;
+  p.vx=smokeWind.x+(Math.random()-0.5)*0.5; p.vy=0.10+Math.random()*0.30; p.vz=smokeWind.z+(Math.random()-0.5)*0.5;
+  p.age=0; p.life=life; p.s0=s0; p.s1=s1; p.dens=dens; p.rot=Math.random()*6.283; p.vr=(Math.random()-0.5)*0.15; p.alive=true;
+}
+function spawnSmoke(x,y,z, r0, cal){             // le cœur de l'ouverture : quelques bouffées au centre
+  if (!SMOKE_ON) return;
+  const k=cal/75;
+  for (let i=0;i<Math.round(3+3*k);i++){ const u=vrand(Math.random), rr=r0*0.3*Math.random();
+    spawnSmokePuff(x+u[0]*rr, y+u[1]*rr, z+u[2]*rr, 4*k, 12*k, 14+Math.random()*8, 0.8); }
 }
 function updateSmoke(dt, lights){
   if (!SMOKE_ON) return;
-  for (const p of smoke){
-    if (!p.alive) continue;
-    p.age+=dt; if (p.age>=p.life){ p.alive=false; p.spr.visible=false; continue; }
-    p.x+=p.vx*dt; p.y+=p.vy*dt; p.z+=p.vz*dt; p.vy*=Math.max(0,1-0.05*dt);
+  for (let i=0;i<SMOKE_MAX;i++){
+    const p=smoke[i];
+    if (!p.alive){ smokeSize[i]=0; continue; }
+    p.age+=dt; if (p.age>=p.life){ p.alive=false; smokeSize[i]=0; smokeCol[i*3]=smokeCol[i*3+1]=smokeCol[i*3+2]=0; continue; }
+    p.x+=p.vx*dt; p.y+=p.vy*dt; p.z+=p.vz*dt; p.vy*=Math.max(0,1-0.05*dt); p.rot+=p.vr*dt;
     const t=p.age/p.life, size=p.s0+(p.s1-p.s0)*Math.sqrt(t);
-    const env=Math.min(1,p.age/0.6)*(t<0.55?1:Math.max(0,1-(t-0.55)/0.45));   // se forme en ~0,6 s, s'efface sur la fin
-    let r=0.0015, g=0.0018, b=0.0030;                                            // lune : à peine visible sans feux
+    const env=Math.min(1,p.age/0.5)*(t<0.5?1:Math.max(0,1-(t-0.5)/0.5)) / (1+0.6*t);   // se forme, s'étale (dilution), s'efface
+    let r=0.0006, g=0.0007, b=0.0012;                                                   // lune : à peine visible sans feux
     for (const l of lights){
       const dx=l.x-p.x, dy=l.y-p.y, dz=l.z-p.z, f=SMOKE_K/(dx*dx+dy*dy+dz*dz+size*size);
       r+=l.r*f; g+=l.g*f; b+=l.b*f; }
     const a=p.dens*env;
-    p.spr.material.color.setRGB(Math.min(r,1.5)*a, Math.min(g,1.5)*a, Math.min(b,1.5)*a);
-    p.spr.position.set(p.x,p.y,p.z); p.spr.scale.setScalar(size);
-    p.spr.visible=a>0.001;
+    smokePos[i*3]=p.x; smokePos[i*3+1]=p.y; smokePos[i*3+2]=p.z;
+    smokeCol[i*3]=Math.min(r,0.6)*a; smokeCol[i*3+1]=Math.min(g,0.6)*a; smokeCol[i*3+2]=Math.min(b,0.6)*a;
+    smokeSize[i]=size; smokeRot[i]=p.rot;
   }
+  const g=smokePoints.geometry;
+  g.attributes.position.needsUpdate=true; g.attributes.aColor.needsUpdate=true; g.attributes.size.needsUpdate=true; g.attributes.aRot.needsUpdate=true;
 }
 
 // DÔME DE CIEL NOCTURNE (B381) — additif (overlay « screen ») : n'ajoute de la lumière QUE
@@ -335,7 +375,7 @@ function makeSkyDome(){
       float h1(vec3 p){ return fract(sin(dot(p, vec3(12.9898, 78.233, 37.719))) * 43758.5453); }
       void main(){
         vec3 d = normalize(vDir); float el = d.y;
-        float up = smoothstep(-0.005, 0.03, el);                               // rien sous l'horizon
+        float up = smoothstep(0.012, 0.075, el);                               // rien sous l'horizon NI sur les collines lointaines (bande pâle sinon)
         vec3 hor = vec3(0.0105, 0.0125, 0.024), zen = vec3(0.0010, 0.0012, 0.0030);   // très sombre : l ACES (×1,3) remonte fort les bas niveaux
         vec3 c = mix(hor, zen, pow(clamp(el, 0.0, 1.0), 0.42)) * up;
         vec3 q = d * 760.0, g = floor(q); float r = h1(g);
@@ -2162,6 +2202,10 @@ class Shell {
         else if (this.cfg.arrow){ inten *= 0.45; }                 // œuf de dragon : étoile TRÈS DISCRÈTE avant de claquer (à peine une boule, la traînée domine)
       this.col[i*3]=r*inten; this.col[i*3+1]=g*inten; this.col[i*3+2]=b*inten;
       if (inten>0){ aR+=r*inten; aG+=g*inten; aB+=b*inten; aX+=px; aY+=py; aZ+=pz; aN++; }   // B380/B381 : lumière émise (lueur d'air + éclairage du décor)
+      // FUMÉE LE LONG DU TRAJET (B381) : l'étoile qui brûle laisse une bouffée toutes les ~0,3 s.
+      if (SMOKE_ON && inten>0 && A<0.85){ d.smk=(d.smk===undefined ? Math.random()*SMOKE_EVERY : d.smk)-dt;
+        if (d.smk<=0){ d.smk=SMOKE_EVERY*(0.8+Math.random()*0.4); const k2=this.cal/75;
+          spawnSmokePuff(px,py,pz, 1.8*k2, (6+Math.random()*4)*k2, 12+Math.random()*9, 0.45+Math.random()*0.35); } }
 
       // FLOU DE MOUVEMENT (B82, croquis user) : ROND + QUEUE EN CÔNE au shader — tête ronde pleine
       // taille + cône effilé derrière (part large comme la boule, finit en pointe), rond à l'arrêt.
@@ -2241,7 +2285,7 @@ class Shell {
         this.air.material.color.setRGB(1-sat+sat*cr, (1-sat+sat*cg)*0.86, (1-sat+sat*cb)*0.70);
         this.air.material.opacity=Math.min(AIR_MAX, AIR_K*L);
         this.air.position.set(cx, cy, cz);
-        this.air.scale.setScalar(Math.max(10, spread*4.5));
+        this.air.scale.setScalar(Math.max(14, spread*7.0));
         this.air.visible=true;
       } else this.air.visible=false;
     }

@@ -30,8 +30,8 @@ if (HAS_ION) Cesium.Ion.defaultAccessToken = ION_TOKEN;
 // gueule des mortiers, traînées) : couleur réelle de la bombe, atténuation en 1/d², orientation des
 // surfaces (normales calculées à l'écran). Les positions passent en repère CAMÉRA (précision float).
 const GROUND_NL = 8;                     // nb de lumières simultanées (les plus fortes)
-const GROUND_K = 5.5;                    // lumière émise (unités moteur) -> éclairement du sol (linéaire : pivoine 75 à 80 m ≈ 0,25)
-const GROUND_AMB = [0.030, 0.036, 0.055]; // ambiance nuit LINÉAIRE (lune, ciel bleuté) : décor à peine lisible sans feux
+const GROUND_K = 13.0;                   // lumière émise -> éclairement du sol (relectures à l aveugle : l éclairage ne se remarquait pas)
+const GROUND_AMB = [0.012, 0.015, 0.026]; // ambiance nuit LINÉAIRE : décor quasi noir sans feux (relecture : « éclairé à plat comme un crépuscule »)
 function makeGroundShader(){
   const U = Cesium.UniformType, uniforms = { u_amb:{ type:U.VEC3, value:new Cesium.Cartesian3(...GROUND_AMB) } };
   let somme = '';
@@ -95,11 +95,11 @@ viewer.scene.skyAtmosphere.show = false;   // pas de voile bleu : ciel sombre ->
 viewer.scene.globe.enableLighting = false; // décor à pleine luminosité (réalisme nuit -> plus tard)
 // B381 : CIEL de nuit fait par le dôme de l'overlay (dégradé + étoiles clairsemées) -> on masque
 // le fond d'étoiles Cesium (grain sur toute l'image), le soleil et la lune (position = horloge réelle).
-// OBJECTIF plus large (85° horizontal, ~51° vertical en 16:9) : l'HORIZON et le décor entrent dans
+// OBJECTIF plus large (76° horizontal, ~47° vertical en 16:9) : l'HORIZON et le décor entrent dans
 // le cadre, les bombes au-dessus — c'est le cadrage de FWsim. ?look=b379 -> ciel et objectif d'avant.
 if (LOOK && !LOOK.old){
   viewer.scene.skyBox.show = false; viewer.scene.sun.show = false; viewer.scene.moon.show = false;
-  viewer.camera.frustum.fov = Cesium.Math.toRadians(85);
+  viewer.camera.frustum.fov = Cesium.Math.toRadians(76);
 }
 
 // Terrain photoréaliste (Google 3D Tiles via Cesium ion) — uniquement si token ion.
@@ -160,8 +160,8 @@ const layer = new ThreeFireworks(viewer, FIRE);
 const cam = new FpsCameraController(viewer, layer);
 const CAM_LOCAL = [0, -150, 1.75];   // 150 m derrière (axe de tir), hauteur d'homme
 // vise vers le burst (apex ~90 m). B381 : avec l'objectif 85°, on vise un peu plus bas (48 m) -> regard
-// ~+17°, l'horizon tombe à ~1/5 du bas de l'image, une 75 mm et une 100 mm entières dans le cadre.
-const CAM_TARGET = (LOOK && !LOOK.old) ? [0, 0, 48] : [0, 0, 60];
+// ~+16°, l horizon tombe à ~1/6 du bas de l image, une 75 mm entière dans le cadre.
+const CAM_TARGET = (LOOK && !LOOK.old) ? [0, 0, 46] : [0, 0, 60];
 cam.setFromLocal(CAM_LOCAL, CAM_TARGET);
 
 // DÉMO : l'effet choisi tourne EN BOUCLE (focus). Sélecteur d'effet en haut à droite pour réviser.
