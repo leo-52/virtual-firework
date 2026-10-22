@@ -33,9 +33,9 @@ const _airQ = _qnum('air'); const AIR_ON = !LOOK_OLD && !!(_airQ && _airQ[0] > 0
 const STAR_LOOK  = LOOK_OLD ? { haloPx:0, haloMin:1, haloI:0, minPx:0, white:0, crisp:1 } : { haloPx:8, haloMin:1.3, haloI:0.13, halo2Px:30, halo2I:0.05, minPx:3.5, white:0.55, crisp:1.0, soft:1 };
 const TRAIL_LOOK = LOOK_OLD ? { haloPx:0, haloMin:1, haloI:0, minPx:0, white:0, crisp:1 } : { haloPx:4, haloMin:1.0, haloI:0.06, halo2Px:16, halo2I:0.02, minPx:0, spark:0.85, white:0.12, crisp:1 };   // spark (B381) : grains pailletés
 const BLOOM_DEF = [0.3, 0.22, 0.55];   // force, rayon, seuil — ceux de B106 (anti-brouillard). B381 : un bloom fort faisait des « étoiles carrées » sur certains GPU -> la lueur large est calculée par étoile (halo2)
-{ const h=_qnum('halo'), w=_qnum('white'), e=_qnum('expo'), v=_qnum('var'), mp=_qnum('minpx'), so=_qnum('soft'), h2=_qnum('halo2'), th2=_qnum('thalo2');
+{ const sk=_qnum('sspark'), h=_qnum('halo'), w=_qnum('white'), e=_qnum('expo'), v=_qnum('var'), mp=_qnum('minpx'), so=_qnum('soft'), h2=_qnum('halo2'), th2=_qnum('thalo2');
   if (!LOOK_OLD){ if (h){ STAR_LOOK.haloPx=h[0]; if (h.length>1) STAR_LOOK.haloI=h[1]; }
-    if (w) STAR_LOOK.white=w[0]; if (e) STAR_LOOK.expo=e[0]; if (v) STAR_LOOK.var=v[0]; if (mp) STAR_LOOK.minPx=mp[0]; if (so) STAR_LOOK.soft=so[0];
+    if (sk) STAR_LOOK.spark=sk[0]; if (w) STAR_LOOK.white=w[0]; if (e) STAR_LOOK.expo=e[0]; if (v) STAR_LOOK.var=v[0]; if (mp) STAR_LOOK.minPx=mp[0]; if (so) STAR_LOOK.soft=so[0];
     if (h2){ STAR_LOOK.halo2Px=h2[0]; STAR_LOOK.halo2I=h2[1]; } if (th2){ TRAIL_LOOK.halo2Px=th2[0]; TRAIL_LOOK.halo2I=th2[1]; } } }
 const AIR_K = 0.055 / 350;  // opacité de la lueur d'air par unité de lumière émise (pivoine 75 mm pleine ≈ 350 -> 0,055 ; relecture à l'aveugle : « tache floue » -> plus faible et plus large)
 const AIR_MAX = 0.12;       // plafond : une lueur, jamais un brouillard (cf B106 anti-brouillard)
@@ -173,13 +173,14 @@ const STAR_FS = `
     if (max(c.r, max(c.g, c.b)) < 0.0004) discard;
     gl_FragColor = vec4(c, 1.0);                                      // alpha 1 : l'apport additif est la couleur elle-même
   }`;
+const SPARK_CLOCK = { value:0 };   // B381 : horloge commune du scintillement (étoiles ET traînées)
 function makeStarMat(tex, look){
   const k=Math.min(devicePixelRatio,2), L=look||STAR_LOOK;
   return new THREE.ShaderMaterial({
     uniforms:{ uTex:{value:tex||starTex}, uH:{value:0.5*(innerHeight||800)*k},
                uVp:{value:new THREE.Vector2(0.5*(innerWidth||1280)*k, 0.5*(innerHeight||800)*k)},
                uHaloPx:{value:L.haloPx*k}, uHaloMin:{value:L.haloMin}, uHaloI:{value:L.haloI}, uHalo2Px:{value:(L.halo2Px||0)*k}, uHalo2I:{value:L.halo2I||0}, uMinPx:{value:L.minPx*k},
-               uTime:{value:0}, uSpark:{value:L.spark||0}, uWhite:{value:L.white||0}, uCrisp:{value:L.crisp||1},
+               uTime:SPARK_CLOCK, uSpark:{value:L.spark||0}, uWhite:{value:L.white||0}, uCrisp:{value:L.crisp||1},
                uExpo:{value:L.expo||0.07}, uVar:{value:L.var||0}, uSoft:{value:L.soft||0} },
     vertexShader:STAR_VS, fragmentShader:STAR_FS,
     transparent:true, blending:THREE.AdditiveBlending, depthWrite:false });
@@ -231,7 +232,7 @@ let trailWindX = 0, trailWindZ = 0;
 const trailLight = { x:0, y:0, z:0, r:0, g:0, b:0 };
 let sparkT = 0;   // B381 : horloge du scintillement (avance avec la sim -> figée en pause, reproductible)
 function updateTrails(dt){
-  sparkT += dt; trailMat.uniforms.uTime.value = sparkT;
+  sparkT += dt; SPARK_CLOCK.value = sparkT;
   let tR=0, tG=0, tB=0, tX=0, tY=0, tZ=0, tW=0;
   for (let i = 0; i < TRAIL_MAX; i++){
     const t = trail[i];
@@ -2465,10 +2466,16 @@ export class ThreeFireworks {
     this.composer.addPass(new RenderPass(scene, this.camera));
     const BL = (!LOOK_OLD && _qnum('bloom')) || [BLOOM_DEF[0], BLOOM_DEF[1], BLOOM_DEF[2]];
     const bloomPass = new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), BL[0], BL[1], BL[2]);
-    // B381 : le bloom réduit puis agrandit l'image (mips). Si le matériel ne filtre pas linéairement
-    // les textures demi-flottantes, ces agrandissements se font « en escalier » -> une BOÎTE carrée
-    // autour de chaque étoile (vu à l'aveugle : « étoiles carrées »). Quand les flottants 32 bits sont
-    // filtrables, on les utilise pour les cibles du bloom : flou lisse partout.
+    // B381 : BLOOM ROND. Le flou du bloom de Three.js (r160) coupe sa gaussienne à 1 sigma : le noyau
+    // est presque une BOÎTE, et un point très vif (éclair de crackling, tête d'étoile) reçoit une lueur
+    // CARRÉE — sur tous les GPU (vu à l'aveugle : « étoiles carrées »). On garde la MÊME largeur (sigma
+    // d'origine) mais le noyau va jusqu'à 2,5 sigma -> lueur ronde. ?bloomk=0 : noyau d'origine.
+    { const bk=_qnum('bloomk'), kTr = LOOK_OLD ? 0 : (bk ? bk[0] : 2.5);
+      if (kTr > 1) for (const m of bloomPass.separableBlurMaterials){
+        const sig = m.defines.KERNEL_RADIUS, R = Math.round(sig * kTr), co = [];
+        for (let i = 0; i < R; i++) co.push(Math.exp(-0.5 * i * i / (sig * sig)));
+        m.defines.KERNEL_RADIUS = R; m.uniforms.gaussianCoefficients.value = co; m.needsUpdate = true; } }
+    // Cibles du bloom en flottant 32 bits quand le matériel sait les filtrer (agrandissements lisses).
     { const gl=this.renderer.getContext();
       if (gl.getExtension('OES_texture_float_linear') && gl.getExtension('EXT_color_buffer_float'))
         for (const rt of [...bloomPass.renderTargetsHorizontal, ...bloomPass.renderTargetsVertical, bloomPass.renderTargetBright]){
