@@ -30,7 +30,7 @@ const _airQ = _qnum('air'); const AIR_ON = !LOOK_OLD && !!(_airQ && _airQ[0] > 0
 // haloPx = diamètre du halo À L'ÉCRAN (le halo d'une optique a une taille ~fixe en pixels : il
 // habille les petites étoiles lointaines, pas les grosses têtes — sinon celles-ci viraient au blanc) ;
 // haloMin = halo minimal en multiples de la boule (les grosses étoiles gardent un léger rayonnement).
-const STAR_LOOK  = LOOK_OLD ? { haloPx:0, haloMin:1, haloI:0, minPx:0, white:0, crisp:1 } : { haloPx:8, haloMin:1.3, haloI:0.13, halo2Px:20, halo2I:0.03, minPx:3.5, white:0.55, crisp:1.0, soft:1 };
+const STAR_LOOK  = LOOK_OLD ? { haloPx:0, haloMin:1, haloI:0, minPx:0, white:0, crisp:1 } : { haloPx:8, haloMin:1.3, haloI:0.13, halo2Px:20, halo2I:0.03, minPx:3.5, white:0.55, crisp:1.0, soft:1, spark:0.2, var:0.4 }   // spark/var (B381, user : « ça ne vit pas ») : léger vacillement de combustion + étoiles inégales;
 const TRAIL_LOOK = LOOK_OLD ? { haloPx:0, haloMin:1, haloI:0, minPx:0, white:0, crisp:1 } : { haloPx:4, haloMin:1.0, haloI:0.06, halo2Px:16, halo2I:0.02, minPx:0, spark:0.85, white:0.12, crisp:1 };   // spark (B381) : grains pailletés
 const BLOOM_FACTORS = [1.0, 0.8, 0.45, 0.12, 0.0];   // poids des 5 niveaux du bloom (Three.js : 1, 0.8, 0.6, 0.4, 0.2). B381 : les 2 plus larges coupés = plus de voile brun autour des saules (relecture à l'aveugle), lueur serrée gardée
 const BLOOM_DEF = LOOK_OLD ? [0.3, 0.22, 0.55] : [0.8, 0.0, 0.55];   // B381 : bloom ROND (cf noyau corrigé plus bas) -> on peut le pousser sans carrés ; SEUIL B106 (0.55) gardé = la masse faible ne fait toujours pas de brouillard.   // force, rayon, seuil — ceux de B106 (anti-brouillard). B381 : un bloom fort faisait des « étoiles carrées » sur certains GPU -> la lueur large est calculée par étoile (halo2)
@@ -80,6 +80,7 @@ const STAR_VS = `
   uniform float uVar;       // B381 : variété d'éclat/taille par étoile (0 = toutes identiques comme avant)
   varying float vSpark;
   uniform float uH;
+  uniform float uP11Ref;   // B381 : 0 = taille en px fixe (B379) ; sinon focale de référence
   uniform vec2 uVp;
   uniform float uHaloPx;    // B380 : diamètre du halo à l'écran (px)
   uniform float uHaloMin;   // B380 : halo minimal en rayons de boule (1 = aucun)
@@ -97,6 +98,8 @@ const STAR_VS = `
     vec4 mv = modelViewMatrix * vec4(position, 1.0);
     vec4 p1 = projectionMatrix * mv;
     float basePx = size * (uH / -mv.z);
+    float pk = uP11Ref > 0.0 ? projectionMatrix[1][1] / uP11Ref : 1.0;
+    basePx *= pk;   // B381 : taille ANGULAIRE (suit l'objectif) — cf P11_REF
     float vv = (uVar > 0.0 && aSeed > 0.0) ? fract(aSeed * 7.13) : 0.5;
     basePx *= (uVar > 0.0 && aSeed > 0.0) ? mix(1.0, 0.78 + 0.44 * fract(aSeed * 3.71), uVar) : 1.0;   // B381 : tailles inégales (étoiles réelles : charges inégales)
     float px = max(basePx, uMinPx);
@@ -119,8 +122,8 @@ const STAR_VS = `
     float st = 1.0 + 1.1 * lenPx / max(px, 0.001);   // ×1.1 : goutte ~10% plus étirée (user B84)
     vStretch = min(st, 3.3);
     vDir = lenPx > 0.0001 ? dpx/lenPx : vec2(1.0, 0.0);
-    vHR = max(uHaloPx / max(px, 0.001), uHaloMin);                  // petite étoile -> grand halo relatif ; grosse tête -> halo minimal
-    vHR2 = uHalo2Px / max(px, 0.001);
+    vHR = max(uHaloPx * pk / max(px, 0.001), uHaloMin);   // halos aussi à l'échelle de l'objectif (sinon voile laiteux sur téléphone)                  // petite étoile -> grand halo relatif ; grosse tête -> halo minimal
+    vHR2 = uHalo2Px * pk / max(px, 0.001);
     vE = 1.0 + max(max(vHR, vHR2) - 1.0, 0.0) / vStretch;                      // le halo (autour de la tête) dépasse l'ovale
     gl_PointSize = px * vStretch * vE;                              // le sprite s'agrandit pour contenir l'ovale ET le halo
     if (uVar > 0.0 && aSeed > 0.0) vGain *= mix(1.0, 0.65 + 0.70 * vv, uVar);                      // B381 : éclats inégaux
@@ -177,11 +180,17 @@ const STAR_FS = `
     if (max(c.r, max(c.g, c.b)) < 0.0004) discard;
     gl_FragColor = vec4(c, 1.0);                                      // alpha 1 : l'apport additif est la couleur elle-même
   }`;
+// TAILLE ANGULAIRE DES ÉTOILES (B381, user sur iPhone : « c'est cramé ») : la taille en px ne suivait
+// pas l'objectif. Objectif plus large (B381 : 76°) ou écran en PORTRAIT (téléphone : le champ devient
+// vertical, 76° au lieu de ~47°) -> la bombe rapetisse à l'écran mais PAS ses étoiles -> elles se
+// chevauchent, s'additionnent et virent au blanc. Désormais la taille suit la focale : P11_REF = celle
+// de la B379 sur écran 16:9 (60° horizontal), là où les tailles (STAR_SCALE) ont été validées.
+const P11_REF = (LOOK_OLD || /[?&]angul=0\b/.test(_QS)) ? 0 : (16/9) / Math.tan(Math.PI/6);   // = 1/tan(demi-champ vertical) ≈ 3,08
 const SPARK_CLOCK = { value:0 };   // B381 : horloge commune du scintillement (étoiles ET traînées)
 function makeStarMat(tex, look){
   const k=Math.min(devicePixelRatio,2), L=look||STAR_LOOK;
   return new THREE.ShaderMaterial({
-    uniforms:{ uTex:{value:tex||starTex}, uH:{value:0.5*(innerHeight||800)*k},
+    uniforms:{ uTex:{value:tex||starTex}, uH:{value:0.5*(innerHeight||800)*k}, uP11Ref:{value:P11_REF},
                uVp:{value:new THREE.Vector2(0.5*(innerWidth||1280)*k, 0.5*(innerHeight||800)*k)},
                uHaloPx:{value:L.haloPx*k}, uHaloMin:{value:L.haloMin}, uHaloI:{value:L.haloI}, uHalo2Px:{value:(L.halo2Px||0)*k}, uHalo2I:{value:L.halo2I||0}, uMinPx:{value:L.minPx*k},
                uTime:SPARK_CLOCK, uSpark:{value:L.spark||0}, uWhite:{value:L.white||0}, uHaloSat:{value:L.hsat||0}, uCrisp:{value:L.crisp||1},
@@ -349,11 +358,11 @@ if (SMOKE_ON){
   g.setAttribute('aRot',     new THREE.BufferAttribute(smokeRot,1));
   const k=Math.min(devicePixelRatio,2);
   const m=new THREE.ShaderMaterial({
-    uniforms:{ uTex:{value:makeCloudTexture()}, uH:{value:0.5*(innerHeight||800)*k} },
-    vertexShader:`attribute float size; attribute vec3 aColor; attribute float aRot; uniform float uH;
+    uniforms:{ uTex:{value:makeCloudTexture()}, uH:{value:0.5*(innerHeight||800)*k}, uP11Ref:{value:P11_REF} },
+    vertexShader:`attribute float size; attribute vec3 aColor; attribute float aRot; uniform float uH; uniform float uP11Ref;
       varying vec3 vC; varying float vR;
       void main(){ vec4 mv=modelViewMatrix*vec4(position,1.0); vC=aColor; vR=aRot;
-        gl_PointSize=min(size*(uH/-mv.z), 900.0); gl_Position=projectionMatrix*mv; }`,
+        gl_PointSize=min(size*(uH/-mv.z)*(uP11Ref>0.0?projectionMatrix[1][1]/uP11Ref:1.0), 900.0); gl_Position=projectionMatrix*mv; }`,
     fragmentShader:`uniform sampler2D uTex; varying vec3 vC; varying float vR;
       void main(){ vec2 p=gl_PointCoord-0.5; float cs=cos(vR), sn=sin(vR);
         vec2 q=vec2(cs*p.x-sn*p.y, sn*p.x+cs*p.y)+0.5; float a=texture2D(uTex,q).a;
