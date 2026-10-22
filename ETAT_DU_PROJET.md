@@ -2,7 +2,7 @@
 
 > Document vivant : où on en est, ce qui est fait, ce qui reste, la ligne directrice,
 > les effets et leurs caractéristiques. Tenu à jour au fil des sessions.
-> **Dernière mise à jour : 2026-10-22 (B382 : tailles angulaires, iPhone non cramé ; B381 : décor éclairé, ciel, fumée, bloom rond — notation à l'aveugle face à FWsim).**
+> **Dernière mise à jour : 2026-10-22 (B383 : chute réaliste, dispersion 10 % ; B382 : tailles angulaires, iPhone non cramé ; B381 : décor éclairé, ciel, fumée, bloom rond — notation à l'aveugle face à FWsim).**
 >
 > 📌 **VERSION DE BASE = B379** (choix user, 2026-10-22) : commit `9060f65`, branche figée
 > **`base-B379`**, état AVANT les modifications de rendu B380. C'est la référence de retour :
@@ -147,6 +147,12 @@ sur captures mélangées avec celles de FWsim) — toujours sans toucher à la p
   `?angul=0` = ancien calcul. + léger vacillement de combustion des étoiles (`spark 0.2`) et éclats
   inégaux (`var 0.25`), pour la vie en mouvement. Note : le calque des feux est rendu à 2× au plus
   (`setPixelRatio`), un iPhone 3× l'agrandit de 1,5 (léger flou) — passer à 3 coûterait ~2,3× en pixels.
+- **B383 (physique, accord user)** : CHUTE en fin de vie séparée de l'éjection (l'ouverture et l'envergure
+  validées ne bougent pas) avec la vitesse limite réelle d'une étoile (18 m/s en 75 mm, ∝ √ échelle du
+  calibre ; docs/physique) pour les étoiles lourdes (gravStar ≥ 0,9) -> la pivoine « fond » de ~7 m au
+  lieu de ~4,5 m. Saules, feuilles mortes, effets légers inchangés. `?chute=0` = avant. Dispersion des
+  durées d'étoiles (BASE.lifeJitter) 13 % -> 10 % (user : « les japonais c'est de l'art », 10 % =
+  fournisseur standard).
 - ⚠️ **Banc d'essai** : entre deux captures sur la même page, il FAUT laisser s'éteindre traînées et
   fumée (≥ 25 s de simulation), sinon la fumée de l'effet précédent, éclairée par le suivant, pollue
   l'image (des tours de relecture ont été faussés ainsi).

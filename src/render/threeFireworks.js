@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B382';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B383';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 // RENDU « VU À TRAVERS UNE CAMÉRA » (B380, user : « ça fait fade, faux, générique » face à FWsim).
 // La PHYSIQUE et les réglages d'effets ne bougent pas : seul l'ASPECT de chaque étoile change.
@@ -1279,6 +1279,12 @@ function behaveMosaic(d,A,dt,ctx){
 const CAL_SCALE = { 10:0.22, 20:0.36, 30:0.50, 40:0.58, 49:0.66, 50:0.67, 75:1.0, 100:1.44, 125:1.87, 150:2.30, 200:2.58 };   // 30 mm ajouté B233 (bombettes de compact) ; 10/20/40/49 ajoutés B351 (chandelles romaines et monocoups)
 const STAR_SCALE = 1.0;   // taille globale des étoiles (user 2026-07-02 : 1.2 -> 1.1 ("un tout petit peu") puis -> 1.0 ("baisse encore").
                           //  Les effets à GROSSES étoiles — comète, palme, toupie, soucoupe, mosaïques — sont COMPENSÉS à chaque baisse pour ne pas changer.)
+// CHUTE EN FIN DE VIE (B383, user : « tu peux corriger fin de vie ») : avec le seul frein linéaire, une étoile
+// tombait au plus à g/(dragStar×PUNCH) ≈ 7 m/s. Une vraie étoile (traînée quadratique, C_D 0,5, ~1500 kg/m³)
+// tombe à √(g·L) ≈ 18 m/s pour ~10 mm (75 mm), ∝ √(taille) -> la boule « fond » de ~10 m en fin de vie
+// (docs/physique). Appliqué aux étoiles LOURDES (gravStar ≥ 0,9) ; saules, feuilles mortes, effets légers
+// gardent leur réglage. ?chute=0 = ancien comportement ; ?chute=v = vitesse limite d'une 75 mm (m/s).
+const _chuteQ = _qnum('chute'); const FALL_VT75 = _chuteQ ? _chuteQ[0] : 18;
 const BURST_PUNCH = 2.0;  // PUNCH d'explosion (user, vidéos réelles) : vitesse initiale ×2 ET freinage ×2 -> même envergure
                           // finale (distance ≈ v/drag), mais l'expansion se fait VITE au début (flou de mouvement fort à
                           // l'ouverture, proportionnel à la vitesse) puis les étoiles FREINENT -> boule quasi figée à l'extinction.
@@ -1287,7 +1293,7 @@ const BASE = {
   stars:80, nMax:0, burstRadius:13.5, speedMul:1.8, speedJit:0.05,
   apex:90, riseTime:2.5, riseLean:12, G:9.8, gravStar:1.0, dragStar:0.70,
   color:new THREE.Color(1.0,0.22,0.015), riseColor:new THREE.Color(1.0,0.72,0.35),
-  colors:null, heat:true, headSize:1.0, sway:0, starSize:2.2, lifeBase75:1.55, lifeJitter:0.13,
+  colors:null, heat:true, headSize:1.0, sway:0, starSize:2.2, lifeBase75:1.55, lifeJitter:0.10,
   dist:distFibonacci, dist2D:null, orient:'face', trailing:false, onStar:null, behave:null,
   gerbe:null, flashBig:false,
   // B158 (user) : TOUTES les bombes ont une PETITE EXPLOSION AU CENTRE — « vraiment une CENTAINE
@@ -1864,6 +1870,8 @@ class Shell {
     // VENT commun par tir (B120, feuilles mortes) : toutes les étoiles dérivent dans la MÊME direction
     // horizontale (un minimum de sens), le tangage individuel ne fait que broder autour.
     this._windX=0; this._windZ=0;
+    { const c=this.cfg, vtLin=c.G*c.gravStar/Math.max(1e-6,c.dragStar*BURST_PUNCH), vt=FALL_VT75*Math.sqrt(CAL_SCALE[this.cal]||1);
+      this._vtFall = (FALL_VT75>0 && c.gravStar>=0.9 && !c.noRise && vt>vtLin) ? vt : 0; }   // B383 : chute réaliste (étoiles lourdes)
     if (this.cfg.wind){ const wa=Math.random()*Math.PI*2;
       this._windX=Math.cos(wa)*this.cfg.wind; this._windZ=Math.sin(wa)*this.cfg.wind;
       trailWindX=this._windX*0.55; trailWindZ=this._windZ*0.55; }   // B177 : la MÊME brise dérive les étincelles du pool (toutes ensemble, légèrement)
@@ -2178,8 +2186,15 @@ class Shell {
         this.lcol[li]=this.lcol[li+1]=this.lcol[li+2]=this.lcol[li+3]=this.lcol[li+4]=this.lcol[li+5]=0; continue; }
       alive++; d.age+=dt; const A=d.age/d.life;
 
-      d.vy -= this.cfg.G*this.cfg.gravStar*(d.gMul||1)*dt;
-      const kd=Math.max(0,1-this.cfg.dragStar*BURST_PUNCH*dt); d.vx*=kd; d.vy*=kd; d.vz*=kd;   // ×PUNCH : freinage fort -> l'étoile finit quasi immobile (boule figée), flou de mouvement seulement dans sa course
+      const kd=Math.max(0,1-this.cfg.dragStar*BURST_PUNCH*dt);
+      if (this._vtFall){   // CHUTE RÉALISTE (B383) : éjection freinée comme avant (ouverture/envergure validées), CHUTE à part avec sa vitesse limite réelle
+        const gg=this.cfg.G*this.cfg.gravStar*(d.gMul||1), vf=d.vf||0, vyE=(d.vy+vf)*kd;
+        d.vf = vf + (gg - gg*vf/this._vtFall)*dt;
+        d.vx*=kd; d.vz*=kd; d.vy = vyE - d.vf;
+      } else {
+        d.vy -= this.cfg.G*this.cfg.gravStar*(d.gMul||1)*dt;
+        d.vx*=kd; d.vy*=kd; d.vz*=kd;
+      }   // ×PUNCH : freinage fort -> l'étoile finit quasi immobile (boule figée), flou de mouvement seulement dans sa course
       if (sway){ d.vx+=Math.sin(d.age*d.swF+d.phase)*sway*dt; d.vz+=Math.cos(d.age*d.swF2+d.phase2)*sway*dt; }
       if (this._windX||this._windZ){ d.vx+=this._windX*dt; d.vz+=this._windZ*dt; }        // vent commun du tir (feuilles mortes B120)
       if (this.cfg.noRise && d.vy>0) d.vy*=Math.max(0,1-4*dt);                            // presque JAMAIS vers le haut : l'ascendant s'étouffe en ~0,3s

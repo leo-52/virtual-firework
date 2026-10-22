@@ -141,9 +141,9 @@ globalement sphérique. Visuel : flash central bref (< ~50 ms ⚠️), petit nua
 |---|---|---|---|
 | Expansion de la pivoine | 50 % en ~0,5-0,7 s, 90 % en 1,2-2,2 s | frein linéaire k = 0,7×2 = 1,4/s -> 50 % à 0,5 s, 90 % à 1,6 s | ✅ **conforme** (le réglage « punch » validé tombe pile) |
 | Forme du freinage | quadratique (très brutal les 0,1-0,2 premières s) | linéaire (exponentiel) | léger : le début réel est encore plus « explosif » |
-| Chute en fin de vie | vitesse limite ~18 m/s (étoile de 10 mm) -> affaissement ~10 m | vitesse limite ~ g/1,4 ≈ 7 m/s | la boule réelle « fond » un peu plus vers le bas |
+| Chute en fin de vie | vitesse limite ~18 m/s (étoile de 10 mm) -> affaissement ~10 m | **B383 corrigé** : chute séparée de l'éjection, vitesse limite 18 m/s × √(échelle du calibre) pour les étoiles lourdes (gravStar ≥ 0,9) ; pivoine 75 mm : −7,4 m en fin de vie (avant −4,5 m), envergure inchangée. `?chute=0` = avant | ✅ |
 | Étoile qui rapetisse | traînée/masse recalculées, freinage croissant | taille de traînée constante | second ordre |
-| Dispersion des durées d'étoiles | ~5 % (pro) | `lifeJitter` 0,13 (13 %) | extinction moteur plus étalée que du pro japonais (choix user) |
+| Dispersion des durées d'étoiles | ~5 % (pro japonais, « de l'art ») ; fournisseurs standard plus dispersés | **B383 : 10 %** (choix user, niveau fournisseur standard) | ✅ |
 | Brillance en fin de vie | ∝ surface (1−t/T)², couleur tenue | `1 − 0,85·A²`, couleur tenue | ✅ esprit conforme (le réel faiblit plus tôt et plus progressivement) |
 | Scintillement de combustion | 10-30 % rms, irrégulier | B382 : ~10 % rms à 14 Hz | ✅ bas de fourchette |
 | Allumage / amorce | 0,05-0,15 s de lueur orangée-blanche | cœur blanc les 15 premiers % de vie | ✅ proche |
@@ -153,7 +153,7 @@ globalement sphérique. Visuel : flash central bref (< ~50 ms ⚠️), petit nua
 | Étincelles de charbon | corps noir : s'éteignent en perdant leur éclat bien avant le rouge | `COPPER` + refroidissement (B363) | à vérifier effet par effet |
 | Fumée éclairée par ses propres étoiles | oui (physique) | non (B381 : seulement par les AUTRES bombes, car le rendu faisait des taches) | limite de rendu, pas de physique |
 | Montée d'une 75 mm | ~4,4 s pour ~120 m (calcul avec traînée) | ~2,2 s pour ~80 m (calage catalogue / vidéos user) | ⚠️ à recouper avec les vidéos user |
-| Motifs plans | orientation aléatoire (bombe qui tourne) | face au public (`orient:'face'`) | choix user (lisibilité catalogue) |
+| Motifs plans | orientation aléatoire (bombe qui tourne) | aléatoire, avec un tirage « bon sens » (face public ±19°, debout) de 55 % (B130) | ✅ esprit conforme (taux à confirmer : user évoque 3/10) |
 | Étoiles aveugles, flash d'éclatement, pistil | 0-3 % ; flash < 50 ms ; pistil 0,4-0,7 R | — / flash présent / pistils par effet | options possibles |
 
 **Règle** : tout changement de PHYSIQUE (trajectoires, durées, nombres) se fait avec l'accord
