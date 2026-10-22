@@ -101,6 +101,26 @@ seul change, la physique et les réglages d'effets sont intacts :
   barycentre, taille = étalement des étoiles. Elle naît, grandit et s'éteint avec la bombe.
 - **Comparer** : `…/virtual-firework/?look=b379` = rendu d'avant à l'identique ; `?air=0` = sans lueur d'air.
 
+**Scène B381** (objectif « 8/10 face à FWsim », jugé par des relecteurs indépendants À L'AVEUGLE
+sur captures mélangées avec celles de FWsim) — toujours sans toucher à la physique des effets :
+- **Le décor est éclairé par les feux** (`main.js`, CustomShader sur les Google 3D Tiles) : les tuiles
+  (photos de jour) passent en nuit (`GROUND_AMB`), puis reçoivent la lumière des 8 sources les plus
+  fortes du moteur (`layer.lights()` : étoiles de chaque bombe, flash d'ouverture, flash de gueule
+  des mortiers, traînées), couleur réelle, 1/d², orientation des surfaces. Gain : `GROUND_K`.
+- **Ciel** : post-traitement Cesium, peint seulement là où il n'y a pas de décor (les collines le
+  masquent) — dégradé selon l'élévation + étoiles clairsemées fixes ; fond d'étoiles Cesium, soleil
+  et lune masqués. `?ciel=bleu|nuit|noir`.
+- **Cadrage** : objectif 76° (au lieu de 60°) visé à 46 m -> l'horizon et le décor entrent dans le
+  cadre, comme chez FWsim. Position du public inchangée (150 m, dans l'axe).
+- **Fumée** : chaque étoile laisse des bouffées sur son trajet (points texturés « nuage », 1 appel de
+  dessin) qui dérivent ~20 s ; éclairée par les bombes SUIVANTES et par le flash, pas par ses propres
+  étoiles (sinon : « flou », « tache »). `?fumee=0` pour couper.
+- **Traînées pailletées** (`TRAIL_LOOK.spark`) : l'éclat de chaque grain saute ~14×/s, moyenne inchangée.
+- **Réglages par l'adresse** (banc d'essai) : `?halo=px,I &white= &expo= &var= &bloom=f,r,s &air= &sol=K,amb`.
+- ⚠️ **Banc d'essai** : entre deux captures sur la même page, il FAUT laisser s'éteindre traînées et
+  fumée (≥ 25 s de simulation), sinon la fumée de l'effet précédent, éclairée par le suivant, pollue
+  l'image (des tours de relecture ont été faussés ainsi).
+
 **Calibrage (données catalogue « donnée A » + métier user)** :
 | Calibre | Donnée A catalogue (m) | Hauteur RENDUE (×0,89, m) | Nb étoiles pivoine | Envergure (diam., m) |
 |---|---|---|---|---|

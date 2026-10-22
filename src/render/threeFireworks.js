@@ -23,12 +23,19 @@ const BUILD = 'B380';  // tampon de version affiché dans le HUD -> permet de vo
 // Comparaison : ajouter ?look=b379 à l'adresse = rendu d'avant ; ?air=0 = sans lueur d'air.
 const _QS = (typeof location !== 'undefined') ? location.search : '';
 const LOOK_OLD = /[?&]look=b379\b/.test(_QS);
-const AIR_ON = !LOOK_OLD && /[?&]air=1\b/.test(_QS);   // B381 : retirée par défaut (relecture à l'aveugle : « brouillard en cercle parfait ») — ?air=1 pour la revoir
+// Réglage fin par l'adresse (B381, pour comparer des variantes à l'aveugle) : ?halo=px,intensité
+// &white=x &expo=s &var=0|1 &bloom=force,rayon,seuil. Sans paramètre = valeurs par défaut ci-dessous.
+function _qnum(nom){ const m=new RegExp('[?&]'+nom+'=([-0-9.,]+)').exec(_QS); return m ? m[1].split(',').map(Number) : null; }
+const _airQ = _qnum('air'); const AIR_ON = !LOOK_OLD && !!(_airQ && _airQ[0] > 0);   // B381 : off par défaut ; ?air=1 (ou 0.5, 2…) = intensité   // B381 : retirée par défaut (relecture à l'aveugle : « brouillard en cercle parfait ») — ?air=1 pour la revoir
 // haloPx = diamètre du halo À L'ÉCRAN (le halo d'une optique a une taille ~fixe en pixels : il
 // habille les petites étoiles lointaines, pas les grosses têtes — sinon celles-ci viraient au blanc) ;
 // haloMin = halo minimal en multiples de la boule (les grosses étoiles gardent un léger rayonnement).
-const STAR_LOOK  = LOOK_OLD ? { haloPx:0, haloMin:1, haloI:0, minPx:0, white:0, crisp:1 } : { haloPx:8, haloMin:1.3, haloI:0.13, minPx:1.6, white:0.55, crisp:1.0 };
+const STAR_LOOK  = LOOK_OLD ? { haloPx:0, haloMin:1, haloI:0, minPx:0, white:0, crisp:1 } : { haloPx:8, haloMin:1.3, haloI:0.13, minPx:3.5, white:0.55, crisp:1.0, soft:1 };
 const TRAIL_LOOK = LOOK_OLD ? { haloPx:0, haloMin:1, haloI:0, minPx:0, white:0, crisp:1 } : { haloPx:4, haloMin:1.0, haloI:0.06, minPx:0, spark:0.85, white:0.12, crisp:1 };   // spark (B381) : grains pailletés
+const BLOOM_DEF = LOOK_OLD ? [0.3, 0.22, 0.55] : [0.9, 0.55, 0.6];   // B381 (ablation à l'aveugle) : bloom fort et large, seuil HAUT -> halo doux sur les cœurs, pas de brouillard   // force, rayon, seuil (B106 : 0.3 / 0.22 / 0.55)
+{ const h=_qnum('halo'), w=_qnum('white'), e=_qnum('expo'), v=_qnum('var'), mp=_qnum('minpx'), so=_qnum('soft');
+  if (!LOOK_OLD){ if (h){ STAR_LOOK.haloPx=h[0]; if (h.length>1) STAR_LOOK.haloI=h[1]; }
+    if (w) STAR_LOOK.white=w[0]; if (e) STAR_LOOK.expo=e[0]; if (v) STAR_LOOK.var=v[0]; if (mp) STAR_LOOK.minPx=mp[0]; if (so) STAR_LOOK.soft=so[0]; } }
 const AIR_K = 0.055 / 350;  // opacité de la lueur d'air par unité de lumière émise (pivoine 75 mm pleine ≈ 350 -> 0,055 ; relecture à l'aveugle : « tache floue » -> plus faible et plus large)
 const AIR_MAX = 0.12;       // plafond : une lueur, jamais un brouillard (cf B106 anti-brouillard)
 const TRAIL_LIGHT_K = 0.05; // B381 : poids des traînées dans l'éclairage du décor (grains = éclat × taille²)
@@ -67,6 +74,8 @@ const STAR_VS = `
   attribute float aSeed;    // B381 : graine de scintillement (traînées ; 0 = pas de scintillement)
   uniform float uTime;
   uniform float uSpark;     // B381 : force du scintillement des grains (0 = lisse comme avant)
+  uniform float uExpo;      // B381 : durée de « pose » du flou de mouvement (s)
+  uniform float uVar;       // B381 : variété d'éclat/taille par étoile (0 = toutes identiques comme avant)
   varying float vSpark;
   uniform float uH;
   uniform vec2 uVp;
@@ -84,6 +93,8 @@ const STAR_VS = `
     vec4 mv = modelViewMatrix * vec4(position, 1.0);
     vec4 p1 = projectionMatrix * mv;
     float basePx = size * (uH / -mv.z);
+    float vv = (uVar > 0.0 && aSeed > 0.0) ? fract(aSeed * 7.13) : 0.5;
+    basePx *= (uVar > 0.0 && aSeed > 0.0) ? mix(1.0, 0.78 + 0.44 * fract(aSeed * 3.71), uVar) : 1.0;   // B381 : tailles inégales (étoiles réelles : charges inégales)
     float px = max(basePx, uMinPx);
     vGain = basePx > 0.0 ? mix(1.0, basePx/px, 0.6) : 0.0;          // 1 si pas agrandie ; sinon éclat réduit (un peu moins que la surface)
     // SCINTILLEMENT DES GRAINS (B381) : l'éclat de chaque grain saute ~14 fois/s autour de sa moyenne
@@ -97,7 +108,7 @@ const STAR_VS = `
       float h = mix(ha, hb, smoothstep(0.0, 1.0, fract(tt)));
       vSpark = mix(1.0, (0.55 + 1.8 * h * h * h) / 1.0, uSpark);
     }
-    vec4 mv2 = modelViewMatrix * vec4(position - aVel*0.07, 1.0);   // où était l'étoile il y a ~70ms
+    vec4 mv2 = modelViewMatrix * vec4(position - aVel*uExpo, 1.0);  // où était l'étoile il y a uExpo s (0,07 = B379 ; « pose » plus longue = traînée de caméra)
     vec4 p2 = projectionMatrix * mv2;
     vec2 dpx = (p1.xy/p1.w - p2.xy/p2.w) * uVp;                     // déplacement écran en px
     float lenPx = length(dpx);
@@ -107,6 +118,7 @@ const STAR_VS = `
     vHR = max(uHaloPx / max(px, 0.001), uHaloMin);                  // petite étoile -> grand halo relatif ; grosse tête -> halo minimal
     vE = 1.0 + max(vHR - 1.0, 0.0) / vStretch;                      // le halo (autour de la tête) dépasse l'ovale
     gl_PointSize = px * vStretch * vE;                              // le sprite s'agrandit pour contenir l'ovale ET le halo
+    if (uVar > 0.0 && aSeed > 0.0) vGain *= mix(1.0, 0.65 + 0.70 * vv, uVar);                      // B381 : éclats inégaux
     gl_Position = p1;
   }`;
 const STAR_FS = `
@@ -114,6 +126,7 @@ const STAR_FS = `
   uniform float uHaloI;
   uniform float uWhite;     // B381 : cœur blanc-chaud (saturation du capteur sur les étoiles vives)
   uniform float uCrisp;     // B381 : netteté du bord de l'étoile
+  uniform float uSoft;      // B381 : bord doux de la boule (0 = net comme avant)
   varying float vSpark;
   varying vec3 vCol;
   varying vec2 vDir;
@@ -127,7 +140,8 @@ const STAR_FS = `
     float m = 1.0 - 1.0/vStretch;                                    // position de la TÊTE vers l'avant (0 si à l'arrêt)
     // TÊTE : boule RONDE à pleine taille (croquis user : le rond)
     vec2 relH = vec2(q.x - m, q.y) * vStretch;
-    vec4 tH = texture2D(uTex, relH*0.5 + 0.5) * step(length(relH), 1.0);   // step : ZÉRO hors de la boule (le clamp de texture laissait ~1% d'alpha -> bandes en CROIX avec HDR+bloom)
+    float lh = length(relH);
+    vec4 tH = texture2D(uTex, relH*0.5 + 0.5) * mix(step(lh, 1.0), 1.0 - smoothstep(0.5, 1.0, lh), uSoft);   // uSoft=0 : bord net (B379) ; 1 : bord doux -> les petites étoiles restent RONDES (relecture : « carrés pixelisés »)   // step : ZÉRO hors de la boule (le clamp de texture laissait ~1% d'alpha -> bandes en CROIX avec HDR+bloom)
     // QUEUE : CÔNE effilé derrière — part aussi LARGE que la boule et finit en POINTE (croquis user)
     float f = clamp((q.x + 1.0) / max(m + 1.0, 0.001), 0.0, 1.0);    // 1 à la boule -> 0 à la pointe arrière
     float w = f / vStretch;                                          // demi-largeur locale du cône
@@ -155,7 +169,8 @@ function makeStarMat(tex, look){
     uniforms:{ uTex:{value:tex||starTex}, uH:{value:0.5*(innerHeight||800)*k},
                uVp:{value:new THREE.Vector2(0.5*(innerWidth||1280)*k, 0.5*(innerHeight||800)*k)},
                uHaloPx:{value:L.haloPx*k}, uHaloMin:{value:L.haloMin}, uHaloI:{value:L.haloI}, uMinPx:{value:L.minPx*k},
-               uTime:{value:0}, uSpark:{value:L.spark||0}, uWhite:{value:L.white||0}, uCrisp:{value:L.crisp||1} },
+               uTime:{value:0}, uSpark:{value:L.spark||0}, uWhite:{value:L.white||0}, uCrisp:{value:L.crisp||1},
+               uExpo:{value:L.expo||0.07}, uVar:{value:L.var||0}, uSoft:{value:L.soft||0} },
     vertexShader:STAR_VS, fragmentShader:STAR_FS,
     transparent:true, blending:THREE.AdditiveBlending, depthWrite:false });
 }
@@ -270,12 +285,15 @@ function makeAirTexture(){
   const c=document.createElement('canvas'); c.width=c.height=128;
   const x=c.getContext('2d');
   const g=x.createRadialGradient(64,64,0, 64,64,64);
-  g.addColorStop(0.0,'rgba(255,255,255,1)');
-  g.addColorStop(0.25,'rgba(255,255,255,0.55)');
-  g.addColorStop(0.55,'rgba(255,255,255,0.16)');
-  g.addColorStop(0.8,'rgba(255,255,255,0.04)');
+  g.addColorStop(0.0,'rgba(255,255,255,0.55)');
+  g.addColorStop(0.35,'rgba(255,255,255,0.22)');
+  g.addColorStop(0.7,'rgba(255,255,255,0.05)');
   g.addColorStop(1.0,'rgba(255,255,255,0)');
   x.fillStyle=g; x.fillRect(0,0,128,128);
+  for (let k=0;k<45;k++){   // B381 : grumeaux -> lueur IRRÉGULIÈRE (relecture : « brouillard en cercle parfait »)
+    const a=Math.random()*6.283, r=Math.pow(Math.random(),0.8)*40, cx=64+Math.cos(a)*r, cy=64+Math.sin(a)*r, rad=8+Math.random()*18;
+    const gg=x.createRadialGradient(cx,cy,0, cx,cy,rad); gg.addColorStop(0,'rgba(255,255,255,'+(0.04+Math.random()*0.10)+')'); gg.addColorStop(1,'rgba(255,255,255,0)');
+    x.fillStyle=gg; x.fillRect(0,0,128,128); }
   const t=new THREE.CanvasTexture(c); t.needsUpdate=true; return t;
 }
 const airTex = makeAirTexture();
@@ -1737,6 +1755,7 @@ class Shell {
     // (B76 "fantômes" retirés — remplacés en B77 par la déformation OVALE dans le shader, cf STAR_VS/STAR_FS.)
     this.vel=new Float32Array(m*3);   // vitesse par étoile -> attribut aVel (étirement ovale au shader)
     this.geo.setAttribute('aVel', new THREE.BufferAttribute(this.vel,3));
+    { const sd=new Float32Array(m); for (let i=0;i<m;i++) sd[i]=0.01+Math.random()*0.99; this.geo.setAttribute('aSeed', new THREE.BufferAttribute(sd,1)); }   // B381 : variété par étoile
   }
 
   _numColors(){ return this.cfg.colors ? this.cfg.colors.length : 1; }
@@ -2258,7 +2277,7 @@ class Shell {
         // ×(1, 0.86, 0.70) : la lumière diffusée par la fumée est CHAUDE — sans ça une bombe blanche/or
         // faisait un voile GRIS (lu comme du brouillard), alors que sur vidéo c'est une lueur ambrée.
         this.air.material.color.setRGB(1-sat+sat*cr, (1-sat+sat*cg)*0.86, (1-sat+sat*cb)*0.70);
-        this.air.material.opacity=Math.min(AIR_MAX, AIR_K*L);
+        this.air.material.opacity=Math.min(AIR_MAX*_airQ[0], AIR_K*_airQ[0]*L);
         this.air.position.set(cx, cy, cz);
         this.air.scale.setScalar(Math.max(14, spread*7.0));
         this.air.visible=true;
@@ -2434,7 +2453,8 @@ export class ThreeFireworks {
     scene.add(this.camera);
     this.composer = new EffectComposer(this.renderer);
     this.composer.addPass(new RenderPass(scene, this.camera));
-    this.composer.addPass(new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), 0.3, 0.22, 0.55)); // B106 anti-BROUILLARD : seuil 0.12->0.55 = seuls les CŒURS brillants blooment (la masse faible ne fait plus de halo), rayon resserré
+    const BL = (!LOOK_OLD && _qnum('bloom')) || [BLOOM_DEF[0], BLOOM_DEF[1], BLOOM_DEF[2]];
+    this.composer.addPass(new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), BL[0], BL[1], BL[2])); // B106 anti-BROUILLARD : seuil 0.12->0.55 = seuls les CŒURS brillants blooment (la masse faible ne fait plus de halo), rayon resserré
     this.composer.addPass(new OutputPass());
     // CIEL DE NUIT (B381) : le fond d'étoiles de Cesium faisait du « grain » sur toute l'image.
     // Remplacé (main.js le masque) par un dôme qui suit la caméra : dégradé horizon bleu sombre ->
@@ -2562,4 +2582,4 @@ export const LOOK = { old: LOOK_OLD, groundLight: !LOOK_OLD && !/[?&]sol=0\b/.te
 
 // Exports internes pour le BANC D'APERÇU hors-Cesium (_preview.html) — rendu réel d'un effet
 // pour capture d'écran. N'affecte pas l'app (rien ne les importe en prod).
-export { scene as __scene, Shell as __Shell, updateTrails as __updateTrails, updatePuffs as __updatePuffs, __setMarronPop, trail as __trailPool, buildCompactQueue as __buildCompactQueue };
+export { smoke as __smoke, smokeCol as __smokeCol, smokeSize as __smokeSize, scene as __scene, Shell as __Shell, updateTrails as __updateTrails, updatePuffs as __updatePuffs, __setMarronPop, trail as __trailPool, buildCompactQueue as __buildCompactQueue };
