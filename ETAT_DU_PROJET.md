@@ -2,7 +2,7 @@
 
 > Document vivant : où on en est, ce qui est fait, ce qui reste, la ligne directrice,
 > les effets et leurs caractéristiques. Tenu à jour au fil des sessions.
-> **Dernière mise à jour : 2026-10-23 (B386 : marrons sans étincelles ; B385 : marrons d'air ; B384 : chandelles ; B383 : chute réaliste, dispersion 10 % ; B382 : tailles angulaires, iPhone non cramé ; B381 : décor éclairé, ciel, fumée, bloom rond — notation à l'aveugle face à FWsim).**
+> **Dernière mise à jour : 2026-10-23 (B387 : montées balistiques ; B386 : marrons sans étincelles ; B385 : marrons d'air ; B384 : chandelles ; B383 : chute réaliste, dispersion 10 % ; B382 : tailles angulaires, iPhone non cramé ; B381 : décor éclairé, ciel, fumée, bloom rond — notation à l'aveugle face à FWsim).**
 >
 > 📌 **VERSION DE BASE = B379** (choix user, 2026-10-22) : commit `9060f65`, branche figée
 > **`base-B379`**, état AVANT les modifications de rendu B380. C'est la référence de retour :
@@ -171,6 +171,22 @@ sur captures mélangées avec celles de FWsim) — toujours sans toucher à la p
   masquées. Reste : éclair bref + boule de fumée. Tête de montée : halo DISCRET des traînées pour les bombes
   (le halo des étoiles faisait briller la montée presque autant que l'éclatement), look étoile gardé pour
   les CHANDELLES (noIgnite : la bille est l'étoile).
+- **B387 — MONTÉES refaites (user : « refais les montées, la physique, l'aérodynamisme »)** — docs/physique 07 et 08 :
+  - TEMPS tir -> éclatement recalé sur la profession : 75 mm (80 m rendus) ≈ 2,9 s, 100 mm ≈ 3,4 s,
+    150 mm ≈ 4,5 s, 30 mm ≈ 1,8 s (`2,9 s × (apex/80)^0,62`, principe B192 gardé). Avant : 75 mm ≈ 2,2 s.
+    Effets à montée chronométrée par l'user (riseTime explicite : zigzag, saule pointes 100…) inchangés ;
+    chandelles et noRise gardent l'ancienne courbe (calées sur vidéo).
+  - TRAJECTOIRE balistique réelle : gravité + traînée quadratique (C_D 0,45, masse/diamètre par calibre),
+    vitesse de sortie résolue (75 mm ≈ 51 m/s) -> départ fulgurant puis ralenti ; éclatement AVANT le
+    sommet (la bombe monte encore ~8-10 m/s) et les étoiles héritent de cet élan (comme Finale). Légère
+    dérive au vent en haut de course (trajet très légèrement arqué, points de départ/éclatement inchangés).
+  - TRAÎNÉE émise à cadence fixe (plus de chapelet de perles par mètre) -> densité ∝ 1/vitesse : paquet
+    lumineux sous l'éclatement. Bombe nue = mince filet de MÈCHE terne (`?meche=k`, défaut 1,6), tête =
+    point net ; PALMIERS (`risingTail:'gold'`) = vraie comète dorée (tronc fin, irrégulier, pailleté).
+  - DÉPART : étincelles de chasse (courte gerbe orange qui suit la bombe 5-30 m) + fumée de levée
+    persistante sur le pas de tir (suit le vent, éclairée par les flashs).
+  - À l'aveugle (salves au ras du sol, FWsim = 9) : montée 8,2 et 8,9 (deux relecteurs) contre 5,0-5,6
+    pour l'ancienne. `?montee=0` = ancienne montée.
 - ⚠️ **Banc d'essai** : entre deux captures sur la même page, il FAUT laisser s'éteindre traînées et
   fumée (≥ 25 s de simulation), sinon la fumée de l'effet précédent, éclairée par le suivant, pollue
   l'image (des tours de relecture ont été faussés ainsi).

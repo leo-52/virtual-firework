@@ -2,7 +2,7 @@
 
 Synthèse (2026-10-22) de 5 recherches documentaires, détaillées dans ce dossier :
 `01_bombe_balistique.md`, `02_etoiles_combustion.md`, `03_couleurs.md`,
-`04_etincelles_effets.md`, `05_fumee_atmosphere.md`, `06_artifices_chinois.md` (fournisseurs standard).
+`04_etincelles_effets.md`, `05_fumee_atmosphere.md`, `06_artifices_chinois.md` (fournisseurs standard), `07_montee.md`, `08_aerodynamique_montee.md`.
 Sources principales : Shimizu (*Fireworks: The Art, Science and Technique*), articles japonais
 mesurés (*Sci. Tech. Energetic Materials* : Ooki 2006, Ding 2007-2008, Wakabayashi 2006,
 Sashimura 2007, Inoue 2017-2022), Kosanke (*Journal of Pyrotechnics*), Juknelevičius/Klapötke
@@ -184,7 +184,7 @@ d'éclatement est adaptée à chaque effet. Ce qui est normé et mesuré (normes
 | Bleu | (0,21 ; 0,27 ; 1) à (0,59 ; 0,45 ; 1) délavé | `BLU` (0,4 ; 0,55 ; 1) | ✅ dans la fourchette |
 | Étincelles de charbon | corps noir : s'éteignent en perdant leur éclat bien avant le rouge | `COPPER` + refroidissement (B363) | à vérifier effet par effet |
 | Fumée éclairée par ses propres étoiles | oui (physique) | non (B381 : seulement par les AUTRES bombes, car le rendu faisait des taches) | limite de rendu, pas de physique |
-| Montée d'une 75 mm | ~4,4 s pour ~120 m (calcul avec traînée) | ~2,2 s pour ~80 m (calage catalogue / vidéos user) | ⚠️ à recouper avec les vidéos user |
+| Montée d'une 75 mm | ~2,9 s tir -> éclatement (profession), éclatement avant le sommet à ~10 m/s | **B387** : balistique à traînée quadratique, 80 m en 2,9 s, v0 ≈ 51 m/s, élan transmis aux étoiles | ✅ |
 | Motifs plans | orientation aléatoire (bombe qui tourne) | aléatoire, avec un tirage « bon sens » (face public ±19°, debout) de 55 % (B130) | ✅ esprit conforme (taux à confirmer : user évoque 3/10) |
 | Étoiles aveugles, flash d'éclatement, pistil | 0-3 % ; flash < 50 ms ; pistil 0,4-0,7 R | — / flash présent / pistils par effet | options possibles |
 

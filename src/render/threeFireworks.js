@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B386';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B387';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 // RENDU « VU À TRAVERS UNE CAMÉRA » (B380, user : « ça fait fade, faux, générique » face à FWsim).
 // La PHYSIQUE et les réglages d'effets ne bougent pas : seul l'ASPECT de chaque étoile change.
@@ -191,7 +191,7 @@ const EGG_K = _oeufQ ? _oeufQ[0] : (LOOK_OLD ? 1 : 0.45);   // 0,45 : avec le bl
 const HEAD_LOOK = Object.assign({}, TRAIL_LOOK, { spark:0.2 });
 // B387 : têtes de montée balistique — mèche = point vif et NET (pas de goutte floue) ; comète de palmier = tête vive, petit halo
 const FUSE_LOOK = LOOK_OLD ? HEAD_LOOK : { haloPx:2, haloMin:1.0, haloI:0.05, halo2Px:0, halo2I:0, minPx:1.2, white:0.35, crisp:1.4, soft:1, spark:0.35 };
-const TAILHEAD_LOOK = LOOK_OLD ? HEAD_LOOK : { haloPx:4, haloMin:1.1, haloI:0.08, halo2Px:9, halo2I:0.02, minPx:2.0, white:0.6, crisp:1.2, soft:1, spark:0.15 };   // B386 : look de la tête de montée
+const TAILHEAD_LOOK = LOOK_OLD ? HEAD_LOOK : { haloPx:3, haloMin:1.0, haloI:0.05, halo2Px:0, halo2I:0, minPx:1.6, white:0.7, crisp:1.4, soft:1, spark:0.2 };   // B386 : look de la tête de montée
 const HEAD_OLD = /[?&]tete=0\b/.test(_QS);   // B384 : ?tete=0 = tête de montée dessinée comme avant
 const SPARK_CLOCK = { value:0 };   // B381 : horloge commune du scintillement (étoiles ET traînées)
 function makeStarMat(tex, look){
@@ -1313,6 +1313,7 @@ const STAR_SCALE = 1.0;   // taille globale des étoiles (user 2026-07-02 : 1.2 
 //   et l'éclatement arrive un peu AVANT le sommet (la bombe monte encore ~5-12 m/s) : la fleur hérite
 //   de cet élan (Finale le fait aussi).
 // ?montee=0 = ancienne montée (courbe en cloche, perles de traînée).
+const _mecheQ = _qnum('meche'); const FUSE_K = _mecheQ ? _mecheQ[0] : 1.6;   // éclat du filet de mèche (réglage)
 const RISE_OLD = /[?&]montee=0\b/.test(_QS);
 const SHELL_MASS = [[30,0.03],[50,0.07],[75,0.22],[100,0.45],[125,0.8],[150,1.4],[200,3.0],[300,9.0]];   // kg (bombes chinoises standard, docs/physique 07)
 function shellK(cal){   // k = ρ·C_D·A / (2m)  [1/m]
@@ -1807,7 +1808,8 @@ class Shell {
       if (opts && opts.riseMul && !explicit) tb *= opts.riseMul;
       this._bal = solveRise(this.cfg.apex, tb, shellK(this.cal));
       this.riseTime = this._bal.tb;
-      this._spin = 3+Math.random()*12;   // tr/s, s'amortit en ~1,5 s (Ding & Yoshida 2008)
+      this._spin = 3+Math.random()*12;
+      { const wa=Math.random()*6.283, wm=(0.04+Math.random()*0.06)*this.cfg.apex; this._bowX=Math.cos(wa)*wm; this._bowZ=Math.sin(wa)*wm; }   // tr/s, s'amortit en ~1,5 s (Ding & Yoshida 2008)
       this._fuseAcc=0; this._tailAcc=0;
     }
     this.headLastX=this.ox; this.headLastY=0; this.headLastZ=this.oz; this.headTimer=0;
@@ -2113,18 +2115,18 @@ class Shell {
     const B=this._bal, t=Math.min(this.age,B.tb), vAx=Math.sqrt(9.8/B.k)*Math.tan(B.phi-B.a*t);   // vitesse le long de l'axe (m/s, ≈ verticale)
     const vx=vAx*this.muTX, vz=vAx*this.muTZ, tail=this.cfg.risingTail;
     if (tail){
-      const silver = tail==='silver', rate = silver?520:600;
+      const silver = tail==='silver', rate = (silver?520:600)*(0.55+0.9*Math.random());   // débit irrégulier (combustion de la comète) -> traîne non uniforme
       this._tailAcc += rate*dt;
-      while (this._tailAcc>=1){ this._tailAcc-=1; const f=Math.random();
-        const c = silver ? WARMSILVER : COPPER, life = silver ? (0.20+Math.random()*0.30) : (0.55+Math.random()*0.85);
-        spawnTrail(px+(hx-px)*f+(Math.random()-0.5)*0.25, py+(y-py)*f, pz+(hz-pz)*f+(Math.random()-0.5)*0.25,
-                   c.r*(silver?1.25:1), c.g*(silver?1.25:1), c.b*(silver?1.25:1), silver?0.9:1.05, 0.12, life/0.26,
+      while (this._tailAcc>=1){ this._tailAcc-=1; const f=Math.random(), br=0.45+Math.random()*0.9;   // éclat inégal d'un grain à l'autre
+        const c = silver ? WARMSILVER : COPPER, life = silver ? (0.20+Math.random()*0.30) : (0.35+Math.pow(Math.random(),1.5)*1.1);
+        spawnTrail(px+(hx-px)*f+(Math.random()-0.5)*0.5, py+(y-py)*f, pz+(hz-pz)*f+(Math.random()-0.5)*0.5,
+                   c.r*br*(silver?1.25:1), c.g*br*(silver?1.25:1), c.b*br*(silver?1.25:1), silver?0.7:0.8, 0.12, life/0.26,
                    vx*0.3*4, vAx*0.3*4, vz*0.3*4, 0.35, 3.0, true, 0.10); }   // rin 0,1 s : les grains neufs n'empilent plus un halo blanc contre la tête
     } else if (this.cfg.riseTrail!==false){
       this._fuseAcc += 140*dt;
       const spin=Math.exp(-t/1.5), tv=(2+4*Math.random())*spin;
       while (this._fuseAcc>=1){ this._fuseAcc-=1; const f=Math.random(), u=vrand(Math.random), q=tv*(0.5+Math.random());
-        spawnTrail(px+(hx-px)*f, py+(y-py)*f, pz+(hz-pz)*f, 0.60,0.28,0.08, 0.45, 0.25, (0.10+Math.random()*0.22)/0.26,
+        spawnTrail(px+(hx-px)*f, py+(y-py)*f, pz+(hz-pz)*f, 0.60*FUSE_K,0.28*FUSE_K,0.08*FUSE_K, 0.45, 0.25, (0.10+Math.random()*0.22)/0.26,
                    (vx*0.25+u[0]*q)*4, (vAx*0.25+u[1]*q*0.3)*4, (vz*0.25+u[2]*q)*4, 0.15, 7.0, true, 0.05); }   // mèche : filet terne, presque invisible de loin (docs/physique 07)
     }
   }
@@ -2227,7 +2229,10 @@ class Shell {
       const T=Math.min(1,this.age/this.riseTime);
       let te=1-(1-T)*(1-T);
       if (this._bal){ const B=this._bal, t=Math.min(this.age,B.tb); te=Math.log(Math.cos(B.phi-B.a*t)/Math.cos(B.phi))/B.k/this.cfg.apex; }
-      const y=this.cfg.apex*te, hx=this.ox+(this.bx-this.ox)*te, hz=this.oz+(this.bz-this.oz)*te;
+      // dérive latérale au vent (B387) : elle joue surtout en haut, quand la bombe ralentit -> trajet très
+      // légèrement arqué (extrémités inchangées : mortier et point d'éclatement)
+      let bowX=0, bowZ=0; if (this._bal){ const w=(T*T-te); bowX=this._bowX*w; bowZ=this._bowZ*w; }
+      const y=this.cfg.apex*te, hx=this.ox+(this.bx-this.ox)*te+bowX, hz=this.oz+(this.bz-this.oz)*te+bowZ;
       const a=this.headGeo.attributes.position.array;
       if (this._bal && dt>0) this._riseEmit(dt, a[0],a[1],a[2], hx,y,hz);   // B387 : traînée à cadence fixe
       const hv=this.headGeo.attributes.aVel; if (hv && dt>0){ hv.array[0]=(hx-a[0])/dt; hv.array[1]=(y-a[1])/dt; hv.array[2]=(hz-a[2])/dt; hv.needsUpdate=true; }   // B384 : flou de mouvement de la tête
