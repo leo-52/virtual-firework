@@ -2,7 +2,7 @@
 
 > Document vivant : où on en est, ce qui est fait, ce qui reste, la ligne directrice,
 > les effets et leurs caractéristiques. Tenu à jour au fil des sessions.
-> **Dernière mise à jour : 2026-10-23 (B388 : montée 75 mm = 2,5 s ; B387 : montées balistiques ; B386 : marrons sans étincelles ; B385 : marrons d'air ; B384 : chandelles ; B383 : chute réaliste, dispersion 10 % ; B382 : tailles angulaires, iPhone non cramé ; B381 : décor éclairé, ciel, fumée, bloom rond — notation à l'aveugle face à FWsim).**
+> **Dernière mise à jour : 2026-10-23 (B389 : moteur du simulateur de site 3D régénéré ; B388 : montée 75 mm = 2,5 s ; B387 : montées balistiques ; B386 : marrons sans étincelles ; B385 : marrons d'air ; B384 : chandelles ; B383 : chute réaliste, dispersion 10 % ; B382 : tailles angulaires, iPhone non cramé ; B381 : décor éclairé, ciel, fumée, bloom rond — notation à l'aveugle face à FWsim).**
 >
 > 📌 **VERSION DE BASE = B379** (choix user, 2026-10-22) : commit `9060f65`, branche figée
 > **`base-B379`**, état AVANT les modifications de rendu B380. C'est la référence de retour :
@@ -191,6 +191,14 @@ sur captures mélangées avec celles de FWsim) — toujours sans toucher à la p
   (80 m) = 2,5 s (`RISE_T80`), entre l'ancien moteur (~2,2 s) et la profession (~2,9 s). Même loi pour les autres
   calibres : 100 mm ≈ 2,9 s, 150 mm ≈ 3,9 s, 30 mm ≈ 1,5 s. La bombe sort un peu plus vite (~54 m/s) et éclate en
   montant encore à ~15 m/s (dans la fourchette Kosanke 15-20 m/s). Montées chronométrées par l'user inchangées.
+- **B389 — SIMULATEUR DE SITE 3D (« Reconnaissance de site 3D — JPA », simu_3d_vNNN.html)** : son moteur de feux
+  est une COPIE GÉNÉRÉE de ce moteur (bloc `<script id="moteur_feux">`, objet global `PFX`). Elle était restée en
+  B379. Nouveau générateur : `python3 outils/faire_moteur_simu.py simu_3d_v142.html simu_3d_v143.html` (mêmes
+  transformations que l'ancien `_feux/faire_moteur.py` : imports/Cesium retirés, `PFX_VUE`, `calScale`, options
+  envMul/colors/riseColor) + raccordement du rendu de la page : lueur ronde (`PFX.setupBloomPass`, `PFX.BLOOM_DEF`),
+  taille angulaire (plus de facteur k de champ), fumée (`PFX.updateSmoke` + `PFX.shellLights`). Pour ça, le réglage
+  de la lueur et les sources de lumière sont sortis de `ThreeFireworks` en fonctions de module (`setupBloomPass`,
+  `shellLights`) — PrevoFX inchangé. À relancer à chaque nouvelle version du moteur.
 - ⚠️ **Banc d'essai** : entre deux captures sur la même page, il FAUT laisser s'éteindre traînées et
   fumée (≥ 25 s de simulation), sinon la fumée de l'effet précédent, éclairée par le suivant, pollue
   l'image (des tours de relecture ont été faussés ainsi).

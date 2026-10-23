@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B388';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B389';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 // RENDU « VU À TRAVERS UNE CAMÉRA » (B380, user : « ça fait fade, faux, générique » face à FWsim).
 // La PHYSIQUE et les réglages d'effets ne bougent pas : seul l'ASPECT de chaque étoile change.
@@ -1303,6 +1303,42 @@ function behaveMosaic(d,A,dt,ctx){
 const CAL_SCALE = { 10:0.22, 20:0.36, 30:0.50, 40:0.58, 49:0.66, 50:0.67, 75:1.0, 100:1.44, 125:1.87, 150:2.30, 200:2.58 };   // 30 mm ajouté B233 (bombettes de compact) ; 10/20/40/49 ajoutés B351 (chandelles romaines et monocoups)
 const STAR_SCALE = 1.0;   // taille globale des étoiles (user 2026-07-02 : 1.2 -> 1.1 ("un tout petit peu") puis -> 1.0 ("baisse encore").
                           //  Les effets à GROSSES étoiles — comète, palme, toupie, soucoupe, mosaïques — sont COMPENSÉS à chaque baisse pour ne pas changer.)
+function shellLights(shells, max=8){   // B389 : sources de lumière des bombes (fumée, décor) — module, réutilisé par le simulateur de site 3D
+  const out=[];
+  for (const s of shells){ if (s.dead) continue;
+    if (s.light) out.push({ x:s.light.x, y:s.light.y, z:s.light.z, r:s.light.r, g:s.light.g, b:s.light.b, own:s._sid, selfW:0 });
+    if (s.muLight>0.5) out.push({ x:s.ox, y:1.2*(s.muzzleScale||1), z:s.oz, r:s.muLight*0.53, g:s.muLight*0.33, b:s.muLight*0.14 });
+    if (s.breakLight>5) out.push({ x:s.bx, y:s.cfg.apex, z:s.bz, r:s.breakLight*0.40, g:s.breakLight*0.34, b:s.breakLight*0.26, own:s._sid, selfW:0.3 }); }
+  const k=TRAIL_LIGHT_K;
+  if (trailLight.r+trailLight.g+trailLight.b>0) out.push({ x:trailLight.x, y:trailLight.y, z:trailLight.z, r:trailLight.r*k, g:trailLight.g*k, b:trailLight.b*k, noSmoke:true });   // traînées : éclairent le décor, pas la fumée (lumière globale, toutes bombes confondues)
+  out.sort((a,b)=>(b.r+b.g+b.b)-(a.r+a.g+a.b));
+  return out.slice(0,max);
+}
+
+// LUEUR (bloom) : réglages B381 regroupés en une fonction (B389) — PrevoFX ET le simulateur de site 3D
+// (« Reconnaissance de site 3D — JPA », moteur généré par outils/faire_moteur_simu.py) l'appliquent à
+// leur UnrealBloomPass créé avec BLOOM_DEF.
+function setupBloomPass(bloomPass, renderer){
+    // B381 : BLOOM ROND. Le flou du bloom de Three.js (r160) coupe sa gaussienne à 1 sigma : le noyau
+  // est presque une BOÎTE, et un point très vif (éclair de crackling, tête d'étoile) reçoit une lueur
+  // CARRÉE — sur tous les GPU (vu à l'aveugle : « étoiles carrées »). On garde la MÊME largeur (sigma
+  // d'origine) mais le noyau va jusqu'à 2,5 sigma -> lueur ronde. ?bloomk=0 : noyau d'origine.
+  { const bk=_qnum('bloomk'), kTr = LOOK_OLD ? 0 : (bk ? bk[0] : 2.5);
+    if (kTr > 1) for (const m of bloomPass.separableBlurMaterials){
+      const sig = m.defines.KERNEL_RADIUS, R = Math.round(sig * kTr), co = [];
+      for (let i = 0; i < R; i++) co.push(Math.exp(-0.5 * i * i / (sig * sig)));
+      m.defines.KERNEL_RADIUS = R; m.uniforms.gaussianCoefficients.value = co; m.needsUpdate = true; } }
+  // Poids des 5 niveaux du bloom (du plus serré au plus large). Les 2 plus larges font un VOILE de
+  // plusieurs centaines de px autour des grosses masses (saule) : atténués (anti-brouillard B106).
+  { const bf=_qnum('bloomf'), W = LOOK_OLD ? null : (bf && bf.length===5 ? bf : BLOOM_FACTORS);
+    if (W) bloomPass.compositeMaterial.uniforms.bloomFactors.value = W.slice(); }
+  // Cibles du bloom en flottant 32 bits quand le matériel sait les filtrer (agrandissements lisses).
+  { const gl=renderer.getContext();
+    if (gl.getExtension('OES_texture_float_linear') && gl.getExtension('EXT_color_buffer_float'))
+      for (const rt of [...bloomPass.renderTargetsHorizontal, ...bloomPass.renderTargetsVertical, bloomPass.renderTargetBright]){
+        rt.texture.type = THREE.FloatType; rt.dispose(); } }
+}
+
 // MONTÉE BALISTIQUE (B387, user : « refais les montées ») — docs/physique/07_montee.md et 08 :
 // - TEMPS de montée (tir -> éclatement) recalé sur la profession : 75 mm (90 m catalogue) ≈ 2,9 s,
 //   B388 : entre-deux voulu par l'user, 75 mm = 2,5 s (100 mm ≈ 2,9 s, 150 mm ≈ 3,9 s, 30 mm ≈ 1,5 s ; t = RISE_T80 × (apex/80)^0,62 ; principe B192 :
@@ -2631,24 +2667,7 @@ export class ThreeFireworks {
     this.composer.addPass(new RenderPass(scene, this.camera));
     const BL = (!LOOK_OLD && _qnum('bloom')) || [BLOOM_DEF[0], BLOOM_DEF[1], BLOOM_DEF[2]];
     const bloomPass = new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), BL[0], BL[1], BL[2]);
-    // B381 : BLOOM ROND. Le flou du bloom de Three.js (r160) coupe sa gaussienne à 1 sigma : le noyau
-    // est presque une BOÎTE, et un point très vif (éclair de crackling, tête d'étoile) reçoit une lueur
-    // CARRÉE — sur tous les GPU (vu à l'aveugle : « étoiles carrées »). On garde la MÊME largeur (sigma
-    // d'origine) mais le noyau va jusqu'à 2,5 sigma -> lueur ronde. ?bloomk=0 : noyau d'origine.
-    { const bk=_qnum('bloomk'), kTr = LOOK_OLD ? 0 : (bk ? bk[0] : 2.5);
-      if (kTr > 1) for (const m of bloomPass.separableBlurMaterials){
-        const sig = m.defines.KERNEL_RADIUS, R = Math.round(sig * kTr), co = [];
-        for (let i = 0; i < R; i++) co.push(Math.exp(-0.5 * i * i / (sig * sig)));
-        m.defines.KERNEL_RADIUS = R; m.uniforms.gaussianCoefficients.value = co; m.needsUpdate = true; } }
-    // Poids des 5 niveaux du bloom (du plus serré au plus large). Les 2 plus larges font un VOILE de
-    // plusieurs centaines de px autour des grosses masses (saule) : atténués (anti-brouillard B106).
-    { const bf=_qnum('bloomf'), W = LOOK_OLD ? null : (bf && bf.length===5 ? bf : BLOOM_FACTORS);
-      if (W) bloomPass.compositeMaterial.uniforms.bloomFactors.value = W.slice(); }
-    // Cibles du bloom en flottant 32 bits quand le matériel sait les filtrer (agrandissements lisses).
-    { const gl=this.renderer.getContext();
-      if (gl.getExtension('OES_texture_float_linear') && gl.getExtension('EXT_color_buffer_float'))
-        for (const rt of [...bloomPass.renderTargetsHorizontal, ...bloomPass.renderTargetsVertical, bloomPass.renderTargetBright]){
-          rt.texture.type = THREE.FloatType; rt.dispose(); } }
+    setupBloomPass(bloomPass, this.renderer);   // B389 : réglages de la lueur regroupés (réutilisés par le simulateur de site 3D)
     this.composer.addPass(bloomPass); // B106 anti-BROUILLARD : seuil 0.12->0.55 = seuls les CŒURS brillants blooment (la masse faible ne fait plus de halo), rayon resserré
     this.composer.addPass(new OutputPass());
     // CIEL DE NUIT (B381) : le fond d'étoiles de Cesium faisait du « grain » sur toute l'image.
@@ -2758,17 +2777,7 @@ export class ThreeFireworks {
   // SOURCES DE LUMIÈRE pour éclairer le décor (B381) : étoiles de chaque bombe, flash de gueule,
   // traînées. Coordonnées scène Three (x, y=haut, z) ; r,g,b = lumière émise (unités moteur).
   // Les MAX plus fortes seulement (le shader du décor a un nombre fixe de lumières).
-  lights(max=8){
-    const out=[];
-    for (const s of this.shells){ if (s.dead) continue;
-      if (s.light) out.push({ x:s.light.x, y:s.light.y, z:s.light.z, r:s.light.r, g:s.light.g, b:s.light.b, own:s._sid, selfW:0 });
-      if (s.muLight>0.5) out.push({ x:s.ox, y:1.2*(s.muzzleScale||1), z:s.oz, r:s.muLight*0.53, g:s.muLight*0.33, b:s.muLight*0.14 });
-      if (s.breakLight>5) out.push({ x:s.bx, y:s.cfg.apex, z:s.bz, r:s.breakLight*0.40, g:s.breakLight*0.34, b:s.breakLight*0.26, own:s._sid, selfW:0.3 }); }
-    const k=TRAIL_LIGHT_K;
-    if (trailLight.r+trailLight.g+trailLight.b>0) out.push({ x:trailLight.x, y:trailLight.y, z:trailLight.z, r:trailLight.r*k, g:trailLight.g*k, b:trailLight.b*k, noSmoke:true });   // traînées : éclairent le décor, pas la fumée (lumière globale, toutes bombes confondues)
-    out.sort((a,b)=>(b.r+b.g+b.b)-(a.r+a.g+a.b));
-    return out.slice(0,max);
-  }
+  lights(max=8){ return shellLights(this.shells, max); }
   // scène Three -> repère ENU du tir -> ECEF (Cesium)
   sceneToWorld(x,y,z, out){ return Cesium.Matrix4.multiplyByPoint(this.enuToFixed, new Cesium.Cartesian3(x, -z, y), out||new Cesium.Cartesian3()); }
 }
