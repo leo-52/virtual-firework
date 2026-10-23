@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B387';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B388';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 // RENDU « VU À TRAVERS UNE CAMÉRA » (B380, user : « ça fait fade, faux, générique » face à FWsim).
 // La PHYSIQUE et les réglages d'effets ne bougent pas : seul l'ASPECT de chaque étoile change.
@@ -1305,7 +1305,7 @@ const STAR_SCALE = 1.0;   // taille globale des étoiles (user 2026-07-02 : 1.2 
                           //  Les effets à GROSSES étoiles — comète, palme, toupie, soucoupe, mosaïques — sont COMPENSÉS à chaque baisse pour ne pas changer.)
 // MONTÉE BALISTIQUE (B387, user : « refais les montées ») — docs/physique/07_montee.md et 08 :
 // - TEMPS de montée (tir -> éclatement) recalé sur la profession : 75 mm (90 m catalogue) ≈ 2,9 s,
-//   100 mm ≈ 3,3 s, 150 mm ≈ 4,1 s, 30 mm ≈ 1,8 s  (t = 2,9 s × (apex/80)^0,62 ; principe B192 :
+//   B388 : entre-deux voulu par l'user, 75 mm = 2,5 s (100 mm ≈ 2,9 s, 150 mm ≈ 3,9 s, 30 mm ≈ 1,5 s ; t = RISE_T80 × (apex/80)^0,62 ; principe B192 :
 //   la hauteur se lit au temps ; apex RENDU, 80 m = pivoine 75 mm). Les effets à montée CHRONOMÉTRÉE par l'user (riseTime explicite :
 //   zigzag, saule pointes 100, chandelles…) gardent leurs temps.
 // - TRAJECTOIRE : traînée QUADRATIQUE réelle (C_D 0,45, masse/diamètre du calibre) + gravité. On
@@ -1314,6 +1314,7 @@ const STAR_SCALE = 1.0;   // taille globale des étoiles (user 2026-07-02 : 1.2 
 //   de cet élan (Finale le fait aussi).
 // ?montee=0 = ancienne montée (courbe en cloche, perles de traînée).
 const _mecheQ = _qnum('meche'); const FUSE_K = _mecheQ ? _mecheQ[0] : 1.6;   // éclat du filet de mèche (réglage)
+const RISE_T80 = 2.5;   // B388 (user : « fais un entre-deux : 2,5 s de montée ») : temps tir -> éclatement d'une 75 mm (80 m) ; profession ≈ 2,9 s, ancien moteur ≈ 2,2 s
 const RISE_OLD = /[?&]montee=0\b/.test(_QS);
 const SHELL_MASS = [[30,0.03],[50,0.07],[75,0.22],[100,0.45],[125,0.8],[150,1.4],[200,3.0],[300,9.0]];   // kg (bombes chinoises standard, docs/physique 07)
 function shellK(cal){   // k = ρ·C_D·A / (2m)  [1/m]
@@ -1804,7 +1805,7 @@ class Shell {
     this._bal=null;
     if (!RISE_OLD && !this.cfg.noIgnite && !this.cfg.noRise && !this.cfg.gerbe){
       const explicit = EFFECTS[this.arch] && EFFECTS[this.arch].riseTime!==undefined;
-      let tb = explicit ? this.riseTime : 2.9*Math.pow(this.cfg.apex/80, 0.62)*(0.96+Math.random()*0.08);   // cfg.apex est déjà la hauteur RENDUE (×0,89) : pivoine 75 mm = 80 m -> 2,9 s
+      let tb = explicit ? this.riseTime : RISE_T80*Math.pow(this.cfg.apex/80, 0.62)*(0.96+Math.random()*0.08);   // cfg.apex est déjà la hauteur RENDUE (×0,89) : pivoine 75 mm = 80 m -> RISE_T80
       if (opts && opts.riseMul && !explicit) tb *= opts.riseMul;
       this._bal = solveRise(this.cfg.apex, tb, shellK(this.cal));
       this.riseTime = this._bal.tb;

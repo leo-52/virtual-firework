@@ -2,7 +2,7 @@
 
 > Document vivant : où on en est, ce qui est fait, ce qui reste, la ligne directrice,
 > les effets et leurs caractéristiques. Tenu à jour au fil des sessions.
-> **Dernière mise à jour : 2026-10-23 (B387 : montées balistiques ; B386 : marrons sans étincelles ; B385 : marrons d'air ; B384 : chandelles ; B383 : chute réaliste, dispersion 10 % ; B382 : tailles angulaires, iPhone non cramé ; B381 : décor éclairé, ciel, fumée, bloom rond — notation à l'aveugle face à FWsim).**
+> **Dernière mise à jour : 2026-10-23 (B388 : montée 75 mm = 2,5 s ; B387 : montées balistiques ; B386 : marrons sans étincelles ; B385 : marrons d'air ; B384 : chandelles ; B383 : chute réaliste, dispersion 10 % ; B382 : tailles angulaires, iPhone non cramé ; B381 : décor éclairé, ciel, fumée, bloom rond — notation à l'aveugle face à FWsim).**
 >
 > 📌 **VERSION DE BASE = B379** (choix user, 2026-10-22) : commit `9060f65`, branche figée
 > **`base-B379`**, état AVANT les modifications de rendu B380. C'est la référence de retour :
@@ -187,6 +187,10 @@ sur captures mélangées avec celles de FWsim) — toujours sans toucher à la p
     persistante sur le pas de tir (suit le vent, éclairée par les flashs).
   - À l'aveugle (salves au ras du sol, FWsim = 9) : montée 8,2 et 8,9 (deux relecteurs) contre 5,0-5,6
     pour l'ancienne. `?montee=0` = ancienne montée.
+- **B388 (user : « fais un entre-deux pour les bombes : 2,5 s de montée »)** : temps tir -> éclatement de la 75 mm
+  (80 m) = 2,5 s (`RISE_T80`), entre l'ancien moteur (~2,2 s) et la profession (~2,9 s). Même loi pour les autres
+  calibres : 100 mm ≈ 2,9 s, 150 mm ≈ 3,9 s, 30 mm ≈ 1,5 s. La bombe sort un peu plus vite (~54 m/s) et éclate en
+  montant encore à ~15 m/s (dans la fourchette Kosanke 15-20 m/s). Montées chronométrées par l'user inchangées.
 - ⚠️ **Banc d'essai** : entre deux captures sur la même page, il FAUT laisser s'éteindre traînées et
   fumée (≥ 25 s de simulation), sinon la fumée de l'effet précédent, éclairée par le suivant, pollue
   l'image (des tours de relecture ont été faussés ainsi).
