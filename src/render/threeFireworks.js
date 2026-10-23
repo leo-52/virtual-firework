@@ -188,7 +188,10 @@ const STAR_FS = `
 const P11_REF = (LOOK_OLD || /[?&]angul=0\b/.test(_QS)) ? 0 : (16/9) / Math.tan(38*Math.PI/180);   // ≈ 2,28 = focale du rendu B381 sur écran 16:9 (objectif 76°) : sur ordinateur RIEN ne change (rendu validé à l'aveugle) ; en portrait (téléphone) étoiles et halos suivent la bombe
 const _oeufQ = _qnum('oeuf');   // B384 : éclat du nuage « œuf de dragon » des chandelles (1 = B363)
 const EGG_K = _oeufQ ? _oeufQ[0] : (LOOK_OLD ? 1 : 0.45);   // 0,45 : avec le bloom rond plus fort (B381), les 230 grains à 2,0 faisaient une BOULE blanche floue ; ainsi on voit la grappe crépitante, l'éclair reste blanc
-const HEAD_LOOK = Object.assign({}, TRAIL_LOOK, { spark:0.2 });   // B386 : look de la tête de montée
+const HEAD_LOOK = Object.assign({}, TRAIL_LOOK, { spark:0.2 });
+// B387 : têtes de montée balistique — mèche = point vif et NET (pas de goutte floue) ; comète de palmier = tête vive, petit halo
+const FUSE_LOOK = LOOK_OLD ? HEAD_LOOK : { haloPx:2, haloMin:1.0, haloI:0.05, halo2Px:0, halo2I:0, minPx:1.2, white:0.35, crisp:1.4, soft:1, spark:0.35 };
+const TAILHEAD_LOOK = LOOK_OLD ? HEAD_LOOK : { haloPx:4, haloMin:1.1, haloI:0.08, halo2Px:9, halo2I:0.02, minPx:2.0, white:0.6, crisp:1.2, soft:1, spark:0.15 };   // B386 : look de la tête de montée
 const HEAD_OLD = /[?&]tete=0\b/.test(_QS);   // B384 : ?tete=0 = tête de montée dessinée comme avant
 const SPARK_CLOCK = { value:0 };   // B381 : horloge commune du scintillement (étoiles ET traînées)
 function makeStarMat(tex, look){
@@ -1300,6 +1303,37 @@ function behaveMosaic(d,A,dt,ctx){
 const CAL_SCALE = { 10:0.22, 20:0.36, 30:0.50, 40:0.58, 49:0.66, 50:0.67, 75:1.0, 100:1.44, 125:1.87, 150:2.30, 200:2.58 };   // 30 mm ajouté B233 (bombettes de compact) ; 10/20/40/49 ajoutés B351 (chandelles romaines et monocoups)
 const STAR_SCALE = 1.0;   // taille globale des étoiles (user 2026-07-02 : 1.2 -> 1.1 ("un tout petit peu") puis -> 1.0 ("baisse encore").
                           //  Les effets à GROSSES étoiles — comète, palme, toupie, soucoupe, mosaïques — sont COMPENSÉS à chaque baisse pour ne pas changer.)
+// MONTÉE BALISTIQUE (B387, user : « refais les montées ») — docs/physique/07_montee.md et 08 :
+// - TEMPS de montée (tir -> éclatement) recalé sur la profession : 75 mm (90 m catalogue) ≈ 2,9 s,
+//   100 mm ≈ 3,3 s, 150 mm ≈ 4,1 s, 30 mm ≈ 1,8 s  (t = 2,9 s × (apex/80)^0,62 ; principe B192 :
+//   la hauteur se lit au temps ; apex RENDU, 80 m = pivoine 75 mm). Les effets à montée CHRONOMÉTRÉE par l'user (riseTime explicite :
+//   zigzag, saule pointes 100, chandelles…) gardent leurs temps.
+// - TRAJECTOIRE : traînée QUADRATIQUE réelle (C_D 0,45, masse/diamètre du calibre) + gravité. On
+//   résout la vitesse de sortie pour être à l'apex au temps voulu -> départ fulgurant puis « ralenti »,
+//   et l'éclatement arrive un peu AVANT le sommet (la bombe monte encore ~5-12 m/s) : la fleur hérite
+//   de cet élan (Finale le fait aussi).
+// ?montee=0 = ancienne montée (courbe en cloche, perles de traînée).
+const RISE_OLD = /[?&]montee=0\b/.test(_QS);
+const SHELL_MASS = [[30,0.03],[50,0.07],[75,0.22],[100,0.45],[125,0.8],[150,1.4],[200,3.0],[300,9.0]];   // kg (bombes chinoises standard, docs/physique 07)
+function shellK(cal){   // k = ρ·C_D·A / (2m)  [1/m]
+  let m=SHELL_MASS[0][1];
+  for (let i=1;i<SHELL_MASS.length;i++){ const a=SHELL_MASS[i-1], b=SHELL_MASS[i];
+    if (cal<=b[0]){ const t=(Math.log(cal)-Math.log(a[0]))/(Math.log(b[0])-Math.log(a[0])); m=Math.exp(Math.log(a[1])+t*(Math.log(b[1])-Math.log(a[1]))); break; }
+    m=b[1]; }
+  const d=cal*0.96e-3, A=Math.PI*d*d/4;
+  return 1.2*0.45*A/(2*m);
+}
+// y(t) = ln(cos(φ0 − a·t)/cos φ0)/k, a = √(g·k) : on cherche φ0 tel que y(tb) = H (burst avant le sommet).
+function solveRise(H, tb, k){
+  const g=9.8, a=Math.sqrt(g*k), y=(f)=>Math.log(Math.cos(f-a*tb)/Math.cos(f))/k;
+  let lo=a*tb+1e-6, hi=Math.PI/2-1e-6;
+  if (-Math.log(Math.cos(lo))/k >= H){   // le temps demandé est trop long pour cette hauteur : éclatement AU sommet
+    const f=Math.acos(Math.exp(-k*H)); return { k, a, phi:f, tb:f/a };
+  }
+  for (let i=0;i<60;i++){ const m=(lo+hi)/2; if (y(m)>H) hi=m; else lo=m; }
+  return { k, a, phi:(lo+hi)/2, tb };
+}
+
 // CHUTE EN FIN DE VIE (B383, user : « tu peux corriger fin de vie ») : avec le seul frein linéaire, une étoile
 // tombait au plus à g/(dragStar×PUNCH) ≈ 7 m/s. Une vraie étoile (traînée quadratique, C_D 0,5, ~1500 kg/m³)
 // tombe à √(g·L) ≈ 18 m/s pour ~10 mm (75 mm), ∝ √(taille) -> la boule « fond » de ~10 m en fin de vie
@@ -1427,12 +1461,12 @@ const EFFECTS = {
   finalCli: { apex:95, heat:false, color:PINK, pureColor:true, onStar:finalCliFn, lifeBase75:2.3, gravStar:0.7 },  // FINAL CLI. BLANC ROSE 75mm (catalogue, 95m) : pivoine rose -> les étoiles finissent en CLIGNOTANT BLANC ; décliner via {color} (citron/rouge/verte/bleue/violette)
   fallingLeaves: { apex:95, stars:75, dist:distLeaves, heat:false, color:new THREE.Color(1.0,0.45,0.55),
                    gravStar:0.75, gravJit:0.2, dragStar:0.5, lifeBase75:5.3, speedMul:0.5, sway:1.5, wind:1.8, noRise:true, starSize:2.1 },   // B125 (user) : durée -0,7s (5,3s) ; éclat compact, 75 étoiles, chute ~7 m/s ±20%, vent commun, jamais vers le haut
-  palm: { apex:105, stars:15, dist:distFibonacci, heat:false, color:WHITE, onStar:glitterFn, gravStar:1.0, dragStar:0.6,   // PIVOINE (sphère, bien écartée) + traînée, 15 étoiles ; blanc scintillant + traînée OR
+  palm: { apex:105, risingTail:'gold', stars:15, dist:distFibonacci, heat:false, color:WHITE, onStar:glitterFn, gravStar:1.0, dragStar:0.6,   // PIVOINE (sphère, bien écartée) + traînée, 15 étoiles ; blanc scintillant + traînée OR
           lifeBase75:2.8, starSize:4.1, trailing:{emitUntil:0.97, period:0.006, grain:1.3, gF:0.45, lifeMul:9.0, color:GOLD} },  // FRONDES = TRÈS LONGUES queues dorées = la palme (compensé, taille inchangée = 3.4×1.2)
-  palmStrobe: { apex:95, stars:15, dist:distFibonacci, heat:false, pureColor:true, onStar:scintFn, gravStar:0.85, dragStar:0.30, speedMul:0.62, wind:1.2, randomAxis:true,   // « bombe 75 mm PALME OR SCINTILLANT blanc/or » (575292000/575291000, 95 m). B177 (user : « on dirait figé ») : VENT commun par tir — les étincelles dérivent toutes ensemble, légèrement -> la nappe VIT
+  palmStrobe: { apex:95, risingTail:'gold', stars:15, dist:distFibonacci, heat:false, pureColor:true, onStar:scintFn, gravStar:0.85, dragStar:0.30, speedMul:0.62, wind:1.2, randomAxis:true,   // « bombe 75 mm PALME OR SCINTILLANT blanc/or » (575292000/575291000, 95 m). B177 (user : « on dirait figé ») : VENT commun par tir — les étincelles dérivent toutes ensemble, légèrement -> la nappe VIT
           lifeBase75:1.7, lifeJitter:0.18, starSize:2.0, shrink:1.0, shrinkPow:2.2, colors:[new THREE.Color(1.15,1.18,1.28)],   // B187 (user) : étoiles scintillantes à 2.2 (harmonisé avec le saule scintillant) ; blanches, FONDENT jusqu'à 0
           trailing:{emitUntil:0.97, period:0.006, grain:1.1, gF:0.05, lifeMul:8.5, color:new THREE.Color(1.12,0.60,0.20), longLaw:{p0:0.2, p1:0.5, min:2.8, max:7, pow:1.8}} },   // B181 (loi user) : proba d'étincelle LONGUE graduelle 2/10 (centre) -> 5/10 (bout) ; longues = 2,8-7 s biaisées bas (les ~7 s restent rares)
-  palmMulti: { apex:105, stars:15, dist:distFibonacci, heat:false, pureColor:true, assorted:[GRN,RED,BLU], gravStar:1.0, dragStar:0.6, shrink:true,   // PALME MULTICOLORE 75mm (catalogue, user : 15 étoiles vertes/rouges/bleues)
+  palmMulti: { apex:105, risingTail:'gold', stars:15, dist:distFibonacci, heat:false, pureColor:true, assorted:[GRN,RED,BLU], gravStar:1.0, dragStar:0.6, shrink:true,   // PALME MULTICOLORE 75mm (catalogue, user : 15 étoiles vertes/rouges/bleues)
           lifeBase75:3.0, starSize:2.6, trailing:{emitUntil:0.97, period:0.0022, grain:0.8, gF:0.45, lifeMul:8.15, color:EMBER, fixedColor:true, spark:true} },  // étincelles CHAUDES orangé/doré (EMBER) + DENSES (period 0.0022, B91) ; vie moy 1,9s ; étoiles réduites + shrink ; pointe verte/rouge/bleue
 
   // === FORMES 2D (face public) — chiffres catalogue vérifiés (web/data/effets.json, B127) ===
@@ -1765,6 +1799,17 @@ class Shell {
     // les 75 mm ne bougent pas (~2,2 s), cœur/marguerite 100 mm +10 %, atome 150 mm ~3,0 s.
     this.riseTime = this.cfg.riseTime * APEX_SCALE * Math.sqrt(this.cfg.apex/80) * (0.95 + Math.random()*0.10);
     if (opts && opts.riseMul) this.riseTime *= opts.riseMul;   // B354 : chandelles — chaque coup brûle sa propre durée
+    // B387 : montée balistique (sauf chandelles/noRise, calées sur vidéo avec l'ancienne courbe)
+    this._bal=null;
+    if (!RISE_OLD && !this.cfg.noIgnite && !this.cfg.noRise && !this.cfg.gerbe){
+      const explicit = EFFECTS[this.arch] && EFFECTS[this.arch].riseTime!==undefined;
+      let tb = explicit ? this.riseTime : 2.9*Math.pow(this.cfg.apex/80, 0.62)*(0.96+Math.random()*0.08);   // cfg.apex est déjà la hauteur RENDUE (×0,89) : pivoine 75 mm = 80 m -> 2,9 s
+      if (opts && opts.riseMul && !explicit) tb *= opts.riseMul;
+      this._bal = solveRise(this.cfg.apex, tb, shellK(this.cal));
+      this.riseTime = this._bal.tb;
+      this._spin = 3+Math.random()*12;   // tr/s, s'amortit en ~1,5 s (Ding & Yoshida 2008)
+      this._fuseAcc=0; this._tailAcc=0;
+    }
     this.headLastX=this.ox; this.headLastY=0; this.headLastZ=this.oz; this.headTimer=0;
     this.nMax = (this.cfg.nMax || this.cfg.stars) + (this.cfg.core ? this.cfg.core.stars : 0); this.nAlive = 0;
     this.data = []; this.flash=null; this.hasMuzzle=false;
@@ -1794,13 +1839,14 @@ class Shell {
         this.headGeo.setAttribute('aColor',new THREE.BufferAttribute(new Float32Array([rc.r,rc.g,rc.b]),3));
         this.headGeo.setAttribute('aVel',  new THREE.BufferAttribute(new Float32Array(3),3));
         this.headGeo.setAttribute('aSeed', new THREE.BufferAttribute(new Float32Array([0.01+Math.random()*0.99]),1));
-        this.headMat=makeStarMat(starTex, this.cfg.noIgnite ? STAR_LOOK : HEAD_LOOK);   // chandelles (noIgnite : la bille EST l'étoile) = look étoile ; montée des bombes = halo discret   // B386 : halo discret des traînées (le halo des étoiles faisait briller la montée presque autant que l'éclatement)
+        this.headMat=makeStarMat(starTex, this.cfg.noIgnite ? STAR_LOOK : (this._bal ? (this.cfg.risingTail ? TAILHEAD_LOOK : FUSE_LOOK) : HEAD_LOOK));   // chandelles (noIgnite : la bille EST l'étoile) = look étoile ; montée des bombes = halo discret   // B386 : halo discret des traînées (le halo des étoiles faisait briller la montée presque autant que l'éclatement)
         // petite API compatible avec PointsMaterial (size, color) : le code de montée n'a pas à changer
         const G=this.headGeo, hm=this.headMat;
         Object.defineProperty(hm,'size',{ get:()=>G.attributes.size.array[0],
           set:(v)=>{ G.attributes.size.array[0]=v; G.attributes.size.needsUpdate=true; } });
         hm.color={ copy:(c)=>hm.color.setRGB(c.r,c.g,c.b),
           setRGB:(r,g,b)=>{ const A=G.attributes.aColor; A.array[0]=r; A.array[1]=g; A.array[2]=b; A.needsUpdate=true; } };
+        if (this._bal && !this.cfg.risingTail && this.cfg.riseTrail!==false){ const q=0.5; hm.color.setRGB(rc.r*q,rc.g*q,rc.b*q); }   // B387 : bombe nue = lueur de MÈCHE discrète
       }
       this.head=new THREE.Points(this.headGeo,this.headMat); this.head.frustumCulled=false; scene.add(this.head);
     }
@@ -1853,7 +1899,10 @@ class Shell {
 
   burst(){
     const apex=this.cfg.apex, bx=this.bx, bz=this.bz;
-    const speed=this.cfg.burstRadius*this.cfg.speedMul*BURST_PUNCH, jit=this.cfg.speedJit;   // ×PUNCH : l'explosion PROPULSE (le drag ×PUNCH compense -> même envergure)
+    const speed=this.cfg.burstRadius*this.cfg.speedMul*BURST_PUNCH, jit=this.cfg.speedJit;
+    // B387 : la bombe éclate en MONTANT encore (~5-12 m/s) -> toutes les étoiles héritent de cet élan
+    let iX=0, iY=0, iZ=0;
+    if (this._bal){ const B=this._bal, vA=Math.sqrt(9.8/B.k)*Math.tan(Math.max(0,B.phi-B.a*B.tb)); iX=vA*this.muTX; iY=vA; iZ=vA*this.muTZ; }   // ×PUNCH : l'explosion PROPULSE (le drag ×PUNCH compense -> même envergure)
     let plane=null, pts=null, n;
     if (this.cfg.dist2D){
       pts=this.cfg.dist2D(Math.random, this.cal, this._numColors());
@@ -1941,7 +1990,7 @@ class Shell {
       // trailComps (B148, marguerite) : la traînée seulement pour certains GROUPES de couleur
       // (ex pétales OR avec bande d'étincelles, cœur/perles = points nets sans traînée)
       const trOK=!this.cfg.trailComps || this.cfg.trailComps.indexOf(comp)>=0;
-      const s=this._newStar(dir.dx*sp, dir.dy*sp, dir.dz*sp, comp, trOK ? this.cfg.trailing : false);
+      const s=this._newStar(dir.dx*sp+iX, dir.dy*sp+iY, dir.dz*sp+iZ, comp, trOK ? this.cfg.trailing : false);
       // compLife (B152, marguerite) : vie multipliée PAR GROUPE (ex le CŒUR rouge meurt EN PREMIER, ×0.6)
       if (this.cfg.compLife && this.cfg.compLife[comp]) s.life*=this.cfg.compLife[comp];
       // compSize (B191, atome) : taille PAR GROUPE (ex têtes de brins 3.3, paquets scintillants 1.9)
@@ -1960,7 +2009,7 @@ class Shell {
         const i=this.nAlive++, dir=distFibonacci(j,cn,Math.random), sp2=csp*(0.8+Math.random()*0.45);
         this.pos[i*3]=bx; this.pos[i*3+1]=apex; this.pos[i*3+2]=bz;
         // ŒUF DE DRAGON : les étoiles du cœur reçoivent la MÊME traînée que la coquille ; sinon (crackling) pas de traînée.
-        const s=this._newStar(dir.dx*sp2, dir.dy*sp2, dir.dz*sp2, 0, this.cfg.crackleStars?this.cfg.trailing:false);
+        const s=this._newStar(dir.dx*sp2+iX, dir.dy*sp2+iY, dir.dz*sp2+iZ, 0, this.cfg.crackleStars?this.cfg.trailing:false);
         s._i=i; s._split=false; s.crackle=true; s.coreColor=co.color;
         if (this.cfg.crackleStars || co.eggSplode){   // ŒUF DE DRAGON (cœur) OU pistil "étoiles œuf de dragon" (crackling <couleur>) : explosent en boule d'étincelles
           s.crackleAt=(co.crackleAt||0)+Math.random()*(co.jitter||0); s.isCore=true;   // tag : explosion taille "cœur" (params isCore), timing propre au cœur
@@ -2043,6 +2092,42 @@ class Shell {
 
   // SORTIE DU TUBE — 3 composantes (échelle ∝ calibre via muzzleScale) :
   // (B126) chaque jet suit l'AXE DU TUBE : + up×muTX/muTZ (mortier incliné -> la gueule crache en biais)
+  // DÉPART (B387) : étincelles de CHASSE (grains encore en feu éjectés derrière la bombe : courte gerbe
+  // orange qui la suit sur ~5-30 m puis s'éteint) + FUMÉE DE LEVÉE qui reste sur le pas de tir (gris clair,
+  // formée d'un coup, éclairée par le flash, suit le vent, ~30-50 s).
+  _launchFX(){
+    const sc=this.muzzleScale, B=this._bal, v0=Math.sqrt(9.8/B.k)*Math.tan(B.phi), n=Math.round(50*sc);
+    for (let k=0;k<n;k++){ const sp=v0*(0.25+Math.random()*0.55), a2=Math.random()*6.283, r=Math.random()*0.10;
+      const ux=this.muTX+Math.cos(a2)*r, uz=this.muTZ+Math.sin(a2)*r;
+      spawnTrail(this.ox, 1.0, this.oz, 1.25,0.55,0.14, 0.75, 0.3, (0.15+Math.random()*0.30)/0.26,
+                 ux*sp*4, sp*4, uz*sp*4, 0.3, 3.5, true); }
+    for (let k=0;k<3;k++){ const a2=Math.random()*6.283, rr=(0.5+Math.random()*1.5)*sc;
+      spawnSmokePuff(this.ox+Math.cos(a2)*rr, (1.5+Math.random()*2)*sc, this.oz+Math.sin(a2)*rr, 3.0*sc, 10*sc, 30+Math.random()*20, 0.45, 0, 0.06, true); }
+  }
+  // TRAÎNÉE DE MONTÉE (B387) : émission à CADENCE fixe dans le temps (pas par mètre) -> la densité suit
+  // 1/vitesse : traîne longue et pâle au départ, PAQUET lumineux qui « hésite » sous l'éclatement.
+  //  - bombe nue : seule la MÈCHE se voit — mince filet orange terne, très discret ; la rotation de la bombe
+  //    (3-15 tr/s, amortie en ~1,5 s) éjecte les étincelles de côté -> traîne un peu élargie au départ.
+  //  - risingTail 'gold' / 'silver' (palmiers…) : vraie comète attachée, tronc droit (stabilisé).
+  _riseEmit(dt, px,py,pz, hx,y,hz){
+    const B=this._bal, t=Math.min(this.age,B.tb), vAx=Math.sqrt(9.8/B.k)*Math.tan(B.phi-B.a*t);   // vitesse le long de l'axe (m/s, ≈ verticale)
+    const vx=vAx*this.muTX, vz=vAx*this.muTZ, tail=this.cfg.risingTail;
+    if (tail){
+      const silver = tail==='silver', rate = silver?520:600;
+      this._tailAcc += rate*dt;
+      while (this._tailAcc>=1){ this._tailAcc-=1; const f=Math.random();
+        const c = silver ? WARMSILVER : COPPER, life = silver ? (0.20+Math.random()*0.30) : (0.55+Math.random()*0.85);
+        spawnTrail(px+(hx-px)*f+(Math.random()-0.5)*0.25, py+(y-py)*f, pz+(hz-pz)*f+(Math.random()-0.5)*0.25,
+                   c.r*(silver?1.25:1), c.g*(silver?1.25:1), c.b*(silver?1.25:1), silver?0.9:1.05, 0.12, life/0.26,
+                   vx*0.3*4, vAx*0.3*4, vz*0.3*4, 0.35, 3.0, true, 0.10); }   // rin 0,1 s : les grains neufs n'empilent plus un halo blanc contre la tête
+    } else if (this.cfg.riseTrail!==false){
+      this._fuseAcc += 140*dt;
+      const spin=Math.exp(-t/1.5), tv=(2+4*Math.random())*spin;
+      while (this._fuseAcc>=1){ this._fuseAcc-=1; const f=Math.random(), u=vrand(Math.random), q=tv*(0.5+Math.random());
+        spawnTrail(px+(hx-px)*f, py+(y-py)*f, pz+(hz-pz)*f, 0.60,0.28,0.08, 0.45, 0.25, (0.10+Math.random()*0.22)/0.26,
+                   (vx*0.25+u[0]*q)*4, (vAx*0.25+u[1]*q*0.3)*4, (vz*0.25+u[2]*q)*4, 0.15, 7.0, true, 0.05); }   // mèche : filet terne, presque invisible de loin (docs/physique 07)
+    }
+  }
   _emitMuzzleFlare(){   // lueur de gueule (source lumière) : PETITE et contenue (user B84 : "- ronde, - grosse")
     const sc=this.muzzleScale, up=(1.5+Math.random()*1.5)*sc;
     spawnPuff(this.ox+(Math.random()-0.5)*0.3*sc, 1.0*sc, this.oz+(Math.random()-0.5)*0.3*sc,
@@ -2061,7 +2146,7 @@ class Shell {
     const up=(3+Math.random()*4)*sc;
     spawnPuff(this.ox+(Math.random()-0.5)*0.45*sc, 0.7, this.oz+(Math.random()-0.5)*0.45*sc,
       Math.cos(ang)*out+up*this.muTX, up, Math.sin(ang)*out+up*this.muTZ, 1.1+Math.random()*1.0, 1.0*sc, 3.2*sc,
-      w*1.5, w*1.25, w, 0.16, 2.0*sc, 1.1);
+      w*1.5, w*1.25, w, this._bal ? 0.05 : 0.16, 2.0*sc, 1.1);   // B387 : la fumée de levée persistante (_launchFX) prend le relais
   }
   _emitMuzzleDebris(){  // quelques débris (opercule/bourre) éjectés qui retombent (trail = gravité)
     const sc=this.muzzleScale, ang=Math.random()*Math.PI*2, out=(2+Math.random()*5)*sc, up=(7+Math.random()*9)*sc;
@@ -2128,7 +2213,8 @@ class Shell {
       this.muAge += dt;
       if (!this.muDebrisDone){ this.muDebrisDone=true;           // au départ : flash de gueule + débris
         for(let k=0;k<3;k++) this._emitMuzzleFlare();
-        const nd=Math.round(8*this.muzzleScale); for(let k=0;k<nd;k++) this._emitMuzzleDebris(); }
+        const nd=Math.round(8*this.muzzleScale); for(let k=0;k<nd;k++) this._emitMuzzleDebris();
+        if (this._bal) this._launchFX(); }
       if (this.muAge < this.muFlameWin){ this.muFlameAcc += 700*dt;     // FLAMME : brève, haut débit
         while(this.muFlameAcc>=1){ this.muFlameAcc-=1; this._emitMuzzleFlame(); } }
       if (this.muAge < this.muSmokeWin){ this.muSmokeAcc += 30*dt;      // FUMÉE : moins dense (rate bas)
@@ -2138,9 +2224,12 @@ class Shell {
     this.muLight = (this.hasMuzzle && this.muAge < 0.6) ? 60*this.muzzleScale*Math.exp(-this.muAge/0.12) : 0;
 
     if (this.phase==='rise'){
-      const T=Math.min(1,this.age/this.riseTime), te=1-(1-T)*(1-T);
+      const T=Math.min(1,this.age/this.riseTime);
+      let te=1-(1-T)*(1-T);
+      if (this._bal){ const B=this._bal, t=Math.min(this.age,B.tb); te=Math.log(Math.cos(B.phi-B.a*t)/Math.cos(B.phi))/B.k/this.cfg.apex; }
       const y=this.cfg.apex*te, hx=this.ox+(this.bx-this.ox)*te, hz=this.oz+(this.bz-this.oz)*te;
       const a=this.headGeo.attributes.position.array;
+      if (this._bal && dt>0) this._riseEmit(dt, a[0],a[1],a[2], hx,y,hz);   // B387 : traînée à cadence fixe
       const hv=this.headGeo.attributes.aVel; if (hv && dt>0){ hv.array[0]=(hx-a[0])/dt; hv.array[1]=(y-a[1])/dt; hv.array[2]=(hz-a[2])/dt; hv.needsUpdate=true; }   // B384 : flou de mouvement de la tête
       a[0]=hx; a[1]=y; a[2]=hz;
       this.headGeo.attributes.position.needsUpdate=true;
@@ -2151,7 +2240,7 @@ class Shell {
         const rc=this.cfg.riseColor, big=this.cfg.headSize>1.5;
         // riseTrail:false (B243, user — bombettes de compact) : PAS de traînée de montée,
         // on voit juste l'étoile monter, très légèrement.
-        if (this.cfg.riseTrail!==false) spawnTrail(mx,my,mz, rc.r,rc.g,rc.b, big?1.4:1.1, 0.4, big?1.6:1.0);
+        if (this.cfg.riseTrail!==false && !this._bal) spawnTrail(mx,my,mz, rc.r,rc.g,rc.b, big?1.4:1.1, 0.4, big?1.6:1.0);   // B387 : remplacé par _riseEmit (montée balistique)
         // CHANDELLE (B351) : chapelet d'étincelles DISCRÈTES le long de la montée (1,5-2,5 m ;
         // il raccourcit tout seul en haut de course puisque la bille ralentit). B352 : la queue
         // reste AMBRÉE même quand la tête a viré à la couleur de la référence.
