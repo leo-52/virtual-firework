@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B389';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B390';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 // RENDU « VU À TRAVERS UNE CAMÉRA » (B380, user : « ça fait fade, faux, générique » face à FWsim).
 // La PHYSIQUE et les réglages d'effets ne bougent pas : seul l'ASPECT de chaque étoile change.
@@ -38,7 +38,13 @@ const BLOOM_DEF = LOOK_OLD ? [0.3, 0.22, 0.55] : [0.8, 0.0, 0.55];   // B381 : b
   if (!LOOK_OLD){ if (h){ STAR_LOOK.haloPx=h[0]; if (h.length>1) STAR_LOOK.haloI=h[1]; }
     if (sk) STAR_LOOK.spark=sk[0]; { const hs=_qnum('hsat'); if (hs){ STAR_LOOK.hsat=hs[0]; TRAIL_LOOK.hsat=hs[0]; } } if (w) STAR_LOOK.white=w[0]; if (e) STAR_LOOK.expo=e[0]; if (v) STAR_LOOK.var=v[0]; if (mp) STAR_LOOK.minPx=mp[0]; if (so) STAR_LOOK.soft=so[0];
     if (h2){ STAR_LOOK.halo2Px=h2[0]; STAR_LOOK.halo2I=h2[1]; } if (th2){ TRAIL_LOOK.halo2Px=th2[0]; TRAIL_LOOK.halo2I=th2[1]; } } }
-const AIR_K = 0.055 / 350;  // opacité de la lueur d'air par unité de lumière émise (pivoine 75 mm pleine ≈ 350 -> 0,055 ; relecture à l'aveugle : « tache floue » -> plus faible et plus large)
+// RÉGLAGES IMPOSÉS PAR UNE PAGE HÔTE (B390) : le simulateur de site 3D (moteur généré par
+// outils/faire_moteur_simu.py) déclare `var PFX_REGLAGES = { star:{…}, trail:{…}, bloom:[f,r,s], bloomFactors:[…], air:k }`
+// avant le moteur pour avoir son propre dosage de lueur. PrevoFX n'en déclare pas -> rien ne change ici.
+{ const H = (typeof PFX_REGLAGES !== 'undefined' && PFX_REGLAGES) || null;
+  if (H && !LOOK_OLD){ if (H.star) Object.assign(STAR_LOOK, H.star); if (H.trail) Object.assign(TRAIL_LOOK, H.trail);
+    if (H.bloom) for (let i=0;i<3;i++) BLOOM_DEF[i]=H.bloom[i]; if (H.bloomFactors) BLOOM_FACTORS.splice(0, 5, ...H.bloomFactors); } }
+const AIR_K = 0.055 / 350 * ((typeof PFX_REGLAGES !== 'undefined' && PFX_REGLAGES && PFX_REGLAGES.air != null && !LOOK_OLD) ? PFX_REGLAGES.air : 1);  // (B390 : × air de la page hôte) opacité de la lueur d'air par unité de lumière émise (pivoine 75 mm pleine ≈ 350 -> 0,055 ; relecture à l'aveugle : « tache floue » -> plus faible et plus large)
 const AIR_MAX = 0.12;       // plafond : une lueur, jamais un brouillard (cf B106 anti-brouillard)
 const TRAIL_LIGHT_K = 0.05; // B381 : poids des traînées dans l'éclairage du décor (grains = éclat × taille²)
 

@@ -2,7 +2,7 @@
 
 > Document vivant : où on en est, ce qui est fait, ce qui reste, la ligne directrice,
 > les effets et leurs caractéristiques. Tenu à jour au fil des sessions.
-> **Dernière mise à jour : 2026-10-23 (B389 : moteur du simulateur de site 3D régénéré ; B388 : montée 75 mm = 2,5 s ; B387 : montées balistiques ; B386 : marrons sans étincelles ; B385 : marrons d'air ; B384 : chandelles ; B383 : chute réaliste, dispersion 10 % ; B382 : tailles angulaires, iPhone non cramé ; B381 : décor éclairé, ciel, fumée, bloom rond — notation à l'aveugle face à FWsim).**
+> **Dernière mise à jour : 2026-10-23 (B390 : simu 3D v144 — halo retiré, surface d'eau avec reflets ; B389 : moteur du simulateur de site 3D régénéré ; B388 : montée 75 mm = 2,5 s ; B387 : montées balistiques ; B386 : marrons sans étincelles ; B385 : marrons d'air ; B384 : chandelles ; B383 : chute réaliste, dispersion 10 % ; B382 : tailles angulaires, iPhone non cramé ; B381 : décor éclairé, ciel, fumée, bloom rond — notation à l'aveugle face à FWsim).**
 >
 > 📌 **VERSION DE BASE = B379** (choix user, 2026-10-22) : commit `9060f65`, branche figée
 > **`base-B379`**, état AVANT les modifications de rendu B380. C'est la référence de retour :
@@ -199,6 +199,21 @@ sur captures mélangées avec celles de FWsim) — toujours sans toucher à la p
   taille angulaire (plus de facteur k de champ), fumée (`PFX.updateSmoke` + `PFX.shellLights`). Pour ça, le réglage
   de la lueur et les sources de lumière sont sortis de `ThreeFireworks` en fonctions de module (`setupBloomPass`,
   `shellLights`) — PrevoFX inchangé. À relancer à chaque nouvelle version du moteur.
+- **B390 — SIMULATEUR DE SITE 3D v144 (user : « y'a encore du halo » + « option surface d'eau, reflets, vagues »)** :
+  - Crochet `var PFX_REGLAGES = { star, trail, bloom, bloomFactors, air }` : si la page hôte le déclare AVANT le
+    moteur, il remplace le dosage de lueur (halos par étoile, bloom, lueur de l'air ×air). PrevoFX n'en déclare
+    pas -> rien ne change ici. Le générateur l'écrit (dosage simu : halos ≈ 0, bloom 0,15 seuil 0,75, air 0,25)
+    et garde la ligne si elle existe déjà dans la page (réglage à la main conservé).
+  - Corrigé : la v143 avait le réglage `PFX_VUE.uVp` commenté par erreur (le générateur répare).
+  - Module eau `outils/simu3d/eau.js`, injecté dans `<script id="eau">` + section « Surface d'eau » (onglet Scène) :
+    nappes d'affichage posées sur les plans d'eau du site (BD TOPO/OSM, `exp.nom === "eau"`) et sur les surfaces
+    tracées à la main ; vagues animées, ciel reflété (Fresnel), nuit/jour. Reflets des feux : 2e rendu des feux par
+    une caméra miroir (plan y = niveau de l'eau), plaqué sur l'eau dans le calque des feux, déformé par les vagues,
+    étiré en colonnes et morcelé selon le curseur (miroir -> forte houle). Objets du site non modifiés : exports
+    FWsim/Finale inchangés ; surfaces tracées + réglages gardés dans le fichier du site (`eauxTracees`, `eau`).
+  - Limites : un seul niveau de miroir à la fois (celui du plan d'eau le plus proche du poste de tir) ; les reflets
+    ne sont pas cachés par les bâtiments ; géométrie miroir oblige, avec un regard très levé les reflets sortent
+    par le bas de l'écran (comme dans la réalité).
 - ⚠️ **Banc d'essai** : entre deux captures sur la même page, il FAUT laisser s'éteindre traînées et
   fumée (≥ 25 s de simulation), sinon la fumée de l'effet précédent, éclairée par le suivant, pollue
   l'image (des tours de relecture ont été faussés ainsi).
