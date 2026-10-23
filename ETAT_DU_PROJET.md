@@ -2,7 +2,7 @@
 
 > Document vivant : où on en est, ce qui est fait, ce qui reste, la ligne directrice,
 > les effets et leurs caractéristiques. Tenu à jour au fil des sessions.
-> **Dernière mise à jour : 2026-10-23 (B385 : marrons d'air ; B384 : chandelles ; B383 : chute réaliste, dispersion 10 % ; B382 : tailles angulaires, iPhone non cramé ; B381 : décor éclairé, ciel, fumée, bloom rond — notation à l'aveugle face à FWsim).**
+> **Dernière mise à jour : 2026-10-23 (B386 : marrons sans étincelles ; B385 : marrons d'air ; B384 : chandelles ; B383 : chute réaliste, dispersion 10 % ; B382 : tailles angulaires, iPhone non cramé ; B381 : décor éclairé, ciel, fumée, bloom rond — notation à l'aveugle face à FWsim).**
 >
 > 📌 **VERSION DE BASE = B379** (choix user, 2026-10-22) : commit `9060f65`, branche figée
 > **`base-B379`**, état AVANT les modifications de rendu B380. C'est la référence de retour :
@@ -165,6 +165,12 @@ sur captures mélangées avec celles de FWsim) — toujours sans toucher à la p
   flash, qui reste en l'air (~25 s). Multi-marron : même éclair/étincelles/fumée à chaque détonation, les
   90 grains argentés superposés à demi-éclat (sinon boule floue avec le bloom B381) ; forme validée
   (paquet qui s'ouvre en cercle, B167-168), instants et hauteurs inchangés. `?marron=0` = avant.
+- **B386 (user : « le marron ne fait presque pas d'étincelles, à la manière d'un pétard, c'est juste de la
+  poudre »)** : gerbe d'étincelles retirée (marron simple : 15 grains à peine visibles, 0,04-0,12 s ; multi :
+  aucune ajoutée — son paquet validé B167-168 reste), les 14 petites étoiles argentées du marron simple
+  masquées. Reste : éclair bref + boule de fumée. Tête de montée : halo DISCRET des traînées pour les bombes
+  (le halo des étoiles faisait briller la montée presque autant que l'éclatement), look étoile gardé pour
+  les CHANDELLES (noIgnite : la bille est l'étoile).
 - ⚠️ **Banc d'essai** : entre deux captures sur la même page, il FAUT laisser s'éteindre traînées et
   fumée (≥ 25 s de simulation), sinon la fumée de l'effet précédent, éclairée par le suivant, pollue
   l'image (des tours de relecture ont été faussés ainsi).
