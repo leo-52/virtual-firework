@@ -2,7 +2,7 @@
 
 > Document vivant : où on en est, ce qui est fait, ce qui reste, la ligne directrice,
 > les effets et leurs caractéristiques. Tenu à jour au fil des sessions.
-> **Dernière mise à jour : 2026-10-22 (B384 : chandelles ; B383 : chute réaliste, dispersion 10 % ; B382 : tailles angulaires, iPhone non cramé ; B381 : décor éclairé, ciel, fumée, bloom rond — notation à l'aveugle face à FWsim).**
+> **Dernière mise à jour : 2026-10-23 (B385 : marrons d'air ; B384 : chandelles ; B383 : chute réaliste, dispersion 10 % ; B382 : tailles angulaires, iPhone non cramé ; B381 : décor éclairé, ciel, fumée, bloom rond — notation à l'aveugle face à FWsim).**
 >
 > 📌 **VERSION DE BASE = B379** (choix user, 2026-10-22) : commit `9060f65`, branche figée
 > **`base-B379`**, état AVANT les modifications de rendu B380. C'est la référence de retour :
@@ -158,6 +158,13 @@ sur captures mélangées avec celles de FWsim) — toujours sans toucher à la p
   texture/taille/couleur qu'avant -> passage tête -> étoile toujours sans saut (B355). `?tete=0` = avant.
   Chandelles « œuf de dragon » : le nuage de 230 grains (B363) faisait une boule blanche floue avec le bloom
   B381 -> éclat ×0,45 (`?oeuf=1` = avant) : grappe crépitante visible, éclair blanc conservé.
+- **B385 (user : « refais les marrons d'air, ils sont moches »)** : le marron simple était une grosse boule
+  grise à bord net (sprite de 12 m pendant 0,3 s). Désormais (`saluteBlast`) : ÉCLAIR blanc très bref
+  (0,07 s, petit et très vif, le bloom fait l'éblouissement) + gerbe de ~140 étincelles blanches qui fusent
+  (45-85 m/s, freinées, 0,1-0,4 s) + BOULE DE FUMÉE blanche formée d'un coup et éclairée par son propre
+  flash, qui reste en l'air (~25 s). Multi-marron : même éclair/étincelles/fumée à chaque détonation, les
+  90 grains argentés superposés à demi-éclat (sinon boule floue avec le bloom B381) ; forme validée
+  (paquet qui s'ouvre en cercle, B167-168), instants et hauteurs inchangés. `?marron=0` = avant.
 - ⚠️ **Banc d'essai** : entre deux captures sur la même page, il FAUT laisser s'éteindre traînées et
   fumée (≥ 25 s de simulation), sinon la fumée de l'effet précédent, éclairée par le suivant, pollue
   l'image (des tours de relecture ont été faussés ainsi).

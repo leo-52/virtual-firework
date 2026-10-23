@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B384';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B385';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 // RENDU « VU À TRAVERS UNE CAMÉRA » (B380, user : « ça fait fade, faux, générique » face à FWsim).
 // La PHYSIQUE et les réglages d'effets ne bougent pas : seul l'ASPECT de chaque étoile change.
@@ -374,12 +374,12 @@ if (SMOKE_ON){
   smokePoints=new THREE.Points(g,m); smokePoints.frustumCulled=false; scene.add(smokePoints);
 }
 let SHELL_SEQ = 0;   // B381 : identifiant de bombe (sa fumée n'est pas éclairée par ses PROPRES étoiles)
-function spawnSmokePuff(x,y,z, s0, s1, life, dens, own){
+function spawnSmokePuff(x,y,z, s0, s1, life, dens, own, fl=0, fast=false){   // fl/fast (B385, marrons) : nuage formé d'un coup et éclairé par SON flash
   if (!SMOKE_ON) return;
   const p=smoke[smokeHead]; smokeHead=(smokeHead+1)%SMOKE_MAX;
   p.x=x; p.y=y; p.z=z;
   p.vx=smokeWind.x+(Math.random()-0.5)*0.5; p.vy=0.10+Math.random()*0.30; p.vz=smokeWind.z+(Math.random()-0.5)*0.5;
-  p.age=0; p.life=life; p.s0=s0; p.s1=s1; p.dens=dens; p.rot=Math.random()*6.283; p.vr=(Math.random()-0.5)*0.15; p.alive=true; p.own=own||0;
+  p.age=0; p.life=life; p.s0=s0; p.s1=s1; p.dens=dens; p.rot=Math.random()*6.283; p.vr=(Math.random()-0.5)*0.15; p.alive=true; p.own=own||0; p.fl=fl; p.fast=fast;
 }
 function spawnSmoke(x,y,z, r0, cal, own){        // le cœur de l'ouverture : quelques bouffées au centre
   if (!SMOKE_ON) return;
@@ -395,8 +395,9 @@ function updateSmoke(dt, lights){
     p.age+=dt; if (p.age>=p.life){ p.alive=false; smokeSize[i]=0; smokeCol[i*3]=smokeCol[i*3+1]=smokeCol[i*3+2]=0; continue; }
     p.x+=p.vx*dt; p.y+=p.vy*dt; p.z+=p.vz*dt; p.vy*=Math.max(0,1-0.05*dt); p.rot+=p.vr*dt;
     const t=p.age/p.life, size=p.s0+(p.s1-p.s0)*Math.sqrt(t);
-    const env=Math.min(1,p.age/0.5)*(t<0.5?1:Math.max(0,1-(t-0.5)/0.5)) / (1+0.6*t);   // se forme, s'étale (dilution), s'efface
+    const env=Math.min(1,p.age/(p.fast?0.04:0.5))*(t<0.5?1:Math.max(0,1-(t-0.5)/0.5)) / (1+0.6*t);   // se forme, s'étale (dilution), s'efface
     let r=0.0006, g=0.0007, b=0.0012;                                                   // lune : à peine visible sans feux
+    if (p.fl>0 && p.age<0.4){ const e=p.fl*Math.exp(-p.age/0.06); r+=e; g+=e; b+=e*1.06; }   // B385 : le flash du marron éclaire son propre nuage
     for (const l of lights){
       // Relectures à l'aveugle : une bombe qui éclaire SA fumée pendant qu'elle brûle = « flou », « blob ».
       // Sur les photos, la fumée d'une bombe se lit quand les SUIVANTES l'éclairent (et au flash).
@@ -1129,6 +1130,20 @@ function behaveSaucer(d,A,dt,ctx){
     const px=ctx.pos[d._i*3],py=ctx.pos[d._i*3+1],pz=ctx.pos[d._i*3+2];
     spawnTrail(px,py,pz, GOLD.r,GOLD.g,GOLD.b, 0.9,0.4,0.8, s[0]*4,s[1]*4,s[2]*4); }
 }
+// MARRON D'AIR (B385, user : « refais les marrons d'air, ils sont moches ») : un vrai marron = un ÉCLAIR
+// blanc très bref (quelques centièmes de s ; poudre éclair), une gerbe d'ÉTINCELLES blanches qui fusent et
+// meurent vite, et une BOULE DE FUMÉE blanche qui apparaît d'un coup, éclairée par son propre flash, puis
+// reste en l'air (les marrons sont les plus fumigènes : ~0,4 kg de fumée fine par kg — docs/physique).
+// Remplace l'ancienne grosse boule grise (sprite de 12 m pendant 0,3 s). ?marron=0 = ancien rendu.
+const SALUTE_NEW = !LOOK_OLD && !/[?&]marron=0\b/.test(_QS);
+function saluteBlast(x,y,z, k, sparks){
+  spawnPuff(x,y,z, 0,0,0, 0.07, 1.6*k, 3.2*k, 2.6,2.65,2.85, 0.95, 0, 1.0);          // éclair : 3 images, très vif, petit (le bloom fait l'éblouissement)
+  for (let c=0;c<sparks;c++){ const v=vrand(Math.random), sp=(45+Math.random()*40)*k;   // étincelles blanches qui FUSENT (le flou de mouvement les étire en rayons), freinées fort
+    spawnTrail(x,y,z, 2.2,2.25,2.4, 0.8, 0.15, (0.10+0.28*Math.pow(Math.random(),1.5))/0.26, v[0]*sp*4, v[1]*sp*4, v[2]*sp*4, 0.2, 3.0, true); }
+  for (let c=0;c<5;c++){ const u=vrand(Math.random), rr=1.2*k*Math.random();           // boule de fumée blanche, formée d'un coup
+    spawnSmokePuff(x+u[0]*rr, y+u[1]*rr, z+u[2]*rr, 2.5*k, 8*k, 22+Math.random()*10, 1.1, 0, 0.9, true); }
+}
+
 // MARRON D'AIR MULTI (B157, user) : la bombe éclate et libère 5 MINI MARRONS **INVISIBLES**
 // (un marron = juste du BRUIT — de la poudre de titane qui explose). Après 1,5 s d'attente,
 // les 5 détonent à des instants ALÉATOIRES dans une fourchette de 0,5 s. La détonation =
@@ -1149,9 +1164,11 @@ function behaveMarron(d,A,dt,ctx){
   // B168 (user + photo) : des CENTAINES d'étincelles par détonation (~300), envergure finale
   // 10 m. Vitesses SERRÉES (10,5-14 m/s) pour que le paquet reste circulaire et cohérent.
   for (let c=0;c<90;c++){ const v=vrand(Math.random), sp=10.5+Math.random()*3.5;   // grains ARGENT (brefs, 0,10-0,20 s)
-    spawnTrail(px,py,pz, 1.40,1.44,1.55, 1.0, 0.35, (0.10+Math.random()*0.10)/0.26, v[0]*sp*4, v[1]*sp*4, v[2]*sp*4, 0.4, 0.42, true); }
+    const ks = SALUTE_NEW ? 0.5 : 1;   // B385 : 90 grains superposés à 1,4 + bloom B381 = boule floue -> moitié (l'éclair vient de saluteBlast)
+    spawnTrail(px,py,pz, 1.40*ks,1.44*ks,1.55*ks, 1.0, 0.35, (0.10+Math.random()*0.10)/0.26, v[0]*sp*4, v[1]*sp*4, v[2]*sp*4, 0.4, 0.42, true); }
   for (let c=0;c<220;c++){ const v=vrand(Math.random), sp=10.5+Math.random()*3.5;  // grains ORANGE fins (0,28-0,52 s -> le cercle final de ~10 m)
     spawnTrail(px,py,pz, 1.25,0.58,0.16, 0.7, 0.35, (0.28+Math.random()*0.24)/0.26, v[0]*sp*4, v[1]*sp*4, v[2]*sp*4, 0.5, 0.42, true); }
+  if (SALUTE_NEW) saluteBlast(px,py,pz, 0.55, 40);   // B385 : éclair bref + étincelles + boule de fumée à chaque détonation
   if (_onMarronPop) _onMarronPop(px, py, pz);   // BOOM synchronisé pile sur la détonation visuelle (B256 : + position pour la distance)
   d.age=d.life;   // le porteur meurt à la détonation
 }
@@ -1963,7 +1980,8 @@ class Shell {
       const big=this.cfg.flashBig, mini=this.cfg.flashMini;
       const sc=big?12:(mini?3:5), op=big?0.85:(mini?0.5:0.45), dur=big?0.30:(mini?0.10:0.12);
       const fr=big?1.6:1.5, fg2=big?1.62:1.15, fb=big?1.72:0.70;   // salut = blanc argenté ; bombes = blanc chaud
-      spawnPuff(bx,apex,bz, 0,0,0, dur, sc*0.8, sc*1.35, fr,fg2,fb, op, 0, 1.0);
+      if (big && SALUTE_NEW) saluteBlast(bx,apex,bz, this.cal/50, 140);   // B385 : marron d'air = éclair bref + étincelles + fumée (plus de grosse boule grise)
+      else spawnPuff(bx,apex,bz, 0,0,0, dur, sc*0.8, sc*1.35, fr,fg2,fb, op, 0, 1.0);
     }
     // FLASH D'OUVERTURE comme source de lumière (B381) : le décor « pulse » à chaque explosion
     // (~0,15 s), comme sur les vidéos de spectacle. Pas de flash pour les effets sans ouverture.
