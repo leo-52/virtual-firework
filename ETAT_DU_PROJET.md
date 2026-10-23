@@ -214,6 +214,25 @@ sur captures mélangées avec celles de FWsim) — toujours sans toucher à la p
   - Limites : un seul niveau de miroir à la fois (celui du plan d'eau le plus proche du poste de tir) ; les reflets
     ne sont pas cachés par les bâtiments ; géométrie miroir oblige, avec un regard très levé les reflets sortent
     par le bas de l'écran (comme dans la réalité).
+- **SIMULATEUR DE SITE 3D v145 — EAU refaite (user : « en fonction du niveau », « pinceau pour ajouter/effacer »,
+  « pas du tout réaliste, on vise 8/10 », vagues réglables)** — `outils/simu3d/eau.js` réécrit :
+  - L'eau est une CARTE de cases de 50 cm (tuiles de 32 m, chaque case : état, plan d'eau, niveau). Outils de la
+    section « Surface d'eau » (onglet Scène) : **Niveau** (clic au fond -> remplissage de tout ce qui est plus bas
+    que le niveau et relié, curseur « Niveau de l'eau » de −1 à +8 m, berges qui suivent le relief), **Pinceau** et
+    **Gomme** (glisser ; taille 1-40 m ; l'eau peinte suit le sol : rivières en pente). Pendant un outil, le clic
+    gauche ne bouge plus la vue (clic droit / molette oui) ; Échap ou re-clic pour finir. « Tout effacer ».
+  - Plans d'eau du site (`exp.nom === "eau"`) mis dans la carte (gommables, agrandissables) ; leurs objets ne sont
+    ni modifiés ni masqués (la visibilité sert aux exports) : l'eau réaliste est posée par-dessus, opaque.
+  - Rendu : rides en 4 couches de bruit qui défilent autour du vent (pas de motif répété), effacées sous quelques
+    pixels (pas de moiré) ; rafales ; rivière : le courant (pente de la surface) emporte les rides (2 phases
+    fondues). Reflet du DÉCOR par une vue miroir (demi-résolution, recalculée seulement si la caméra bouge, coupée
+    en qualité Léger ou par la case « Reflets du décor ») — le sens des faces est rétabli pendant le rendu miroir
+    (sinon on voit l'arrière des objets). Fresnel (F0 = 0,02), reflet assombri, couleur selon la profondeur
+    réelle (eau trouble), bord arrondi (lissage 4x4), ligne mouillée sur la berge, soleil sur l'eau, ciel reflété
+    légèrement nuageux de jour. Reflets des FEUX : éclats décalés par les rides -> colonnes de paillettes.
+  - Fichier du site : `eau = { v:2, case, corps, tuiles:[[tx,tz,plages]] , reflets, decor, vagues }` ; lit aussi les
+    `eauxTracees` (polygones) de la v144. Réglages aussi gardés dans le navigateur (localStorage « eau »).
+  - Notation à l'aveugle (scène d'essai, décor sommaire ignoré) : 4,3 -> 4,8 -> 4,8 -> 5,3 -> voir journal.
 - ⚠️ **Banc d'essai** : entre deux captures sur la même page, il FAUT laisser s'éteindre traînées et
   fumée (≥ 25 s de simulation), sinon la fumée de l'effet précédent, éclairée par le suivant, pollue
   l'image (des tours de relecture ont été faussés ainsi).

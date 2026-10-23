@@ -142,40 +142,60 @@ def page(html, mot):
 EAU_JS = ICI / 'simu3d' / 'eau.js'
 EAU_UI = """    <div class="section" id="eauSection">
       <p class="titre">Surface d'eau</p>
-      <label class="coche" title="Lacs, rivières, étangs et piscines du site (IGN, OpenStreetMap) et surfaces tracées : vagues animées et reflets des feux pendant le tir. Rien n'est changé dans les exports."><input type="checkbox" id="eauReflets" checked> <span>Eau réaliste et reflets des feux</span></label>
+      <label class="coche" title="Lacs, rivières, étangs du site et eau ajoutée à la main : eau animée, reflets et reflets des feux pendant le tir. Rien n'est changé dans les exports."><input type="checkbox" id="eauReflets" checked> <span>Eau réaliste</span></label>
+      <label class="coche" title="L'eau reflète les bâtiments, les arbres et les berges (une vue de plus à calculer ; coupé en qualité Léger)."><input type="checkbox" id="eauDecor" checked> <span>Reflets du décor</span></label>
       <div>
-        <label for="eauVagues" class="regle"><span>Vagues</span><output><span id="eauVaguesTxt">calme</span></output></label>
-        <input type="range" id="eauVagues" min="0" max="1" step="0.05" value="0.35" title="De l'eau miroir (étang par temps calme) à une forte houle : déforme et étire les reflets.">
+        <label for="eauVagues" class="regle"><span>Vagues</span><output><span id="eauVaguesTxt">légères</span></output></label>
+        <input type="range" id="eauVagues" min="0" max="1" step="0.05" value="0.2" title="De l'eau sans vague (miroir) à une eau agitée par le vent.">
       </div>
-      <div class="rang">
-        <button id="eauTracer">Tracer une surface d'eau</button>
-        <button id="eauEffacer">Effacer</button>
+      <div class="rang outilsEau">
+        <button id="eauOutilNiveau" title="Touche le fond d'un étang, d'un lac ou d'une rivière : l'eau remplit tout ce qui est plus bas que le niveau choisi.">Niveau</button>
+        <button id="eauOutilPinceau" title="Glisse sur le terrain pour peindre de l'eau.">Pinceau</button>
+        <button id="eauOutilGomme" title="Glisse sur le terrain pour effacer de l'eau.">Gomme</button>
       </div>
-      <p class="hint">Les plans d'eau connus sont déjà en eau. Pour un lac, une rivière ou un étang absent : touche ses coins sur le terrain, puis « Terminer l'eau ». Gardée dans le fichier du site, hors export (FWsim fait sa propre eau).</p>
+      <div>
+        <label for="eauNiveau" class="regle"><span>Niveau de l'eau</span><output><span id="eauNiveauTxt">touche un plan d'eau</span></output></label>
+        <input type="range" id="eauNiveau" min="-1" max="8" step="0.05" value="0.5" title="Hauteur de l'eau au-dessus du point touché : l'eau monte ou descend et suit les berges.">
+      </div>
+      <div>
+        <label for="eauPinceau" class="regle"><span>Taille du pinceau</span><output><span id="eauPinceauTxt">5 m</span></output></label>
+        <input type="range" id="eauPinceau" min="1" max="40" step="0.5" value="5">
+      </div>
+      <div class="rang"><button id="eauEffacer">Tout effacer</button></div>
+      <p class="hint">Les plans d'eau connus sont déjà en eau. « Niveau » remplit un creux jusqu'à la hauteur choisie ; « Pinceau » et « Gomme » ajoutent ou retirent de l'eau (rivière, forme particulière). Gardée dans le fichier du site, hors export.</p>
     </div>
 """
-EAU_CSS = ("  #terminerEau{display:none;position:absolute;left:50%;top:62px;transform:translateX(-50%);"
-           "height:36px;padding:0 18px;background:var(--accent);color:var(--sur-accent);border:none;font:600 13px var(--sans)}\n"
-           "  #terminerEau:active{transform:translateX(-50%) translateY(1px)}\n")
+EAU_CSS = ("  .outilsEau button.actif{background:var(--accent-faible);border-color:var(--accent);color:var(--accent2)}\n"
+           "  #eauNiveau:disabled{opacity:.45}\n")
+
+
+def module(html, ident, chemin):
+    # installe (ou remplace) <script id="ident"> avec le fichier chemin, juste avant </body>
+    if not chemin.exists():
+        return html
+    bloc = f'<script id="{ident}">\n' + chemin.read_text(encoding='utf-8') + '</script>\n'
+    m = re.search(rf'<script id="{ident}">.*?</script>\n', html, flags=re.S)
+    if m:
+        return html[:m.start()] + bloc + html[m.end():]
+    i = html.rfind('</body>')
+    return html[:i] + bloc + html[i:]
 
 
 def eau(html):
-    js = EAU_JS.read_text(encoding='utf-8')
-    if 'id="eauSection"' not in html:
-        # panneau Scène : après la section « Feu d'artifice » (avant « Postes de tir »)
+    # feux automatiques : traduction désignation -> effet PrevoFX (outils/simu3d/feux_auto.js)
+    html = module(html, 'feux_auto', EAU_JS.parent / 'feux_auto.js')
+    # section « Surface d'eau » (onglet Scène, avant « Postes de tir ») : posée ou remplacée
+    m = re.search(r'    <div class="section" id="eauSection">.*?\n    </div>\n', html, flags=re.S)
+    if m:
+        html = html[:m.start()] + EAU_UI + html[m.end():]
+    else:
         a = '    <div class="section">\n      <p class="titre">Postes de tir</p>'
         html = remplace_une(html, a, EAU_UI + a, 'section Postes de tir')
-        html = remplace_une(html, '    <button id="terminerZone">Terminer la zone</button>\n',
-                            '    <button id="terminerZone">Terminer la zone</button>\n    <button id="terminerEau">Terminer l\'eau</button>\n', 'bouton terminerZone')
-        html = remplace_une(html, '</style>', EAU_CSS + '</style>', 'style')
-    m = re.search(r'<script id="eau">.*?</script>\n', html, flags=re.S)
-    bloc = '<script id="eau">\n' + js + '</script>\n'
-    if m:
-        html = html[:m.start()] + bloc + html[m.end():]
-    else:
-        i = html.rfind('</body>')
-        html = html[:i] + bloc + html[i:]
-    return html
+    html = html.replace('    <button id="terminerEau">Terminer l\'eau</button>\n', '')   # outil de tracé v144 retiré
+    html = re.sub(r'  #terminerEau\{[^\n]*\n  #terminerEau:active\{[^\n]*\n', '', html)
+    html = re.sub(r'  \.outilsEau button\.actif\{[^\n]*\n  #eauNiveau:disabled\{[^\n]*\n', '', html)
+    html = remplace_une(html, '</style>', EAU_CSS + '</style>', 'style')
+    return module(html, 'eau', EAU_JS)
 
 
 def main():
