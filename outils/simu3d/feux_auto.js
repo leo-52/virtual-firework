@@ -78,7 +78,7 @@ function behaveMosaique(d, A, dt, ctx) {
 // ── effets « bombette » écrits au calibre (aucune réduction d'échelle par-dessus) ──
 const FA = {
   fa_titane: Object.assign({}, E.bombRouge, BOMBETTE, { cal: 30, apex: 39, color: new THREE.Color(0.12, 1.25, 0.22),
-    stars: 72, starSize: 1.35, speedMul: 0.80, speedJit: 0.08, lifeBase75: 3.0, lifeJitter: 0.15, risingTail: "silver", _apexBurst: true }),
+    stars: 92, starSize: 1.45, speedMul: 0.80, speedJit: 0.08, lifeBase75: 3.0, lifeJitter: 0.15, risingTail: "silver", _apexBurst: true }),   // B392 (relecture : « gerbes trop clairsemées ») : +28 % d'étoiles, un peu plus grosses
   fa_titaneEclair: Object.assign({}, BOMBETTE, { cal: 30, apex: 39, color: K(C.WHITE, 1.4), stars: 90, starSize: 0.6,
     speedMul: 0.42, speedJit: 0.5, dragStar: 1.1, gravStar: 0.3, lifeBase75: 1.3, lifeJitter: 0.5, onStar: onTitane,
     flashBig: true, noFlash: false, headSize: 0.01, riseColor: NOIR, _apexBurst: true }),
@@ -86,16 +86,16 @@ const FA = {
     riseSparks: { n: 7, size: 0.5, life: 0.7, jit: 0.5, color: C.WARMSILVER } }),
   fa_comete: Object.assign({}, E.candle30, { cal: 20, apex: 25, headSize: 3.4, riseLean: 1.0,
     riseSparks: { n: 9, size: 0.7, life: 1.6, jit: 0.45, color: C.COPPER } }),
-  fa_feuilles: Object.assign({}, E.fallingLeaves, BOMBETTE, { cal: 25, apex: 32, stars: 30, starSize: 1.5, speedMul: 0.85,
+  fa_feuilles: Object.assign({}, E.fallingLeaves, BOMBETTE, { cal: 25, apex: 32, stars: 40, starSize: 1.5, speedMul: 0.85,
     lifeBase75: 11.5, lifeJitter: 0.15, gravStar: 0.30, gravJit: 0.3, dragStar: 0.8, sway: 3.2, wind: 1.0, onStar: onFeuille }),
-  fa_chrys: Object.assign({}, E.chrysanthemum, BOMBETTE, { cal: 25, apex: 32, stars: 72, starSize: 1.15, speedMul: 0.62, speedJit: 0.06,
+  fa_chrys: Object.assign({}, E.chrysanthemum, BOMBETTE, { cal: 25, apex: 32, stars: 92, starSize: 1.25, speedMul: 0.62, speedJit: 0.06,
     lifeBase75: 4.6, lifeJitter: 0.12, gravStar: 0.6, dragStar: 0.55, _apexBurst: true, behave: behaveMulti,
     trailing: { emitUntil: 0.92, period: 0.006, grain: 0.8, gF: 0.13, lifeMul: 1.7, spark: true, jit: 0.25, bright: 0.85 } }),
-  fa_mosaique: Object.assign({}, E.mosaic, BOMBETTE, { cal: 20, apex: 25, stars: 7, nMax: 7 + 7 * 7, coreSplit: 7, burstRadius: 6.5,
+  fa_mosaique: Object.assign({}, E.mosaic, BOMBETTE, { cal: 20, apex: 25, stars: 7, nMax: 7 + 7 * 9, coreSplit: 9, burstRadius: 6.5,
     starSize: 2.2, splitStarSize: 1.5, speedMul: 1.0, lifeBase75: 3.2, lifeJitter: 0.05, behave: behaveMosaique,
     _fa: { rupt: 0.85, sp: 5.5, vie: 1.25 }, _apexBurst: true,
     trailing: tr(E.mosaic.trailing, { grain: 0.85, lifeMul: 1.4 }) }),
-  fa_oeuf: Object.assign({}, E.dragonEgg, BOMBETTE, { cal: 20, apex: 25, stars: 52, starSize: 0.75, speedMul: 0.62, speedJit: 0.55,
+  fa_oeuf: Object.assign({}, E.dragonEgg, BOMBETTE, { cal: 20, apex: 25, stars: 64, starSize: 0.75, speedMul: 0.62, speedJit: 0.55,
     lifeBase75: 4.4, lifeJitter: 0.10, core: null, crackleStars: { delay: 0.45, jitter: 0.95, snaps: 4 }, _apexBurst: true,
     trailing: tr(E.dragonEgg.trailing, { grain: 0.9, lifeMul: 2.6 }) }),
 };
@@ -107,9 +107,9 @@ const FR = {
   fa_brocart: Object.assign({}, E.willow, SAULE, { risingTail: "gold" }),
   fa_brocartCrep: Object.assign({}, E.willow, SAULE, { risingTail: "gold",
     core: { stars: 18, radiusMul: 0.55, color: C.GOLD, eggSplode: true, crackleAt: 0.45, jitter: 0.6 } }),
-  fa_brocartPuis: Object.assign({}, E.willowTips, BASCULE, { stars: 48, lifeBase75: 5.5, _fa: { t1: 0.85, cli: false },
+  fa_brocartPuis: Object.assign({}, E.willowTips, BASCULE, { stars: 60, lifeBase75: 5.5, _fa: { t1: 0.85, cli: false },
     trailing: tr(E.willowTips.trailing, { fixedColor: false, bright: 0.9, lifeMul: 12 }) }),
-  fa_sauleCli: Object.assign({}, E.willowStrobe, BASCULE, { stars: 48, lifeBase75: 5.4, _fa: { t1: 0.9, cli: true, t2: 0.45, hz: 9 },
+  fa_sauleCli: Object.assign({}, E.willowStrobe, BASCULE, { stars: 60, lifeBase75: 5.4, _fa: { t1: 0.9, cli: true, t2: 0.45, hz: 9 },
     trailing: tr(E.willowStrobe.trailing, { fixedColor: false, bright: 0.95 }) }),
 };
 for (const [k, v] of Object.entries(FA)) { v._natif = true; E[k] = v; }
