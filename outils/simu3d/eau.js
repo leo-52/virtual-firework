@@ -279,7 +279,7 @@ function construireBientot() { if (_attente) return; _attente = setTimeout(() =>
 // ── 3. Matériau de l'eau ────────────────────────────────────────────────────
 // v146 : houle en 16 trains d'ondes + rides capillaires, reflet du décor déformé/flouté par les
 // vagues, ciel « HDR », soleil en traînée, corps de l'eau par absorption. ?eau=v145 = rendu d'avant.
-const EAU_V145 = /[?&]eau=v145\b/.test(location.search);
+const EAU_V145 = !/[?&]eau=v146\b/.test(location.search);   // jury à l'aveugle : v146 notée 4,9 contre 5,8 -> v145 reste le rendu par défaut ; ?eau=v146 = nouveau rendu (en cours)
 const BRUIT_GLSL_V145 = `
 uniform float uT, uV;
 vec2 h22(vec2 p){ p = vec2(dot(p, vec2(127.1, 311.7)), dot(p, vec2(269.5, 183.3))); return -1.0 + 2.0 * fract(sin(p) * 43758.5453); }
