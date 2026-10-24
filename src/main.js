@@ -7,7 +7,7 @@ const _v = new URL(import.meta.url).search;   // ex "?v=1719..." (vide si charg�
 const { ThreeFireworks, LABELS, __setMarronPop, LOOK } = await import('./render/threeFireworks.js' + _v);
 const { FpsCameraController } = await import('./cameraController.js' + _v);
 const { Timeline } = await import('./timeline.js' + _v);
-const { PyroAudio } = await import('./audio.js' + _v);
+const { PyroAudio, panDepuisCamera } = await import('./audio.js' + _v);
 
 // DÉCOR = Google Photorealistic 3D Tiles, mais VIA CESIUM ION (token gratuit), PAS la
 // clé Google directe. Raison (vérifiée) : Google BLOQUE les 3D tiles en accès direct par
@@ -253,38 +253,52 @@ Object.assign(sndBtn.style, { position:'fixed', top:'52px', right:'10px', zIndex
 // et le pointerdown GLOBAL débloquait l'audio juste avant le clic -> le 1er appui sur le bouton
 // COUPAIT le son au lieu de l'activer. Désormais : le son est ON par défaut (il démarre au 1er
 // geste, politique navigateur), le bouton ne fait que BASCULER enabled, le label suit enabled.
-function updateSndBtn(){ sndBtn.textContent = audio.enabled ? '🔊 Son ON' : '🔇 Son OFF'; }
+// B391 (user : « des fois pas de son ») : le label dit aussi OÙ en est l'audio — « touche
+// l'écran » tant qu'aucun geste n'a débloqué le navigateur, « chargement… » pendant le décodage
+// des mp3, « secours » si un mp3 n'a pas chargé (synthèse) — et le choix ON/OFF est mémorisé.
+const SND_LABEL = { off: '🔇 Son OFF', attente: '🔊 Son (touche l\'écran)', chargement: '🔊 Son (chargement…)', pret: '🔊 Son ON', secours: '🔊 Son ON (secours)' };
+function updateSndBtn(){ sndBtn.textContent = SND_LABEL[audio.status()] || '🔊 Son'; }
+audio.onStatus = updateSndBtn;
 sndBtn.addEventListener('click', () => {
   audio.unlock();
-  audio.enabled = !audio.enabled;
+  audio.setEnabled(!audio.enabled);
   updateSndBtn();
 });
 document.body.appendChild(sndBtn);
 updateSndBtn();
 
+// B391 : PANORAMIQUE — position de la bombe dans le champ de la caméra des feux (−1 gauche … +1
+// droite). Le moteur ne passe que (arch, calibre, distance) à ses crochets : on retrouve l'obus
+// concerné dans la liste (le dernier créé pour le départ, celui qui vient d'éclater pour l'éclat).
+const _panDe = s => s ? panDepuisCamera(layer.camera, s.phase === 'burst' ? s.bx : s.ox, s.phase === 'burst' ? s.cfg.apex : 0, s.phase === 'burst' ? s.bz : s.oz) : 0;
+const _panDepart = () => _panDe(layer.shells[layer.shells.length - 1]);
+const _panEclat = () => { const s = layer.shells.find(s => s.phase === 'burst' && !s._sonEclat); if (s) s._sonEclat = true; return _panDe(s); };
+
 layer.onLaunch = (arch, cal, dist) => {                          // B254 : DÉPART calibré. B256 : atténué/retardé par la DISTANCE caméra
-  if (arch === 'candle10' || arch === 'candle10egg') audio.candle(dist);   // B356 (user) : une chandelle 10 mm fait un POUF sourd, pas le départ d'une 75 mm
-  else audio.launch(cal, dist);
+  const pan = _panDepart();
+  if (arch === 'candle10' || arch === 'candle10egg') audio.candle(dist, pan);   // B356 (user) : une chandelle 10 mm fait un POUF sourd, pas le départ d'une 75 mm
+  else audio.launch(cal, dist, pan);
 };
 layer.onBurst = (arch, cal, dist) => {
-  if (arch === 'dragonEgg') audio.dragonEgg(cal, dist);
-  else if (arch === 'crackling') audio.crackling(cal, dist);     // B255 : texture étalée (chaque étoile crépite)
-  else if (arch === 'salute') audio.marron(0.03, dist, cal);     // marron simple : boom quasi immédiat, calibré
-  else if (arch === 'saluteMulti') audio.breakOpen(40, dist);    // revue B254 : petit pop d'ouverture — les 5 BOOMS des marrons portent le son
-  else if (arch === 'spinner') audio.hibou(0, dist);             // B254 : tourbillon = hululement (réf « Hibou » de l'user)
+  const pan = _panEclat();
+  if (arch === 'dragonEgg') audio.dragonEgg(cal, dist, pan);
+  else if (arch === 'crackling') audio.crackling(cal, dist, pan);     // B255 : texture étalée (chaque étoile crépite)
+  else if (arch === 'salute') audio.marron(0.03, dist, cal, 1, pan);  // marron simple : boom quasi immédiat, calibré
+  else if (arch === 'saluteMulti') audio.breakOpen(40, dist, pan);    // revue B254 : petit pop d'ouverture — les 5 BOOMS des marrons portent le son
+  else if (arch === 'spinner') audio.hibou(0, dist, pan);             // B254 : tourbillon = hululement (réf « Hibou » de l'user)
   else if (arch === 'tourbBomb') {}                              // B338 (user) : quasi SILENCIEUX (« pétard mouillé ») — pas de break
   else if (arch === 'candle10') {}                               // B355 (user) : chandelle — « pas de déto ni de flash à la fin », l'étoile s'éteint, c'est tout
-  else if (arch === 'candle10egg') audio.candleEgg(dist);        // B360 : la bille claque au sommet — crépitement discret, PAS le break d'une 75 mm (bug : elle tombait dans le cas par défaut)
+  else if (arch === 'candle10egg') audio.candleEgg(dist, pan);   // B360 : la bille claque au sommet — crépitement discret, PAS le break d'une 75 mm (bug : elle tombait dans le cas par défaut)
   else if (arch === 'candle30') {}                               // B368 : la comète traçante s'éteint sans bruit
   else if (arch === 'candle30k') {}                              // B379 : kamuro — aucun break mesuré sur la vidéo, le rideau s'éteint en silence
-  else if (arch === 'candle30qc') audio.candleTip(dist);         // B369 (user) : « elle éclate mais d'un bruit sourd, presque comme une botte de chandelle à la sortie du tube »
-  else if (arch === 'd8'){ audio.breakOpen(cal, dist);           // B262 : D8 = break, puis les étoiles finissent en ŒUF DE DRAGON
-    audio.crackle(cal, dist, 4.1); audio.crackle(cal, dist, 4.75, 0.7); }   //        B266 : crépitement visuel ~4,0-5,2 s -> 2 couches calées dessus + trajet
-  else audio.breakOpen(cal, dist);                               // = « Bombe 75mm.mp3 »
+  else if (arch === 'candle30qc') audio.candleTip(dist, pan);    // B369 (user) : « elle éclate mais d'un bruit sourd, presque comme une botte de chandelle à la sortie du tube »
+  else if (arch === 'd8'){ audio.breakOpen(cal, dist, pan);      // B262 : D8 = break, puis les étoiles finissent en ŒUF DE DRAGON
+    audio.crackle(cal, dist, 4.1, 1, pan); audio.crackle(cal, dist, 4.75, 0.7, pan); }   //        B266 : crépitement visuel ~4,0-5,2 s -> 2 couches calées dessus + trajet
+  else audio.breakOpen(cal, dist, pan);                          // = « Bombe 75mm.mp3 »
 };
 // MULTI marron d'air : le BOOM part PILE au moment où chaque mini marron détone (hook moteur,
 // plus fiable que des délais programmés — timing 1,0→3,0 s géré par behaveMarron).
-__setMarronPop((x, y, z) => audio.marron(0, layer.distTo(x, y, z), 40, 0.7));   // B256 : chaque détonation à SA distance ; B263 : MINI-marrons du multi = plus petits (cal 40, ×0.7)
+__setMarronPop((x, y, z) => audio.marron(0, layer.distTo(x, y, z), 40, 0.7, panDepuisCamera(layer.camera, x, y, z)));   // B256 : chaque détonation à SA distance ; B263 : MINI-marrons du multi = plus petits (cal 40, ×0.7)
 
 // BOUCLE DE RENDU UNIQUE — on PREND LA MAIN sur Cesium (sinon il s'endort quand la scène
 // est stable et tout se fige). On pilote nous-mêmes : sim -> décor Cesium -> overlay feux.

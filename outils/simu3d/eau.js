@@ -277,8 +277,10 @@ let _attente = 0;
 function construireBientot() { if (_attente) return; _attente = setTimeout(() => { _attente = 0; toutConstruire(); }, 50); }
 
 // ── 3. Matériau de l'eau ────────────────────────────────────────────────────
-// Normale : bruit de gradient (dérivées exactes) sur 5 octaves qui dérivent au vent + houle.
-const BRUIT_GLSL = `
+// v146 : houle en 16 trains d'ondes + rides capillaires, reflet du décor déformé/flouté par les
+// vagues, ciel « HDR », soleil en traînée, corps de l'eau par absorption. ?eau=v145 = rendu d'avant.
+const EAU_V145 = /[?&]eau=v145\b/.test(location.search);
+const BRUIT_GLSL_V145 = `
 uniform float uT, uV;
 vec2 h22(vec2 p){ p = vec2(dot(p, vec2(127.1, 311.7)), dot(p, vec2(269.5, 183.3))); return -1.0 + 2.0 * fract(sin(p) * 43758.5453); }
 vec3 bruitD(vec2 p){
@@ -334,15 +336,7 @@ vec3 normaleEau(vec2 p, vec2 cours, float flou){
 }
 float fresnelEau(vec3 N, vec3 V){ float c = clamp(dot(N, V), 0.0, 1.0); return 0.02 + 0.98 * pow(1.0 - c, 5.0); }
 `;
-const VS_EAU = `attribute vec2 eau; attribute vec2 cours; varying vec3 vW; varying float vMasque, vProf; varying vec2 vCours;
-void main(){ vec4 w = modelMatrix * vec4(position, 1.0); vW = w.xyz; vMasque = eau.x; vProf = eau.y; vCours = cours; gl_Position = projectionMatrix * viewMatrix * w; }`;
-const matScene = new THREE.ShaderMaterial({
-  uniforms: { uT: { value: 0 }, uV: { value: EAU.vagues }, uFond: { value: new THREE.Color() }, uClair: { value: new THREE.Color() },
-              uCielH: { value: new THREE.Color() }, uCielZ: { value: new THREE.Color() },
-              uSol: { value: new THREE.Vector3(0.5, 0.7, 0.3) }, uSolCoul: { value: new THREE.Color() },
-              uRefl: { value: null }, uReflOn: { value: 0 }, uReflY: { value: 0 }, uVP: { value: new THREE.Matrix4() }, uJour: { value: 0.5 } },
-  vertexShader: VS_EAU,
-  fragmentShader: BRUIT_GLSL + `
+const FRAG_SCENE_V145 = `
 uniform vec3 uFond, uClair, uCielH, uCielZ, uSol, uSolCoul; uniform sampler2D uRefl; uniform float uReflOn, uReflY, uJour; uniform mat4 uVP;
 varying vec3 vW; varying float vMasque, vProf; varying vec2 vCours;
 void main(){
@@ -388,19 +382,239 @@ void main(){
   float a = aE + aM * (1.0 - aE);
   vec3 col = (eau * aE + uFond * 0.25 * aM * (1.0 - aE)) / max(a, 1e-4);
   gl_FragColor = vec4(col, a);
+  #include <colorspace_fragment>`;
+const FRAG_REFLET_V145 = `
+uniform sampler2D uRefl; uniform mat4 uVP; varying vec3 vW; varying float vMasque, vProf; varying vec2 vCours;
+void main(){
+  float bord = smoothstep(0.40, 0.52, vMasque); if (bord <= 0.001) discard;
+  vec3 V = normalize(cameraPosition - vW);
+  float dist = length(cameraPosition - vW);
+  vec3 N = normaleEau(vW.xz, vCours, max(length(dFdx(vW.xz)), length(dFdy(vW.xz))));
+  float F = fresnelEau(N, V);
+  vec4 c = uVP * vec4(vW, 1.0); vec2 uv = c.xy / c.w * 0.5 + 0.5;
+  // les rides renvoient la lumière plus haut ou plus bas : colonnes de paillettes (une facette = un éclat)
+  vec2 d = N.xz * vec2(0.16, 1.7) * (0.15 + 1.2 * uV);
+  float L = 0.002 + 0.03 * smoothstep(0.02, 0.2, uV) + 0.03 * uV;                                        // chaque éclat s'étire à la verticale : les éclats forment des colonnes
+  vec3 s = vec3(0.0); float ws = 0.0;
+  float o = fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233))) * 43758.5453) - 0.5;
+  for (int i = -4; i <= 4; i++){ float fi = (float(i) + o) / 4.0, w = exp(-fi * fi * 1.2); s += texture2D(uRefl, uv + d + vec2(0.0, fi * L)).rgb * w; ws += w; }
+  s = s / ws * (1.0 + 2.2 * uV);
+  float casse = 1.0;
+  float k = clamp(F * 0.3 + 0.01, 0.0, 0.22) * smoothstep(0.0, 0.15, vProf);
+  gl_FragColor = vec4(s * casse * k * bord, 1.0);
+`;
+const BRUIT_GLSL_V146 = `
+uniform float uT, uV; uniform vec2 uVent;
+vec2 h22(vec2 p){ p = vec2(dot(p, vec2(127.1, 311.7)), dot(p, vec2(269.5, 183.3))); return -1.0 + 2.0 * fract(sin(p) * 43758.5453); }
+vec3 bruitD(vec2 p){
+  vec2 i = floor(p), f = fract(p), u = f*f*f*(f*(f*6.0-15.0)+10.0), du = 30.0*f*f*(f*(f-2.0)+1.0);
+  vec2 ga = h22(i), gb = h22(i + vec2(1.0,0.0)), gc = h22(i + vec2(0.0,1.0)), gd = h22(i + vec2(1.0,1.0));
+  float va = dot(ga, f), vb = dot(gb, f - vec2(1.0,0.0)), vc = dot(gc, f - vec2(0.0,1.0)), vd = dot(gd, f - vec2(1.0,1.0));
+  float v = va + u.x*(vb-va) + u.y*(vc-va) + u.x*u.y*(va-vb-vc+vd);
+  vec2 d = ga + u.x*(gb-ga) + u.y*(gc-ga) + u.x*u.y*(ga-gb-gc+gd) + du*(u.yx*(va-vb-vc+vd) + vec2(vb,vc) - va);
+  return vec3(v, d);
+}
+float h11(float n){ return fract(sin(n * 12.9898) * 43758.5453); }
+float g_sig = 0.0;   // rugosité sous le pixel (pente RMS), posée par normaleEau
+// v146 — HOULE : 16 trains d'ondes autour du vent (angle, longueur et phase tirés au sort, spectre
+// de pente à peu près plat, vitesse de phase physique en eau profonde), crêtes un peu pincées
+// quand l'eau s'agite. Chaque train s'efface quand il fait moins de ~8 pixels (aucun moiré).
+// raf1/raf2 : rafales = amplitude modulée par zones (eau plus ou moins ridée selon l'endroit).
+vec2 trains(vec2 p, vec2 vent, float flou, float lmax, float ouv, float pince, float raf1, float raf2, inout float perdu){
+  vec2 g = vec2(0.0);
+  for (int i = 0; i < 16; i++){
+    float fi = float(i);
+    float lam = lmax * pow(0.78, fi + 0.5 * (h11(fi * 3.1 + 7.7) - 0.5));
+    float att = smoothstep(6.0, 16.0, lam / max(flou, 1e-5));
+    float amp0 = 0.7 + 0.6 * h11(fi * 5.3 + 2.2);
+    perdu += (1.0 - att) * amp0 * amp0 * 0.5;                            // ce que l'oeil ne résout plus devient de la rugosité
+    if (att <= 0.0) continue;
+    float ang = (h11(fi * 7.13 + 1.7) - 0.5) * ouv;
+    vec2 d = vec2(cos(ang) * vent.x - sin(ang) * vent.y, sin(ang) * vent.x + cos(ang) * vent.y);
+    float k = 6.2832 / lam, w = sqrt(9.81 * k);
+    vec3 env = bruitD(p / (lam * 4.5) + vec2(h11(fi * 1.7) * 37.0, h11(fi * 2.9) * 53.0) + uT * 0.03);   // paquets d'ondes : chaque train vit par zones
+    float ph = dot(d, p) * k - w * uT + h11(fi * 3.7 + 0.3) * 6.2832 + 2.4 * env.x;
+    float amp = amp0 * mix(raf1, raf2, fract(fi * 0.381)) * (0.35 + 1.3 * smoothstep(-0.5, 0.5, env.x));
+    g += d * cos(ph) * (1.0 + pince * sin(ph)) * att * amp;
+  }
+  return g;
+}
+// rides capillaires (~25 cm et ~12 cm) : le grain fin du premier plan, effacé vite avec la distance
+vec2 rides(vec2 p, vec2 vent, float flou){
+  float px = 0.25 / max(flou, 1e-5);
+  float a0 = smoothstep(6.0, 16.0, px * 4.4), a1 = smoothstep(6.0, 16.0, px), a2 = smoothstep(6.0, 16.0, px * 0.48);
+  vec2 g = vec2(0.0);
+  if (a0 > 0.0) { vec2 q0 = p * 0.9 + vent * uT * 0.35; float a0b = smoothstep(6.0, 16.0, px * 2.2);
+    g += (bruitD(q0).yz * a0 + 0.5 * bruitD(q0 * 2.0 + 7.1 - vent * uT * 0.1).yz * a0b) * 0.22; }   // clapot moyen (~1 m et ~0,5 m), chaque octave filtrée
+  if (a1 <= 0.0) return g;
+  vec2 q = p * 4.0 + vent * uT * 0.7;
+  g += bruitD(q).yz * a1;
+  if (a2 > 0.0) g += bruitD(q * 2.1 + 3.3 + vent * uT * 0.4).yz * 0.6 * a2;
+  return g;
+}
+// traînées de courant : bruit étiré dans l'axe de la rivière (×3), évalué dans 4 repères ancrés aux
+// coins de la maille de 16 m et fondu bilinéairement (coordonnées bornées -> pas de dérive de phase)
+vec2 stries(vec2 p, vec2 fd, vec2 ft, vec2 dv, float t0, float t1, float m, float flou){
+  float att = smoothstep(6.0, 16.0, 0.9 / max(flou, 1e-5));
+  if (att <= 0.0) return vec2(0.0);
+  vec2 cel = floor(p / 16.0), f = fract(p / 16.0);
+  vec2 g = vec2(0.0);
+  for (int j = 0; j < 2; j++) for (int i = 0; i < 2; i++){
+    vec2 c = (cel + vec2(float(i), float(j))) * 16.0;
+    float w = (i == 0 ? 1.0 - f.x : f.x) * (j == 0 ? 1.0 - f.y : f.y);
+    vec2 r0 = p - c - dv * t0, r1 = p - c - dv * t1;
+    vec2 qa = vec2(dot(r0, fd) * 0.35, dot(r0, ft) * 1.1) + c * 0.013;
+    vec2 qb = vec2(dot(r1, fd) * 0.35, dot(r1, ft) * 1.1) + c * 0.013 + 5.0;
+    vec2 gl = mix(bruitD(qa).yz, bruitD(qb).yz, m);
+    g += w * (fd * gl.x * 0.35 + ft * gl.y * 1.1);
+  }
+  return g * att * 0.25;
+}
+vec3 normaleEau(vec2 p, vec2 cours, float flou){
+  float fs = clamp(length(cours), 0.0, 1.0);
+  float r1 = 0.5 + 1.0 * clamp(0.5 + 0.9 * bruitD(p * 0.02 + vec2(uT * 0.025, 0.0)).x, 0.0, 1.0);
+  float r2 = 0.5 + 1.0 * clamp(0.5 + 0.9 * bruitD(p * 0.031 + vec2(3.7, uT * 0.02)).x, 0.0, 1.0);
+  float lmax = mix(0.9, 5.0, smoothstep(0.1, 0.9, uV));                 // vent faible : rides courtes ; eau agitée : houle longue
+  float ouv = mix(2.4, 1.1, smoothstep(0.3, 0.9, uV));                  // calme : directions très mêlées ; agitée : alignées au vent
+  float rms = 0.010 + 0.024 * smoothstep(0.0, 0.25, uV) + 0.12 * smoothstep(0.25, 0.7, uV) + 0.09 * smoothstep(0.7, 1.0, uV);   // pente RMS : miroir 0,01 ; légères ~0,03 ; agitées ~0,15
+  float pince = 0.4 * smoothstep(0.3, 1.0, uV);
+  vec2 g; float perdu = 0.0;
+  if (fs < 0.02) g = trains(p, uVent, flou, lmax, ouv, pince, r1, r2, perdu);
+  else {
+    // RIVIÈRE : les mêmes trains (repère du monde, jamais tourné : un repère qui tourne avec le
+    // courant fait dériver la phase et moire), emportés vers l'aval (deux phases fondues, aucune
+    // déformation ne s'accumule), + des traînées étirées dans l'axe (bruit en repères ancrés par
+    // mailles de 16 m, fondu bilinéaire) ; une rivière ride toujours un peu
+    vec2 fd = cours / max(length(cours), 1e-4), ft = vec2(-fd.y, fd.x);
+    float t0 = fract(uT * 0.3), t1 = fract(uT * 0.3 + 0.5), m = abs(0.5 - t0) / 0.5;
+    vec2 dv = fd * (1.2 * fs / 0.3);
+    float p0 = 0.0, p1 = 0.0;
+    vec2 g0 = trains(p - dv * t0, uVent, flou, max(lmax, 1.2), ouv, pince, r1, r2, p0);
+    vec2 g1 = trains(p - dv * t1 + vec2(7.3, 3.1), uVent, flou, max(lmax, 1.2), ouv, pince, r1, r2, p1);
+    g = mix(g0, g1, m); perdu = mix(p0, p1, m);
+    g += stries(p, fd, ft, dv, t0, t1, m, flou) * (0.6 + 0.4 * fs) * 2.8;
+    rms = max(rms, 0.03 + 0.03 * fs);
+  }
+  g *= rms / 2.8;
+  g += rides(p, uVent, flou) * (0.010 + 0.025 * uV);
+  // rugosité résiduelle : les rides que le pixel ne résout plus ne font pas de relief mais un FLOU
+  // (et des paillettes sous une source vive) -> transmise au reflet par g_sig
+  g_sig = sqrt(max(perdu, 0.0)) * rms / 2.8;
+  return normalize(vec3(-g.x, 1.0, -g.y));
+}
+float fresnelEau(vec3 N, vec3 V){ float c = clamp(dot(N, V), 0.0, 1.0); return 0.02 + 0.98 * pow(1.0 - c, 5.0); }
+`;
+const FRAG_SCENE_V146 = `
+uniform vec3 uFond, uClair, uCielH, uCielZ, uSol, uSolCoul; uniform sampler2D uRefl; uniform float uReflOn, uReflY, uJour, uGainCiel; uniform mat4 uVP;
+varying vec3 vW; varying float vMasque, vProf; varying vec2 vCours;
+void main(){
+  float eauB = smoothstep(0.40, 0.50, vMasque);                        // ligne d'eau (fondu court)
+  float mouille = smoothstep(0.26, 0.40, vMasque) * (1.0 - eauB);      // berge mouillée (~35 cm), sombre
+  if (eauB + mouille <= 0.001) discard;
+  vec3 V = normalize(cameraPosition - vW);
+  float dist = length(cameraPosition - vW);
+  float flou = max(length(dFdx(vW.xz)), length(dFdy(vW.xz)));          // taille d'un pixel sur l'eau (m)
+  vec3 N = normaleEau(vW.xz, vCours, flou);
+  float F = fresnelEau(N, V);
+  vec3 R = reflect(-V, N); float Ry = max(R.y, 0.0);
+  // CIEL reflété : dégradé horizon -> zénith, un peu nuageux de jour ; en « HDR » (uGainCiel) car le
+  // ciel est bien plus lumineux que l'eau : son reflet reste visible même vu d'en haut
+  vec3 ciel = mix(uCielH, uCielZ, pow(Ry, 0.5));
+  vec3 Rp = reflect(-V, vec3(0.0, 1.0, 0.0));
+  vec2 qn = Rp.xz / (Rp.y + 0.35) * 0.9 + N.xz * 0.8 + vec2(uT * 0.004, 0.0);
+  float nu = 0.5 + 0.5 * (bruitD(qn).x * 0.7 + bruitD(qn * 2.1 + 4.1).x * 0.3);
+  ciel *= mix(1.0, 0.86 + 0.30 * nu, smoothstep(0.3, 0.7, uJour) * smoothstep(0.05, 0.3, Rp.y));
+  ciel = max(ciel * uGainCiel, vec3(0.0025, 0.0032, 0.0055));         // nuit : le ciel garde une faible lueur
+  vec3 refl = ciel;
+  float pr = smoothstep(0.0, 0.12, vProf);                             // pas de reflet net sur 2 cm d'eau
+  float pres = smoothstep(0.0, 30.0, dist);                            // tout près de l'oeil, le décor reflété est loin derrière : décalage réduit
+  if (uReflOn > 0.5){
+    // DÉCOR reflété (vue miroir) : la pente de la vague déplace le reflet d'environ 2x la pente
+    // (surtout en hauteur), et le floute à la verticale d'autant plus que l'eau est rugueuse
+    vec4 c = uVP * vec4(vW.x, uReflY, vW.z, 1.0);
+    vec2 uv = c.xy / c.w * 0.5 + 0.5;
+    vec2 dec = vec2(N.x * 0.9, N.z * 2.0) * (0.45 + 0.55 * pres);
+    float lg = (0.0015 + 0.08 * (0.012 + 0.09 * uV) + 0.9 * g_sig) * (0.5 + 0.5 * pres);
+    float o = (fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233))) * 43758.5453) - 0.5) * 0.6;
+    vec4 d = vec4(0.0); float ws = 0.0;
+    for (int i = -4; i <= 4; i++){ float fi = (float(i) + o) / 4.0, w = exp(-fi * fi * 1.8); d += texture2D(uRefl, uv + dec + vec2(0.0, fi * lg)) * w; ws += w; }
+    d /= ws;
+    float memeNiveau = 1.0 - smoothstep(1.0, 3.0, abs(vW.y - uReflY));
+    refl = mix(ciel, d.rgb * 0.86, d.a * memeNiveau * pr);              // un reflet est un peu plus sombre que l'objet
+  }
+  refl *= 1.0 / (1.0 + 0.35 * max(max(refl.r, refl.g), refl.b));        // genou doux : pas de nappe blanche au loin
+  // SOLEIL : traînée de reflets (seules les facettes tournées vers lui brillent)
+  vec3 Ls = normalize(uSol), Hs = normalize(Ls + V);
+  float shin = mix(900.0, 90.0, smoothstep(0.0, 1.0, uV));
+  float sp = pow(max(dot(N, Hs), 0.0), shin) * (shin + 2.0) * 0.02;
+  float Fs = 0.02 + 0.98 * pow(1.0 - max(dot(Hs, V), 0.0), 5.0);
+  vec3 soleil = uSolCoul * sp * Fs * smoothstep(0.25, 0.6, uJour);
+  soleil = soleil / (1.0 + soleil);
+  // CORPS de l'eau : la lumière s'éteint le long du chemin aller + retour (eau trouble d'étang)
+  float chemin = vProf * (1.0 + 1.0 / max(V.y, 0.25));
+  vec3 Tr = exp(-vec3(1.5, 0.75, 1.0) * chemin);
+  float aCorps = 1.0 - (Tr.r + Tr.g + Tr.b) / 3.0;
+  vec3 corps = mix(uClair, uFond, smoothstep(0.0, 1.5, chemin));
+  float Fb = F * smoothstep(0.35, 0.75, vMasque);                      // pas de liseré clair au contact de la berge
+  // composition : surface (reflet, Fb) + corps (aCorps) + fond visible au travers (alpha)
+  float a = Fb + aCorps - Fb * aCorps;
+  vec3 col = ((1.0 - Fb) * aCorps * corps + Fb * refl + soleil * eauB) / max(a, 1e-4);
+  a *= eauB;
+  float aM = 0.32 * mouille;
+  float at = a + aM * (1.0 - a);
+  col = (col * a + uFond * 0.3 * aM * (1.0 - a)) / max(at, 1e-4);
+  gl_FragColor = vec4(col, at);
   #include <colorspace_fragment>
-}`,
+}`;
+const FRAG_REFLET_V146 = `
+uniform sampler2D uRefl; uniform mat4 uVP; varying vec3 vW; varying float vMasque, vProf; varying vec2 vCours;
+void main(){
+  float bord = smoothstep(0.40, 0.50, vMasque); if (bord <= 0.001) discard;
+  vec3 V = normalize(cameraPosition - vW);
+  float dist = length(cameraPosition - vW);
+  vec3 N = normaleEau(vW.xz, vCours, max(length(dFdx(vW.xz)), length(dFdy(vW.xz))));
+  float F = fresnelEau(N, V);
+  vec4 c = uVP * vec4(vW, 1.0); vec2 uv = c.xy / c.w * 0.5 + 0.5;
+  float pres = smoothstep(0.0, 30.0, dist);
+  float rug = 0.015 + 0.10 * uV;
+  // la pente de chaque facette déplace l'éclat (surtout en hauteur) : les bouquets se reflètent en
+  // COLONNES de paillettes, d'autant plus longues que l'eau est rugueuse
+  vec2 dec = vec2(N.x * 0.5, N.z * 2.0) * (0.45 + 0.55 * pres);
+  float L = (0.003 + 1.2 * rug + 1.0 * g_sig) * (0.5 + 0.5 * pres);
+  float o = (fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233))) * 43758.5453) - 0.5) * 0.6;
+  vec3 s = vec3(0.0); float ws = 0.0;
+  for (int i = -6; i <= 6; i++){ float fi = (float(i) + o) / 6.0, w = exp(-fi * fi * 1.3); s += texture2D(uRefl, uv + dec + vec2(0.0, fi * L)).rgb * w; ws += w; }
+  s /= ws;
+  float gain = mix(1.0, 2.6, smoothstep(0.0, 0.6, uV));                 // la colonne dilue la lumière ; les crêtes la concentrent
+  vec2 cel = floor(gl_FragCoord.xy / 3.0) + floor(uT * 6.0) * 17.0;      // paillettes : facettes au sort sous le pixel, scintillent à ~6 Hz
+  gain *= 1.0 + smoothstep(0.0, 0.03, g_sig) * 0.35 * h22(cel).x;
+  float k = clamp(F * 0.55 + 0.02, 0.0, 0.55) * smoothstep(0.0, 0.12, vProf) * bord;
+  gl_FragColor = vec4(s * gain * k, 1.0);
+}
+`;
+const BRUIT_GLSL = EAU_V145 ? BRUIT_GLSL_V145 : BRUIT_GLSL_V146;
+const VS_EAU = `attribute vec2 eau; attribute vec2 cours; varying vec3 vW; varying float vMasque, vProf; varying vec2 vCours;
+void main(){ vec4 w = modelMatrix * vec4(position, 1.0); vW = w.xyz; vMasque = eau.x; vProf = eau.y; vCours = cours; gl_Position = projectionMatrix * viewMatrix * w; }`;
+const matScene = new THREE.ShaderMaterial({
+  uniforms: { uT: { value: 0 }, uV: { value: EAU.vagues }, uVent: { value: new THREE.Vector2(0.6, 0.8) }, uGainCiel: { value: 1.0 },
+              uFond: { value: new THREE.Color() }, uClair: { value: new THREE.Color() },
+              uCielH: { value: new THREE.Color() }, uCielZ: { value: new THREE.Color() },
+              uSol: { value: new THREE.Vector3(0.5, 0.7, 0.3) }, uSolCoul: { value: new THREE.Color() },
+              uRefl: { value: null }, uReflOn: { value: 0 }, uReflY: { value: 0 }, uVP: { value: new THREE.Matrix4() }, uJour: { value: 0.5 } },
+  vertexShader: VS_EAU,
+  fragmentShader: BRUIT_GLSL + (EAU_V145 ? FRAG_SCENE_V145 : FRAG_SCENE_V146),
   transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2,
   extensions: { derivatives: true } });
 function majTeintes() {
   const j = typeof _jour === "number" ? _jour : 0.15, k = Math.min(1, Math.max(0, (j - 0.03) / 0.55));
   const L = (a, b) => new THREE.Color(a).lerp(new THREE.Color(b), k);
   const U = matScene.uniforms;
-  U.uFond.value.copy(L(0x010205, 0x1a2b29));
-  U.uClair.value.copy(L(0x030506, 0x26241d));
+  if (EAU_V145) { U.uFond.value.copy(L(0x010205, 0x1a2b29)); U.uClair.value.copy(L(0x030506, 0x26241d)); }
+  else { U.uFond.value.copy(L(0x010204, 0x15251c)); U.uClair.value.copy(L(0x030505, 0x3b3a26)); }   // eau d'étang : vert sombre ; bas-fonds : vase claire
   const fond = scene.background && scene.background.isColor ? scene.background : new THREE.Color(0x9FB4C8);
-  U.uCielH.value.copy(fond).lerp(new THREE.Color(0xf4f6f8), 0.42 * k);             // horizon : plus clair
+  U.uCielH.value.copy(fond).lerp(new THREE.Color(0xf4f6f8), (EAU_V145 ? 0.42 : 0.28) * k);   // horizon : plus clair
   U.uCielZ.value.copy(fond).lerp(new THREE.Color(0x3d6da8), 0.45 * k).multiplyScalar(0.85);   // zénith : bleu plus profond
+  U.uGainCiel.value = EAU_V145 ? 1.0 : 1.0 + 0.45 * k;                               // de jour le ciel est bien plus lumineux que l'eau
   try { U.uSol.value.copy(soleil.position).sub(soleil.target.position).normalize(); U.uSolCoul.value.copy(soleil.color).multiplyScalar(soleil.intensity); } catch (e) {}
   U.uJour.value = j;
 }
@@ -432,10 +646,11 @@ function avantRendu(r, sc, cam) {
   if (!EAU.decor || leger) { U.uReflOn.value = 0; return; }
   const h = niveauMiroir();
   if (h === null) { U.uReflOn.value = 0; return; }
-  const W = Math.max(2, Math.round(r.domElement.width * 0.75)), H = Math.max(2, Math.round(r.domElement.height * 0.75));
+  const ech = EAU_V145 ? 0.75 : 1.0;
+  const W = Math.max(2, Math.round(r.domElement.width * ech)), H = Math.max(2, Math.round(r.domElement.height * ech));
   if (!EAU.rtDecor || EAU.rtDecor.width !== W || EAU.rtDecor.height !== H) {
     if (EAU.rtDecor) EAU.rtDecor.dispose();
-    EAU.rtDecor = new THREE.WebGLRenderTarget(W, H, { type: THREE.HalfFloatType });
+    EAU.rtDecor = new THREE.WebGLRenderTarget(W, H, { type: THREE.HalfFloatType, samples: EAU_V145 ? 0 : 4 });
   }
   if (!EAU.camDecor) { EAU.camDecor = new THREE.PerspectiveCamera(); EAU.camDecor.matrixAutoUpdate = false; EAU.camDecor.matrixWorldAutoUpdate = false; }
   const C = EAU.camDecor, Rm = new THREE.Matrix4().set(1, 0, 0, 0, 0, -1, 0, 2 * h, 0, 0, 1, 0, 0, 0, 0, 1);
@@ -449,7 +664,13 @@ function avantRendu(r, sc, cam) {
   const caches = [];
   for (const T of EAU.tuiles.values()) if (T.mesh && T.mesh.visible) { caches.push(T.mesh); T.mesh.visible = false; }
   if (curseur && curseur.visible) { caches.push(curseur); curseur.visible = false; }
-  try { if (_cielFeu && _cielFeu.visible && EAU.vagues > 0.03) { caches.push(_cielFeu); _cielFeu.visible = false; } } catch (e) {}   // étoiles : sur eau ridée, du bruit
+  let etoiles = null;
+  try {
+    if (_cielFeu && _cielFeu.visible) {
+      if (EAU_V145) { if (EAU.vagues > 0.03) { caches.push(_cielFeu); _cielFeu.visible = false; } }
+      else { const m = _cielFeu.material; etoiles = [m, m.transparent, m.opacity, m.size]; m.transparent = true; m.opacity = 0.65; m.size = Math.max(0.8, m.size * 0.75); }   // étoiles reflétées, plus discrètes (le flou des vagues les étale)
+    }
+  } catch (e) {}
   const avantRT = r.getRenderTarget(), fondAvant = sc.background, plans = r.clippingPlanes, autoOmbre = r.shadowMap.autoUpdate, besoinOmbre = r.shadowMap.needsUpdate;
   const cc = new THREE.Color(); r.getClearColor(cc); const ca = r.getClearAlpha();
   try {
@@ -459,6 +680,7 @@ function avantRendu(r, sc, cam) {
   } finally {
     r.setRenderTarget(avantRT); sc.background = fondAvant; r.clippingPlanes = plans; r.shadowMap.autoUpdate = autoOmbre; r.shadowMap.needsUpdate = besoinOmbre; r.setClearColor(cc, ca);
     for (const o of caches) o.visible = true;
+    if (etoiles) { const [m, t, op, sz] = etoiles; m.transparent = t; m.opacity = op; m.size = sz; }
   }
   U.uRefl.value = EAU.rtDecor.texture; U.uReflOn.value = 1; U.uReflY.value = h;
   U.uVP.value.multiplyMatrices(C.projectionMatrix, C.matrixWorldInverse);
@@ -475,31 +697,13 @@ function rendreMiroir(r, sc, C) {
   if (EAU.actif && EAU.anim && EAU.tuiles.size && performance.now() - EAU.vu < 600) _vueSale = true;
 })();
 
+
 // ── 5. Reflets des FEUX (calque des feux) ────────────────────────────────────
 function matReflet() {
   return new THREE.ShaderMaterial({
-    uniforms: { uT: { value: 0 }, uV: { value: EAU.vagues }, uRefl: { value: null }, uVP: { value: new THREE.Matrix4() } },
+    uniforms: { uT: { value: 0 }, uV: { value: EAU.vagues }, uVent: matScene.uniforms.uVent, uRefl: { value: null }, uVP: { value: new THREE.Matrix4() } },
     vertexShader: VS_EAU,
-    fragmentShader: BRUIT_GLSL + `
-uniform sampler2D uRefl; uniform mat4 uVP; varying vec3 vW; varying float vMasque, vProf; varying vec2 vCours;
-void main(){
-  float bord = smoothstep(0.40, 0.52, vMasque); if (bord <= 0.001) discard;
-  vec3 V = normalize(cameraPosition - vW);
-  float dist = length(cameraPosition - vW);
-  vec3 N = normaleEau(vW.xz, vCours, max(length(dFdx(vW.xz)), length(dFdy(vW.xz))));
-  float F = fresnelEau(N, V);
-  vec4 c = uVP * vec4(vW, 1.0); vec2 uv = c.xy / c.w * 0.5 + 0.5;
-  // les rides renvoient la lumière plus haut ou plus bas : colonnes de paillettes (une facette = un éclat)
-  vec2 d = N.xz * vec2(0.16, 1.7) * (0.15 + 1.2 * uV);
-  float L = 0.002 + 0.03 * smoothstep(0.02, 0.2, uV) + 0.03 * uV;                                        // chaque éclat s'étire à la verticale : les éclats forment des colonnes
-  vec3 s = vec3(0.0); float ws = 0.0;
-  float o = fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233))) * 43758.5453) - 0.5;
-  for (int i = -4; i <= 4; i++){ float fi = (float(i) + o) / 4.0, w = exp(-fi * fi * 1.2); s += texture2D(uRefl, uv + d + vec2(0.0, fi * L)).rgb * w; ws += w; }
-  s = s / ws * (1.0 + 2.2 * uV);
-  float casse = 1.0;
-  float k = clamp(F * 0.3 + 0.01, 0.0, 0.22) * smoothstep(0.0, 0.15, vProf);
-  gl_FragColor = vec4(s * casse * k * bord, 1.0);
-}`,
+    fragmentShader: BRUIT_GLSL + (EAU_V145 ? FRAG_REFLET_V145 : FRAG_REFLET_V146),
     transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, extensions: { derivatives: true } });
 }
 const _rendreFeuOrig = window._feuRendre;
@@ -509,8 +713,9 @@ window._feuRendre = function () {
     if (EAU.actif && nappes.length && _rendFeu.r) {
       const r = _rendFeu.r, sc = _rendFeu.scene;
       if (!EAU.matRefl) EAU.matRefl = matReflet();
-      const W = Math.max(2, Math.round(r.domElement.width / 2)), H = Math.max(2, Math.round(r.domElement.height / 2));
-      if (!EAU.rt || EAU.rt.width !== W || EAU.rt.height !== H) { if (EAU.rt) EAU.rt.dispose(); EAU.rt = new THREE.WebGLRenderTarget(W, H, { type: THREE.HalfFloatType }); }
+      const ech = EAU_V145 ? 0.5 : 0.75;
+      const W = Math.max(2, Math.round(r.domElement.width * ech)), H = Math.max(2, Math.round(r.domElement.height * ech));
+      if (!EAU.rt || EAU.rt.width !== W || EAU.rt.height !== H) { if (EAU.rt) EAU.rt.dispose(); EAU.rt = new THREE.WebGLRenderTarget(W, H, { type: THREE.HalfFloatType, samples: EAU_V145 ? 0 : 4 }); }
       camera.updateMatrixWorld();
       const h = niveauMiroir(); if (h === null) throw new Error("pas d'eau");
       for (const T of nappes) {

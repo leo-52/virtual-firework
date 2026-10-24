@@ -195,8 +195,47 @@ def eau(html):
     html = re.sub(r'  #terminerEau\{[^\n]*\n  #terminerEau:active\{[^\n]*\n', '', html)
     html = re.sub(r'  \.outilsEau button\.actif\{[^\n]*\n  #eauNiveau:disabled\{[^\n]*\n', '', html)
     html = remplace_une(html, '</style>', EAU_CSS + '</style>', 'style')
-    return module(html, 'eau', EAU_JS)
+    return son(module(html, 'eau', EAU_JS))
 
+
+
+# ── SON DES FEUX (B391) : src/audio.js (le module de PrevoFX web) + les 7 mp3 embarqués ──────
+SON_JS = ICI / 'simu3d' / 'son.js'
+AUDIO_JS = ICI.parent / 'src' / 'audio.js'
+SONS_DIR = ICI.parent / 'sons'
+
+
+def module_texte(html, ident, texte):
+    # comme module(), mais à partir d'un texte déjà construit
+    bloc = f'<script id="{ident}">\n' + texte + '</script>\n'
+    m = re.search(rf'<script id="{ident}">.*?</script>\n', html, flags=re.S)
+    if m:
+        return html[:m.start()] + bloc + html[m.end():]
+    i = html.rfind('</body>')
+    return html[:i] + bloc + html[i:]
+
+
+def son(html):
+    """Injecte <script id="son"> : outils/simu3d/son.js (crochets + bouton) dans lequel on colle
+    src/audio.js transformé en script classique (plus d'export ni d'import.meta ; les mp3 viennent
+    du tableau SONS_B64 embarqué au lieu du réseau). Idempotent. Rien si un fichier manque."""
+    if not (SON_JS.exists() and AUDIO_JS.exists() and SONS_DIR.exists()):
+        return html
+    import base64, json
+    audio = AUDIO_JS.read_text(encoding='utf-8')
+    audio = re.sub(r'^export ', '', audio, flags=re.M)
+    audio = remplace_une(audio, "const _V = new URL(import.meta.url).search;", "const _V = '';", 'anti-cache du module son')
+    audio = remplace_une(audio, "const MP3_URL = name => new URL('../sons/' + name + '.mp3' + _V, import.meta.url);",
+                         "const MP3_URL = name => SONS_AB[name];", 'source des mp3 du module son')
+    if 'import.meta' in audio:
+        sys.exit('module son : import.meta restant (script classique impossible)')
+    b64 = {p.stem: base64.b64encode(p.read_bytes()).decode('ascii') for p in sorted(SONS_DIR.glob('*.mp3'))}
+    js = SON_JS.read_text(encoding='utf-8')
+    js = remplace_une(js, '/*@@AUDIO@@*/', audio, 'marqueur audio de son.js')
+    js = remplace_une(js, '/*@@SONS@@*/{}', json.dumps(b64), 'marqueur mp3 de son.js')
+    # le moteur exporte le crochet des mini-marrons (son de chaque détonation du multi-marron)
+    html = html.replace("return { scene, Shell, updateTrails,", "return { scene, Shell, __setMarronPop, updateTrails,")
+    return module_texte(html, 'son', js)
 
 def main():
     if len(sys.argv) != 3:

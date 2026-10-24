@@ -233,6 +233,53 @@ sur captures mélangées avec celles de FWsim) — toujours sans toucher à la p
   - Fichier du site : `eau = { v:2, case, corps, tuiles:[[tx,tz,plages]] , reflets, decor, vagues }` ; lit aussi les
     `eauxTracees` (polygones) de la v144. Réglages aussi gardés dans le navigateur (localStorage « eau »).
   - Notation à l'aveugle (scène d'essai, décor sommaire ignoré) : 4,3 -> 4,8 -> 4,8 -> 5,3 -> voir journal.
+- **B391 — SON (user : « des fois ça bug, je n'ai pas de son » + « même le son [plus beau] » + son dans le Simu 3D)** :
+  - Causes du silence, toutes reproduites au banc (scratchpad/son/essai_son.mjs, politique d'autoplay stricte) :
+    (1) `enabled = false` par défaut (B265) -> page muette tant qu'on ne cliquait pas le bouton ; (2) `_ready()`
+    exigeait `ctx.state === 'running'` or `resume()` est asynchrone -> les sons tirés DANS le 1er geste (barre
+    espace, clic « Tirer ») étaient perdus (ancien : 0 son joué ; nouveau : 2/2) ; idem après un retour d'onglet
+    ou une interruption iOS : le contexte restait `suspended` jusqu'au prochain geste ; (3) mp3 téléchargés et
+    décodés seulement APRÈS le 1er geste -> premières bombes muettes sur liaison lente ; (4) URL des mp3 sans
+    le `?v=` anti-cache.
+  - Corrections (src/audio.js) : ON par défaut, choix mémorisé (localStorage `pfx_son`) ; file d'attente des sons
+    (≤ 0,8 s) rejoués dès que le contexte tourne ou que le mp3 est décodé ; reprise sur visibilitychange / focus /
+    pageshow / onstatechange, contexte `closed` recréé ; mp3 téléchargés dès le chargement de la page, décodés au
+    1er geste, synthèse de secours immédiate si un fichier manque ; bouton qui dit l'état (« touche l'écran »,
+    « chargement… », « secours »). Écouteurs du 1er geste en phase de capture (avant ceux de la page).
+  - Rendu (sans toucher aux mp3 de l'user, master 0,5 inchangé) : panoramique stéréo selon la position de la bombe
+    dans le champ (`panDepuisCamera`), absorption de l'air (passe-bas qui descend avec la distance), réverbération
+    de plein air (réponse impulsionnelle synthétique, réflexions précoces + queue ~1,5 s) dosée par la distance,
+    couche grave sous l'éclatement et le marron au-dessus de 90 mm. `?son=ancien` = rendu B263.
+  - Simu 3D : `outils/simu3d/son.js` (crochets sur `_feuMaj` : obus nouveau = départ, passage en « burst » =
+    éclatement ; mini-marrons via `PFX.__setMarronPop`, désormais exporté par le générateur) + le MÊME src/audio.js
+    transformé en script classique par `faire_moteur_simu.py` (fonction `son()`), les 7 mp3 embarqués en base64
+    (+ 380 Ko ; la page marche en file:// et sur /3d/). Bouton 🔊 dans la barre de tir ; `?son=0` = sans son.
+    Vérifié au banc (scratchpad/son/essai_son_simu.mjs) en http, file:// et iPhone émulé.
+- **SIMULATEUR DE SITE 3D v146 — EAU : rendu refait (user : « surtout les reflets… on vise 8/10 »)** — `outils/simu3d/eau.js`,
+  `?eau=v145` dans l'adresse = rendu d'avant (les deux jeux de shaders sont gardés) :
+  - **Houle** : 16 trains d'ondes autour du vent (angle, longueur, phase tirés au sort ; spectre de pente ~plat ;
+    vitesse de phase physique), en PAQUETS (phase et amplitude modulées par un bruit lent : plus de quadrillage
+    d'interférences), crêtes pincées quand ça s'agite, + clapot moyen (~1 m / 0,5 m) + rides capillaires
+    (25 / 12 cm). Chaque composante s'efface quand elle fait moins de ~6-16 pixels (aucun moiré) ; ce qui n'est
+    plus résolu devient une RUGOSITÉ résiduelle `g_sig` (pente RMS) transmise au reflet (flou/colonnes) au lieu
+    de relief : au loin l'eau se floute, elle ne « neige » pas (essai raté w3 : micro-facettes tirées au sort =
+    neige). Pente RMS : miroir 0,01 (micro-rides toujours là, jamais du verre), légères ~0,03, agitées ~0,15.
+  - **Rivière** : mêmes trains dans le repère du MONDE (un repère tourné par le courant, avec des coordonnées
+    absolues, fait dériver la phase -> moiré et losanges : piège rencontré en w7), emportés vers l'aval (deux
+    phases fondues), + traînées étirées dans l'axe = bruit évalué dans 4 repères ancrés aux coins de la maille
+    de 16 m et fondu bilinéairement (coordonnées bornées) ; ride minimale garantie.
+  - **Reflet du décor** : cible pleine résolution + MSAA 4 (bords non crénelés) ; décalage ≈ 2× la pente (surtout
+    vertical, réduit tout près de l'oeil), flou vertical ∝ rugosité (+ g_sig), assombri 14 %, Fresnel de Schlick
+    F0 = 0,02 ; ciel en « HDR » léger (×1,45 de jour, genou doux) -> le reflet du ciel reste visible vu d'en haut
+    (plus de plaque sombre) sans nappe blanche ; étoiles reflétées atténuées (0,65) au lieu de cachées.
+  - **Corps / berges** : absorption le long du chemin aller-retour (bords transparents, fond vert sombre d'étang,
+    bas-fonds vase claire), composition surface + corps + fond visible ; bande mouillée sombre ~35 cm ; Fresnel
+    coupé au contact (pas de liseré clair). Soleil : traînée de facettes (Blinn étroit) à genou doux.
+  - **Reflets des feux** : cible 0,75 + MSAA ; chaque éclat étiré en COLONNE verticale (longueur ∝ rugosité + g_sig),
+    13 prises tramées, paillettes (facettes au sort sous le pixel, ±35 %, ~6 Hz), intensité Fresnel ×0,55 (≤ 0,55).
+  - Journal des tours (scène d'essai essai_eau5.mjs, planches eau5_planche_w1..w6) : w1 ciel trop blanc ;
+    w2 quadrillage ; w3 neige (micro-facettes) ; w4 trop de flou + grain ; w5-w8 retenu (w7 : seuils de filtrage des rides 6-16 px ; w8 : rivière sans repère tournant). Outils (niveau, pinceau,
+    gomme, sauvegarde) revérifiés : essai_outils_eau.mjs passe.
 - ⚠️ **Banc d'essai** : entre deux captures sur la même page, il FAUT laisser s'éteindre traînées et
   fumée (≥ 25 s de simulation), sinon la fumée de l'effet précédent, éclairée par le suivant, pollue
   l'image (des tours de relecture ont été faussés ainsi).
