@@ -412,11 +412,11 @@ if (SMOKE_ON){
   smokePoints=new THREE.Points(g,m); smokePoints.frustumCulled=false; scene.add(smokePoints);
 }
 let SHELL_SEQ = 0;   // B381 : identifiant de bombe (sa fumée n'est pas éclairée par ses PROPRES étoiles)
-function spawnSmokePuff(x,y,z, s0, s1, life, dens, own, fl=0, fast=false){   // fl/fast (B385, marrons) : nuage formé d'un coup et éclairé par SON flash
+function spawnSmokePuff(x,y,z, s0, s1, life, dens, own, fl=0, fast=false, tint=null, vy0=null){   // fl/fast (B385, marrons) : nuage formé d'un coup et éclairé par SON flash ; tint (B391, fumigènes) : fumée COLORÉE visible sans lumière ; vy0 : vitesse d'ascension (fumée chaude d'un effet de sol)
   if (!SMOKE_ON) return;
   const p=smoke[smokeHead]; smokeHead=(smokeHead+1)%SMOKE_MAX;
-  p.x=x; p.y=y; p.z=z;
-  p.vx=smokeWind.x+(Math.random()-0.5)*0.5; p.vy=0.10+Math.random()*0.30; p.vz=smokeWind.z+(Math.random()-0.5)*0.5;
+  p.x=x; p.y=y; p.z=z; p.tr=tint?tint[0]:0; p.tg=tint?tint[1]:0; p.tb=tint?tint[2]:0;
+  p.vx=smokeWind.x+(Math.random()-0.5)*0.5; p.vy=(vy0!=null?vy0:0.10)+Math.random()*0.30; p.vz=smokeWind.z+(Math.random()-0.5)*0.5;
   p.age=0; p.life=life; p.s0=s0; p.s1=s1; p.dens=dens; p.rot=Math.random()*6.283; p.vr=(Math.random()-0.5)*0.15; p.alive=true; p.own=own||0; p.fl=fl; p.fast=fast;
 }
 function spawnSmoke(x,y,z, r0, cal, own){        // le cœur de l'ouverture : quelques bouffées au centre
@@ -434,7 +434,7 @@ function updateSmoke(dt, lights){
     p.x+=p.vx*dt; p.y+=p.vy*dt; p.z+=p.vz*dt; p.vy*=Math.max(0,1-0.05*dt); p.rot+=p.vr*dt;
     const t=p.age/p.life, size=p.s0+(p.s1-p.s0)*Math.sqrt(t);
     const env=Math.min(1,p.age/(p.fast?0.04:0.5))*(t<0.5?1:Math.max(0,1-(t-0.5)/0.5)) / (1+0.6*t);   // se forme, s'étale (dilution), s'efface
-    let r=0.0006, g=0.0007, b=0.0012;                                                   // lune : à peine visible sans feux
+    let r=0.0006+(p.tr||0), g=0.0007+(p.tg||0), b=0.0012+(p.tb||0);                    // lune : à peine visible sans feux (+ teinte propre des fumigènes, B391)
     if (p.fl>0 && p.age<0.4){ const e=p.fl*Math.exp(-p.age/0.06); r+=e; g+=e; b+=e*1.06; }   // B385 : le flash du marron éclaire son propre nuage
     for (const l of lights){
       // Relectures à l'aveugle : une bombe qui éclaire SA fumée pendant qu'elle brûle = « flou », « blob ».
@@ -1332,6 +1332,128 @@ function behaveMosaic(d,A,dt,ctx){
 }
 
 // ============================================================================
+// B391 — CATALOGUE COMPLET (user : « occupe-toi des effets manquants de PrevoFX par rapport à
+// notre catalogue. Liste-les, crée-les ») : outils communs aux archétypes AJOUTÉS. Aspect
+// visuel seulement (formes, mouvements, durées, couleurs lus sur les vidéos du catalogue et des
+// démonstrations en ligne). ?catalogue=0 = traduction grossière d'avant (aucun archétype neuf).
+// ============================================================================
+const CATALOGUE_NEW = !LOOK_OLD && !/[?&]catalogue=0\b/.test(_QS);
+// noms de couleur du catalogue (src/render/catalogue.js) -> couleurs du moteur
+const NOMS_COULEUR = { rouge:RED, vert:GRN, bleu:BLU, violet:PURP, mauve:new THREE.Color(0.7,0.45,1.0), rose:PINK, citron:YEL, jaune:YEL,
+  orange:new THREE.Color(1.0,0.45,0.08), aqua:CYAN, cyan:CYAN, turquoise:CYAN, argent:SILVER, blanc:WHITE, or:GOLD, kamuro:DIMGOLD,
+  cuivre:COPPER, peche:new THREE.Color(1.0,0.62,0.45), sang:new THREE.Color(0.85,0.05,0.08), lime:new THREE.Color(0.6,1.0,0.2), titane:WARMSILVER, charbon:DIMGOLD };
+const MULTI_NOMS = ['rouge','vert','bleu','citron','violet','rose','aqua','orange'];
+function couleurNom(n, defaut){ if (!n) return defaut||null; if (n.isColor) return n;
+  if (n==='multicolore'||n==='assorti'||n==='multi') return NOMS_COULEUR[MULTI_NOMS[(Math.random()*MULTI_NOMS.length)|0]];
+  if (n==='pastel') return NOMS_COULEUR[['rose','citron','aqua','peche','mauve'][(Math.random()*5)|0]];
+  return NOMS_COULEUR[n] || defaut || null; }
+// ENVELOPPE + PISTIL ROND (« pivoine <c> centre <c2> », « peony w/ <c> pistil ») : comp 0 =
+// enveloppe Fibonacci, comp 1 = petit cœur Fibonacci, plus lent (rayon ~45 %), étoiles plus petites.
+function makeDistEnvPistil(nEnv){
+  return function(i,n,rnd){
+    if (i<nEnv){ const d=distFibonacci(i,nEnv,rnd); return {dx:d.dx,dy:d.dy,dz:d.dz,spMul:1.0,comp:0}; }
+    const d=distFibonacci(i-nEnv,Math.max(1,n-nEnv),rnd); return {dx:d.dx,dy:d.dy,dz:d.dz,spMul:0.42+rnd()*0.10,comp:1};
+  };
+}
+const distPeonyPistil=makeDistEnvPistil(80);
+// FARFALLE = MARGUERITE CYLINDRIQUE (510399000-510407000, 100 mm ; vidéos catalogue) : à
+// l'ouverture, des dizaines de PETITES PIÈCES PLATES sont projetées en galette et VIREVOLTENT
+// (chacune tourne sur elle-même, son assiette change par à-coups -> sa poussée part dans tous les
+// sens) avec une courte traîne argent ; disque irrégulier, très clairsemé, ~1,5-2 s. Variante
+// « <couleur> cylindrique » : petit pistil de couleur au centre (comp 1).
+function makeDistFarfalle(nPistil){
+  return function(i,n,rnd){
+    if (i < n-nPistil){ const v=vrand(rnd); return {dx:v[0], dy:v[1]*0.55, dz:v[2], spMul:0.75+rnd()*0.5, comp:0}; }   // galette aplatie
+    const d=distFibonacci(i-(n-nPistil), Math.max(1,nPistil), rnd); return {dx:d.dx,dy:d.dy,dz:d.dz,spMul:0.30+rnd()*0.10,comp:1};
+  };
+}
+function behaveFarfalle(d,A,dt,ctx){
+  if (d.comp!==0) return;
+  if (d._fa===undefined){ d._fa=vrand(Math.random); d._fw=(5+Math.random()*7)*(Math.random()<0.5?-1:1); d._ft=0; }
+  d._ft-=dt;
+  if (d._ft<=0){ d._ft=0.25+Math.random()*0.45; const e=vrand(Math.random);   // la pièce change d'assiette par à-coups
+    const ax=[d._fa[0]*0.5+e[0], d._fa[1]*0.5+e[1], d._fa[2]*0.5+e[2]], L=Math.hypot(ax[0],ax[1],ax[2])||1; d._fa=[ax[0]/L,ax[1]/L,ax[2]/L]; }
+  const ang=d._fw*dt, c=Math.cos(ang), s=Math.sin(ang), ax=d._fa;   // rotation de Rodrigues de la vitesse (vol en vrille)
+  const dot=ax[0]*d.vx+ax[1]*d.vy+ax[2]*d.vz;
+  const rx=ax[1]*d.vz-ax[2]*d.vy, ry=ax[2]*d.vx-ax[0]*d.vz, rz=ax[0]*d.vy-ax[1]*d.vx;
+  d.vx=d.vx*c+rx*s+ax[0]*dot*(1-c); d.vy=d.vy*c+ry*s+ax[1]*dot*(1-c); d.vz=d.vz*c+rz*s+ax[2]*dot*(1-c);
+  const sp=Math.hypot(d.vx,d.vy,d.vz); if (sp<4.5 && sp>1e-3){ const k=4.5/sp; d.vx*=k; d.vy*=k; d.vz*=k; }   // la vrille entretient le mouvement
+}
+// MULTIBOMBE 150 mm (515091000-515097000 « bombe 150 mm multibombe <couleur> ») : la bombe
+// libère ~6 PETITES BOMBES qui filent avec une traîne argent, puis chacune ÉCLATE (0,55-0,9 s
+// plus tard) en pivoine clairsemée de la couleur de la référence. comp 0 = porteuses (traîne),
+// comp 1 = étoiles des sous-éclats.
+function behaveMultibombe(d,A,dt,ctx){
+  if (d._split || d.comp!==0) return;
+  if (d._mbAt===undefined) d._mbAt=0.55+Math.random()*0.35;
+  if (d.age<d._mbAt) return;
+  d._split=true;
+  const px=ctx.pos[d._i*3],py=ctx.pos[d._i*3+1],pz=ctx.pos[d._i*3+2];
+  spawnPuff(px,py,pz, 0,0,0, 0.10, 3, 6, 1.5,1.15,0.7, 0.45, 0, 1.0);   // petit flash d'ouverture
+  const base=ctx.cfg.burstRadius*0.95, n=ctx.cfg.subStars||34;
+  const col=d.coreColor || (ctx.cfg.colors && ctx.cfg.colors[1]) || null;
+  for (let c=0;c<n && ctx.nAlive<ctx.nMax;c++){
+    const v=vrand(Math.random), esp=base*(0.85+Math.random()*0.35);
+    ctx.addStar(px,py,pz, v[0]*esp+d.vx*0.25, v[1]*esp+d.vy*0.25, v[2]*esp+d.vz*0.25, 1.5+Math.random()*0.5, 1, false, col);
+  }
+  d.age=d.life;
+}
+// SIFFLET (compacts « sifflets argent » 500087000, botte de chandelles « sifflet » 501309000) :
+// la pièce part en SIFFLANT et monte en TIRE-BOUCHON serré (⌀ 0,6-1 m, 9-14 tours/s), traîne
+// argent dense et courte, puis s'éteint avant ou au sommet. Pas d'éclatement. Son : audio.js.
+function behaveSifflet(d,A,dt,ctx){
+  if (d._sa===undefined){ d._sa=Math.random()*6.283; d._sr=(9+Math.random()*5)*(Math.random()<0.5?1:-1); d._R=0.3+Math.random()*0.25;
+    d._vu=9+Math.random()*3; d._lean=vrand(Math.random); d.gMul=0.15; }
+  d._sa+=d._sr*dt; const k=d._R*Math.abs(d._sr), ca=Math.cos(d._sa), sa=Math.sin(d._sa);
+  d.vx=ca*k+d._lean[0]*1.2; d.vz=sa*k+d._lean[2]*1.2; d.vy=d._vu*(1-0.55*A);   // la montée mollit
+  const px=ctx.pos[d._i*3],py=ctx.pos[d._i*3+1],pz=ctx.pos[d._i*3+2];
+  d._se=(d._se||0)+dt*260;
+  while (d._se>=1){ d._se-=1; const e=vrand(Math.random);
+    spawnTrail(px+e[0]*0.12,py+e[1]*0.12,pz+e[2]*0.12, WARMSILVER.r*1.3,WARMSILVER.g*1.3,WARMSILVER.b*1.3, 0.6, 0.16, (0.22+Math.random()*0.30)/0.26,
+               -d.vx*0.3*4+e[0]*2, -d.vy*0.15*4, -d.vz*0.3*4+e[2]*2, 0.2, 2.5, true); }
+}
+// COLONNE (monocoups 30 mm « colonne bleu à citron », « kamuro à cli. blanc », « kamuro à œuf de
+// dragon » 506071000-506078000) : pot à feu HAUT et ÉTROIT (~28 m) dont les billes CHANGENT DE
+// COULEUR à mi-course (A -> B, fondu 0,1 s), puis finissent selon la référence : clignotant blanc
+// (colonneFin 'cli') ou crépitement œuf de dragon ('oeuf').
+function behaveColonne(d,A,dt,ctx){
+  const C=ctx.cfg.colors||[]; if (C.length<2) return;
+  if (d._sw===undefined) d._sw=0.40+Math.random()*0.15;
+  if (ctx.cfg.colonneFin==='cli' && A>0.62) d._cli=true;
+  if (A<d._sw) return;
+  const f=Math.min(1,(A-d._sw)/0.10);
+  if (!d._mix) d._mix=new THREE.Color();
+  d._mix.setRGB(C[0].r+(C[1].r-C[0].r)*f, C[0].g+(C[1].g-C[0].g)*f, C[0].b+(C[1].b-C[0].b)*f); d.coreColor=d._mix;
+  if (ctx.cfg.colonneFin==='oeuf' && !d.crackle && A>0.70){ d.crackle=true; d.crackleAt=d.age; d.eggSplode=true; d.isCore=true; }
+}
+function colonneFn(d,A){ return d._cli ? cliFn(d,A) : null; }
+// BENGALE / LANCE / TORCHE (feu fixe au sol, 60 s) : flamme colorée qui VACILLE sur place, fumée
+// de sa couleur. (gerbe.flare : billes émises sur place, sans vitesse)
+function flareFn(d){ return { intenMul: 0.55+0.9*Math.random() }; }
+// CASCADE + CERCLE (575554000 « centre cascade cercle multicolore ») : les gouttes de cascade
+// (comp 0, invisibles — seule la pointe du sillage se voit) + un CERCLE de 24 étoiles de couleurs
+// mêlées (comp 1) dans un plan face public.
+function distCascadeRing(i,n,rnd){
+  const nR=24;
+  if (i<n-nR){ const d=distCascade(i,n-nR,rnd); return {dx:d.dx,dy:d.dy,dz:d.dz,spMul:d.spMul,comp:0}; }
+  const a=((i-(n-nR))/nR)*6.283+(rnd()-0.5)*0.12; return {dx:Math.cos(a), dy:Math.sin(a)*0.98, dz:(rnd()-0.5)*0.08, spMul:1.0, comp:1};
+}
+function cascadeRingFn(d){ return d.comp===0 ? {intenMul:0} : null; }
+// TROIS CERCLES + PISTIL (« three rings w/ green strobe pistil », 150 mm) : 3 anneaux de 20
+// étoiles dans 3 plans aléatoires (rayons 0,65 / 0,85 / 1,0) + pistil scintillant (comp 1).
+let _r3P=null;
+function distRings3(i,n,rnd){
+  if (i===0){ _r3P=[0,1,2].map(()=>{ const N=vrand(rnd); let U=cross(N,[0,1,0]); if(len2(U)<0.01)U=cross(N,[1,0,0]); U=norm(U); return {U, V:norm(cross(N,U))}; }); }
+  if (i<60){ const k=(i/20)|0, a=((i%20)/20)*6.283+(rnd()-0.5)*0.1, P=_r3P[k], r=[0.65,0.85,1.0][k];
+    return {dx:(P.U[0]*Math.cos(a)+P.V[0]*Math.sin(a)), dy:(P.U[1]*Math.cos(a)+P.V[1]*Math.sin(a)), dz:(P.U[2]*Math.cos(a)+P.V[2]*Math.sin(a)), spMul:r, comp:0}; }
+  const d=distFibonacci(i-60,Math.max(1,n-60),rnd); return {dx:d.dx,dy:d.dy,dz:d.dz,spMul:0.35,comp:1};
+}
+function rings3Fn(d,A,dt){ return d.comp===1 ? scintFn(d) : null; }
+// BOMBETTE CLI. (compacts « pot à feu et bombette cli. blanc », « bombettes rouge et cli. blanc ») :
+// mini pivoine dont chaque étoile clignote (recette B212 à l'échelle 30 mm).
+// (les autres bombettes — crackling, palme, œuf, kamuro à pointes — sont des réglages de leurs
+//  grands frères à l'échelle 30 mm, cf table)
+// ============================================================================
 // TABLE DES EFFETS (clé absente -> BASE = profil pivoine)
 // ============================================================================
 const CAL_SCALE = { 10:0.22, 20:0.36, 30:0.50, 40:0.58, 49:0.66, 50:0.67, 75:1.0, 100:1.44, 125:1.87, 150:2.30, 200:2.58 };   // 30 mm ajouté B233 (bombettes de compact) ; 10/20/40/49 ajoutés B351 (chandelles romaines et monocoups)
@@ -1340,7 +1462,7 @@ const STAR_SCALE = 1.0;   // taille globale des étoiles (user 2026-07-02 : 1.2 
 function shellLights(shells, max=8){   // B389 : sources de lumière des bombes (fumée, décor) — module, réutilisé par le simulateur de site 3D
   const out=[];
   for (const s of shells){ if (s.dead) continue;
-    if (s.light) out.push({ x:s.light.x, y:s.light.y, z:s.light.z, r:s.light.r, g:s.light.g, b:s.light.b, own:s._sid, selfW:0 });
+    if (s.light) out.push({ x:s.light.x, y:s.light.y, z:s.light.z, r:s.light.r, g:s.light.g, b:s.light.b, own:s._sid, selfW: s.gerbeLongue ? 0.012 : 0 });   // B391 : une fontaine éclaire (faiblement) son propre panache
     if (s.muLight>0.5) out.push({ x:s.ox, y:1.2*(s.muzzleScale||1), z:s.oz, r:s.muLight*0.53, g:s.muLight*0.33, b:s.muLight*0.14 });
     if (s.breakLight>5) out.push({ x:s.bx, y:s.cfg.apex, z:s.bz, r:s.breakLight*0.40, g:s.breakLight*0.34, b:s.breakLight*0.26, own:s._sid, selfW:0.3 }); }
   const k=TRAIL_LIGHT_K;
@@ -1801,6 +1923,135 @@ const EFFECTS = {
   saluteMulti: { apex:77, heat:false, stars:5, nMax:5, starSize:1.1, lifeBase75:2.5, lifeJitter:0.05, speedMul:0.35, speedJit:0.15, gravStar:0.45,   // « bombe 75 mm CYLINDRIQUE espagnole MULTI marron d'air » (77 m, B160 user) : vie porteur 2.5 > détonation max 2.2 (sinon un marron mourait sans claquer)
     flashMini:true,                                                                                                                                   // break = mini flash + les 100 grains de riz universels (plus l'override orange fusionné)
     color:new THREE.Color(0.30,0.32,0.36), dist:distMarron, randomAxis:true, behave:behaveMarron },                                                   // les 5 MARRONS sont DU MÊME CÔTÉ de la bombe -> l'explosion les pousse TOUS dans la même direction (cône serré, orientation aléatoire par tir) ; invisibles ; 1,5 s puis détonations aléatoires dans 0,5 s
+
+  // === B391 — ARCHÉTYPES AJOUTÉS POUR COUVRIR LE CATALOGUE (user : « liste-les, crée-les ») ===
+  // DAHLIA PUR (575578000-575587000 75 mm 95 m, 100 mm « purple dhalia », 125 mm « tangerine
+  // dahlia w/ silver tail ») : PEU d'étoiles, GROSSES, qui vont LOIN et brûlent longtemps (vidéos
+  // K7jCppP90hY…) — l'enveloppe du dahlia centre cli. (B214) SANS pistil. Couleur par référence.
+  dahlia: { apex:95, heat:false, pureColor:true, stars:32, starSize:3.8, speedMul:1.7, speedJit:0.06,
+            gravStar:0.55, dragStar:0.5, lifeBase75:2.6, lifeJitter:0.12, shrink:1.0, shrinkPow:2.2, color:WHITE,
+            trailing:{emitUntil:0.6, period:0.012, grain:1.1, gF:0.2, lifeMul:0.8, spark:true, jit:0.3, bright:0.7} },   // grosses étoiles-comètes : courte queue de leur couleur à l'ouverture
+  // PIVOINE À PISTIL (« bombe pivoine <c> centre <c2> », « <c> peony w/ <c2> pistil », 18 réfs) :
+  // pivoine + petit cœur rond d'une autre couleur (plus petites étoiles, rayon ~45 %, un peu plus
+  // court). Variantes : pistil CLIGNOTANT (strobe/cli), pistil CRÉPITANT (glitter).
+  peonyPistil:    { apex:95, heat:false, pureColor:true, stars:104, dist:distPeonyPistil, compSize:{1:1.6}, compLife:{1:0.85}, colors:[RED,SILVER] },
+  peonyPistilCli: { apex:95, heat:false, pureColor:true, stars:104, dist:distPeonyPistil, compSize:{1:1.6}, compLife:{1:0.95}, onStar:dahliaCliFn, colors:[RED,WHITE] },
+  // EXT. KAMURO CENTRE <couleur> (« bombe 75 mm extérieur kamuro centre violet/vert/… », 9 réfs) :
+  // le kamuro centre cli. blanc (B218) avec un pistil de COULEUR fixe (2 lobes) au lieu du cli.
+  kamuroPistil: { apex:95, heat:false, pureColor:true, stars:104, starSize:0.9, speedMul:0.8,
+             gravStar:0.25, dragStar:0.25, lifeBase75:2.7, lifeJitter:0.28, restExtra:4,
+             dist:distKamuroCli, compLife:{1:0.55}, compSize:{1:1.6}, trailComps:[0], colors:[DIMGOLD, PURP],
+             trailing:{emitUntil:0.95, period:0.008, grain:1.4, gF:0.13, lifeMul:8.5, color:COPPER, spark:true, jit:0.22} },
+  // MOITIÉ-MOITIÉ CENTRE CLI. BLANC (510xxx « moitié citron moitié bleu centre cli. blanc », 7 réfs
+  // 100 mm 122 m) : la demi-demi (coupe lisible B132) + pistil cli. blanc en 2 lobes (B215), sans
+  // bascule de couleur.
+  halfHalfCli: { apex:122, cal:100, heat:false, pureColor:true, stars:120, splitFacing:true, gravStar:0.6, lifeBase75:1.55, lifeJitter:0.08,
+             dist:distHalfSwapCli, onStar:cli2Fn, compLife:{2:1.3}, compSize:{2:1.6}, colors:[YEL, BLU, WHITE] },
+  // CENTRE ŒUF DE DRAGON PALME <c> (575xxx « bombe 75 mm centre oeuf de dragon palme kamuro/violet »,
+  // 8 réfs 95 m) : la palme (frondes à longue queue or) + un cœur ŒUF DE DRAGON qui crépite 0,5-1,1 s
+  // après l'ouverture.
+  palmEgg: { apex:95, risingTail:'gold', stars:15, dist:distFibonacci, heat:false, color:DIMGOLD, onStar:glitterFn, gravStar:1.0, dragStar:0.6,
+          lifeBase75:2.8, starSize:3.6, trailing:{emitUntil:0.97, period:0.006, grain:1.3, gF:0.45, lifeMul:9.0, color:GOLD},
+          core:{ stars:26, radiusMul:0.32, color:GOLD, eggSplode:true, crackleAt:0.5, jitter:0.6 } },
+  // TRAÇANTE TRONC BLANC 125 mm (512xxx « bombe 125 mm traçante <c> tronc blanc », 21 réfs 140 m) :
+  // la traçante (B208) en 125 + TRONC = queue de fusée à la montée (B232), traîne argentée.
+  tracerTrunk: { apex:140, cal:125, heat:false, pureColor:true, stars:90, starSize:2.0, lifeBase75:1.5, lifeJitter:0.10, speedMul:1.60, gravStar:0.7, dragStar:0.55,
+            trunk:true, colorPairs:[[RED],[GRN],[BLU],[YEL],[new THREE.Color(1.0,0.45,0.08)],[PINK],[PURP],[CYAN],[WHITE]],
+            trailing:{emitUntil:0.97, period:0.010, grain:0.9, gF:0.13, lifeMul:2.8, color:COPPER, fixedColor:true, spark:true, jit:0.16, bright:0.85} },
+  // FARFALLE (marguerite cylindrique 100 mm) — cf makeDistFarfalle. Pièces argentées (traîne courte
+  // argent), pistil de couleur sur la variante « <c> cylindrique » (farfallePistil).
+  farfalle: { apex:116, cal:100, heat:false, pureColor:true, stars:44, starSize:1.5, speedMul:2.3, speedJit:0.15,
+            gravStar:0.5, dragStar:0.45, lifeBase75:1.9, lifeJitter:0.20, noFlash:false, restExtra:1,
+            dist:makeDistFarfalle(0), behave:behaveFarfalle, colors:[WARMSILVER],
+            trailing:{emitUntil:0.9, period:0.012, grain:0.7, gF:0.2, lifeMul:0.9, color:WARMSILVER, fixedColor:true, spark:true, jit:0.3, bright:0.8} },
+  farfallePistil: { apex:116, cal:100, heat:false, pureColor:true, stars:60, starSize:1.5, speedMul:2.3, speedJit:0.15,
+            gravStar:0.5, dragStar:0.45, lifeBase75:1.9, lifeJitter:0.20, restExtra:1, compSize:{1:1.7}, compLife:{1:0.8}, trailComps:[0],
+            dist:makeDistFarfalle(16), behave:behaveFarfalle, colors:[WARMSILVER, RED],
+            trailing:{emitUntil:0.9, period:0.012, grain:0.7, gF:0.2, lifeMul:0.9, color:WARMSILVER, fixedColor:true, spark:true, jit:0.3, bright:0.8} },
+  // MULTIBOMBE 150 mm — cf behaveMultibombe. colors = [porteuses argent, étoiles des sous-éclats].
+  multibombe: { apex:150, cal:150, heat:false, pureColor:true, stars:6, nMax:6+6*36, subStars:34, starSize:1.6, splitStarSize:2.1, speedMul:1.1, speedJit:0.12,
+            gravStar:0.6, dragStar:0.45, lifeBase75:1.3, lifeJitter:0.08, restExtra:2, riseTime:3.1,
+            behave:behaveMultibombe, trailComps:[0], colors:[WARMSILVER, RED],
+            trailing:{emitUntil:0.97, period:0.006, grain:1.0, gF:0.13, lifeMul:2.2, color:WARMSILVER, fixedColor:true, spark:true, jit:0.2, bright:0.9} },
+  multibombeMix: { apex:150, cal:150, heat:false, pureColor:true, stars:6, nMax:6+6*36, subStars:34, starSize:1.6, splitStarSize:2.1, speedMul:1.1, speedJit:0.12,
+            gravStar:0.6, dragStar:0.45, lifeBase75:1.3, lifeJitter:0.08, restExtra:2, riseTime:3.1, assorted:[PINK,CYAN,YEL,GRN,PURP,RED],
+            behave:behaveMultibombe, trailComps:[0], colors:[WARMSILVER, WHITE],
+            trailing:{emitUntil:0.97, period:0.006, grain:1.0, gF:0.13, lifeMul:2.2, color:WARMSILVER, fixedColor:true, spark:true, jit:0.2, bright:0.9} },
+  // BOMBE TITANE À ÉTOILES (« bombe titane avec étoiles vertes », feux automatiques Prévot) :
+  // pivoine 30 mm de couleur + ÉCLAIR BLANC du titane à l'ouverture et grains argent qui crépitent
+  // ~0,5 s (recette validée du simulateur de site 3D, B390).
+  titane: { apex:39, cal:30, heat:false, pureColor:true, stars:60, starSize:1.3, speedMul:0.80, speedJit:0.08, gravStar:0.6, dragStar:0.6,
+            lifeBase75:2.7, lifeJitter:0.15, riseLean:2.5, riseTrail:false, headSize:0.8, color:GRN, flashBig:true, risingTail:'silver',
+            burstSparks:{ n:90, sp:3.2, grain:1.0, color:new THREE.Color(1.4,1.4,1.5) } },
+  // SIFFLET — cf behaveSifflet (1 pièce, part du tube, pas de montée visible : apex 3 m).
+  sifflet: { apex:3, cal:20, heat:false, pureColor:true, stars:1, starSize:1.2, lifeBase75:5.0, lifeJitter:0.25, speedMul:0.02, riseLean:1,
+            riseTime:0.3, riseTrail:false, headSize:0.6, noFlash:true, burstSparks:false, restExtra:0.5,
+            color:WARMSILVER, dist:distTourb, behave:behaveSifflet },
+  // POISSONS 30 mm (compacts « poissons rouge/vert/argent » 500021000-500023000) : le poisson
+  // (fish) à l'échelle bombette — nuée de petites pièces qui nagent au hasard, traîne fine.
+  fishBomb: { apex:25, cal:30, heat:false, pureColor:true, stars:30, starSize:1.1, lifeBase75:2.0, lifeJitter:0.2, gravStar:0.20, dragStar:0.30, speedMul:0.9,
+            riseLean:2.5, riseTrail:false, headSize:0.7, noFlash:true, burstSparks:false,
+            color:RED, dist:distFish, behave:behaveFish, trailing:{emitUntil:0.7,period:0.02,grain:0.6,gF:0.3,lifeMul:0.7} },
+  // COLONNE — cf behaveColonne (pot à feu haut et étroit, bascule de couleur). colors=[A,B].
+  colonne: { cal:30, heat:false, pureColor:true, starSize:1.2, stars:70, nMax:70, gravStar:1.0, dragStar:0.21, shrink:1.0, shrinkPow:1.6, lifeBase75:1.9, lifeJitter:0.12,
+            colors:[BLU,YEL], behave:behaveColonne, onStar:colonneFn, gerbe:{ dur:0.25, cometRate:240, cone:0.045, speedMul:2.5 } },
+  // BENGALE / LANCE / TORCHE (bengales françaises 100021000…, lances décor) : flamme fixe.
+  bengale: { cal:30, heat:false, pureColor:true, starSize:2.0, stars:400, nMax:400, gravStar:0.0, dragStar:3.0, lifeBase75:0.55, lifeJitter:0.3,
+            color:RED, onStar:flareFn, noFlash:true, burstSparks:false, airMin:3, airMul:0.45,   // flamme SATURÉE : peu de billes empilées (sinon cœur blanc), lueur courte
+            gerbe:{ dur:60, cometRate:14, cone:0.3, speedMul:0.06, flare:true, tint:0.5 } },
+  // FUMIGÈNE (monocoups « fumigène rouge/bleu ciel/… », fumigènes à goupille, jets fumigènes
+  // théâtre) : effet DE JOUR — fumée dense de la couleur, qui monte et dérive. (gerbe.fumee)
+  fumee: { cal:30, heat:false, stars:1, nMax:1, lifeBase75:0.01, noFlash:true, burstSparks:false, color:WHITE, airMul:0,
+            gerbe:{ dur:20, cometRate:0, cone:0, speedMul:0, fumee:{ h:1.5, rate:10, s0:2.0, s1:14, life:14, vy:1.1 } } },   // panache qui MONTE (~1 m/s) et s'étale (14 m) avant de s'effacer
+  // FONTAINE / VOLCAN / GERBE / GIRANDOLE : jet de sol continu (hauteur et durée par référence via
+  // opts.gerbe). Étincelles fines argent/or qui retombent ; volcan = + étoiles de couleur ; gerbe
+  // titane = jet bref très dense ; girandole = jets qui TOURNENT (gerbe.spin).
+  fontaine: { cal:30, heat:false, pureColor:true, starSize:0.75, stars:900, nMax:900, gravStar:1.0, dragStar:0.25, shrink:1.0, lifeBase75:1.1, lifeJitter:0.35,
+            color:WARMSILVER, noFlash:true, burstSparks:false, onStar:glitterFn, airMin:5, airMul:0.6,
+            trailing:{emitUntil:0.9, period:0.012, grain:0.55, gF:0.3, lifeMul:0.6, color:WARMSILVER, fixedColor:true, spark:true, jit:0.25, bright:0.7},
+            gerbe:{ dur:30, cometRate:110, cone:0.09, speedMul:0.33 } },
+  girandole: { cal:30, heat:false, pureColor:true, starSize:0.75, stars:900, nMax:900, gravStar:1.0, dragStar:0.25, shrink:1.0, lifeBase75:1.0, lifeJitter:0.35,
+            color:WARMSILVER, noFlash:true, burstSparks:false, onStar:glitterFn, airMin:5, airMul:0.6,
+            trailing:{emitUntil:0.9, period:0.012, grain:0.55, gF:0.3, lifeMul:0.6, color:WARMSILVER, fixedColor:true, spark:true, jit:0.25, bright:0.7},
+            gerbe:{ dur:40, cometRate:160, cone:0.06, speedMul:0.45, spin:1.6, jets:8, y0:2.5 } },
+  // CASCADE DE JETS (« cascade 10 m 24 jets 20 mm argent pointes rouge monté sur ficelle ») :
+  // rideau de jets argent TOURNÉS VERS LE BAS, répartis sur une ligne, pointes rouges.
+  cascadeLigne: { cal:20, heat:false, pureColor:true, starSize:0.7, stars:1400, nMax:1400, gravStar:1.0, dragStar:0.35, shrink:1.0, lifeBase75:1.0, lifeJitter:0.3,
+            colors:[WARMSILVER, RED], behave:behaveColonne, noFlash:true, burstSparks:false, airMin:6, airMul:0.5,
+            trailing:{emitUntil:0.9, period:0.012, grain:0.5, gF:0.3, lifeMul:0.6, color:WARMSILVER, fixedColor:true, spark:true, jit:0.25, bright:0.7},
+            gerbe:{ dur:30, cometRate:260, cone:0.08, speedMul:0.30, down:true, line:10, jets:24, y0:4 } },
+  // CASCADE + CERCLE — cf distCascadeRing.
+  cascadeRing: { apex:90, heat:false, pureColor:true, stars:54, starSize:2.0, lifeBase75:2.2, lifeJitter:0.2, speedJit:0.2, gravStar:1.0, dragStar:0.55, restExtra:3, noFlash:true, burstSparks:false,
+            dist:distCascadeRing, onStar:cascadeRingFn, trailComps:[0], compLife:{0:2.5}, assorted:null,
+            colors:[GOLD, PINK], trailing:{emitUntil:0.96, period:0.004, grain:1.05, gF:0.37, lifeMul:12, color:EMBER, spark:true, jit:0.5, bright:0.5, fall:0.9, flatLife:true, rampIn:true, grainRampIn:0.18} },
+  // TROIS CERCLES + PISTIL SCINTILLANT (150 mm) — cf distRings3.
+  rings3: { apex:165, cal:150, heat:false, pureColor:true, stars:78, starSize:2.3, speedMul:1.9, speedJit:0.04, gravStar:0.5, dragStar:0.5, lifeBase75:1.6, lifeJitter:0.08,
+            dist:distRings3, onStar:rings3Fn, compSize:{1:1.9}, colors:[SILVER, GRN] },
+  // MOSAÏQUE CRACKLING (compact « z mosaïque crackling ») : la mosaïque dont les étoiles divisées
+  // CRÉPITENT (chacune claque en petite boule 0,3-0,8 s après la division).
+  mosaicCrackle: { apex:100, heat:false, stars:7, nMax:36, coreSplit:4, starSize:5.3, splitStarSize:2.6, lifeBase75:3.0, color:GOLD, speedMul:1.8,
+            dist:distMosaic, behave:behaveMosaic, splitCrackle:{ delay:0.3, jitter:0.5 }, crackleStars:{ delay:1e9, jitter:0, snaps:3 },
+            trailing:{emitUntil:0.9, period:0.012, grain:1.2, gF:0.45, lifeMul:1.9, color:GOLD} },
+  // CHANDELLE DÉTO (« chandelle 20 mm 7 tirs déto (avec flash) ») : comète qui monte puis CLAQUE
+  // (marron) au sommet — éclair bref, pas d'étoile.
+  candleDeto: { apex:28, cal:20, heat:false, stars:4, starSize:1.0, lifeBase75:0.2, color:SILVER, dist:distSalute, flashBig:true, hideStars:true,
+            riseLean:1, headSize:1.4, riseColor:new THREE.Color(1.5,1.15,0.72), risingTail:'silver' },
+  // BOMBETTES 30 mm (compacts) : déclinaisons à l'échelle bombette des grands effets.
+  bombEgg: { apex:42, cal:30, heat:false, color:GOLD, stars:40, lifeBase75:2.0, starSize:0.5, arrow:true, speedMul:0.7, gravStar:0.5,
+            riseLean:2.5, riseTrail:false, headSize:0.7, riseColor:new THREE.Color(0.55,0.40,0.20), noFlash:true, burstSparks:false,
+            trailing:{emitUntil:0.95, period:0.013, grain:0.8, gF:0.12, lifeMul:1.6, color:EGGGOLD},
+            core:{ stars:14, radiusMul:0.30, color:GOLD, crackleAt:0.45, jitter:0.15 }, crackleStars:{ delay:1.0, jitter:0.6, snaps:4 } },
+  bombCrackle: { apex:42, cal:30, heat:false, color:CKGRN, pureColor:true, stars:45, starSize:0.9, speedMul:0.7, riseLean:2.5, riseTrail:false, headSize:0.7,
+            riseColor:new THREE.Color(0.55,0.40,0.20), noFlash:true, burstSparks:false,
+            core:{ stars:12, radiusMul:0.42, color:GOLD, eggSplode:true, crackleAt:0.8, jitter:0.6 } },
+  bombCli: { apex:42, cal:30, heat:false, pureColor:true, onStar:cliFn, lifeBase75:2.0, lifeJitter:0.12, gravStar:0.6, stars:40, starSize:0.9, speedMul:0.7,
+            riseLean:2.5, riseTrail:false, headSize:0.7, riseColor:new THREE.Color(0.55,0.40,0.20), noFlash:true, burstSparks:false, color:WHITE },
+  bombPalm: { apex:42, cal:30, heat:false, color:WHITE, pureColor:true, risingTail:'gold', stars:9, dist:distFibonacci, onStar:glitterFn, gravStar:1.0, dragStar:0.6,
+            lifeBase75:2.0, starSize:1.7, speedMul:0.75, riseLean:2.5, headSize:0.9, noFlash:true, burstSparks:false,
+            trailing:{emitUntil:0.97, period:0.006, grain:0.9, gF:0.45, lifeMul:5.0, color:GOLD} },
+  bombKamuroTips: { apex:42, cal:30, heat:false, pureColor:true, gravStar:0.4, dragStar:0.25, lifeBase75:2.2, lifeJitter:0.28, restExtra:2, stars:22, nMax:22,
+            starSize:1.0, speedMul:0.55, riseLean:2.5, riseTrail:false, headSize:0.7, riseColor:new THREE.Color(0.55,0.40,0.20), noFlash:true, burstSparks:false,
+            colors:[RED], trailing:{emitUntil:0.95, period:0.008, grain:1.0, gF:0.13, lifeMul:8, color:COPPER, spark:true, jit:0.22} },
 };
 
 export const LABELS = { peony:'pivoine', chrysanthemum:'chrysanthème', willow:'saule (kamuro)', willowLong50:'kamuro longue durée 50 mm', willowLong150:'kamuro longue durée 150 mm', willowTrunk:'à tronc saule kamuro', willowStrobe:'saule or pointes scintillant', willowTips:'saule or pointes', willowTips100:'saule or pointes 100 mm', comet:'comète',
@@ -1814,7 +2065,15 @@ export const LABELS = { peony:'pivoine', chrysanthemum:'chrysanthème', willow:'
   botte7egg:'botte de 7 chandelles 20 tirs œuf de dragon', botte3egg:'botte de 3 chandelles 20 tirs œuf de dragon',
   ch30pot:'chandelle 30 mm 8 tirs pot à feu + comète traçante',
   ch30potk:'chandelle 30 mm 8 tirs pot à feu kamuro + comète traçante kamuro',
-  ch30qc:'chandelle 30 mm 8 tirs comète traçante + queue de cheval pointe' };
+  ch30qc:'chandelle 30 mm 8 tirs comète traçante + queue de cheval pointe',
+  // B391 — catalogue complet
+  dahlia:'dahlia', peonyPistil:'pivoine à pistil', peonyPistilCli:'pivoine pistil clignotant', kamuroPistil:'ext. kamuro centre couleur',
+  halfHalfCli:'moitié-moitié centre cli. blanc', palmEgg:'centre œuf de dragon palme', tracerTrunk:'traçante tronc blanc 125 mm',
+  farfalle:'marguerite cylindrique (farfalle)', farfallePistil:'marguerite cylindrique à pistil', multibombe:'multibombe 150 mm', multibombeMix:'multibombe multicolore 150 mm',
+  titane:'bombe titane à étoiles', sifflet:'sifflet (tournant)', fishBomb:'poissons 30 mm', colonne:'colonne (monocoup)', bengale:'bengale / lance',
+  fumee:'fumigène', fontaine:'fontaine', girandole:'girandole', cascadeLigne:'cascade de jets (ligne)', cascadeRing:'centre cascade + cercle',
+  rings3:'trois cercles + pistil', mosaicCrackle:'mosaïque crackling', candleDeto:'chandelle déto', bombEgg:'bombette œuf de dragon', bombCrackle:'bombette crackling',
+  bombCli:'bombette cli.', bombPalm:'bombette palme', bombKamuroTips:'bombette kamuro à pointes' };
 
 // ============================================================================
 // SHELL
@@ -1823,6 +2082,9 @@ class Shell {
   constructor(arch, ox, oz, cal, opts){
     this.arch = EFFECTS[arch] ? arch : 'peony';
     this.cfg = Object.assign({}, BASE, EFFECTS[this.arch]);
+    // B391 (catalogue) : réglages PAR TIR par-dessus l'archétype (apex, couleurs, montée, gerbe…)
+    if (opts && opts.cfg){ for (const k in opts.cfg){ const v=opts.cfg[k];
+      this.cfg[k] = (v && typeof v==='object' && !v.isColor && !Array.isArray(v) && this.cfg[k] && typeof this.cfg[k]==='object') ? Object.assign({}, this.cfg[k], v) : v; } }
     this.cfg.apex *= APEX_SCALE;   // abaisse TOUTES les hauteurs d'un coup (cfg est une copie -> safe)
     if (opts && opts.apexMul) this.cfg.apex *= opts.apexMul;   // B351 : la chandelle « s'allonge » — les derniers coups montent plus haut que les premiers
     if (opts && opts.color) this.cfg.color = opts.color;   // override couleur (ex "crackling aqua", "mosaïque rouge")
@@ -1889,6 +2151,7 @@ class Shell {
 
     if (this.cfg.gerbe){               // POT À FEU : pas de montée ni burst, EXPULSION au sol
       this.phase='gerbe'; this.gerbeLeft=this.cfg.gerbe.dur;
+      this.gerbeLongue = this.cfg.gerbe.dur>1;   // B391 : effet de sol LONG (fontaine, bengale…) ≠ pot à feu (0,1 s) -> fumée budgétée, lueur d'air réduite
       this.emitAcc=0; this.glowAcc=0; this.head=null;
       this.muzzleScale=this.cal/75; this.gerbeFlashDone=false;   // la CHASSE fait un vrai flash de gueule (B144)
     } else {
@@ -1959,14 +2222,24 @@ class Shell {
       trailing:!!trailing, since:0, lastX:this.bx, lastY:this.cfg.apex, lastZ:this.bz };
   }
 
+  // B391 : les effets de SOL LONGS (fontaine 30 s, bengale 60 s, cascade de jets) émettent bien plus
+  // d'étoiles que nMax au total — on RECYCLE les cases des étoiles mortes (curseur tournant).
+  _caseLibre(){
+    if (this.nAlive<this.nMax) return this.nAlive++;
+    const n=this.nAlive; let k=this._recyc||0;
+    for (let t=0;t<n;t++){ const i=(k+t)%n, d=this.data[i]; if (!d || d.age>=d.life){ this._recyc=(i+1)%n; return i; } }
+    return -1;
+  }
   addStar(px,py,pz, vx,vy,vz, life, comp, trailing, coreColor){
-    if (this.nAlive>=this.nMax) return; const i=this.nAlive++;
+    const i=this._caseLibre(); if (i<0) return;
+    this.vel[i*3]=this.vel[i*3+1]=this.vel[i*3+2]=0; this.col[i*3]=this.col[i*3+1]=this.col[i*3+2]=0;
     this.pos[i*3]=px; this.pos[i*3+1]=py; this.pos[i*3+2]=pz;
     this.size[i]=(this.cfg.splitStarSize||this.cfg.starSize)*STAR_SCALE;   // étoiles issues d'une division = + petites
     this.geo.attributes.size.needsUpdate=true;
     const s=this._newStar(vx,vy,vz, comp, trailing);
     s.life=life; s._i=i; s._split=true; s.lastX=px; s.lastY=py; s.lastZ=pz;
     if (coreColor) s.coreColor=coreColor;   // les secondaires héritent de la couleur de leur comète (mosaïque assortie)
+    if (this.cfg.splitCrackle){ s.crackle=true; s.crackleAt=this.cfg.splitCrackle.delay+Math.random()*this.cfg.splitCrackle.jitter; }   // B391 (mosaïque crackling) : les étoiles divisées claquent à leur tour
     this.data[i]=s;
   }
 
@@ -2155,11 +2428,17 @@ class Shell {
   // laisse des ÉTINCELLES (spark) puis s'éteint.
   _emitGerbeComet(){
     const g=this.cfg.gerbe, br=this.cfg.burstRadius;
-    const A0=Math.random()*Math.PI*2, cone=Math.random()*g.cone, sc=Math.sin(cone), cc=Math.cos(cone);
+    // B391 : variantes de sol — jets qui TOURNENT (girandole : spin tr/s, jets répartis), rideau
+    // sur une LIGNE tourné vers le BAS (cascade de jets), FLAMME fixe (bengale : vitesse ~0).
+    let A0=Math.random()*Math.PI*2, cone=Math.random()*g.cone;
+    if (g.spin){ const j=(Math.random()*(g.jets||1))|0; A0=this.age*g.spin*6.283+j*6.283/(g.jets||1); cone=0.9+Math.random()*0.25; }   // jets quasi horizontaux qui tournent
+    const sc=Math.sin(cone), cc=Math.cos(cone)*(g.down?-1:1);
     const sp=br*(0.72+0.58*Math.pow(Math.random(),1.5))*g.speedMul;
-    const life=1.0+Math.random()*0.5;
+    const life=g.flare ? 0.35+Math.random()*0.5 : 1.0+Math.random()*0.5;
+    let x0=this.ox, z0=this.oz, y0=(g.y0!=null?g.y0:1)+(g.flare?0.2:Math.random()*0.5);
+    if (g.line){ const j=(Math.random()*(g.jets||1))|0; x0+=(j/Math.max(1,(g.jets||1)-1)-0.5)*g.line; }
     this.points.visible=true;
-    this.addStar(this.ox+(Math.random()-0.5)*0.075, 1+Math.random()*0.5, this.oz+(Math.random()-0.5)*0.075,
+    this.addStar(x0+(Math.random()-0.5)*(g.flare?0.25:0.075), y0, z0+(Math.random()-0.5)*(g.flare?0.25:0.075),
       Math.cos(A0)*sc*sp, cc*sp, Math.sin(A0)*sc*sp, life, 0, this.cfg.trailing);
   }
 
@@ -2280,7 +2559,22 @@ class Shell {
         for (let k=0;k<10;k++) this._emitMuzzleFlame(); }
       if (this.gerbeLeft > 0){
         this.emitAcc += this.cfg.gerbe.cometRate*dt;                  // tout le « bouchon » part pendant dur=0,1 s
-        while (this.emitAcc>=1){ this.emitAcc-=1; this._emitGerbeComet(); } }
+        while (this.emitAcc>=1){ this.emitAcc-=1; this._emitGerbeComet(); }
+        // B391 — FUMIGÈNE (fumée colorée de jour) et BENGALE (fumée de la couleur de la flamme)
+        const gb=this.cfg.gerbe, fm=gb.fumee, c=this.cfg.colors ? this.cfg.colors[0] : this.cfg.color;
+        if (fm || gb.tint){ this.fumAcc=(this.fumAcc||0)+(fm?fm.rate:4)*dt;
+          while (this.fumAcc>=1){ this.fumAcc-=1; const k=fm?1:0.35, t=gb.tint||0.9;
+            spawnSmokePuff(this.ox+(Math.random()-0.5)*0.6*k, (fm?fm.h:1.6)+Math.random()*0.4, this.oz+(Math.random()-0.5)*0.6*k,
+              (fm?fm.s0:1.0), (fm?fm.s1:4.0), (fm?fm.life:6)*(0.8+Math.random()*0.4), fm?1.2:0.5, this._sid||(this._sid=++SHELL_SEQ), 0, false,
+              [c.r*0.12*t, c.g*0.12*t, c.b*0.12*t], fm ? (fm.vy||1.0) : null); } }
+        // PANACHE d'un effet de sol LONG (fontaine, girandole, cascade de jets) : quelques bouffées par
+        // seconde au-dessus de la gerbe (pas une par bille), qui montent et dérivent ; elles sont
+        // faiblement éclairées par l'effet lui-même (selfW dans shellLights) -> plume ambrée discrète.
+        else if (this.gerbeLongue){ this.fumAcc=(this.fumAcc||0)+5*dt;
+          const h=Math.max(2, this.cfg.burstRadius*gb.speedMul*(gb.down?0.5:0.9)), sp=(gb.line||0)*0.5+1.0;
+          while (this.fumAcc>=1){ this.fumAcc-=1;
+            spawnSmokePuff(this.ox+(Math.random()-0.5)*2*sp, (gb.y0!=null?gb.y0:1)+h*(gb.down?-0.3:0.35)+Math.random()*h*0.6, this.oz+(Math.random()-0.5)*1.5,
+              1.5, 7+Math.random()*4, 9+Math.random()*6, 0.28, this._sid||(this._sid=++SHELL_SEQ), 0, false, null, 0.6+Math.random()*0.6); } } }
       if (this.age < 0.35){                                           // le départ ÉCLAIRE le sol un bref instant
         this.glowAcc += 14*dt;
         while (this.glowAcc>=1){ this.glowAcc-=1; const c=this.cfg.color;
@@ -2451,7 +2745,10 @@ class Shell {
       this.col[i*3]=r*inten; this.col[i*3+1]=g*inten; this.col[i*3+2]=b*inten;
       if (inten>0){ aR+=r*inten; aG+=g*inten; aB+=b*inten; aX+=px; aY+=py; aZ+=pz; aN++; }   // B380/B381 : lumière émise (lueur d'air + éclairage du décor)
       // FUMÉE LE LONG DU TRAJET (B381) : l'étoile qui brûle laisse une bouffée toutes les ~0,3 s.
-      if (SMOKE_ON && inten>0 && A<0.85){ d.smk=(d.smk===undefined ? Math.random()*SMOKE_EVERY : d.smk)-dt;
+      // (B391) PAS par étoile pour les effets de SOL (fontaine 30 s × 900 billes au même endroit = des
+      // centaines de bouffées empilées -> boule blanche) : ils ont leur PANACHE budgété (branche gerbe).
+      // Les pots à feu (gerbe de 0,1 s) gardent le comportement B381.
+      if (SMOKE_ON && inten>0 && A<0.85 && !this.gerbeLongue){ d.smk=(d.smk===undefined ? Math.random()*SMOKE_EVERY : d.smk)-dt;
         if (d.smk<=0){ d.smk=SMOKE_EVERY*(0.8+Math.random()*0.4); const k2=this.cal/75;
           spawnSmokePuff(px,py,pz, 1.8*k2, (6+Math.random()*4)*k2, 12+Math.random()*9, 0.45+Math.random()*0.35, this._sid||(this._sid=++SHELL_SEQ)); } }
 
@@ -2531,9 +2828,12 @@ class Shell {
         // ×(1, 0.86, 0.70) : la lumière diffusée par la fumée est CHAUDE — sans ça une bombe blanche/or
         // faisait un voile GRIS (lu comme du brouillard), alors que sur vidéo c'est une lueur ambrée.
         this.air.material.color.setRGB(1-sat+sat*cr, (1-sat+sat*cg)*0.86, (1-sat+sat*cb)*0.70);
-        this.air.material.opacity=Math.min(AIR_MAX*_airQ[0], AIR_K*_airQ[0]*L);
+        // (B391) effets de SOL : cfg.airMul atténue, cfg.airMin remplace le plancher de 14 m (une flamme de
+        // bengale de 1 m n'a pas une lueur de 14 m ; relecture : « boule blanche »). Bombes : inchangé.
+        const aMul=(this.cfg.airMul!=null)?this.cfg.airMul:1, aMin=(this.cfg.airMin!=null)?this.cfg.airMin:14;
+        this.air.material.opacity=Math.min(AIR_MAX*_airQ[0]*aMul, AIR_K*_airQ[0]*aMul*L);
         this.air.position.set(cx, cy, cz);
-        this.air.scale.setScalar(Math.max(14, spread*7.0));
+        this.air.scale.setScalar(Math.max(aMin, spread*7.0));
         this.air.visible=true;
       } else this.air.visible=false;
     }
@@ -2780,9 +3080,30 @@ export class ThreeFireworks {
         pair: va ? [va.c, va.c] : (pairs ? pairs[Math.floor(Math.random()*pairs.length)] : null),   // UNE couleur pour toute la séquence (elle change à chaque boucle)
         apexS:((EFFECTS[def.arch]&&EFFECTS[def.arch].apex)||90)*APEX_SCALE };
       this._hud(va ? def.label+' '+va.n+' — réf '+va.r : def.label);
+    } else if (this.focus==='_catalogue' && this.catalogue){
+      // B391 : RÉFÉRENCE DU CATALOGUE (traduite par catalogue.js) — bombe seule ou SÉQUENCE
+      const ct=this.catalogue, def=ct.def;
+      this._clear(); this.shells=[];
+      if (def.tirs<=1 && !def.mine){ this.current=def.arch;
+        this.shells=[new Shell(def.arch,0,0,ct.cal,Object.assign({}, def.shot))];
+        if (this.onLaunch) this.onLaunch(def.arch, this.shells[0].cal, this.distTo(0,0,0));
+      } else { this.current=def.arch;
+        this.compact={ def, queue:buildCompactQueue(def), i:0, t:0, pair:def.shot&&def.shot.pair||null, shot:def.shot||{}, cal:ct.cal,
+                       apexS:((EFFECTS[def.arch]&&EFFECTS[def.arch].apex)||90)*APEX_SCALE }; }
+      this._hud(ct.label||def.arch);
     } else this.fire(this.focus, this.focusColor);
   }
-  setFocus(arch, color){ if (EFFECTS[arch] || COMPACTS[arch]){
+  // B391 : jouer une référence du CATALOGUE Prévot. `res` = effetPour(...) de catalogue.js.
+  setCatalogue(res){
+    const def = defDepuisCatalogue(res);
+    if (!def) return false;
+    if (this.compact){ this.compact=null; this._clear(); this.shells=[]; }
+    this.catalogue={ def, cal: def.cal, label: (res.designation||'')+(res.type?'  ·  '+res.type:'') };
+    this.focus='_catalogue'; this.restDelay=0;
+    return true;
+  }
+  setFocus(arch, color){ if (arch==='_catalogue' && this.catalogue){ this.focus=arch; return; }
+    if (EFFECTS[arch] || COMPACTS[arch]){
     if (this.compact && arch!==this.focus){ this.compact=null; this._clear(); this.shells=[]; this.restDelay=0; }   // B241 : changer d'effet COUPE la mèche en cours (sinon la séquence continuait jusqu'à 30 s)
     this.focus=arch; if (color!==undefined) this.focusColor=color; } }
   update(dt){
@@ -2792,7 +3113,10 @@ export class ThreeFireworks {
       const c=this.compact; c.t+=dt;
       while (c.i<c.queue.length && c.queue[c.i].t<=c.t){
         const q=c.queue[c.i++];
-        const nsh=new Shell(c.def.arch,0,0,undefined,{lean:[Math.tan(q.a)*c.apexS,0], pair:c.pair||undefined, apexMul:q.apexMul, riseMul:q.riseMul});
+        // B391 (catalogue) : séquence à effets MÊLÉS (feux automatiques) = archétype tiré au sort par
+        // coup dans def.mix ; réglages par tir (couleur, montée, tronc…) dans c.shot.
+        const archQ = c.def.mix ? c.def.mix[(Math.random()*c.def.mix.length)|0] : c.def.arch;
+        const nsh=new Shell(archQ,0,0,c.cal,Object.assign({}, c.shot||{}, {lean:[Math.tan(q.a)*c.apexS,0], pair:c.pair||undefined, apexMul:q.apexMul, riseMul:q.riseMul}));
         this.shells.push(nsh);
         // B325 : le POT À FEU part du même tube, en même temps. B367 : sur les chandelles 30 mm,
         // le pot à feu est de LA COULEUR DE LA RÉFÉRENCE (« pot à feu vert + comète traçante
@@ -2800,7 +3124,7 @@ export class ThreeFireworks {
         // leur couleur propre (mineColored absent).
         if (c.def.mine) this.shells.push(new Shell(c.def.mine,0,0,undefined,
           c.def.mineColored && c.pair ? {pair:c.pair} : {}));
-        if (this.onLaunch) this.onLaunch(c.def.arch, nsh.cal, this.distTo(nsh.ox, 0, nsh.oz));
+        if (this.onLaunch) this.onLaunch(archQ, nsh.cal, this.distTo(nsh.ox, 0, nsh.oz));
       }
       if (c.i>=c.queue.length) this.compact=null;   // mèche finie — le repos/refire reprend quand tout est mort
     }
@@ -2826,6 +3150,84 @@ export class ThreeFireworks {
 // Réglages d'aspect lus par main.js (éclairage du décor) — B381
 export const LOOK = { old: LOOK_OLD, groundLight: !LOOK_OLD && !/[?&]sol=0\b/.test(_QS) };
 
+// ============================================================================
+// B391 — du CATALOGUE au moteur : `res` = effetPour(designation, calibre, infos) de
+// src/render/catalogue.js (archétype + options NOMMÉES : couleur, paire, pointe, montee, tronc,
+// pistil, nautique, gerbe/hauteur/durée… ou une SÉQUENCE `compact`). Rend une définition prête
+// à jouer : { arch, cal, tirs, dur, pattern, rowSize, fanDeg, mine, mineColored, mix, shot:{opts par tir} }.
+// Partagé par PrevoFX web (setCatalogue) et le simulateur de site 3D (feux_auto.js).
+// ============================================================================
+function defDepuisCatalogue(res){
+  if (!res || !res.arch) return null;
+  const o = res.opts || {}, cp = res.compact || null;
+  const archOK = a => (CATALOGUE_NEW && EFFECTS[a]) ? a : null;
+  // archétypes neufs coupés (?catalogue=0) -> rabat sur l'ancien le plus proche
+  const RABAT = { dahlia:'dahliaCli', peonyPistil:'peony', peonyPistilCli:'peony', kamuroPistil:'kamuroCli', halfHalfCli:'halfHalf', palmEgg:'palm', tracerTrunk:'tracer',
+    farfalle:'daisy', farfallePistil:'daisy', multibombe:'peony', multibombeMix:'peony', titane:'peony', sifflet:'spinner', fishBomb:'fish', colonne:'mine', bengale:'mine',
+    fumee:'mine', fontaine:'mine', girandole:'mine', cascadeLigne:'cascade', cascadeRing:'cascade', rings3:'ring', mosaicCrackle:'mosaic', candleDeto:'salute', bombEgg:'dragonEgg',
+    bombCrackle:'crackling', bombCli:'cli', bombPalm:'palm', bombKamuroTips:'bombKamuro', compactMix:'bombRouge', assortiment:'peony' };
+  let arch = res.arch;
+  const shot = {}, cfg = {};
+  // --- couleurs ---
+  const C1 = couleurNom(o.couleur, null);
+  if (arch==='peonyPistil' && o.pistilCli) arch='peonyPistilCli';
+  if (arch==='farfalle' && o.variante==='pistil') arch='farfallePistil';
+  if (arch==='multibombe' && (o.couleur==='multicolore'||o.couleur==='assorti')) arch='multibombeMix';
+  if (!EFFECTS[arch] || !archOK(arch)) arch = RABAT[arch] || (EFFECTS[arch] ? arch : 'peony');
+  const E = EFFECTS[arch] || {};
+  if (o.paire){ const p=[couleurNom(o.paire[0],RED), couleurNom(o.paire[1],WHITE)]; if (E.colors && E.colors.length>2) p.push(E.colors[2]); shot.pair=p; }
+  else if (o.pointe){ if (arch==='willowTips100') shot.pair=[GOLD, couleurNom(o.pointe,SILVER)]; else if (arch==='corolle'||arch==='corolleOr') shot.pair=[E.colorPairs?E.colorPairs[0][0]:SILVER, o.pointe==='multicolore'?'multi':couleurNom(o.pointe,RED)]; else shot.pair=[couleurNom(o.pointe,SILVER)]; }
+  else if (o.pistil){ shot.pair=[E.colors?E.colors[0]:DIMGOLD, couleurNom(o.pistil,PURP)]; }
+  else if (C1){
+    // effets dont colors[0] est la STRUCTURE (argent/or) et colors[1] la couleur de la référence
+    const SECONDE = { farfalle:1, farfallePistil:1, multibombe:1, cascadeRing:1, rings3:1, cascadeLigne:1, kamuroPistil:1 };
+    if (SECONDE[arch] && E.colors) shot.pair = [E.colors[0], C1];
+    else if (E.colorPairs || E.colors) shot.pair = (E.colors && E.colors.length>1) ? [C1].concat(E.colors.slice(1)) : [C1];
+    else shot.color = C1;
+  }
+  if (o.couleur2 && arch==='colonne') shot.pair=[couleurNom(o.couleur,BLU), couleurNom(o.couleur2,YEL)];
+  // --- montée / tronc / nautique ---
+  if (o.montee==='argent') cfg.risingTail='silver'; else if (o.montee==='or'||o.montee==='kamuro'||o.montee==='brocart') cfg.risingTail='gold';
+  else if (o.montee && NOMS_COULEUR[o.montee]){ cfg.riseColor=NOMS_COULEUR[o.montee].clone().multiplyScalar(1.6); cfg.headSize=Math.max(E.headSize||1, 1.6); }
+  if (o.tronc) cfg.trunk=true;
+  if (o.nautique){ cfg.apex=10; cfg.riseTrail=false; cfg.noFlash=false; }
+  if (o.dense && arch==='chrysanthemum') cfg.stars=110;
+  if (o.cli && arch==='mine') cfg.onStar=cliFn;
+  if (o.finalCli && arch==='kamuroCli') cfg.onStar=finalCliFn;
+  if (arch==='colonne' && o.fin) cfg.colonneFin=o.fin;
+  // --- produits de sol : hauteur / durée ---
+  if (arch==='fontaine' || arch==='girandole'){ const h=o.hauteur||5, d=o.duree||30;
+    cfg.gerbe={ speedMul:Math.min(1.2, 0.33*Math.sqrt(h/5)*(h>8?1.08:1)), dur:d, cometRate: d<3 ? 900 : (o.jets?90*o.jets:110)+h*8, jets:o.jets||1 };
+    if (o.etoiles){ cfg.colors=[WARMSILVER, couleurNom(o.etoiles,RED)]; cfg.assorted=null; } }
+  if (arch==='bengale'){ cfg.gerbe={ dur:o.duree||60 }; if (o.cli) cfg.onStar=cliFn; }
+  if (arch==='fumee'){ cfg.gerbe={ dur:o.duree||20, fumee:{ h:o.hauteur||1.5, rate: o.hauteur>5 ? 22 : 14, s0:2.5, s1: o.hauteur>5 ? 14 : 9, life:9 } }; }
+  if (arch==='cascadeLigne'){ cfg.gerbe={ line:o.longueur||10, jets:o.jets||24, dur:o.duree||30 }; }
+  // --- hauteur du catalogue (bombes) : apex = hauteur_m de la fiche quand elle existe ---
+  if (res.hauteur_m && E.apex && !cp && !E.gerbe && !o.nautique) shot.apexMul = res.hauteur_m/E.apex;
+  if (Object.keys(cfg).length) shot.cfg=cfg;
+  // --- séquence ---
+  if (cp){
+    const def = { arch, cal: res.calibre||E.cal||30, tirs:cp.tirs||20, dur:cp.dur||30, pattern:cp.pattern||'droit', rowSize:cp.rowSize||5, fanDeg:cp.fanDeg||25, shot };
+    if (def.pattern==='bande'){ def.pattern='fan'; def.rowSize=def.tirs; def.fanDeg=cp.fanDeg||30; }
+    if (cp.tubes && cp.tubes>1 || cp.pattern==='candle'){ def.pattern='candle'; def.tubes=cp.tubes||1; def.shotsPerTube=cp.shotsPerTube||Math.round(def.tirs/(cp.tubes||1)); }
+    if (cp.mine && EFFECTS[cp.mine]){ def.mine=cp.mine; def.mineColored=!!cp.mineColored; }
+    if (cp.gerbeSeule){ def.pattern = def.pattern==='candle' ? 'droit' : def.pattern; }
+    if (cp.mix) def.mix = cp.mix.filter(a => EFFECTS[a]).map(a => archOK(a) || RABAT[a] || a);
+    if (arch==='compactMix' || arch==='assortiment'){ def.arch = def.mix ? def.mix[0] : 'bombRouge'; if (!def.mix) def.mix=['peony','willow','crackling','strobe','chrysanthemum','palm']; if (arch==='assortiment'){ def.cal=75; def.tirs=5; def.dur=9; def.pattern='droit'; } }
+    if (cp.cli && arch==='candle10') shot.cfg=Object.assign(shot.cfg||{}, { onStar:cliFn });
+    if (cp.crackling && arch==='bombPalm') shot.cfg=Object.assign(shot.cfg||{}, { core:{ stars:10, radiusMul:0.35, color:GOLD, eggSplode:true, crackleAt:0.6, jitter:0.5 } });
+    if (cp.tronc) shot.cfg=Object.assign(shot.cfg||{}, { trunk:true });
+    if (cp.pointe && arch==='bombKamuroTips') shot.pair=[couleurNom(cp.pointe,RED)];
+    if (cp.couleur && !shot.pair && !shot.color){ const c=couleurNom(cp.couleur,null); if (c){ if (E.colorPairs||E.colors) shot.pair=[c].concat(E.colors&&E.colors.length>1?E.colors.slice(1):[]); else shot.color=c; } }
+    if (cp.montee){ const m=cp.montee; const sc=shot.cfg||(shot.cfg={});
+      if (m==='argent') sc.risingTail='silver'; else if (m==='or'||m==='kamuro') sc.risingTail='gold'; else if (m==='tourbillon'){ def.arch='tourbBomb'; } else if (NOMS_COULEUR[m]){ sc.riseColor=NOMS_COULEUR[m].clone().multiplyScalar(1.6); sc.headSize=1.6; } }
+    return def;
+  }
+  // bombe seule : séquence d'UN tir (assortiment = 5 bombes mêlées)
+  if (arch==='assortiment') return { arch:'peony', cal:75, tirs:5, dur:9, pattern:'droit', rowSize:5, fanDeg:25, mix:['peony','willow','crackling','strobe','chrysanthemum','palm'], shot };
+  return { arch, cal: res.calibre||E.cal||75, tirs:1, dur:1, pattern:'droit', rowSize:1, fanDeg:0, shot };
+}
+
 // Exports internes pour le BANC D'APERÇU hors-Cesium (_preview.html) — rendu réel d'un effet
 // pour capture d'écran. N'affecte pas l'app (rien ne les importe en prod).
-export { smoke as __smoke, smokeCol as __smokeCol, smokeSize as __smokeSize, scene as __scene, Shell as __Shell, updateTrails as __updateTrails, updatePuffs as __updatePuffs, __setMarronPop, trail as __trailPool, buildCompactQueue as __buildCompactQueue };
+export { smoke as __smoke, smokeCol as __smokeCol, smokeSize as __smokeSize, scene as __scene, Shell as __Shell, updateTrails as __updateTrails, updatePuffs as __updatePuffs, updateSmoke as __updateSmoke, shellLights as __shellLights, __setMarronPop, trail as __trailPool, buildCompactQueue as __buildCompactQueue, defDepuisCatalogue, NOMS_COULEUR, couleurNom };

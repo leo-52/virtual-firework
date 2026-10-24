@@ -2,7 +2,7 @@
 
 > Document vivant : où on en est, ce qui est fait, ce qui reste, la ligne directrice,
 > les effets et leurs caractéristiques. Tenu à jour au fil des sessions.
-> **Dernière mise à jour : 2026-10-24 (B392 : rendu plus vivant — extinction douce, braise, cœur blanc gardé pour les étoiles vives, grains qui refroidissent ; B390 : simu 3D v144 — halo retiré, surface d'eau avec reflets ; B389 : moteur du simulateur de site 3D régénéré ; B388 : montée 75 mm = 2,5 s ; B387 : montées balistiques ; B386 : marrons sans étincelles ; B385 : marrons d'air ; B384 : chandelles ; B383 : chute réaliste, dispersion 10 % ; B382 : tailles angulaires, iPhone non cramé ; B381 : décor éclairé, ciel, fumée, bloom rond — notation à l'aveugle face à FWsim).**
+> **Dernière mise à jour : 2026-10-24 (B392 : rendu plus vivant — extinction douce, braise, grains qui refroidissent ; B391 : catalogue Prévot complet — 1 034 références traduites, 31 archétypes créés, `src/render/catalogue.js`, docs/CATALOGUE_EFFETS.md ; son corrigé et ajouté au simu 3D ; eau v146 ; B390 : simu 3D v144 — halo retiré, surface d'eau avec reflets ; B389 : moteur du simulateur régénéré ; B388 : montée 75 mm = 2,5 s ; B387 : montées balistiques ; B386 : marrons sans étincelles ; B385 : marrons d'air ; B384 : chandelles ; B383 : chute réaliste, dispersion 10 % ; B382 : tailles angulaires, iPhone non cramé ; B381 : décor éclairé, ciel, fumée, bloom rond — notation à l'aveugle face à FWsim).**
 >
 > 📌 **VERSION DE BASE = B379** (choix user, 2026-10-22) : commit `9060f65`, branche figée
 > **`base-B379`**, état AVANT les modifications de rendu B380. C'est la référence de retour :
@@ -293,6 +293,36 @@ sur captures mélangées avec celles de FWsim) — toujours sans toucher à la p
   - Journal des tours (scène d'essai essai_eau5.mjs, planches eau5_planche_w1..w6) : w1 ciel trop blanc ;
     w2 quadrillage ; w3 neige (micro-facettes) ; w4 trop de flou + grain ; w5-w8 retenu (w7 : seuils de filtrage des rides 6-16 px ; w8 : rivière sans repère tournant). Outils (niveau, pinceau,
     gomme, sauvegarde) revérifiés : essai_outils_eau.mjs passe.
+- **B391 — CATALOGUE PRÉVOT COMPLET (user : « occupe-toi des effets manquants de PrevoFX par rapport à notre
+  catalogue : liste-les, crée-les »)** — détail par type dans **`docs/CATALOGUE_EFFETS.md`** :
+  - Inventaire : `data/effets.json` (1 168 réf.) -> 134 accessoires écartés -> **1 034 références utiles,
+    106 types d'effet, 0 rabat générique**, 19 « hors périmètre » (étiquettes, systèmes de tir…).
+    307 réf. passent par un archétype créé. Contrôle : `node outils/test_catalogue.mjs` (résumé, `--json`,
+    ou une désignation à traduire).
+  - **`src/render/catalogue.js`** (nouveau, autonome, sans import) : `effetPour(designation, calibre, infos)`
+    -> `{ type, arch, opts, compact }` ; couleurs par NOM ; règles ordonnées (formes 150, pistils, farfalle,
+    colonne, poissons, sifflets…) ; séquences pour compacts / chandelles / bottes / pots à feu + bombette /
+    feux automatiques (`compactMix`) / assortiments. Branché dans PrevoFX web (sélecteur « Catalogue
+    Prévot » de `main.js`, `PrevoFX.catalogue("mots")`, `layer.setCatalogue(res)`) et dans le simulateur
+    3D (`feux_auto.js` : effet « nouveau » > catalogue > ancienne table ; `faire_moteur_simu.py` injecte
+    `<script id="catalogue">` = `PFX_CATALOGUE`, idempotent).
+  - Moteur (`threeFireworks.js`, BUILD B391) : **31 archétypes / variantes créés** — dahlia, peonyPistil(+Cli),
+    kamuroPistil, halfHalfCli, palmEgg, tracerTrunk, farfalle(+Pistil), multibombe(+Mix), titane, sifflet,
+    fishBomb, colonne, bengale, fumee, fontaine, girandole, cascadeLigne, cascadeRing, rings3, mosaicCrackle,
+    candleDeto, bombEgg/Crackle/Cli/Palm/KamuroTips, compactMix, assortiment. `defDepuisCatalogue(res)`
+    (archétype, couleurs, hauteur `hauteur_m` -> apexMul, durée des produits de sol, séquences, `mix`
+    d'archétypes par coup), `ThreeFireworks.setCatalogue(res)`, `opts.cfg` du Shell.
+  - Effets de SOL longs (fontaine 30 s, bengale 60 s, girandole, cascade de jets) : phase `gerbe` étendue
+    (`spin/jets/line/down/y0/flare/tint/fumee`), recyclage des cases d'étoiles (`_caseLibre`), **panache
+    budgété** (`gerbeLongue` : ~5 bouffées/s au-dessus de la gerbe, faiblement éclairées par l'effet —
+    une bouffée par bille empilait des centaines de nuages au même point = boule blanche), lueur d'air
+    par effet (`airMin`/`airMul` : plancher 14 m -> 3-6 m au sol), fumée **teintée** (fumigènes, bengales).
+  - Interrupteur `?catalogue=0` : archétypes neufs rabattus sur les anciens (table RABAT). Effets existants
+    inchangés (10 témoins banc B390/B391 équivalents). Pas de notation à l'aveugle faite dans ce chantier :
+    planches + clé prêtes pour le jury final (`scratchpad/envoi/aveugle_B391/`).
+  - Reste approximatif : feux automatiques / séries cartes / lesli (103 réf. sans détail -> mélange de
+    5 bombettes), hiboux (= sifflet), nautiques (effet aérien posé bas), multibombe / titane (références
+    seulement dans `catalogue_effets.csv` de la passerelle).
 - ⚠️ **Banc d'essai** : entre deux captures sur la même page, il FAUT laisser s'éteindre traînées et
   fumée (≥ 25 s de simulation), sinon la fumée de l'effet précédent, éclairée par le suivant, pollue
   l'image (des tours de relecture ont été faussés ainsi).

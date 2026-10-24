@@ -229,6 +229,44 @@ for (const [k, label] of Object.entries(LABELS)){
 pick.value = 'ch30potk';
 // changer d'effet dans le menu -> couleur PAR DÉFAUT de l'effet (null annule l'override de la démo)
 pick.addEventListener('change', e => layer.setFocus(e.target.value, null));
+// CATALOGUE PRÉVOT (B391, user : « tout le catalogue ») : champ de recherche (référence ou mots de
+// la désignation) sous le sélecteur d'effets ; la référence choisie est traduite par
+// src/render/catalogue.js et jouée en boucle (bombe seule ou séquence complète).
+(async () => {
+  try {
+    const { effetPour } = await import('./render/catalogue.js' + _v);
+    const refs = await (await fetch(new URL('../data/effets.json', import.meta.url))).json();
+    const HORS = new Set(['accessoires','FORMATION','fil','montage','service','allumeurs','composant de chaînes pyrotechniques','batteries de mortiers et mortiers','scene','lampions','']);
+    const utiles = refs.filter(e => !HORS.has(e.type));
+    const plat = s => String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+    const box = document.createElement('div');
+    Object.assign(box.style, { position:'fixed', top:'94px', right:'10px', zIndex:'10', width:'min(360px, 80vw)', fontFamily:'system-ui, sans-serif', fontSize:'13px' });
+    const inp = document.createElement('input'); inp.placeholder = 'Catalogue Prévot : réf. ou mots (ex. 575116000, saule or pointes)';
+    Object.assign(inp.style, { width:'100%', boxSizing:'border-box', background:'rgba(0,0,0,.55)', color:'#fff', border:'1px solid #555', borderRadius:'6px', padding:'6px 8px' });
+    const list = document.createElement('div');
+    Object.assign(list.style, { display:'none', maxHeight:'46vh', overflowY:'auto', background:'rgba(0,0,0,.8)', border:'1px solid #555', borderRadius:'6px', marginTop:'4px' });
+    const info = document.createElement('div'); Object.assign(info.style, { color:'#ffd27a', marginTop:'4px', textShadow:'0 1px 2px #000', fontSize:'12px' });
+    box.append(inp, list, info); document.body.appendChild(box);
+    const jouer = e => {
+      const r = effetPour(e.designation, e.calibre, { hauteur_m:e.hauteur_m, duree_s:e.duree_s });
+      if (layer.setCatalogue(r)){ pick.value = ''; info.textContent = e.reference + ' · ' + e.designation + '  →  ' + r.type + ' (' + (r.arch||'—') + ')'; }
+      list.style.display = 'none';
+    };
+    inp.addEventListener('input', () => {
+      const q = plat(inp.value).trim(); list.innerHTML = ''; if (q.length < 2){ list.style.display='none'; return; }
+      const mots = q.split(/\s+/), hits = utiles.filter(e => { const d = plat(e.reference + ' ' + e.designation); return mots.every(m => d.includes(m)); }).slice(0, 40);
+      for (const e of hits){ const o = document.createElement('div'); o.textContent = e.reference + ' — ' + e.designation;
+        Object.assign(o.style, { padding:'4px 8px', cursor:'pointer', borderBottom:'1px solid #333', color:'#eee' });
+        o.addEventListener('mouseenter', () => o.style.background='#333'); o.addEventListener('mouseleave', () => o.style.background='');
+        o.addEventListener('click', () => jouer(e)); list.appendChild(o); }
+      list.style.display = hits.length ? 'block' : 'none';
+    });
+    inp.addEventListener('keydown', ev => { if (ev.key === 'Enter' && list.firstChild) list.firstChild.click(); });
+    pick.addEventListener('change', () => { info.textContent = ''; });
+    // console : PrevoFX.catalogue('575116000') ou PrevoFX.catalogue('saule or pointes')
+    if (window.PrevoFX) window.PrevoFX.catalogue = (q) => { const e = utiles.find(x => String(x.reference)===String(q)) || utiles.find(x => plat(x.designation).includes(plat(q))); if (e) jouer(e); return e; };
+  } catch (e) { console.warn('[PrevoFX] catalogue indisponible', e); }
+})();
 document.body.appendChild(pick);
 
 // DÉMO (réglage en cours) : CHANDELLE 30 mm 8 TIRS POT À FEU + COMÈTE TRAÇANTE (réfs 501314000
