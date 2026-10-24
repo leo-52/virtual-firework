@@ -22,7 +22,7 @@
     import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
     import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
     // import DYNAMIQUE horodaté -> on charge toujours le dernier moteur (sinon ?preview reste en cache)
-    const { __scene, __Shell, __updateTrails, __updatePuffs } =
+    const { __scene, __Shell, __updateTrails, __updatePuffs, __updateSmoke, __shellLights } =
       await import('./src/render/threeFireworks.js?preview=' + Date.now());
 
     const W = innerWidth || 1280, H = innerHeight || 800;   // fallback si la fenêtre preview est à 0×0 (headless) -> le canvas rend quand même
@@ -47,17 +47,18 @@
     composer.addPass(new OutputPass());
 
     let shell = null;
-    const step = () => { if (shell) shell.update(1/60); __updateTrails(1/60); __updatePuffs(1/60); };
+    const step = () => { if (shell) shell.update(1/60); __updateTrails(1/60); __updatePuffs(1/60); if (__updateSmoke) __updateSmoke(1/60, __shellLights ? __shellLights(shell ? [shell] : [], 8) : []); };   // B391 : fumée aussi (fumigènes)
     const settle = n => { for (let i=0;i<n;i++) step(); };   // laisse mourir le tir précédent + vide les pools
 
     // Joue un effet 75mm jusqu'au burst, +burstFrames frames, puis rend UNE image (statique = screenshot OK).
     // rgb (optionnel) = [r,g,b] 0..1 -> override de couleur (ex "crackling aqua", "mosaïque rouge").
     window.__show = (arch, burstFrames, label, rgb, cal) => {
       settle(280);
+      if (shell && !shell.dead) shell.destroy();   // B391 : un effet de sol long (fontaine 30 s) ne doit pas rester figé dans la capture suivante
       const opts = rgb ? { color: new THREE.Color(rgb[0], rgb[1], rgb[2]) } : undefined;
       shell = new __Shell(arch, 0, 0, cal, opts);   // cal absent -> calibre par défaut de l'EFFET (cfg.cal, ex cœur=100mm) sinon 75
       window.__lastShell = shell;
-      let g = 0; while (shell.phase !== 'burst' && g++ < 500) step();
+      let g = 0; while (shell.phase !== 'burst' && shell.phase !== 'gerbe' && g++ < 500) step();   // B391 : les effets de SOL (gerbe) démarrent tout de suite
       for (let i=0;i<burstFrames;i++) step();
       document.getElementById('lbl').textContent = label || arch;
       composer.render();

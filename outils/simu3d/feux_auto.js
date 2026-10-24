@@ -184,14 +184,40 @@ function copieMontee(dst, src) {   // deux charges de la même bombette : même 
   dst.hasMuzzle = false;
 }
 
+// B391 : les désignations que la traduction « feu automatique » ne connaît pas passent par le
+// CATALOGUE complet (PFX_CATALOGUE = src/render/catalogue.js, injecté par le générateur) : tout
+// produit Prévot a un effet fidèle. ?catalogue=0 = sans.
+const CATALOGUE_OK = () => typeof PFX_CATALOGUE !== "undefined" && typeof PFX.defDepuisCatalogue === "function" && !/[?&]catalogue=0\b/.test(location.search);
+function effetCatalogue(s) {
+  if (!CATALOGUE_OK()) return null;
+  try {
+    const r = PFX_CATALOGUE.effetPour(s.des || s.eff || "", s.cal, { hauteur_m: s.h > 0 ? s.h : null });
+    if (!r || !r.arch) return null;
+    const def = PFX.defDepuisCatalogue(r); if (!def) return null;
+    return { arch: def.arch, def, res: r };
+  } catch (e) { console.warn("[feux_auto] catalogue", e); return null; }
+}
 effetFeu = function (s) {
   if (ANCIEN()) return _effetAncien(s);
   const n = effetNouveau(s);
-  return n ? { arch: n.arch, nouveau: n } : _effetAncien(s);
+  if (n) return { arch: n.arch, nouveau: n };
+  const c = effetCatalogue(s);
+  return c ? { arch: c.arch, catalogue: c } : _effetAncien(s);
 };
 tirerUnCoup = function (s) {
   if (ANCIEN()) return _tirerAncien(s);
   const ef = effetFeu(s);
+  if (ef.catalogue) {   // B391 : tir traduit par le catalogue complet (bombe seule ou 1er coup d'une séquence)
+    const def = ef.catalogue.def, cfg = E[def.arch] || {};
+    const h = s.h > 0 ? s.h : hauteurCalibre(s.cal), apexMul = (def.shot && def.shot.apexMul) || (cfg.apex ? h / cfg.apex : 1);
+    const apexS = (cfg.apex || 95) * PFX.APEX_SCALE * apexMul;
+    const arch = def.mix ? def.mix[(Math.random() * def.mix.length) | 0] : def.arch;
+    const opts = Object.assign({}, def.shot || {}, { apexMul, lean: [-Math.tan(s.a * Math.PI / 180) * apexS, 0] });
+    const ox = (_BAT_FEU[s.bat] ?? 0) + (s.tube - 6) * 0.035, oz = (s.rang - 4) * 0.035;
+    _feu.obus.push(new PFX.Shell(arch, ox, oz, s.cal, opts));
+    if (def.mine && E[def.mine]) _feu.obus.push(new PFX.Shell(def.mine, ox, oz, s.cal, def.mineColored && def.shot && def.shot.pair ? { pair: def.shot.pair } : {}));
+    return;
+  }
   if (!ef.nouveau) return _tirerAncien(s);
   const arch = ef.arch, cfg = E[arch], o = ef.nouveau.o;
   const h = s.h > 0 ? s.h : hauteurCalibre(s.cal);

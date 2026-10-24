@@ -56,7 +56,7 @@ REGLAGES_MARQUE = "@@REGLAGES@@"
 
 RETOUR = (
     "\nreturn { scene, Shell, updateTrails, updatePuffs, updateSmoke, shellLights, setupBloomPass, BLOOM_DEF, BUILD,\n"
-    "  EFFECTS, LABELS, CAL_SCALE, APEX_SCALE, calScale,\n"
+    "  EFFECTS, LABELS, CAL_SCALE, APEX_SCALE, calScale, defDepuisCatalogue, NOMS_COULEUR, couleurNom,\n"
     "  C: { GOLD, DIMGOLD, SILVER, PINK, CYAN, YEL, GRN, BLU, RED, PURP, WHITE, COPPER, WARMSILVER, EGGGOLD } };\n"
     "})();\n"
 )
@@ -198,12 +198,38 @@ def eau(html):
     return module(html, 'eau', EAU_JS)
 
 
+CATALOGUE_JS = ICI.parent / 'src' / 'render' / 'catalogue.js'
+
+
+def catalogue(html):
+    """B391 : traduction CATALOGUE Prévot -> effet (src/render/catalogue.js), injectée en script
+    autonome `var PFX_CATALOGUE = (function(){ ... })();` (exports ES -> retour), idempotent."""
+    if not CATALOGUE_JS.exists():
+        return html
+    s = CATALOGUE_JS.read_text(encoding='utf-8')
+    noms = re.findall(r"^export (?:const|let|function) (\w+)", s, flags=re.M)
+    s = re.sub(r"^export (const|let|function|class) ", r"\1 ", s, flags=re.M)
+    if re.search(r"^\s*(import|export)\b", s, flags=re.M):
+        sys.exit('catalogue.js : il reste un import/export')
+    bloc = ("// ── Catalogue Prévot -> effet PrevoFX (genere par outils/faire_moteur_simu.py depuis src/render/catalogue.js) ──\n"
+            "var PFX_CATALOGUE = (function () {\n" + s + "\nreturn { " + ", ".join(noms) + " };\n})();\n")
+    m = re.search(r'<script id="catalogue">.*?</script>\n', html, flags=re.S)
+    bloc = '<script id="catalogue">\n' + bloc + '</script>\n'
+    if m:
+        return html[:m.start()] + bloc + html[m.end():]
+    # avant le script feux_auto (qui s'en sert), sinon avant </body>
+    i = html.find('<script id="feux_auto">')
+    if i < 0:
+        i = html.rfind('</body>')
+    return html[:i] + bloc + html[i:]
+
+
 def main():
     if len(sys.argv) != 3:
         sys.exit(__doc__)
     src, dst = pathlib.Path(sys.argv[1]), pathlib.Path(sys.argv[2])
     mot = moteur()
-    html = page(src.read_text(encoding='utf-8'), mot)
+    html = catalogue(page(src.read_text(encoding='utf-8'), mot))
     dst.write_text(html, encoding='utf-8')
     b = re.search(r"const BUILD = '(B\d+)'", mot)
     print(f'{dst} écrit — moteur PrevoFX {b.group(1) if b else "?"}')
