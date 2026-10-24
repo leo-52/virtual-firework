@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
-const BUILD = 'B390';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
+const BUILD = 'B392';  // tampon de version affiché dans le HUD -> permet de voir si le navigateur sert du CACHE
 
 // RENDU « VU À TRAVERS UNE CAMÉRA » (B380, user : « ça fait fade, faux, générique » face à FWsim).
 // La PHYSIQUE et les réglages d'effets ne bougent pas : seul l'ASPECT de chaque étoile change.
@@ -23,6 +23,13 @@ const BUILD = 'B390';  // tampon de version affiché dans le HUD -> permet de vo
 // Comparaison : ajouter ?look=b379 à l'adresse = rendu d'avant ; ?air=0 = sans lueur d'air.
 const _QS = (typeof location !== 'undefined') ? location.search : '';
 const LOOK_OLD = /[?&]look=b379\b/.test(_QS);
+// B392 (user : « rends les effets encore plus beaux et réalistes ») : ?look=b390 = rendu d'avant B392.
+// Nouveautés B392 (rendu seul) : extinction DOUCE des étoiles (plus de coupure à 15 % d'éclat) avec
+// braise orangée en fin de vie ; cœur blanc réservé aux étoiles VIVES (les étoiles colorées gardent leur
+// couleur, les têtes de comète colorées ne sont plus blanches) ; scintillement des étoiles plus lent
+// que celui des grains ; grains de traînée plus nets, inégaux, qui REFROIDISSENT (or -> orange -> rouge sombre).
+const LOOK_B390 = LOOK_OLD || /[?&]look=b390\b/.test(_QS);
+const sstep = (a, b, x) => { x = Math.min(1, Math.max(0, (x - a) / (b - a))); return x * x * (3 - 2 * x); };
 // Réglage fin par l'adresse (B381, pour comparer des variantes à l'aveugle) : ?halo=px,intensité
 // &white=x &expo=s &var=0|1 &bloom=force,rayon,seuil. Sans paramètre = valeurs par défaut ci-dessous.
 function _qnum(nom){ const m=new RegExp('[?&]'+nom+'=([-0-9.,]+)').exec(_QS); return m ? m[1].split(',').map(Number) : null; }
@@ -32,6 +39,10 @@ const _airQ = _qnum('air'); const AIR_ON = !LOOK_OLD && !!(_airQ && _airQ[0] > 0
 // haloMin = halo minimal en multiples de la boule (les grosses étoiles gardent un léger rayonnement).
 const STAR_LOOK  = LOOK_OLD ? { haloPx:0, haloMin:1, haloI:0, minPx:0, white:0, crisp:1 } : { haloPx:8, haloMin:1.3, haloI:0.13, halo2Px:20, halo2I:0.03, minPx:3.5, white:0.55, crisp:1.0, soft:1, spark:0.2, var:0.25 }   // spark/var (B381, user : « ça ne vit pas ») : léger vacillement de combustion + étoiles inégales;
 const TRAIL_LOOK = LOOK_OLD ? { haloPx:0, haloMin:1, haloI:0, minPx:0, white:0, crisp:1 } : { haloPx:4, haloMin:1.0, haloI:0.06, halo2Px:16, halo2I:0.02, minPx:0, spark:0.85, white:0.12, crisp:1 };   // spark (B381) : grains pailletés
+if (!LOOK_B390){   // B392 : étoiles plus inégales et au vacillement LENT (~7 Hz, la combustion d'une étoile n'est pas un grain de charbon) ;
+  Object.assign(STAR_LOOK,  { var:0.42, spark:0.30, sparkHz:7, whiteGate:1.0 });     // whiteGate : le cœur blanc n'apparaît qu'au-dessus de cette luminance (étoiles vives), les autres restent colorées
+  Object.assign(TRAIL_LOOK, { crisp:1.25, var:0.35, sparkHz:14, whiteGate:0 });      // grains plus nets et inégaux (collier de perles, pas un ruban)
+}
 const BLOOM_FACTORS = [1.0, 0.8, 0.45, 0.12, 0.0];   // poids des 5 niveaux du bloom (Three.js : 1, 0.8, 0.6, 0.4, 0.2). B381 : les 2 plus larges coupés = plus de voile brun autour des saules (relecture à l'aveugle), lueur serrée gardée
 const BLOOM_DEF = LOOK_OLD ? [0.3, 0.22, 0.55] : [0.8, 0.0, 0.55];   // B381 : bloom ROND (cf noyau corrigé plus bas) -> on peut le pousser sans carrés ; SEUIL B106 (0.55) gardé = la masse faible ne fait toujours pas de brouillard.   // force, rayon, seuil — ceux de B106 (anti-brouillard). B381 : un bloom fort faisait des « étoiles carrées » sur certains GPU -> la lueur large est calculée par étoile (halo2)
 { const sk=_qnum('sspark'), h=_qnum('halo'), w=_qnum('white'), e=_qnum('expo'), v=_qnum('var'), mp=_qnum('minpx'), so=_qnum('soft'), h2=_qnum('halo2'), th2=_qnum('thalo2');
@@ -84,6 +95,7 @@ const STAR_VS = `
   uniform float uSpark;     // B381 : force du scintillement des grains (0 = lisse comme avant)
   uniform float uExpo;      // B381 : durée de « pose » du flou de mouvement (s)
   uniform float uVar;       // B381 : variété d'éclat/taille par étoile (0 = toutes identiques comme avant)
+  uniform float uSparkHz;   // B392 : cadence du scintillement (grains 14 Hz, étoiles ~7 Hz)
   varying float vSpark;
   uniform float uH;
   uniform float uP11Ref;   // B381 : 0 = taille en px fixe (B379) ; sinon focale de référence
@@ -115,7 +127,7 @@ const STAR_VS = `
     // Moyenne = 1 : la luminosité globale d'une traînée ne change pas.
     vSpark = 1.0;
     if (uSpark > 0.0 && aSeed > 0.0){
-      float tt = uTime * 14.0 + aSeed * 37.0, fl = floor(tt);
+      float tt = uTime * uSparkHz + aSeed * 37.0, fl = floor(tt);
       float ha = fract(sin(fl * 12.9898 + aSeed * 78.233) * 43758.5453);
       float hb = fract(sin((fl + 1.0) * 12.9898 + aSeed * 78.233) * 43758.5453);
       float h = mix(ha, hb, smoothstep(0.0, 1.0, fract(tt)));
@@ -144,6 +156,7 @@ const STAR_FS = `
   uniform float uWhite;     // B381 : cœur blanc-chaud (saturation du capteur sur les étoiles vives)
   uniform float uCrisp;     // B381 : netteté du bord de l'étoile
   uniform float uSoft;      // B381 : bord doux de la boule (0 = net comme avant)
+  uniform float uWhiteGate; // B392 : luminance en dessous de laquelle le cœur blanc s'efface (0 = comme avant : toutes les étoiles)
   varying float vSpark;
   varying vec3 vCol;
   varying vec2 vDir;
@@ -169,7 +182,9 @@ const STAR_FS = `
     vec3 c = vCol * t.rgb * pow(t.a, uCrisp);                         // noyau (uCrisp=1 : EXACTEMENT l'apport d'avant ; >1 : bord plus net, moins « blob »)
     // CŒUR BLANC-CHAUD (B381, relecture à l'aveugle : « étoiles = points de couleur uniformes, sans cœur ») :
     // au centre d'une étoile vive, la caméra sature -> blanc, la couleur reste au bord. ∝ éclat de l'étoile.
-    c += vec3(1.0) * pow(tH.a, 4.0) * min(dot(vCol, vec3(0.30, 0.50, 0.20)), 2.5) * uWhite;   // sur la BOULE seulement (sur la queue : « paires d'étoiles »)
+    float lum = dot(vCol, vec3(0.30, 0.50, 0.20));
+    float wg = uWhiteGate > 0.0 ? smoothstep(uWhiteGate, uWhiteGate * 2.8, lum) : 1.0;   // B392 : seules les étoiles VIVES saturent en blanc ; une étoile de couleur moyenne garde sa teinte au cœur
+    c += vec3(1.0) * pow(tH.a, 4.0) * min(lum, 2.5) * uWhite * wg;   // sur la BOULE seulement (sur la queue : « paires d'étoiles »)
     // HALO (B380) : lueur de la couleur PURE de l'étoile autour de la tête, gaussienne qui s'éteint
     // avant le bord du sprite (pas de carré visible). C'est le « glow » des étoiles de FWsim.
     float mxc = max(vCol.r, max(vCol.g, vCol.b));
@@ -198,6 +213,12 @@ const HEAD_LOOK = Object.assign({}, TRAIL_LOOK, { spark:0.2 });
 // B387 : têtes de montée balistique — mèche = point vif et NET (pas de goutte floue) ; comète de palmier = tête vive, petit halo
 const FUSE_LOOK = LOOK_OLD ? HEAD_LOOK : { haloPx:2, haloMin:1.0, haloI:0.05, halo2Px:0, halo2I:0, minPx:1.2, white:0.35, crisp:1.4, soft:1, spark:0.35 };
 const TAILHEAD_LOOK = LOOK_OLD ? HEAD_LOOK : { haloPx:3, haloMin:1.0, haloI:0.05, halo2Px:0, halo2I:0, minPx:1.6, white:0.7, crisp:1.4, soft:1, spark:0.2 };   // B386 : look de la tête de montée
+// B392 : tête de montée DE COULEUR (comète « tête rose, queue or », ascension colorée) : cœur blanc réduit,
+// sinon la tête vire au blanc et la couleur annoncée ne se lit pas (relecture à l'aveugle du feu 046).
+const TAILHEAD_COL_LOOK = Object.assign({}, TAILHEAD_LOOK, { white:0.22, whiteGate:1.2, haloI:0.08, haloPx:4 });
+const _teinteVive = c => { if (!c) return false; const mx=Math.max(c.r,c.g,c.b), mn=Math.min(c.r,c.g,c.b);
+  const dore = c.r>=c.g && c.g>=c.b && c.g>0.4*c.r;                   // or / cuivre / blanc chaud : ce n'est pas une « couleur »
+  return mx>0 && (mx-mn)/mx>0.55 && !dore; };
 const HEAD_OLD = /[?&]tete=0\b/.test(_QS);   // B384 : ?tete=0 = tête de montée dessinée comme avant
 const SPARK_CLOCK = { value:0 };   // B381 : horloge commune du scintillement (étoiles ET traînées)
 function makeStarMat(tex, look){
@@ -207,7 +228,8 @@ function makeStarMat(tex, look){
                uVp:{value:new THREE.Vector2(0.5*(innerWidth||1280)*k, 0.5*(innerHeight||800)*k)},
                uHaloPx:{value:L.haloPx*k}, uHaloMin:{value:L.haloMin}, uHaloI:{value:L.haloI}, uHalo2Px:{value:(L.halo2Px||0)*k}, uHalo2I:{value:L.halo2I||0}, uMinPx:{value:L.minPx*k},
                uTime:SPARK_CLOCK, uSpark:{value:L.spark||0}, uWhite:{value:L.white||0}, uHaloSat:{value:L.hsat||0}, uCrisp:{value:L.crisp||1},
-               uExpo:{value:L.expo||0.07}, uVar:{value:L.var||0}, uSoft:{value:L.soft||0} },
+               uExpo:{value:L.expo||0.07}, uVar:{value:L.var||0}, uSoft:{value:L.soft||0},
+               uSparkHz:{value:L.sparkHz||14}, uWhiteGate:{value:L.whiteGate||0} },
     vertexShader:STAR_VS, fragmentShader:STAR_FS,
     transparent:true, blending:THREE.AdditiveBlending, depthWrite:false });
 }
@@ -287,6 +309,12 @@ function updateTrails(dt){
       a*=Math.min(3.2, t.fA);
       const cool=Math.max(0, Math.min(1, (t.age-0.45)/0.55));   // B363 : il reste BLANC 0,45 s (phase vive mesurée) avant de virer braise
       fg=t.g*(1-0.15*cool); fb=t.b*(1-0.42*cool);
+    } else if (!LOOK_B390){
+      // B392 : les grains CHAUDS (or, cuivre, blanc chaud) refroidissent en mourant : or -> orange -> rouge
+      // sombre (queue d'un kamuro : pointes rougeoyantes). Un grain de couleur franche (vert, bleu) s'éteint
+      // simplement : w ≈ 0 pour lui (la couleur reste), 1 pour l'or, ~0,25 pour le blanc.
+      const cool=(1-a)*(1-a), w=Math.min(1, Math.max(0, (t.r/(Math.max(t.g,t.b)+0.01)-0.8)/0.8));
+      fg=t.g*(1-0.30*cool*w); fb=t.b*(1-0.60*cool*w);
     }
     trailPos[i*3]=t.x; trailPos[i*3+1]=t.y; trailPos[i*3+2]=t.z;
     trailCol[i*3]=fr*a*0.85; trailCol[i*3+1]=fg*a*0.85; trailCol[i*3+2]=fb*a*0.85;
@@ -1884,7 +1912,7 @@ class Shell {
         this.headGeo.setAttribute('aColor',new THREE.BufferAttribute(new Float32Array([rc.r,rc.g,rc.b]),3));
         this.headGeo.setAttribute('aVel',  new THREE.BufferAttribute(new Float32Array(3),3));
         this.headGeo.setAttribute('aSeed', new THREE.BufferAttribute(new Float32Array([0.01+Math.random()*0.99]),1));
-        this.headMat=makeStarMat(starTex, this.cfg.noIgnite ? STAR_LOOK : (this._bal ? (this.cfg.risingTail ? TAILHEAD_LOOK : FUSE_LOOK) : HEAD_LOOK));   // chandelles (noIgnite : la bille EST l'étoile) = look étoile ; montée des bombes = halo discret   // B386 : halo discret des traînées (le halo des étoiles faisait briller la montée presque autant que l'éclatement)
+        this.headMat=makeStarMat(starTex, this.cfg.noIgnite ? STAR_LOOK : (this._bal ? (this.cfg.risingTail ? ((!LOOK_B390 && _teinteVive(this.cfg.riseColor)) ? TAILHEAD_COL_LOOK : TAILHEAD_LOOK) : FUSE_LOOK) : HEAD_LOOK));   // chandelles (noIgnite : la bille EST l'étoile) = look étoile ; montée des bombes = halo discret   // B386 : halo discret des traînées (le halo des étoiles faisait briller la montée presque autant que l'éclatement)
         // petite API compatible avec PointsMaterial (size, color) : le code de montée n'a pas à changer
         const G=this.headGeo, hm=this.headMat;
         Object.defineProperty(hm,'size',{ get:()=>G.attributes.size.array[0],
@@ -2212,7 +2240,15 @@ class Shell {
     // noIgnite (B355, chandelles) : l'étoile brûle DÉJÀ depuis la montée — pas de rallumage blanc,
     // sinon on voit un flash au moment où la tête de montée devient l'étoile.
     if (A<0.15 && !this.cfg.noIgnite){ const f=1-A/0.15, f2=f*f*0.5; r=r+(1-r)*f2; g=g+(1-g)*f2; b=b+(1-b)*f2; }
-    const fade=Math.max(0,1-A*A*0.85), fadeIn=0.4+0.6*Math.min(1,d.age/0.25);
+    let fade=Math.max(0,1-A*A*0.85); const fadeIn=0.4+0.6*Math.min(1,d.age/0.25);
+    if (!LOOK_B390){
+      // B392 : EXTINCTION DOUCE — avant, l'étoile disparaissait d'un coup à 15 % d'éclat (« pop ») ;
+      // maintenant elle s'éteint sur ses 20 derniers % de vie, et REFROIDIT en braise : le vert et le
+      // bleu s'effacent avant le rouge (un charbon qui meurt passe du jaune à l'orange puis au rouge sombre).
+      fade *= 1 - sstep(0.85, 1.0, A);
+      const k = sstep(0.72, 1.0, A) * (this.cfg.pureColor ? 0.6 : 1);   // couleurs « pures » validées : braise plus discrète
+      g *= 1 - 0.35*k; b *= 1 - 0.60*k;
+    }
     // +punch HDR (2.4->3.4) : le coeur sature en blanc-chaud, halo coloré au bloom => ça "brûle"
     return { r,g,b, inten:3.4*fade*d.dimVar*fadeIn };
   }

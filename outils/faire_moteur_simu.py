@@ -50,8 +50,8 @@ CALSCALE = (
 # Dosage de la LUEUR propre au simulateur (le moteur le lit s'il existe : PrevoFX, lui, n'en a pas).
 # user (23/10/2026) : « y'a encore du halo » -> lueur générale de la v142 (0,3) + halo léger par étoile.
 # Modifiable à la main dans la page : le générateur GARDE la ligne existante à la régénération.
-REGLAGES_DEFAUT = ("var PFX_REGLAGES = { star: { haloPx: 5, haloI: 0.02, halo2I: 0.0 }, trail: { haloI: 0.015, halo2I: 0.0 }, "
-                   "bloom: [0.15, 0.0, 0.75], air: 0.25 };   // lueur du simulateur (star/trail : halos par étoile ; bloom : force, rayon, seuil ; air : lueur de l'air autour des bombes)")
+REGLAGES_DEFAUT = ("var PFX_REGLAGES = { star: { haloPx: 7, haloI: 0.055, halo2Px: 18, halo2I: 0.012 }, trail: { haloI: 0.035, halo2I: 0.0 }, "
+                   "bloom: [0.38, 0.0, 0.68], air: 0.25 };   // lueur du simulateur (B392 : halo FIN et vivant par étoile, lueur ronde douce — pas la grosse boule floue refusée en v143 ; star/trail : halos par étoile ; bloom : force, rayon, seuil ; air : lueur de l'air autour des bombes)")
 REGLAGES_MARQUE = "@@REGLAGES@@"
 
 RETOUR = (

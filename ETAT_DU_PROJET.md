@@ -2,7 +2,7 @@
 
 > Document vivant : où on en est, ce qui est fait, ce qui reste, la ligne directrice,
 > les effets et leurs caractéristiques. Tenu à jour au fil des sessions.
-> **Dernière mise à jour : 2026-10-23 (B390 : simu 3D v144 — halo retiré, surface d'eau avec reflets ; B389 : moteur du simulateur de site 3D régénéré ; B388 : montée 75 mm = 2,5 s ; B387 : montées balistiques ; B386 : marrons sans étincelles ; B385 : marrons d'air ; B384 : chandelles ; B383 : chute réaliste, dispersion 10 % ; B382 : tailles angulaires, iPhone non cramé ; B381 : décor éclairé, ciel, fumée, bloom rond — notation à l'aveugle face à FWsim).**
+> **Dernière mise à jour : 2026-10-24 (B392 : rendu plus vivant — extinction douce, braise, cœur blanc gardé pour les étoiles vives, grains qui refroidissent ; B390 : simu 3D v144 — halo retiré, surface d'eau avec reflets ; B389 : moteur du simulateur de site 3D régénéré ; B388 : montée 75 mm = 2,5 s ; B387 : montées balistiques ; B386 : marrons sans étincelles ; B385 : marrons d'air ; B384 : chandelles ; B383 : chute réaliste, dispersion 10 % ; B382 : tailles angulaires, iPhone non cramé ; B381 : décor éclairé, ciel, fumée, bloom rond — notation à l'aveugle face à FWsim).**
 >
 > 📌 **VERSION DE BASE = B379** (choix user, 2026-10-22) : commit `9060f65`, branche figée
 > **`base-B379`**, état AVANT les modifications de rendu B380. C'est la référence de retour :
@@ -199,6 +199,19 @@ sur captures mélangées avec celles de FWsim) — toujours sans toucher à la p
   taille angulaire (plus de facteur k de champ), fumée (`PFX.updateSmoke` + `PFX.shellLights`). Pour ça, le réglage
   de la lueur et les sources de lumière sont sortis de `ThreeFireworks` en fonctions de module (`setupBloomPass`,
   `shellLights`) — PrevoFX inchangé. À relancer à chaque nouvelle version du moteur.
+- **B392 — BEAUTÉ DU RENDU (user : « rends les effets encore plus beaux et réalistes, on vise 8/10 »)** — rendu seul,
+  `?look=b390` = rendu d'avant. Dans `threeFireworks.js` : (1) EXTINCTION DOUCE des étoiles : avant, une étoile
+  disparaissait d'un coup à 15 % d'éclat (« pop ») ; elle s'éteint maintenant sur ses 20 derniers % de vie en
+  REFROIDISSANT en braise (vert et bleu s'effacent avant le rouge ; ×0,6 pour les couleurs « pures » validées) ;
+  (2) CŒUR BLANC réservé aux étoiles VIVES (`whiteGate`, luminance 1,0 -> 2,8) : une étoile de couleur moyenne garde sa
+  teinte au cœur (relecture : « têtes blanchâtres », « vert pâle ») ; (3) scintillement des ÉTOILES ralenti à 7 Hz
+  (`sparkHz`, les grains restent à 14 Hz), étoiles plus inégales (var 0,42, spark 0,30) ; (4) GRAINS de traînée plus
+  nets (crisp 1,25), inégaux (var 0,35) et qui REFROIDISSENT en mourant (or -> orange -> rouge sombre ; un grain de
+  couleur franche s'éteint sans virer) ; (5) tête de montée DE COULEUR (`TAILHEAD_COL_LOOK`, comète « tête rose,
+  queue or ») : cœur blanc réduit pour que la couleur annoncée se lise. Simulateur de site 3D : `PFX_REGLAGES`
+  remonté à un halo FIN par étoile (7 px, 0,055 + lueur large 18 px, 0,012), bloom 0,38 seuil 0,68 (pas la grosse
+  boule floue refusée en v143 : la lueur d'air reste à 0,25) ; `feux_auto.js` : bombettes +25 % d'étoiles
+  (titane 92, chrysanthème 92, feuilles 40, œufs 64, saules à bascule 60, mosaïque 7×9).
 - **B390 — SIMULATEUR DE SITE 3D v144 (user : « y'a encore du halo » + « option surface d'eau, reflets, vagues »)** :
   - Crochet `var PFX_REGLAGES = { star, trail, bloom, bloomFactors, air }` : si la page hôte le déclare AVANT le
     moteur, il remplace le dosage de lueur (halos par étoile, bloom, lueur de l'air ×air). PrevoFX n'en déclare
